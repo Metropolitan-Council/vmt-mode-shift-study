@@ -20,3 +20,7 @@ This repository is in active development. See the CONTRIBUTING page on the right
 
 ## Related repositories
 * metc-tbi-helper and metc-tbi-internal: These repositories create the data objects and .csv files containing the Travel Behavior Inventory (TBI) 2019 and 2021 data.
+
+
+Please note that the mode-shift project is released with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md). By contributing to this project, you agree to abide by its terms.
+
