@@ -1,4 +1,4 @@
-# Mode Shift Study
+# VMT Reduction and Mode Shift Study
 This repository contains a collection of code supporting the mode shift feasibility study.
 
 Do this to set up your repository/code to point to the Teams directory where data are stored: 
