@@ -1,0 +1,5 @@
+# Ingore all data and outputs unless explicitly 
+# added by the user. 
+
+data\*
+output\*
