@@ -2,24 +2,37 @@
 # VMT Reduction and Mode Shift Study
 This repository contains a collection of code supporting the mode shift feasibility study.
 
-Do this to set up your repository/code to point to the Teams directory where data are stored: 
+Do this to set up your repository/code: 
 
-```
-do this thing in python to set up access to the Teams directory without committing absolute file paths, etc
-```
+1. Clone the repository to your local machine. 
+2. Copy the contents of the example directory to a working directory located outside the repository.  
+3. Request access to the data stored on the Teams directory from @gregerhardt and create a path to the data directory. 
+4. Run the script using the command: 
+
+	```
+	python run_all.py Usage: python run_all.py -d [DATA_DIR] -c [CONFIG_DIR] -o [OUTPUT_DIR]
+	```
+
+You may need to adjust the sys.path.append command in `run_all.py` to reference the source code within the repository. **It is important that no private data or outputs be stored in the repository.**  See Handling data for details.
 
 This repository is in active development. See the [CONTRIBUTING](CONTRIBUTING.md) page on the right to learn how to contribute 🤝.
 
 ## Organization: what's here
 
-* `a folder`: content
-* `a folder`: content
-  * `a thing` 
-      * `a sub-thing` of stuff
+* `src`: Source code for main processing scripts. 
+* `example`: Example folder structure for running the scripts. 
+  * `config`: Configurations and run options (i.e. user-set thresholds and rules)
+  * `data`: Placeholder for input data. Only limited publicly available data should be stored here to test the system.  To run with real data, the user should instead point to a data folder on the Teams site.  See handling data. 
+  * `output`: A placeholder for where output data would be written.  This is empty, and output data should be stored locally. 
 
 ## Handling data
 
-**[????] is the only data we store in this GitHub repository.**  Git (even [Git LFS](https://git-lfs.github.com/)) is *not* ideal for storing data. If you generate additional datasets in your work, please add them to the .gitignore file. If incorporating a new dataset, save it to the Teams folder first (see @ashleyasmus or another project contact for access).
+**Non-private and non-proprietary example data are the only data we store in this GitHub repository.**  The analyses used for this project are based on the Travel Behavior Inventory (TBI) which includes personal information for the respondents, including trip locations.  It is important to keep those data safe, including both the raw data and outputs of individual records or traces. Aggregated data summaries are ok. Users should take the following precautions: 
+
+* Only run the scripts outside the repository to avoid accidentally checking in private data or outputs. 
+* If you are working with a particular data file, add its extension to the .gitignore file. (This is redundant with the practice above, and that's the point.)
+
+Eventually we hope to provide a runable example using synthetic and/or public data. If you think a new dataset should be incorporated, please discuss with the project contacts. 
 
 ## Related repositories
 
@@ -35,20 +48,19 @@ Additional documents in VMT Reduction Mode Shift Microsoft Teams/Sharepoint.
 
 ### Contacts
 
-Metropolitan Council
+Metropolitan Council 
 
 - Ashley Asmus [email](ashley.asmus@metc.state.mn.us) @eroten
 - Liz Roten [email](liz.roten@metc.state.mn.us) @ashleyasmus
 - Eric Lind [email](eric.lind@metrotransit.org) @elindie
 - Jonathan Ehrlich [email](jonathan.ehrlich@metc.state.mn.us) @JonathanEhrlichMC
 
-
 University of Kentucky Team
 
-- Greg Erhardt [email](greg.erhardt@uky.edu)
-- Xu Zhang [email](xuzhang_uk@uky.edu)
-- Richard Donohue [email](rgdonohue@uky.edu)
-- Mattthew Wigginton Bhagat-Conway [email](mwbc@unc.edu)
+- Greg Erhardt [email](greg.erhardt@uky.edu) @gregerhardt
+- Xu Zhang [email](xuzhang_uk@uky.edu) @xzh263
+- Richard Donohue [email](rgdonohue@uky.edu) @rgdonohue
+- Matthew Wigginton Bhagat-Conway [email](mwbc@unc.edu) @mattwigway
 
 
 ## Code of Conduct
