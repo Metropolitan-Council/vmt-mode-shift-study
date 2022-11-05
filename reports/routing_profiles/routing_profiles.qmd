@@ -1,0 +1,83 @@
+---
+title: Routing profiles
+author: Matt Bhagat-Conway
+institute: Department of City and Regional Planning, University of North Carolina at Chapel Hill
+bibliography: ../bibliography.bib
+execute:
+    cache: true
+---
+
+```{r}
+#| include: false
+# R used to generate some embedded plots
+library(tidyverse)
+library(sf)
+#library(raster)
+```
+
+# Introduction
+
+The goal of the re-routing analysis is to determine the route details for each trip if it had been taken by a different mode—for instance, how long a driving trip would have taken by cycling, or how many transfers would be required if a trip were shifted to transit from another mode. We need to define a “profile” for each alternate mode modeled. These profiles contain the detailed parameters needed to find the best paths. For instance, a walking profile would contain the walking speed, factors related to avoiding busy or steep roads, and so on.
+
+These profiles will be used to determine the weights which will be used in routing. The route that will be found will be the one that has the lowest total weight. We plan to have four profile for on street modes: driving, walking, bicycling, and e-bicycling (similar to bicycling but with higher speed and reduced/eliminated penalties for hill climbing). We will additionally have a single profile for transit routing.
+
+In addition to weighting, each profile will have rules for selecting which links are preserved. For instance, freeways will be removed from bicycle and pedestrian routing, and footpaths will be removed from automobile routing. Additionally, we may remove certain links from bicycle and pedestrian routing based on level of traffic stress.
+
+# Street routing
+
+For street network routing, the weights will start with traversal times, and be adjusted based on behavioral factors such as avoidance of busy streets. The street network will be based on OpenStreetMap, and each link will have attributes derived from OpenStreetMap, such as roadway classification and speed limit (where available). We will use USGS elevation data to attach an elevation profile to each link. Lastly, traffic congestion data provided by Met Council will be attached to links. The weights for each link will be calculated based on these attributes. The following sections describe the weighting formulae for each of the profiles.
+
+## Walking
+
+The weights used for walking are based first on the walking speed and distance traveled. The typical adult walks between 0.9 and 1.4 meters per second (2.0 to 3.1 mph), with most adults traveling about 1.35 meters per second (3.0 mph) [@bohannon_normal_2011]. Thus, a walking speed of 1.35 meters per second will be used as the basis for pedestrian weights. Future research could investigate varying this walking speed based on respondent characteristics, but that is beyond the scope of this project. It would additionally introduce additional variables into the routing, complicating result interpretation.
+
+Other key aspects of the pedestrian environment that affect route choice are traffic safety and elevation gain. 
+
+## Multi-objective or single-objective street routing algorithms
+
+A key question that needs to be resolved before routing software can be selected is whether a multi-objective or single-objective routing algorithm is desired. Single-objective algorithms find the path with the lowest value for some metric—for instance, distance or travel time. They can also be used with a generalized cost, which is a weighted combination of several different cost components (for instance, travel time plus a penalty for steep slopes). This is till considered a single objective, because there is a single number representing the cost of each path.
+
+Single-objective optimization algorithms are by far the most common optimization algorithms used in transport. They are simple to implement, available in many network analysis packages, and computationally efficient.
+
+Multi-objective optimization algorithms, by contrast, find shortest paths based on a number of objectives simultaneously. They find all _Pareto-optimal_ paths from an origin to a destination. Pareto-optimal paths are all paths for which there is no path where any one of the objectives is improved, without another being worsened.
+
+To make this more concrete, consider an algorithm finding Pareto-optimal paths based on walking distance and elevation gain, for a shortest path between two points on the opposite sides of Orient Heights, a large hill in Boston, Massachusetts. The shortest path crosses directly over the top of the hill, so it has the largest elevation gain. The flattest path skirts around the side of the hill, leading to minimal elevation gain but a significantly longer route. Another path is a compromise between the two; it does not go directly over the top of the hill, but still crosses part of it, while having a shorter total distance than the flattest path. A multi-objective routing algorithm would find all of these paths.
+
+```{r}
+#| include: false
+
+# load data in separate chunk so it doesn't happen every time graph is changes
+
+```
+
+```{r}
+
+```
+
+A single-objective routing algorithm could also incorporate travel distance and elevation through use of a generalized cost (for instance, travel distance in meters plus 25% of elevation gain in meters). This would result in finding one of the Pareto-optimal paths above, and which one would depend on the relative weights of elevation and distance. 
+
+### Resource limits and single-objective routing
+
+Generalized costs provide a good compromise, allowing consideration of multiple objectives while still using a simpler single-objective optimization algorithm. The challenge comes when we want to impose limits on the routing, for instance a maximum travel time or distance. To guarantee that correct paths are found, all limits must be expressed in terms of whatever objective is used. For instance, if generalized costs are used, a maximum distance or travel time cannot be imposed. Maxima must be expressed in terms of generalized cost. Since generalized costs are not very interpretable, this can be problematic.
+
+A single objective optimization algorithm only guarantees that it will find the shortest path in terms of whatever objective is used. If we imposed, say, a 2 km maximum walk distance on an optimization algorithm using generalized cost, it is possible that the path with the lowest generalized cost is more than 2 km, but there is an alternate path that is less than 2km but has some other attribute---such as a steep slope---that increases its generalized cost. If we use a 2 km distance limit, we would erroneously find that this location is not accessible. This is not affected by rules that completely ban travel on certain road segments (for instance, highways, or high-stress streets). This is effectively just routing on a different network.
+
+A multiple objective routing algorithm can solve this problem. For instance, if a multi-objective algorithm with two objectives, travel distance and generalized cost, both the lowest generalized cost path as well as the lowest distance path would be found. In the example above, the destination would be deemed accessible; even though the lowest-generalized-cost path exceeds two kilometers, the shorter but higher cost path would be found as well.
+
+An alternative to using generalized costs or solely distances while still using a single-objective optimization algorithm is to express all costs in terms of time. In this way, costs for elevation can still be imposed inasmuch as they affect travel time. Since people walk more slowly up hills [@campbell_using_2019], a time-based cost can incorporate avoidance of slopes. However, it cannot account for slope avoidance behavior in excess of time minimization. Similar costs can be imposed for other things that slow travel (for instance, unpaved surfaces). However, this method does not allow for costs for things that do not increase travel time, for instance walking on a more comfortable/safer road.
+
+When evaluating access to transit, one of the objectives must be time. This is because transit vehicle departures are effectively time limits on the access leg. A user might reasonably take a steeper path to get to transit if it was faster than a flatter path they would ordinarily prefer, but a single-objective algorithm might not find that faster path.
+
+Multi-objective routing algorithms are not available in most routing software, however, and would likely require some level of custom software development. In contrast, single-objective routing is widely available across many software packages. Multi-objective routing is also significantly more computationally intensive than single-objective routing. If a multi-objective algorithm is used for finding access routes to transit, a multi-objective transit routing algorithm must be used as well.
+
+Multi-objective routing algorithms may also complicate interpretation, since many trips will have several trips for each mode. Additional work would be needed during analysis to address the multiple options per mode returned by the routing algorithm.
+
+## Bicycling
+
+## Driving
+
+# Transit
+
+Profiles for transit routing are somewhat more complicated due to the temporal nature of the transit network. Someone who might ordinarily prefer to walk along a longer route using more comfortable streets might instead choose to walk on a busier street if it meant the difference between catching or missing an hourly bus. Similarly, someone who prefers rail might be willing to walk longer and/or have a longer overall travel time to ride rail rather than taking a bus.
+
+Unlike walking, however, it is not correct to assume a generalized cost function for transit routing. As an extreme example, consider the trip to a peak-only express bus with its last run at 9:30 AM shown in Figure 1. In this example, the rider departs home at 9:15 AM, and is faced with two options: a direct but less comfortable route on a major arterial which is a 12 minute walk, and a less direct but more comfortable route along a greenway, which is an 18 minute walk. Even a rider who would normally prefer the greenway (because the safety and comfort benefits are worth more than 6 minutes to them) may choose the route along the major arterial to avoid missing their bus.
