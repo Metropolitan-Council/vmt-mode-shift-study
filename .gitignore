@@ -130,3 +130,8 @@ dmypy.json
 .Rproj.user
 
 README.html
+
+# Quarto output files
+reports/**/*.html
+reports/**/*_cache
+reports/**/*_files
