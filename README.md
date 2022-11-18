@@ -32,7 +32,15 @@ This repository is in active development. See the [CONTRIBUTING](CONTRIBUTING.md
 * Only run the scripts outside the repository to avoid accidentally checking in private data or outputs. 
 * If you are working with a particular data file, add its extension to the .gitignore file. (This is redundant with the practice above, and that's the point.)
 
-Eventually we hope to provide a runable example using synthetic and/or public data. If you think a new dataset should be incorporated, please discuss with the project contacts. 
+Eventually we hope to provide a runable example using synthetic and/or public data. If you think a new dataset should be incorporated, please discuss with the project contacts.
+
+### nbstripout
+
+We want to avoid inadvertently committing any identifiable data to the repository, and one way this could happen would be through outputs in Jupyter Notebooks. To prevent this, we strip all outputs from notebooks before committing. *This needs to be set up on each machine accessing the git repository; this is a git security restriction to prevent arbitrary code execution without user consent when working with an untrusted clone.*
+
+Full instructions are [available on the nbstripout site](https://github.com/kynan/nbstripout). In a nutshell, install nbstripout by running `pip install --upgrade nbstripout`, and then, within the repository directory, run `nbstripout --install`. This will remove outputs from notebooks when committing, without modifying your local files.
+
+I recommend using this as a failsafe, and using the "Clear All Outputs" menu item in JupyterLab before committing so that you are always committing clean files anyhow.
 
 ## Related repositories
 
