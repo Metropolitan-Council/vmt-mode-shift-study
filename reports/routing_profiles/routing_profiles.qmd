@@ -123,6 +123,18 @@ Another factor that often enters models is route complexity, with models finding
 
 Some authors find land use along the route to be correlated with route choice [@broach_travel_2016; @lue_estimating_2019; @tribby_analyzing_2017]. This is rare in transportation studies, and does not reflect the quality of the transport infrastructure. Thus, we intend to exclude it from this analysis.
 
+### Final weights
+
+The weights we propose are shown in @tbl-walkweight.
+
+| Component | Unit | Weight |
+|-----------|------|--------|
+| Distance  | meters | $1.35^{-1} \approxeq 0.74$ |
+| Distance on steep hills (>10% grade) | meters | 0.74 |
+| Unsignalized arterial crossing | each | 53.28 |
+
+: Weight components for walking {#tbl-walkweight}
+
 ## Bicycling
 
 ## Driving
