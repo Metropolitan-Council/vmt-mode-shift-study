@@ -129,13 +129,38 @@ The weights we propose are shown in @tbl-walkweight.
 
 | Component | Unit | Weight |
 |-----------|------|--------|
-| Distance  | meters | $1.35^{-1} \approxeq 0.74$ |
+| Distance  |  meters | $1.35^{-1} \approxeq 0.74$ |
 | Distance on steep hills (>10% grade) | meters | 0.74 |
 | Unsignalized arterial crossing | each | 53.28 |
 
 : Weight components for walking {#tbl-walkweight}
 
 ## Bicycling
+
+As with the other profiles, weights for bicycling will start with travel time. Bicycling speed is quite variable [@xu_modeling_2015; @allen_operational_1998], with speeds depending on facility type [@el-geneidy_predicting_2007], slope [@manum_improving_2019; @bigazzi_utilitybased_2019], and user characteristics [@lissner_gpsdata_2020]. Even estimates of "typical" bicycling speed vary widely, from 12 to 20 km/h (7.5 to 12.4 mph), and likely depend on the context of the trip.
+
+Due to this wide variation in the literature, we used the TBI data itself to estimate speeds. In the 2019 TBI data, the mean and median speed of bicycling trips are both 8.0 mph. A regression of bicycle trip speed on age, gender, and bicycle mode (owned, borrowed, bikeshare, and e-bikeshare) showed that bike speeds are relatively homogenous across demographic groups. 25-34 year old females bike at an average of 7.6 mph. Men bike 0.9 mph faster on average. Across adults, average speed varies less than 1.5 mph by age, except for adults over 75, who bike 2.2 mph slower. This relative homogeneity may be in part due to selection bias; for example, the typical 65-75 year old cyclist is probably not representative of the typical 65-75 year old resident.
+
+Since there is minimal variation in observed bike speeds by demographic groups, we propose to use the overall mean of 8 mph as the bicycling speed. This is a trip-level average, including stops at traffic lights, etc. This explains why it is at the low end of the speeds cited earlier; this also makes it appropriate for use to derive overall trip travel times from trips distances.
+
+### Slope
+
+Upslopes slow a bicyclist down. Bicyclists travel faster than normal on downslopes, but this effect is smaller than the slowdown from upslopes [@parkin_design_2010]. Bicyclists avoid upslopes more than the time difference would suggest, with @broach_where_2012 finding that cyclists are willing to travel up to 1.72 km on flat ground to avoid 1 km of ground with a 2-4% slope.[^morethanspeed] Cyclists are extremely averse to steeper slopes, willing to travel up to 3.9 km on flat ground to avoid 1 km with slopes 4-6%, and 12.1 km to avoid slopes 6% or more. @hood_gpsbased_2011 find that cyclists will travel 0.59 km to avoid 10m of elevation gain. While the values are not directly comparable to, this implies that people are more averse to 2-4% slopes, similarly averse to 4-6% slopes, and considerably less averse to steeper slopes, relative to @broach_where_2012.[^comparison] There may be regional variations as well; @hood_gpsbased_2011's model was estimated in hilly San Francisco, while @broach_where_2012's was estimated in relatively flatter Portland, Oregon.
+
+[^morethanspeed]: @broach_where_2012 find that the substitution rate of no upslope for 2-4% upslope is 1.72:1. In @parkin_design_2010's work, they find a coefficient for upslope of -40.02 m/s, so for a 4% slope is expected to slow you down $0.04 \times 40.02~\mathrm{m/s} = -1.6~\mathrm{m/s}$. They find the constant (flat average) speed to be 6.01 m/s, so purely in time substitution rate should be 6.01:(6.01 - 1.6) = 1.36:1.
+
+[^comparison]: @broach_where_2012 assumes a constant marginal rate of substitution between a kilometer traveled on uphill streets of various steepness and a flat kilometer, whereas @hood_gpsbased_2011 assume a constant marginal rate of substitution between a meter of elevation gained and a kilometer of travel. We can convert the latter calculations to the former. On a 3% grade, it takes 333m to gain 10m of elevation, which @broach_where_2012 find equivalent to an additional 590m of flat-ground travel. So someone would be willing to travel up to 333 + 590 = 923m to avoid 333m of 3% grade, or 2.77 km on flat ground in lieu of 1 km on a 3% slope, versus @broach_where_2012's 1.77.
+
+    On a 5% grade, it takes 200m to gain 10m of elevation. Using @hood_gpsbased_2011's coefficients, someone would be willing to travel up to 790m on flat ground to avoid 200m on a 5% grade, or 3.95 km on flat ground for 1km on a slope—almost exactly the 3.9 km that @broach_where_2012 found.
+
+    On a 7% grade, it takes 143m to gain 10m of elevation, so someone would be willing to travel up to 733m to avoid 200m on a 7% slope, or 5.13 flat km to avoid 1 sloped km—significantly less than @broach_where_2012's 12.1km.
+
+    @hood_gpsbased_2011's model specification was less flexible than @broach_where_2012's, because there was only one coefficient estimated for elevation gain, regardless of steepness, so it cannot capture any nonlinearities in cyclist's aversion to elevation gain based on steepness, so @broach_where_2012's estimates may be more accurate; it is heartening that on moderate slopes they produced similar results.
+
+For travel time calculations, the 8 mph average speed cited above includes the slopes on typical bicycle routes in Minneapolis, so we propose to assume an 8 mph travel speed by bicycle regardless of slope. One caveat is that the observed bicycle trips may be flatter than the simulated ones, due to survivorship bias (survey respondents may be less likely to chose to bike if their trip would be steep). If we wanted to address this, we could add slope terms to the regression model described above to estimate differential travel speeds for different slopes.
+
+### Safety
+
 
 ## Driving
 
