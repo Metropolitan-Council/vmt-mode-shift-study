@@ -181,8 +181,41 @@ The increased speed of e-bikes may make riders feel safer mixing with traffic. W
 
 ## Driving
 
+Fewer factors go into route choice for driving, with travel time being the dominant factor. However, unlike other modes, driving travel time is quite variable based on traffic conditions. We will use traffic congestion data derived from StreetLight Data to attach congested travel times to the network.
+
+Turns impose costs on drivers in terms of travel time and route complexity. If the software used supports it, we will attach turn penalties to account for the time needed to make turns; many pieces of routing software already include estimated turn times for motor vehicles. We do not believe that StreetLight offers turn time estimates.
+
+We do not propose to model the additional costs of turns due to route complexity. Turn-by-turn navigation systems are ubiquitous, which greatly reduces the cognitive burden of complex routes.
+
+Some drivers base their route choices on safety or perceived safety, avoiding freeways, rush hour, night driving, driving in inclement weather, etc. [@ball_driving_1998]. We believe the variability of these avoidance behaviors makes modeling them difficult and prone to error in this type of study, and thus we propose a network consisting of all links where driving is legal.
+
 # Transit
 
-Profiles for transit routing are somewhat more complicated due to the temporal nature of the transit network. Someone who might ordinarily prefer to walk along a longer route using more comfortable streets might instead choose to walk on a busier street if it meant the difference between catching or missing an hourly bus. Similarly, someone who prefers rail might be willing to walk longer and/or have a longer overall travel time to ride rail rather than taking a bus.
+Transit routing differs from routing on the street network, due to the temporal element of transit. Different routing algorithms are generally used for transit [e.g., @delling_roundbased_2015]. Routing packages that support transit are much less common than those for on-street routing.
 
-Unlike walking, however, it is not correct to assume a generalized cost function for transit routing. As an extreme example, consider the trip to a peak-only express bus with its last run at 9:30 AM shown in Figure 1. In this example, the rider departs home at 9:15 AM, and is faced with two options: a direct but less comfortable route on a major arterial which is a 12 minute walk, and a less direct but more comfortable route along a greenway, which is an 18 minute walk. Even a rider who would normally prefer the greenway (because the safety and comfort benefits are worth more than 6 minutes to them) may choose the route along the major arterial to avoid missing their bus.
+Generalized cost routing is also not appropriate for transit, due to the temporal nature of the network. For example, walking time is generally considered to be more onerous that in-vehicle time. However, if we were to use a generalized cost metric with walking time weighted more heavily than in-vehicle time, we might fail to find an optimal path. Suppose there were two ways to get to a transfer point, one that was faster overall but involved more walking, and one that was somewhat slower but with less walking. A generalized cost algorithm might find the slower with less walking route to be preferable. However, the later arrival of the slower route might mean missing a connection to another transit vehicle.
+
+This is an example of the issues with imposing cutoffs on a generalized-cost shortest path algorithm described earlier. The departure time of the transit vehicle is effectively a time limit; only routes that arrive before a certain time can be used to access that departure.
+
+Imposing cutoffs on a generalized-cost street search is less problematic than doing so with a transit search. Limits on a generalized cost street search may fail to find paths that do meet selection criteria. However, these paths are likely close to the cutoff anyhow, as travel time and travel distance are major components of the generalized cost, and this cutoff always occurs at the end of trips. With transit, however, the cutoff might occur early on in the trip, with saving some walking time causing a missed transfer even on an otherwise quite reasonable trip. For this reason, using generalized costs with transit routing is inadvisable, and many transit routing packages do not even support it.
+
+Many common transit routing packages (e.g., `r5r`, `tidytransit`) are based on the RAPTOR algorithm [@delling_roundbased_2015]. This algorithm is a multiobjective optimization algorithm, finding all Pareto-optimal journeys based on travel time and number of transfers. Unlike multiobjective street routing, this multiobjective functionality is a consequence of how the routing the algorithm is designed, and does not result in diminished computational performance. Not every package exposes the full results including all tradeoffs for time and transfers. For those that do, it would be possible to include a penalty for number of transfers in the routing.
+
+Including other costs, such as fares, differential weights for walking, waiting, and in-vehicle time, or varying preferences for different modes, requires more advanced multiobjective algorithms. Multiobjective transit routing is still an active area of research, and thus we recommend against including it in the scope of this project. If the software chosen for transit routing supports and exposes full results based on number of transfers, we could impose a small additional transfer penalty. This penalty should be small, as @guthrie_multimodal_2019 found that simple shortest path searches, with no additional additional transfer penalties, was most predictive of rider behavior in the Twin Cities, with a higher transfer cost scenario coming in a distant second.
+
+There are multiple ways to access transit; however, the majority of transit users in the Twin Cities access transit by walking or using a mobility device—88% in the 2016 Transit On-Board Survey. For this reason, we propose to only model transit access by walking. We propose to use the same generalized costs described above, for consistency. This may cause some trips to not be found or to be declared infeasible when the generalized cost path misses a transit vehicle but there is another faster path that would not. However, these are believed to be a small portion of all trips, and they have some other undesirable attribute, such as an unsignalized arterial crossing. If this appears to be causing issues during QA, we can revisit this decision.
+
+Transit routing needs to be anchored in time, either as depart-at or arrive-by requests. We will determine whether to use a depart-at or arrive-by request based on the trip purposes at either end. For instance, a work destination purpose would use an arrive-by request, as work is likely more fixed in time than other trip purposes. Not all routing software supports arrive-by requests, but they can be approximated by running multiple depart-at requests if needed.
+
+Transit routing used in the academic literature increasingly uses multiple departure times over a time window to calculate a travel time accounting for variation due to the schedule [e.g., @conway_accounting_2018]. Our application is somewhat different, as we know the times the trips were actually taken, and can use those as exact arrival/departure times. However, some trips may be flexible in time (e.g. shopping/errands). If we want to model the variation in travel times for these trips, we should ensure we choose transit routing software that can support these types of requests.
+
+# Conclusion
+
+This document detailed the five routing profiles we intend to use for this project: walking, bicycling, e-bike, driving, and transit. This document presented ideal scenarios; it may not be possible to implement all desired features, depending on the software packages chosen; these tradeoffs will be detailed in the routing tools memo. There are several questions that remain to be answered:
+
+- How will pedestrian infrastructure and safety be incorporated into the routing, if at all?
+- Should weights for slopes for bicycles be based on total elevation change, or distance along steep streets?
+- Should turn costs be modeled for bicycles and pedestrians?
+- Can turn costs for drivers be retrieved from StreetLight?
+- What trip purposes should be treated as origin or destination "anchors"—i.e., trip departure or arrival times are fixed for these locations?
+- Should transit routing ever use multiple times over a time window?
