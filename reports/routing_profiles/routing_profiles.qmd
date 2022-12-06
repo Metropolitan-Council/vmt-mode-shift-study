@@ -6,6 +6,11 @@ bibliography: ../bibliography.bib
 execute:
     echo: false
     include: true
+standalone: true
+toc: true
+format:
+    html:
+        embed-resources: true
 ---
 
 ```{python}
