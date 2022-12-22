@@ -1,0 +1,93 @@
+table,variable_wave1,variable_wave2,merged_variable,keep,description
+hh,wave,wave,wave,1,"Wave 1 = 2019, Wave 2 = 2021"
+hh,hh_id,hh_id,hh_id,1,Household ID
+hh,num_people,num_people,num_people,1,Household size
+hh,num_adults,num_adults,num_adults,1,Number of adults in household (age 18 and above)
+hh,num_kids,num_kids,num_kids,1,Number of children in household (age 0-17)
+hh,num_students,num_students,num_students,1,"Number of students in household (adults and children, including daycare/preschool)"
+hh,num_workers,num_workers,num_workers,1,"Number of workers in household (employed full-time, employed part-time, self-employed, or volunteer/unpaid intern)"
+hh,num_vehicles,num_vehicles,num_vehicles,1,Number of vehicles in household
+hh,home_lat,home_lat,home_lat,1,Home location: Latitude
+hh,home_lon,home_lon,home_lon,1,Home location: Longitude
+hh,home_bg,home_bg_2010,home_bg_2010,1,Home location: Block group 2010
+hh,home_county,home_county,home_county,1,Home location: County
+hh,home_state,home_state,home_state,1,Home location: State
+hh,income_detailed,income_detailed,income_detailed,1,HH total annual income: detailed categories
+hh,income_broad,income_broad,income_broad,1,Household's total annual income last year
+hh,rent_own,rent_own,rent_own,1,Residence ownership status
+hh,rent_cost,rent_cost,rent_cost,1,Rent or mortgage paid per month
+hh,residence_type,residence_type,residence_type,1,Current residence type
+hh,hh_weight,hh_weight,hh_weight,1,Household weight
+person,wave,wave,wave,1,"Wave 1 = 2019, Wave 2 = 2021"
+person,hh_id,hh_id,hh_id,1,Household ID
+person,person_id,person_id,person_id,1,Person ID
+person,person_num,person_num,person_num,1,Person number within household
+person,person_weight,person_weight,person_weight,1,Person weight
+person,relationship,relationship,relationship,1,Relationship to household person number 1
+person,age,age,age,1,Age
+person,gender,gender,gender,1,Gender
+person,disability,disability,disability,1,Disability status
+person,license,can_drive,can_drive,1,Person has ability to drive motor vehicle
+person,education,education,education,1,Highest level of education completed
+person,student_status,student_status,student_status,1,Student status
+person,school_type,school_attend,school_attend,1,Structure of classes
+person,num_jobs,num_jobs,num_jobs,1,Number of jobs
+person,employment_status,employment_status,employment_status,1,Employment status
+person,job_type,job_type,job_type,1,Usual work location
+person,NONE,transportation_barriers_1,transportation_barriers_1,1,Barrier preventing a trip -- Parking was too expensive
+person,NONE,transportation_barriers_2,transportation_barriers_2,1,Barrier preventing a trip -- Vehicle was not working
+person,NONE,transportation_barriers_3,transportation_barriers_3,1,Barrier preventing a trip -- Vehicle was not available
+person,NONE,transportation_barriers_4,transportation_barriers_4,1,Barrier preventing a trip -- Bus was not running
+person,NONE,transportation_barriers_5,transportation_barriers_5,1,Barrier preventing a trip -- This has not happened in the past 7 days
+person,NONE,transportation_barriers_997,transportation_barriers_997,1,Barrier preventing a trip -- Other
+person,NONE,transportation_barriers_999,transportation_barriers_999,1,Barrier preventing a trip -- Prefer not to answer
+person,NONE,home_vehicle_park,home_vehicle_park,1,Park location at home
+person,NONE,work_vehicle_park,work_vehicle_park,1,Park location at work
+person,NONE,ev_outlet,ev_outlet,1,Parks electric vehicle within 20 feet of an electric outlet when parking at or near home
+day,wave,wave,wave,1,"Wave 1 = 2019, Wave 2 = 2021"
+day,hh_id,hh_id,hh_id,1,Household ID
+day,person_id,person_id,person_id,1,Person ID
+day,day_num,day_num,day_num,1,Day number within travel period
+day,day_weight,day_weight,day_weight,1,Day weight
+day,travel_date,travel_date,travel_date,1,Travel date
+day,travel_dow,travel_dow,travel_dow,1,Day of week
+day,day_complete,day_complete,day_complete,1,Person day is complete
+day,daily_survey_complete,daily_complete,daily_complete,1,Daily survey completion status
+trip,wave,wave,wave,1,"Wave 1 = 2019, Wave 2 = 2021"
+trip,hh_id,hh_id,hh_id,1,Household ID
+trip,NONE,vehicle_id,vehicle_id,1,Vehicle ID
+trip,trip_id,trip_id,trip_id,1,Trip ID
+trip,person_id,person_id,person_id,1,Person ID
+trip,person_num,person_num,person_num,1,Person number within household
+trip,day_num,day_num,day_num,1,Day number within travel period
+trip,travel_date,travel_date,travel_date,1,Travel date
+trip,trip_num,trip_num,trip_num,1,Trip number within travel period
+trip,trip_weight,trip_weight,trip_weight,1,Trip weight
+trip,depart_time,depart_time,depart_time,1,Time departed from origin (US/Central time)
+trip,arrive_time,arrive_time,arrive_time,1,Time arrived at destination (US/Central time)
+trip,duration_imputed,duration,duration,1,Trip duration imputed (minutes)
+trip,distance,distance,distance,1,Trip distance between collected location points (miles)
+trip,speed_mph_imputed,speed_mph,speed_mph,1,Speed (mph)
+trip,o_lat,o_lat,o_lat,1,Origin: Latitude
+trip,o_lon,o_lon,o_lon,1,Origin: Longitude
+trip,o_bg,o_bg_2010,o_bg_2010,1,Origin: Block group 2010
+trip,o_county,o_county,o_county,1,Origin: County
+trip,o_state,o_state,o_state,1,Origin: State
+trip,d_lat,d_lat,d_lat,1,Destination: Latitude
+trip,d_lon,d_lon,d_lon,1,Destination: Longitude
+trip,d_bg,d_bg_2010,d_bg_2010,1,Destination: Block group 2010
+trip,d_county,d_county,d_county,1,Destination: County
+trip,d_state,d_state,d_state,1,Destination: State
+trip,trip_survey_complete,trip_survey_complete,trip_survey_complete,1,Trip survey is complete
+trip,o_purpose_imputed,o_purpose,o_purpose,1,Origin purpose
+trip,o_purpose_category_imputed,o_purpose_category,o_purpose_category,1,Origin purpose category
+trip,d_purpose,d_purpose,d_purpose,1,Destination purpose
+trip,d_purpose_category,d_purpose_category,d_purpose_category,1,Destination purpose category
+trip,mode_type,mode_type,mode_type,1,Trip mode type
+trip,leg_num,leg_num,leg_num,1,Leg number along linked trip
+trip,linked_trip_num,linked_trip_id,linked_trip_id,1,Trip number for linked trip
+trip,vehicle_park_type,vehicle_park_type,vehicle_park_type,1,How parking was paid for trip
+trip,vehicle_driver,vehicle_driver,vehicle_driver,1,Driver or passenger on trip
+trip,num_travelers,num_travelers,num_travelers,1,Number of people in travel party
+trip,num_hh_travelers,num_hh_travelers,num_hh_travelers,1,Number of  household members on trip
+trip,num_non_hh_travelers,num_non_hh_travelers,num_non_hh_travelers,1,Number of non-household members on trip

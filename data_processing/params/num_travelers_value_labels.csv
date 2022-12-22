@@ -1,0 +1,38 @@
+table,variable,value,label
+trip,num_travelers,1 person,1
+trip,num_travelers,2 people,2
+trip,num_travelers,3 people,3
+trip,num_travelers,4 people,4
+trip,num_travelers,5 people,5
+trip,num_travelers,6 people,6
+trip,num_travelers,7 people,7
+trip,num_travelers,8 people,8
+trip,num_travelers,9 people,9
+trip,num_travelers,10 people,10
+trip,num_travelers,11 people,11
+trip,num_travelers,Missing,Missing
+trip,num_travelers,Missing: Non-response,Missing
+trip,num_travelers,Missing: Skip logic,Missing
+trip,num_hh_travelers,1 person,1
+trip,num_hh_travelers,2 people,2
+trip,num_hh_travelers,3 people,3
+trip,num_hh_travelers,4 people,4
+trip,num_hh_travelers,5 people,5
+trip,num_hh_travelers,6 people,6
+trip,num_hh_travelers,7 people,7
+trip,num_hh_travelers,8 people,8
+trip,num_hh_travelers,9 people,9
+trip,num_hh_travelers,10 people,10
+trip,num_hh_travelers,11 people,11
+trip,num_hh_travelers,Missing: Non-response,Missing
+trip,num_hh_travelers,Missing: Skip logic,Missing
+trip,num_non_hh_travelers,Nobody (0 people),0
+trip,num_non_hh_travelers,0 people,0
+trip,num_non_hh_travelers,1 person,1
+trip,num_non_hh_travelers,2 people,2
+trip,num_non_hh_travelers,3 people,3
+trip,num_non_hh_travelers,4 people,4
+trip,num_non_hh_travelers,5 or more people,5
+trip,num_non_hh_travelers,Missing,Missing
+trip,num_non_hh_travelers,Missing: Non-response,Missing
+trip,num_non_hh_travelers,Missing: Skip logic,Missing

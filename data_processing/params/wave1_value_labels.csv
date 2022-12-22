@@ -1,0 +1,828 @@
+table,variable,value,label
+hh,home_in_region,0,Not in study region
+hh,home_in_region,1,In study region
+hh,home_county,995,Missing
+hh,home_county,27001,Aitkin
+hh,home_county,27003,Anoka
+hh,home_county,27005,Becker
+hh,home_county,27007,Beltrami
+hh,home_county,27009,Benton
+hh,home_county,27011,Big Stone
+hh,home_county,27013,Blue Earth
+hh,home_county,27015,Brown
+hh,home_county,27017,Carlton
+hh,home_county,27019,Carver
+hh,home_county,27021,Cass
+hh,home_county,27023,Chippewa
+hh,home_county,27025,Chisago
+hh,home_county,27027,Clay
+hh,home_county,27029,Clearwater
+hh,home_county,27031,Cook
+hh,home_county,27033,Cottonwood
+hh,home_county,27035,Crow Wing
+hh,home_county,27037,Dakota
+hh,home_county,27039,Dodge
+hh,home_county,27041,Douglas
+hh,home_county,27043,Faribault
+hh,home_county,27045,Fillmore
+hh,home_county,27047,Freeborn
+hh,home_county,27049,Goodhue
+hh,home_county,27051,Grant
+hh,home_county,27053,Hennepin
+hh,home_county,27055,Houston
+hh,home_county,27057,Hubbard
+hh,home_county,27059,Isanti
+hh,home_county,27061,Itasca
+hh,home_county,27063,Jackson
+hh,home_county,27065,Kanabec
+hh,home_county,27067,Kandiyohi
+hh,home_county,27069,Kittson
+hh,home_county,27071,Koochiching
+hh,home_county,27073,Lac qui Parle
+hh,home_county,27075,Lake
+hh,home_county,27077,Lake of the Woods
+hh,home_county,27079,Le Sueur
+hh,home_county,27081,Lincoln
+hh,home_county,27083,Lyon
+hh,home_county,27085,McLeod
+hh,home_county,27087,Mahnomen
+hh,home_county,27089,Marshall
+hh,home_county,27091,Martin
+hh,home_county,27093,Meeker
+hh,home_county,27095,Mille Lacs
+hh,home_county,27097,Morrison
+hh,home_county,27099,Mower
+hh,home_county,27101,Murray
+hh,home_county,27103,Nicollet
+hh,home_county,27105,Nobles
+hh,home_county,27107,Norman
+hh,home_county,27109,Olmsted
+hh,home_county,27111,Otter Tail
+hh,home_county,27113,Pennington
+hh,home_county,27115,Pine
+hh,home_county,27117,Pipestone
+hh,home_county,27119,Polk
+hh,home_county,27121,Pope
+hh,home_county,27123,Ramsey
+hh,home_county,27125,Red Lake
+hh,home_county,27127,Redwood
+hh,home_county,27129,Renville
+hh,home_county,27131,Rice
+hh,home_county,27133,Rock
+hh,home_county,27135,Roseau
+hh,home_county,27137,St Louis
+hh,home_county,27139,Scott
+hh,home_county,27141,Sherburne
+hh,home_county,27143,Sibley
+hh,home_county,27145,Stearns
+hh,home_county,27147,Steele
+hh,home_county,27149,Stevens
+hh,home_county,27151,Swift
+hh,home_county,27153,Todd
+hh,home_county,27155,Traverse
+hh,home_county,27157,Wabasha
+hh,home_county,27159,Wadena
+hh,home_county,27161,Waseca
+hh,home_county,27163,Washington
+hh,home_county,27165,Watonwan
+hh,home_county,27167,Wilkin
+hh,home_county,27169,Winona
+hh,home_county,27171,Wright
+hh,home_county,27173,Yellow Medicine
+hh,home_county,55001,Adams
+hh,home_county,55003,Ashland
+hh,home_county,55005,Barron
+hh,home_county,55007,Bayfield
+hh,home_county,55009,Brown
+hh,home_county,55011,Buffalo
+hh,home_county,55013,Burnett
+hh,home_county,55015,Calumet
+hh,home_county,55017,Chippewa
+hh,home_county,55019,Clark
+hh,home_county,55021,Columbia
+hh,home_county,55023,Crawford
+hh,home_county,55025,Dane
+hh,home_county,55027,Dodge
+hh,home_county,55029,Door
+hh,home_county,55031,Douglas
+hh,home_county,55033,Dunn
+hh,home_county,55035,Eau Claire
+hh,home_county,55037,Florence
+hh,home_county,55039,Fond du Lac
+hh,home_county,55041,Forest
+hh,home_county,55043,Grant
+hh,home_county,55045,Green
+hh,home_county,55047,Green Lake
+hh,home_county,55049,Iowa
+hh,home_county,55051,Iron
+hh,home_county,55053,Jackson
+hh,home_county,55055,Jefferson
+hh,home_county,55057,Juneau
+hh,home_county,55059,Kenosha
+hh,home_county,55061,Kewaunee
+hh,home_county,55063,La Crosse
+hh,home_county,55065,Lafayette
+hh,home_county,55067,Langlade
+hh,home_county,55069,Lincoln
+hh,home_county,55071,Manitowoc
+hh,home_county,55073,Marathon
+hh,home_county,55075,Marinette
+hh,home_county,55077,Marquette
+hh,home_county,55078,Menominee
+hh,home_county,55079,Milwaukee
+hh,home_county,55081,Monroe
+hh,home_county,55083,Oconto
+hh,home_county,55085,Oneida
+hh,home_county,55087,Outagamie
+hh,home_county,55089,Ozaukee
+hh,home_county,55091,Pepin
+hh,home_county,55093,Pierce
+hh,home_county,55095,Polk
+hh,home_county,55097,Portage
+hh,home_county,55099,Price
+hh,home_county,55101,Racine
+hh,home_county,55103,Richland
+hh,home_county,55105,Rock
+hh,home_county,55107,Rusk
+hh,home_county,55109,St Croix
+hh,home_county,55111,Sauk
+hh,home_county,55113,Sawyer
+hh,home_county,55115,Shawano
+hh,home_county,55117,Sheboygan
+hh,home_county,55119,Taylor
+hh,home_county,55121,Trempealeau
+hh,home_county,55123,Vernon
+hh,home_county,55125,Vilas
+hh,home_county,55127,Walworth
+hh,home_county,55129,Washburn
+hh,home_county,55131,Washington
+hh,home_county,55133,Waukesha
+hh,home_county,55135,Waupaca
+hh,home_county,55137,Waushara
+hh,home_county,55139,Winnebago
+hh,home_county,55141,Wood
+hh,home_state,27,Minnesota
+hh,home_state,55,Wisconsin
+hh,home_state,995,Missing
+person,school_county,995,Missing
+person,school_county,27001,Aitkin
+person,school_county,27003,Anoka
+person,school_county,27005,Becker
+person,school_county,27007,Beltrami
+person,school_county,27009,Benton
+person,school_county,27011,Big Stone
+person,school_county,27013,Blue Earth
+person,school_county,27015,Brown
+person,school_county,27017,Carlton
+person,school_county,27019,Carver
+person,school_county,27021,Cass
+person,school_county,27023,Chippewa
+person,school_county,27025,Chisago
+person,school_county,27027,Clay
+person,school_county,27029,Clearwater
+person,school_county,27031,Cook
+person,school_county,27033,Cottonwood
+person,school_county,27035,Crow Wing
+person,school_county,27037,Dakota
+person,school_county,27039,Dodge
+person,school_county,27041,Douglas
+person,school_county,27043,Faribault
+person,school_county,27045,Fillmore
+person,school_county,27047,Freeborn
+person,school_county,27049,Goodhue
+person,school_county,27051,Grant
+person,school_county,27053,Hennepin
+person,school_county,27055,Houston
+person,school_county,27057,Hubbard
+person,school_county,27059,Isanti
+person,school_county,27061,Itasca
+person,school_county,27063,Jackson
+person,school_county,27065,Kanabec
+person,school_county,27067,Kandiyohi
+person,school_county,27069,Kittson
+person,school_county,27071,Koochiching
+person,school_county,27073,Lac qui Parle
+person,school_county,27075,Lake
+person,school_county,27077,Lake of the Woods
+person,school_county,27079,Le Sueur
+person,school_county,27081,Lincoln
+person,school_county,27083,Lyon
+person,school_county,27085,McLeod
+person,school_county,27087,Mahnomen
+person,school_county,27089,Marshall
+person,school_county,27091,Martin
+person,school_county,27093,Meeker
+person,school_county,27095,Mille Lacs
+person,school_county,27097,Morrison
+person,school_county,27099,Mower
+person,school_county,27101,Murray
+person,school_county,27103,Nicollet
+person,school_county,27105,Nobles
+person,school_county,27107,Norman
+person,school_county,27109,Olmsted
+person,school_county,27111,Otter Tail
+person,school_county,27113,Pennington
+person,school_county,27115,Pine
+person,school_county,27117,Pipestone
+person,school_county,27119,Polk
+person,school_county,27121,Pope
+person,school_county,27123,Ramsey
+person,school_county,27125,Red Lake
+person,school_county,27127,Redwood
+person,school_county,27129,Renville
+person,school_county,27131,Rice
+person,school_county,27133,Rock
+person,school_county,27135,Roseau
+person,school_county,27137,St Louis
+person,school_county,27139,Scott
+person,school_county,27141,Sherburne
+person,school_county,27143,Sibley
+person,school_county,27145,Stearns
+person,school_county,27147,Steele
+person,school_county,27149,Stevens
+person,school_county,27151,Swift
+person,school_county,27153,Todd
+person,school_county,27155,Traverse
+person,school_county,27157,Wabasha
+person,school_county,27159,Wadena
+person,school_county,27161,Waseca
+person,school_county,27163,Washington
+person,school_county,27165,Watonwan
+person,school_county,27167,Wilkin
+person,school_county,27169,Winona
+person,school_county,27171,Wright
+person,school_county,27173,Yellow Medicine
+person,school_county,55001,Adams
+person,school_county,55003,Ashland
+person,school_county,55005,Barron
+person,school_county,55007,Bayfield
+person,school_county,55009,Brown
+person,school_county,55011,Buffalo
+person,school_county,55013,Burnett
+person,school_county,55015,Calumet
+person,school_county,55017,Chippewa
+person,school_county,55019,Clark
+person,school_county,55021,Columbia
+person,school_county,55023,Crawford
+person,school_county,55025,Dane
+person,school_county,55027,Dodge
+person,school_county,55029,Door
+person,school_county,55031,Douglas
+person,school_county,55033,Dunn
+person,school_county,55035,Eau Claire
+person,school_county,55037,Florence
+person,school_county,55039,Fond du Lac
+person,school_county,55041,Forest
+person,school_county,55043,Grant
+person,school_county,55045,Green
+person,school_county,55047,Green Lake
+person,school_county,55049,Iowa
+person,school_county,55051,Iron
+person,school_county,55053,Jackson
+person,school_county,55055,Jefferson
+person,school_county,55057,Juneau
+person,school_county,55059,Kenosha
+person,school_county,55061,Kewaunee
+person,school_county,55063,La Crosse
+person,school_county,55065,Lafayette
+person,school_county,55067,Langlade
+person,school_county,55069,Lincoln
+person,school_county,55071,Manitowoc
+person,school_county,55073,Marathon
+person,school_county,55075,Marinette
+person,school_county,55077,Marquette
+person,school_county,55078,Menominee
+person,school_county,55079,Milwaukee
+person,school_county,55081,Monroe
+person,school_county,55083,Oconto
+person,school_county,55085,Oneida
+person,school_county,55087,Outagamie
+person,school_county,55089,Ozaukee
+person,school_county,55091,Pepin
+person,school_county,55093,Pierce
+person,school_county,55095,Polk
+person,school_county,55097,Portage
+person,school_county,55099,Price
+person,school_county,55101,Racine
+person,school_county,55103,Richland
+person,school_county,55105,Rock
+person,school_county,55107,Rusk
+person,school_county,55109,St Croix
+person,school_county,55111,Sauk
+person,school_county,55113,Sawyer
+person,school_county,55115,Shawano
+person,school_county,55117,Sheboygan
+person,school_county,55119,Taylor
+person,school_county,55121,Trempealeau
+person,school_county,55123,Vernon
+person,school_county,55125,Vilas
+person,school_county,55127,Walworth
+person,school_county,55129,Washburn
+person,school_county,55131,Washington
+person,school_county,55133,Waukesha
+person,school_county,55135,Waupaca
+person,school_county,55137,Waushara
+person,school_county,55139,Winnebago
+person,school_county,55141,Wood
+person,school_state,27,Minnesota
+person,school_state,55,Wisconsin
+person,school_state,995,Missing
+person,school_in_region,0,Not in study region
+person,school_in_region,1,In study region
+person,school_in_region,995,Missing
+person,work_county,995,Missing
+person,work_county,27001,Aitkin
+person,work_county,27003,Anoka
+person,work_county,27005,Becker
+person,work_county,27007,Beltrami
+person,work_county,27009,Benton
+person,work_county,27011,Big Stone
+person,work_county,27013,Blue Earth
+person,work_county,27015,Brown
+person,work_county,27017,Carlton
+person,work_county,27019,Carver
+person,work_county,27021,Cass
+person,work_county,27023,Chippewa
+person,work_county,27025,Chisago
+person,work_county,27027,Clay
+person,work_county,27029,Clearwater
+person,work_county,27031,Cook
+person,work_county,27033,Cottonwood
+person,work_county,27035,Crow Wing
+person,work_county,27037,Dakota
+person,work_county,27039,Dodge
+person,work_county,27041,Douglas
+person,work_county,27043,Faribault
+person,work_county,27045,Fillmore
+person,work_county,27047,Freeborn
+person,work_county,27049,Goodhue
+person,work_county,27051,Grant
+person,work_county,27053,Hennepin
+person,work_county,27055,Houston
+person,work_county,27057,Hubbard
+person,work_county,27059,Isanti
+person,work_county,27061,Itasca
+person,work_county,27063,Jackson
+person,work_county,27065,Kanabec
+person,work_county,27067,Kandiyohi
+person,work_county,27069,Kittson
+person,work_county,27071,Koochiching
+person,work_county,27073,Lac qui Parle
+person,work_county,27075,Lake
+person,work_county,27077,Lake of the Woods
+person,work_county,27079,Le Sueur
+person,work_county,27081,Lincoln
+person,work_county,27083,Lyon
+person,work_county,27085,McLeod
+person,work_county,27087,Mahnomen
+person,work_county,27089,Marshall
+person,work_county,27091,Martin
+person,work_county,27093,Meeker
+person,work_county,27095,Mille Lacs
+person,work_county,27097,Morrison
+person,work_county,27099,Mower
+person,work_county,27101,Murray
+person,work_county,27103,Nicollet
+person,work_county,27105,Nobles
+person,work_county,27107,Norman
+person,work_county,27109,Olmsted
+person,work_county,27111,Otter Tail
+person,work_county,27113,Pennington
+person,work_county,27115,Pine
+person,work_county,27117,Pipestone
+person,work_county,27119,Polk
+person,work_county,27121,Pope
+person,work_county,27123,Ramsey
+person,work_county,27125,Red Lake
+person,work_county,27127,Redwood
+person,work_county,27129,Renville
+person,work_county,27131,Rice
+person,work_county,27133,Rock
+person,work_county,27135,Roseau
+person,work_county,27137,St Louis
+person,work_county,27139,Scott
+person,work_county,27141,Sherburne
+person,work_county,27143,Sibley
+person,work_county,27145,Stearns
+person,work_county,27147,Steele
+person,work_county,27149,Stevens
+person,work_county,27151,Swift
+person,work_county,27153,Todd
+person,work_county,27155,Traverse
+person,work_county,27157,Wabasha
+person,work_county,27159,Wadena
+person,work_county,27161,Waseca
+person,work_county,27163,Washington
+person,work_county,27165,Watonwan
+person,work_county,27167,Wilkin
+person,work_county,27169,Winona
+person,work_county,27171,Wright
+person,work_county,27173,Yellow Medicine
+person,work_county,55001,Adams
+person,work_county,55003,Ashland
+person,work_county,55005,Barron
+person,work_county,55007,Bayfield
+person,work_county,55009,Brown
+person,work_county,55011,Buffalo
+person,work_county,55013,Burnett
+person,work_county,55015,Calumet
+person,work_county,55017,Chippewa
+person,work_county,55019,Clark
+person,work_county,55021,Columbia
+person,work_county,55023,Crawford
+person,work_county,55025,Dane
+person,work_county,55027,Dodge
+person,work_county,55029,Door
+person,work_county,55031,Douglas
+person,work_county,55033,Dunn
+person,work_county,55035,Eau Claire
+person,work_county,55037,Florence
+person,work_county,55039,Fond du Lac
+person,work_county,55041,Forest
+person,work_county,55043,Grant
+person,work_county,55045,Green
+person,work_county,55047,Green Lake
+person,work_county,55049,Iowa
+person,work_county,55051,Iron
+person,work_county,55053,Jackson
+person,work_county,55055,Jefferson
+person,work_county,55057,Juneau
+person,work_county,55059,Kenosha
+person,work_county,55061,Kewaunee
+person,work_county,55063,La Crosse
+person,work_county,55065,Lafayette
+person,work_county,55067,Langlade
+person,work_county,55069,Lincoln
+person,work_county,55071,Manitowoc
+person,work_county,55073,Marathon
+person,work_county,55075,Marinette
+person,work_county,55077,Marquette
+person,work_county,55078,Menominee
+person,work_county,55079,Milwaukee
+person,work_county,55081,Monroe
+person,work_county,55083,Oconto
+person,work_county,55085,Oneida
+person,work_county,55087,Outagamie
+person,work_county,55089,Ozaukee
+person,work_county,55091,Pepin
+person,work_county,55093,Pierce
+person,work_county,55095,Polk
+person,work_county,55097,Portage
+person,work_county,55099,Price
+person,work_county,55101,Racine
+person,work_county,55103,Richland
+person,work_county,55105,Rock
+person,work_county,55107,Rusk
+person,work_county,55109,St Croix
+person,work_county,55111,Sauk
+person,work_county,55113,Sawyer
+person,work_county,55115,Shawano
+person,work_county,55117,Sheboygan
+person,work_county,55119,Taylor
+person,work_county,55121,Trempealeau
+person,work_county,55123,Vernon
+person,work_county,55125,Vilas
+person,work_county,55127,Walworth
+person,work_county,55129,Washburn
+person,work_county,55131,Washington
+person,work_county,55133,Waukesha
+person,work_county,55135,Waupaca
+person,work_county,55137,Waushara
+person,work_county,55139,Winnebago
+person,work_county,55141,Wood
+person,work_state,27,Minnesota
+person,work_state,55,Wisconsin
+person,work_state,995,Missing
+person,work_in_region,0,Not in study region
+person,work_in_region,1,In study region
+person,work_in_region,995,Missing
+trip,o_county,995,Missing
+trip,o_county,27001,Aitkin
+trip,o_county,27003,Anoka
+trip,o_county,27005,Becker
+trip,o_county,27007,Beltrami
+trip,o_county,27009,Benton
+trip,o_county,27011,Big Stone
+trip,o_county,27013,Blue Earth
+trip,o_county,27015,Brown
+trip,o_county,27017,Carlton
+trip,o_county,27019,Carver
+trip,o_county,27021,Cass
+trip,o_county,27023,Chippewa
+trip,o_county,27025,Chisago
+trip,o_county,27027,Clay
+trip,o_county,27029,Clearwater
+trip,o_county,27031,Cook
+trip,o_county,27033,Cottonwood
+trip,o_county,27035,Crow Wing
+trip,o_county,27037,Dakota
+trip,o_county,27039,Dodge
+trip,o_county,27041,Douglas
+trip,o_county,27043,Faribault
+trip,o_county,27045,Fillmore
+trip,o_county,27047,Freeborn
+trip,o_county,27049,Goodhue
+trip,o_county,27051,Grant
+trip,o_county,27053,Hennepin
+trip,o_county,27055,Houston
+trip,o_county,27057,Hubbard
+trip,o_county,27059,Isanti
+trip,o_county,27061,Itasca
+trip,o_county,27063,Jackson
+trip,o_county,27065,Kanabec
+trip,o_county,27067,Kandiyohi
+trip,o_county,27069,Kittson
+trip,o_county,27071,Koochiching
+trip,o_county,27073,Lac qui Parle
+trip,o_county,27075,Lake
+trip,o_county,27077,Lake of the Woods
+trip,o_county,27079,Le Sueur
+trip,o_county,27081,Lincoln
+trip,o_county,27083,Lyon
+trip,o_county,27085,McLeod
+trip,o_county,27087,Mahnomen
+trip,o_county,27089,Marshall
+trip,o_county,27091,Martin
+trip,o_county,27093,Meeker
+trip,o_county,27095,Mille Lacs
+trip,o_county,27097,Morrison
+trip,o_county,27099,Mower
+trip,o_county,27101,Murray
+trip,o_county,27103,Nicollet
+trip,o_county,27105,Nobles
+trip,o_county,27107,Norman
+trip,o_county,27109,Olmsted
+trip,o_county,27111,Otter Tail
+trip,o_county,27113,Pennington
+trip,o_county,27115,Pine
+trip,o_county,27117,Pipestone
+trip,o_county,27119,Polk
+trip,o_county,27121,Pope
+trip,o_county,27123,Ramsey
+trip,o_county,27125,Red Lake
+trip,o_county,27127,Redwood
+trip,o_county,27129,Renville
+trip,o_county,27131,Rice
+trip,o_county,27133,Rock
+trip,o_county,27135,Roseau
+trip,o_county,27137,St Louis
+trip,o_county,27139,Scott
+trip,o_county,27141,Sherburne
+trip,o_county,27143,Sibley
+trip,o_county,27145,Stearns
+trip,o_county,27147,Steele
+trip,o_county,27149,Stevens
+trip,o_county,27151,Swift
+trip,o_county,27153,Todd
+trip,o_county,27155,Traverse
+trip,o_county,27157,Wabasha
+trip,o_county,27159,Wadena
+trip,o_county,27161,Waseca
+trip,o_county,27163,Washington
+trip,o_county,27165,Watonwan
+trip,o_county,27167,Wilkin
+trip,o_county,27169,Winona
+trip,o_county,27171,Wright
+trip,o_county,27173,Yellow Medicine
+trip,o_county,55001,Adams
+trip,o_county,55003,Ashland
+trip,o_county,55005,Barron
+trip,o_county,55007,Bayfield
+trip,o_county,55009,Brown
+trip,o_county,55011,Buffalo
+trip,o_county,55013,Burnett
+trip,o_county,55015,Calumet
+trip,o_county,55017,Chippewa
+trip,o_county,55019,Clark
+trip,o_county,55021,Columbia
+trip,o_county,55023,Crawford
+trip,o_county,55025,Dane
+trip,o_county,55027,Dodge
+trip,o_county,55029,Door
+trip,o_county,55031,Douglas
+trip,o_county,55033,Dunn
+trip,o_county,55035,Eau Claire
+trip,o_county,55037,Florence
+trip,o_county,55039,Fond du Lac
+trip,o_county,55041,Forest
+trip,o_county,55043,Grant
+trip,o_county,55045,Green
+trip,o_county,55047,Green Lake
+trip,o_county,55049,Iowa
+trip,o_county,55051,Iron
+trip,o_county,55053,Jackson
+trip,o_county,55055,Jefferson
+trip,o_county,55057,Juneau
+trip,o_county,55059,Kenosha
+trip,o_county,55061,Kewaunee
+trip,o_county,55063,La Crosse
+trip,o_county,55065,Lafayette
+trip,o_county,55067,Langlade
+trip,o_county,55069,Lincoln
+trip,o_county,55071,Manitowoc
+trip,o_county,55073,Marathon
+trip,o_county,55075,Marinette
+trip,o_county,55077,Marquette
+trip,o_county,55078,Menominee
+trip,o_county,55079,Milwaukee
+trip,o_county,55081,Monroe
+trip,o_county,55083,Oconto
+trip,o_county,55085,Oneida
+trip,o_county,55087,Outagamie
+trip,o_county,55089,Ozaukee
+trip,o_county,55091,Pepin
+trip,o_county,55093,Pierce
+trip,o_county,55095,Polk
+trip,o_county,55097,Portage
+trip,o_county,55099,Price
+trip,o_county,55101,Racine
+trip,o_county,55103,Richland
+trip,o_county,55105,Rock
+trip,o_county,55107,Rusk
+trip,o_county,55109,St Croix
+trip,o_county,55111,Sauk
+trip,o_county,55113,Sawyer
+trip,o_county,55115,Shawano
+trip,o_county,55117,Sheboygan
+trip,o_county,55119,Taylor
+trip,o_county,55121,Trempealeau
+trip,o_county,55123,Vernon
+trip,o_county,55125,Vilas
+trip,o_county,55127,Walworth
+trip,o_county,55129,Washburn
+trip,o_county,55131,Washington
+trip,o_county,55133,Waukesha
+trip,o_county,55135,Waupaca
+trip,o_county,55137,Waushara
+trip,o_county,55139,Winnebago
+trip,o_county,55141,Wood
+trip,o_state,27,Minnesota
+trip,o_state,55,Wisconsin
+trip,o_state,995,Missing
+trip,o_in_region,0,Not in study region
+trip,o_in_region,1,In study region
+trip,d_county,995,Missing
+trip,d_county,27001,Aitkin
+trip,d_county,27003,Anoka
+trip,d_county,27005,Becker
+trip,d_county,27007,Beltrami
+trip,d_county,27009,Benton
+trip,d_county,27011,Big Stone
+trip,d_county,27013,Blue Earth
+trip,d_county,27015,Brown
+trip,d_county,27017,Carlton
+trip,d_county,27019,Carver
+trip,d_county,27021,Cass
+trip,d_county,27023,Chippewa
+trip,d_county,27025,Chisago
+trip,d_county,27027,Clay
+trip,d_county,27029,Clearwater
+trip,d_county,27031,Cook
+trip,d_county,27033,Cottonwood
+trip,d_county,27035,Crow Wing
+trip,d_county,27037,Dakota
+trip,d_county,27039,Dodge
+trip,d_county,27041,Douglas
+trip,d_county,27043,Faribault
+trip,d_county,27045,Fillmore
+trip,d_county,27047,Freeborn
+trip,d_county,27049,Goodhue
+trip,d_county,27051,Grant
+trip,d_county,27053,Hennepin
+trip,d_county,27055,Houston
+trip,d_county,27057,Hubbard
+trip,d_county,27059,Isanti
+trip,d_county,27061,Itasca
+trip,d_county,27063,Jackson
+trip,d_county,27065,Kanabec
+trip,d_county,27067,Kandiyohi
+trip,d_county,27069,Kittson
+trip,d_county,27071,Koochiching
+trip,d_county,27073,Lac qui Parle
+trip,d_county,27075,Lake
+trip,d_county,27077,Lake of the Woods
+trip,d_county,27079,Le Sueur
+trip,d_county,27081,Lincoln
+trip,d_county,27083,Lyon
+trip,d_county,27085,McLeod
+trip,d_county,27087,Mahnomen
+trip,d_county,27089,Marshall
+trip,d_county,27091,Martin
+trip,d_county,27093,Meeker
+trip,d_county,27095,Mille Lacs
+trip,d_county,27097,Morrison
+trip,d_county,27099,Mower
+trip,d_county,27101,Murray
+trip,d_county,27103,Nicollet
+trip,d_county,27105,Nobles
+trip,d_county,27107,Norman
+trip,d_county,27109,Olmsted
+trip,d_county,27111,Otter Tail
+trip,d_county,27113,Pennington
+trip,d_county,27115,Pine
+trip,d_county,27117,Pipestone
+trip,d_county,27119,Polk
+trip,d_county,27121,Pope
+trip,d_county,27123,Ramsey
+trip,d_county,27125,Red Lake
+trip,d_county,27127,Redwood
+trip,d_county,27129,Renville
+trip,d_county,27131,Rice
+trip,d_county,27133,Rock
+trip,d_county,27135,Roseau
+trip,d_county,27137,St Louis
+trip,d_county,27139,Scott
+trip,d_county,27141,Sherburne
+trip,d_county,27143,Sibley
+trip,d_county,27145,Stearns
+trip,d_county,27147,Steele
+trip,d_county,27149,Stevens
+trip,d_county,27151,Swift
+trip,d_county,27153,Todd
+trip,d_county,27155,Traverse
+trip,d_county,27157,Wabasha
+trip,d_county,27159,Wadena
+trip,d_county,27161,Waseca
+trip,d_county,27163,Washington
+trip,d_county,27165,Watonwan
+trip,d_county,27167,Wilkin
+trip,d_county,27169,Winona
+trip,d_county,27171,Wright
+trip,d_county,27173,Yellow Medicine
+trip,d_county,55001,Adams
+trip,d_county,55003,Ashland
+trip,d_county,55005,Barron
+trip,d_county,55007,Bayfield
+trip,d_county,55009,Brown
+trip,d_county,55011,Buffalo
+trip,d_county,55013,Burnett
+trip,d_county,55015,Calumet
+trip,d_county,55017,Chippewa
+trip,d_county,55019,Clark
+trip,d_county,55021,Columbia
+trip,d_county,55023,Crawford
+trip,d_county,55025,Dane
+trip,d_county,55027,Dodge
+trip,d_county,55029,Door
+trip,d_county,55031,Douglas
+trip,d_county,55033,Dunn
+trip,d_county,55035,Eau Claire
+trip,d_county,55037,Florence
+trip,d_county,55039,Fond du Lac
+trip,d_county,55041,Forest
+trip,d_county,55043,Grant
+trip,d_county,55045,Green
+trip,d_county,55047,Green Lake
+trip,d_county,55049,Iowa
+trip,d_county,55051,Iron
+trip,d_county,55053,Jackson
+trip,d_county,55055,Jefferson
+trip,d_county,55057,Juneau
+trip,d_county,55059,Kenosha
+trip,d_county,55061,Kewaunee
+trip,d_county,55063,La Crosse
+trip,d_county,55065,Lafayette
+trip,d_county,55067,Langlade
+trip,d_county,55069,Lincoln
+trip,d_county,55071,Manitowoc
+trip,d_county,55073,Marathon
+trip,d_county,55075,Marinette
+trip,d_county,55077,Marquette
+trip,d_county,55078,Menominee
+trip,d_county,55079,Milwaukee
+trip,d_county,55081,Monroe
+trip,d_county,55083,Oconto
+trip,d_county,55085,Oneida
+trip,d_county,55087,Outagamie
+trip,d_county,55089,Ozaukee
+trip,d_county,55091,Pepin
+trip,d_county,55093,Pierce
+trip,d_county,55095,Polk
+trip,d_county,55097,Portage
+trip,d_county,55099,Price
+trip,d_county,55101,Racine
+trip,d_county,55103,Richland
+trip,d_county,55105,Rock
+trip,d_county,55107,Rusk
+trip,d_county,55109,St Croix
+trip,d_county,55111,Sauk
+trip,d_county,55113,Sawyer
+trip,d_county,55115,Shawano
+trip,d_county,55117,Sheboygan
+trip,d_county,55119,Taylor
+trip,d_county,55121,Trempealeau
+trip,d_county,55123,Vernon
+trip,d_county,55125,Vilas
+trip,d_county,55127,Walworth
+trip,d_county,55129,Washburn
+trip,d_county,55131,Washington
+trip,d_county,55133,Waukesha
+trip,d_county,55135,Waupaca
+trip,d_county,55137,Waushara
+trip,d_county,55139,Winnebago
+trip,d_county,55141,Wood
+trip,d_state,27,Minnesota
+trip,d_state,55,Wisconsin
+trip,d_state,995,Missing
+trip,d_in_region,0,Not in study region
+trip,d_in_region,1,In study region
