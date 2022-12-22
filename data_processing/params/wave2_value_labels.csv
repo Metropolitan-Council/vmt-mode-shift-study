@@ -1,0 +1,2636 @@
+table,variable,value,label
+hh,complete_sun,0,Not complete
+hh,complete_sun,1,Complete
+hh,complete_sun,995,Missing
+hh,complete_mon,0,Not complete
+hh,complete_mon,1,Complete
+hh,complete_mon,995,Missing
+hh,complete_tue,0,Not complete
+hh,complete_tue,1,Complete
+hh,complete_tue,995,Missing
+hh,complete_wed,0,Not complete
+hh,complete_wed,1,Complete
+hh,complete_wed,995,Missing
+hh,complete_thu,0,Not complete
+hh,complete_thu,1,Complete
+hh,complete_thu,995,Missing
+hh,complete_fri,0,Not complete
+hh,complete_fri,1,Complete
+hh,complete_fri,995,Missing
+hh,complete_sat,0,Not complete
+hh,complete_sat,1,Complete
+hh,complete_sat,995,Missing
+hh,participation_group,1,"Signup survey completed via rMove for Web, Diary completed via rMove for Web"
+hh,participation_group,2,"Signup survey completed via rMove for Web, Diary completed via Call Center"
+hh,participation_group,3,"Signup survey completed via rMove for Web, Diary completed via rMove"
+hh,participation_group,4,"Signup survey completed via Call Center, Diary completed via rMove for Web"
+hh,participation_group,5,"Signup survey completed via Call Center, Diary completed via Call Center"
+hh,participation_group,6,"Signup survey completed via Call Center, Diary completed via rMove"
+hh,participation_group,7,"Signup survey completed via rMove, Diary completed via rMove for Web"
+hh,participation_group,8,"Signup survey completed via rMove, Diary completed via Call Center"
+hh,participation_group,9,"Signup survey completed via rMove, Diary completed via rMove"
+hh,participation_group,995,Missing
+hh,num_people,1,1
+hh,num_people,2,2
+hh,num_people,3,3
+hh,num_people,4,4
+hh,num_people,5,5
+hh,num_people,6,6
+hh,num_people,7,7
+hh,num_people,8,8
+hh,num_people,9,9
+hh,num_people,10,10
+hh,num_people,11,11
+hh,num_people,12,12
+hh,num_people,13,13
+hh,num_people,995,Missing
+hh,num_adults,1,1
+hh,num_adults,2,2
+hh,num_adults,3,3
+hh,num_adults,4,4
+hh,num_adults,5,5
+hh,num_adults,6,6
+hh,num_adults,7,7
+hh,num_adults,8,8
+hh,num_adults,9,9
+hh,num_adults,995,Missing
+hh,num_kids,0,0
+hh,num_kids,1,1
+hh,num_kids,2,2
+hh,num_kids,3,3
+hh,num_kids,4,4
+hh,num_kids,5,5
+hh,num_kids,6,6
+hh,num_kids,7,7
+hh,num_kids,8,8
+hh,num_kids,9,9
+hh,num_kids,10,10
+hh,num_kids,11,11
+hh,num_kids,995,Missing
+hh,num_students,0,0
+hh,num_students,1,1
+hh,num_students,2,2
+hh,num_students,3,3
+hh,num_students,4,4
+hh,num_students,5,5
+hh,num_students,6,6
+hh,num_students,7,7
+hh,num_students,8,8
+hh,num_students,9,9
+hh,num_students,10,10
+hh,num_students,11,11
+hh,num_students,12,12
+hh,num_students,995,Missing
+hh,num_workers,0,0
+hh,num_workers,1,1
+hh,num_workers,2,2
+hh,num_workers,3,3
+hh,num_workers,4,4
+hh,num_workers,5,5
+hh,num_workers,6,6
+hh,num_workers,7,7
+hh,num_workers,8,8
+hh,num_workers,995,Missing
+hh,num_vehicles,0,0
+hh,num_vehicles,1,1
+hh,num_vehicles,2,2
+hh,num_vehicles,3,3
+hh,num_vehicles,4,4
+hh,num_vehicles,5,5
+hh,num_vehicles,6,6
+hh,num_vehicles,7,7
+hh,num_vehicles,8,8
+hh,num_vehicles,995,Missing
+hh,num_bicycles,0,0
+hh,num_bicycles,1,1
+hh,num_bicycles,2,2
+hh,num_bicycles,3,3
+hh,num_bicycles,4,4
+hh,num_bicycles,5,5
+hh,num_bicycles,6,6
+hh,num_bicycles,7,7
+hh,num_bicycles,8,8
+hh,num_bicycles,995,Missing
+hh,bicycle_type_1,0,Not selected
+hh,bicycle_type_1,1,Selected
+hh,bicycle_type_1,995,Missing
+hh,bicycle_type_2,0,Not selected
+hh,bicycle_type_2,1,Selected
+hh,bicycle_type_2,995,Missing
+hh,bicycle_type_3,0,Not selected
+hh,bicycle_type_3,1,Selected
+hh,bicycle_type_3,995,Missing
+hh,bike_store_1,0,Not selected
+hh,bike_store_1,1,Selected
+hh,bike_store_1,995,Missing
+hh,bike_store_2,0,Not selected
+hh,bike_store_2,1,Selected
+hh,bike_store_2,995,Missing
+hh,bike_store_3,0,Not selected
+hh,bike_store_3,1,Selected
+hh,bike_store_3,995,Missing
+hh,bike_store_4,0,Not selected
+hh,bike_store_4,1,Selected
+hh,bike_store_4,995,Missing
+hh,bike_store_5,0,Not selected
+hh,bike_store_5,1,Selected
+hh,bike_store_5,995,Missing
+hh,bike_store_6,0,Not selected
+hh,bike_store_6,1,Selected
+hh,bike_store_6,995,Missing
+hh,bike_store_7,0,Not selected
+hh,bike_store_7,1,Selected
+hh,bike_store_7,995,Missing
+hh,bike_store_997,0,Not selected
+hh,bike_store_997,1,Selected
+hh,bike_store_997,995,Missing
+hh,micromobility_devices_1,0,Not selected
+hh,micromobility_devices_1,1,Selected
+hh,micromobility_devices_1,995,Missing
+hh,micromobility_devices_2,0,Not selected
+hh,micromobility_devices_2,1,Selected
+hh,micromobility_devices_2,995,Missing
+hh,micromobility_devices_3,0,Not selected
+hh,micromobility_devices_3,1,Selected
+hh,micromobility_devices_3,995,Missing
+hh,micromobility_devices_4,0,Not selected
+hh,micromobility_devices_4,1,Selected
+hh,micromobility_devices_4,995,Missing
+hh,micromobility_devices_5,0,Not selected
+hh,micromobility_devices_5,1,Selected
+hh,micromobility_devices_5,995,Missing
+hh,micromobility_devices_6,0,Not selected
+hh,micromobility_devices_6,1,Selected
+hh,micromobility_devices_6,995,Missing
+hh,home_in_region,0,Not in study region
+hh,home_in_region,1,In study region
+hh,home_county,995,Missing
+hh,home_county,27001,Aitkin
+hh,home_county,27003,Anoka
+hh,home_county,27005,Becker
+hh,home_county,27007,Beltrami
+hh,home_county,27009,Benton
+hh,home_county,27011,Big Stone
+hh,home_county,27013,Blue Earth
+hh,home_county,27015,Brown
+hh,home_county,27017,Carlton
+hh,home_county,27019,Carver
+hh,home_county,27021,Cass
+hh,home_county,27023,Chippewa
+hh,home_county,27025,Chisago
+hh,home_county,27027,Clay
+hh,home_county,27029,Clearwater
+hh,home_county,27031,Cook
+hh,home_county,27033,Cottonwood
+hh,home_county,27035,Crow Wing
+hh,home_county,27037,Dakota
+hh,home_county,27039,Dodge
+hh,home_county,27041,Douglas
+hh,home_county,27043,Faribault
+hh,home_county,27045,Fillmore
+hh,home_county,27047,Freeborn
+hh,home_county,27049,Goodhue
+hh,home_county,27051,Grant
+hh,home_county,27053,Hennepin
+hh,home_county,27055,Houston
+hh,home_county,27057,Hubbard
+hh,home_county,27059,Isanti
+hh,home_county,27061,Itasca
+hh,home_county,27063,Jackson
+hh,home_county,27065,Kanabec
+hh,home_county,27067,Kandiyohi
+hh,home_county,27069,Kittson
+hh,home_county,27071,Koochiching
+hh,home_county,27073,Lac qui Parle
+hh,home_county,27075,Lake
+hh,home_county,27077,Lake of the Woods
+hh,home_county,27079,Le Sueur
+hh,home_county,27081,Lincoln
+hh,home_county,27083,Lyon
+hh,home_county,27085,McLeod
+hh,home_county,27087,Mahnomen
+hh,home_county,27089,Marshall
+hh,home_county,27091,Martin
+hh,home_county,27093,Meeker
+hh,home_county,27095,Mille Lacs
+hh,home_county,27097,Morrison
+hh,home_county,27099,Mower
+hh,home_county,27101,Murray
+hh,home_county,27103,Nicollet
+hh,home_county,27105,Nobles
+hh,home_county,27107,Norman
+hh,home_county,27109,Olmsted
+hh,home_county,27111,Otter Tail
+hh,home_county,27113,Pennington
+hh,home_county,27115,Pine
+hh,home_county,27117,Pipestone
+hh,home_county,27119,Polk
+hh,home_county,27121,Pope
+hh,home_county,27123,Ramsey
+hh,home_county,27125,Red Lake
+hh,home_county,27127,Redwood
+hh,home_county,27129,Renville
+hh,home_county,27131,Rice
+hh,home_county,27133,Rock
+hh,home_county,27135,Roseau
+hh,home_county,27137,St Louis
+hh,home_county,27139,Scott
+hh,home_county,27141,Sherburne
+hh,home_county,27143,Sibley
+hh,home_county,27145,Stearns
+hh,home_county,27147,Steele
+hh,home_county,27149,Stevens
+hh,home_county,27151,Swift
+hh,home_county,27153,Todd
+hh,home_county,27155,Traverse
+hh,home_county,27157,Wabasha
+hh,home_county,27159,Wadena
+hh,home_county,27161,Waseca
+hh,home_county,27163,Washington
+hh,home_county,27165,Watonwan
+hh,home_county,27167,Wilkin
+hh,home_county,27169,Winona
+hh,home_county,27171,Wright
+hh,home_county,27173,Yellow Medicine
+hh,home_county,55001,Adams
+hh,home_county,55003,Ashland
+hh,home_county,55005,Barron
+hh,home_county,55007,Bayfield
+hh,home_county,55009,Brown
+hh,home_county,55011,Buffalo
+hh,home_county,55013,Burnett
+hh,home_county,55015,Calumet
+hh,home_county,55017,Chippewa
+hh,home_county,55019,Clark
+hh,home_county,55021,Columbia
+hh,home_county,55023,Crawford
+hh,home_county,55025,Dane
+hh,home_county,55027,Dodge
+hh,home_county,55029,Door
+hh,home_county,55031,Douglas
+hh,home_county,55033,Dunn
+hh,home_county,55035,Eau Claire
+hh,home_county,55037,Florence
+hh,home_county,55039,Fond du Lac
+hh,home_county,55041,Forest
+hh,home_county,55043,Grant
+hh,home_county,55045,Green
+hh,home_county,55047,Green Lake
+hh,home_county,55049,Iowa
+hh,home_county,55051,Iron
+hh,home_county,55053,Jackson
+hh,home_county,55055,Jefferson
+hh,home_county,55057,Juneau
+hh,home_county,55059,Kenosha
+hh,home_county,55061,Kewaunee
+hh,home_county,55063,La Crosse
+hh,home_county,55065,Lafayette
+hh,home_county,55067,Langlade
+hh,home_county,55069,Lincoln
+hh,home_county,55071,Manitowoc
+hh,home_county,55073,Marathon
+hh,home_county,55075,Marinette
+hh,home_county,55077,Marquette
+hh,home_county,55078,Menominee
+hh,home_county,55079,Milwaukee
+hh,home_county,55081,Monroe
+hh,home_county,55083,Oconto
+hh,home_county,55085,Oneida
+hh,home_county,55087,Outagamie
+hh,home_county,55089,Ozaukee
+hh,home_county,55091,Pepin
+hh,home_county,55093,Pierce
+hh,home_county,55095,Polk
+hh,home_county,55097,Portage
+hh,home_county,55099,Price
+hh,home_county,55101,Racine
+hh,home_county,55103,Richland
+hh,home_county,55105,Rock
+hh,home_county,55107,Rusk
+hh,home_county,55109,St Croix
+hh,home_county,55111,Sauk
+hh,home_county,55113,Sawyer
+hh,home_county,55115,Shawano
+hh,home_county,55117,Sheboygan
+hh,home_county,55119,Taylor
+hh,home_county,55121,Trempealeau
+hh,home_county,55123,Vernon
+hh,home_county,55125,Vilas
+hh,home_county,55127,Walworth
+hh,home_county,55129,Washburn
+hh,home_county,55131,Washington
+hh,home_county,55133,Waukesha
+hh,home_county,55135,Waupaca
+hh,home_county,55137,Waushara
+hh,home_county,55139,Winnebago
+hh,home_county,55141,Wood
+hh,home_state,27,Minnesota
+hh,home_state,55,Wisconsin
+hh,home_state,995,Missing
+hh,sample_segment,1,Core Urban BGs - Group 1
+hh,sample_segment,2,Core Urban BGs - Group 2
+hh,sample_segment,3,Core Urban BGs - Group 3
+hh,sample_segment,4,Core Urban BGs - Group 4
+hh,sample_segment,5,Core Urban BGs - Group 5
+hh,sample_segment,6,Core Rural
+hh,sample_segment,7,Rural Ring
+hh,sample_segment,8,Supplemental
+hh,sample_segment,995,Missing
+hh,income_detailed,1,"Less than $15,000"
+hh,income_detailed,2,"$15,000-$24,999"
+hh,income_detailed,3,"$25,000-$34,999"
+hh,income_detailed,4,"$35,000-$49,999"
+hh,income_detailed,5,"$50,000-$74,999"
+hh,income_detailed,6,"$75,000-$99,999"
+hh,income_detailed,7,"$100,000-$149,999"
+hh,income_detailed,8,"$150,000-$199,999"
+hh,income_detailed,9,"$200,000-$249,999"
+hh,income_detailed,10,"$250,000 or more"
+hh,income_detailed,995,Missing
+hh,income_detailed,999,Prefer not to answer
+hh,income_broad,1,"Under $25,000"
+hh,income_broad,2,"$25,000-$49,999"
+hh,income_broad,3,"$50,000-$74,999"
+hh,income_broad,4,"$75,000-$99,999"
+hh,income_broad,5,"$100,000-$199,999"
+hh,income_broad,6,"$200,000 or more"
+hh,income_broad,995,Missing
+hh,income_broad,999,Prefer not to answer
+hh,rent_cost,1,$0 - $499
+hh,rent_cost,2,$500 - $749
+hh,rent_cost,3,$750 - $999
+hh,rent_cost,4,"$1,000 - $1,249"
+hh,rent_cost,5,"$1,250 - $1,499"
+hh,rent_cost,6,"$1,500 - $1,749"
+hh,rent_cost,7,"$1,750 - $1,999"
+hh,rent_cost,8,"$2,000 - $2,499"
+hh,rent_cost,9,"$2,500 - $2,999"
+hh,rent_cost,10,"$3,000 - $3,999"
+hh,rent_cost,11,"$4,000 or more"
+hh,rent_cost,995,Missing
+hh,rent_cost,999,Prefer not to answer
+hh,rent_own,1,Own/buying (paying a mortgage)
+hh,rent_own,2,Rent
+hh,rent_own,3,Housing provided by job or military
+hh,rent_own,4,"Provided by family, relative, or friend without payment or rent"
+hh,rent_own,995,Missing
+hh,rent_own,997,Other
+hh,rent_own,999,Prefer not to answer
+hh,residence_duration,1,Less than a year
+hh,residence_duration,2,Between 1 and 2 years
+hh,residence_duration,3,Between 2 and 3 years
+hh,residence_duration,4,Between 3 and 5 years
+hh,residence_duration,5,Between 5 and 10 years
+hh,residence_duration,6,Between 10 and 20 years
+hh,residence_duration,7,More than 20 years
+hh,residence_duration,995,Missing
+hh,residence_months,1,12 months (all year long)
+hh,residence_months,2,10-11 months
+hh,residence_months,3,7-9 months
+hh,residence_months,4,4-6 months
+hh,residence_months,5,Up to 3 months of the year
+hh,residence_months,995,Missing
+hh,residence_months,999,Prefer not to answer
+hh,residence_type,1,Single-family house (detached house)
+hh,residence_type,2,Single-family house attached to one or more houses (rowhouse or townhouse)
+hh,residence_type,3,"Building with 2-4 units (duplexes, triplexes, quads)"
+hh,residence_type,4,Building with 5-49 apartments/condos
+hh,residence_type,5,Building with 50 or more apartments/condos
+hh,residence_type,6,Senior or age-restricted apartments/condos
+hh,residence_type,7,Manufactured home/mobile home/trailer
+hh,residence_type,8,"Dorm, group quarters, or institutional housing"
+hh,residence_type,9,"Other (e.g., boat, RV, van)"
+hh,residence_type,995,Missing
+hh,num_hh_days,1,1 day
+hh,num_hh_days,2,2 days
+hh,num_hh_days,3,3 days
+hh,num_hh_days,4,4 days
+hh,num_hh_days,5,5 days
+hh,num_hh_days,6,6 days
+hh,num_hh_days,7,7 days
+hh,num_hh_days,995,Missing
+hh,num_hh_days_week,1,1 day
+hh,num_hh_days_week,2,2 days
+hh,num_hh_days_week,3,3 days
+hh,num_hh_days_week,4,4 days
+hh,num_hh_days_week,5,5 days
+hh,num_hh_days_week,995,Missing
+hh,num_hh_days_weekend,0,0 days
+hh,num_hh_days_weekend,1,1 day
+hh,num_hh_days_weekend,2,2 days
+hh,num_hh_days_weekend,995,Missing
+hh,home_zone,1,Anoka County
+hh,home_zone,2,Carver County
+hh,home_zone,3,Dakota County
+hh,home_zone,4,Hennepin County
+hh,home_zone,5,Ramsey County
+hh,home_zone,6,Scott County
+hh,home_zone,7,Washington County
+hh,home_zone,8,MPO outside seven counties
+hh,home_zone,9,"In study region, but not in MPO"
+hh,home_zone,10,Not in study region
+person,person_num,1,1
+person,person_num,2,2
+person,person_num,3,3
+person,person_num,4,4
+person,person_num,5,5
+person,person_num,6,6
+person,person_num,7,7
+person,person_num,8,8
+person,person_num,9,9
+person,person_num,10,10
+person,person_num,11,11
+person,person_num,12,12
+person,person_num,13,13
+person,person_num,995,Missing
+person,relationship,0,Self
+person,relationship,1,Husband/wife/spouse
+person,relationship,2,Son or daughter (or child in-law)
+person,relationship,3,Father or mother (or parent in-law)
+person,relationship,4,Brother or sister (or sibling in-law)
+person,relationship,5,"Other relative (e.g., grandchild, cousin)"
+person,relationship,6,Roommate or friend
+person,relationship,7,Household help
+person,relationship,8,Unmarried partner
+person,relationship,995,Missing
+person,relationship,997,Other nonrelative
+person,age,1,Under 5
+person,age,2,5 to 15
+person,age,3,16 to 17
+person,age,4,18 to 24
+person,age,5,25 to 34
+person,age,6,35 to 44
+person,age,7,45 to 54
+person,age,8,55 to 64
+person,age,9,65 to 74
+person,age,10,75 to 84
+person,age,11,85 or older
+person,age,995,Missing
+person,gender,1,Female
+person,gender,2,Male
+person,gender,3,Transgender
+person,gender,4,Non-binary/third gender
+person,gender,995,Missing
+person,gender,997,Other/prefer to self-describe
+person,gender,999,Prefer not to answer
+person,disability,1,Yes
+person,disability,2,No
+person,disability,995,Missing
+person,disability,999,Prefer not to answer
+person,can_drive,1,"Yes, drives"
+person,can_drive,3,"No, does not drive"
+person,can_drive,995,Missing
+person,phone_type,0,Does not have a smartphone
+person,phone_type,1,Has an Android phone
+person,phone_type,2,Has an Apple iPhone
+person,phone_type,3,Has other smartphone type
+person,phone_type,995,Missing
+person,ethnicity_afam,0,Not selected
+person,ethnicity_afam,1,Selected
+person,ethnicity_afam,995,Missing
+person,ethnicity_aiak,0,Not selected
+person,ethnicity_aiak,1,Selected
+person,ethnicity_aiak,995,Missing
+person,ethnicity_asian,0,Not selected
+person,ethnicity_asian,1,Selected
+person,ethnicity_asian,995,Missing
+person,ethnicity_hapi,0,Not selected
+person,ethnicity_hapi,1,Selected
+person,ethnicity_hapi,995,Missing
+person,ethnicity_hisp,0,Not selected
+person,ethnicity_hisp,1,Selected
+person,ethnicity_hisp,995,Missing
+person,ethnicity_mideast,0,Not selected
+person,ethnicity_mideast,1,Selected
+person,ethnicity_mideast,995,Missing
+person,ethnicity_white,0,Not selected
+person,ethnicity_white,1,Selected
+person,ethnicity_white,995,Missing
+person,ethnicity_dk,0,Not selected
+person,ethnicity_dk,1,Selected
+person,ethnicity_dk,995,Missing
+person,ethnicity_pnta,0,Not selected
+person,ethnicity_pnta,1,Selected
+person,ethnicity_pnta,995,Missing
+person,ethnicity_other,0,Not selected
+person,ethnicity_other,1,Selected
+person,ethnicity_other,995,Missing
+person,race_black_african_1,0,Not selected
+person,race_black_african_1,1,Selected
+person,race_black_african_1,995,Missing
+person,race_black_african_2,0,Not selected
+person,race_black_african_2,1,Selected
+person,race_black_african_2,995,Missing
+person,race_black_african_3,0,Not selected
+person,race_black_african_3,1,Selected
+person,race_black_african_3,995,Missing
+person,race_black_african_4,0,Not selected
+person,race_black_african_4,1,Selected
+person,race_black_african_4,995,Missing
+person,race_black_african_5,0,Not selected
+person,race_black_african_5,1,Selected
+person,race_black_african_5,995,Missing
+person,race_black_african_997,0,Not selected
+person,race_black_african_997,1,Selected
+person,race_black_african_997,995,Missing
+person,race_black_african_998,0,Not selected
+person,race_black_african_998,1,Selected
+person,race_black_african_998,995,Missing
+person,race_black_african_999,0,Not selected
+person,race_black_african_999,1,Selected
+person,race_black_african_999,995,Missing
+person,race_asian_1,0,Not selected
+person,race_asian_1,1,Selected
+person,race_asian_1,995,Missing
+person,race_asian_2,0,Not selected
+person,race_asian_2,1,Selected
+person,race_asian_2,995,Missing
+person,race_asian_3,0,Not selected
+person,race_asian_3,1,Selected
+person,race_asian_3,995,Missing
+person,race_asian_4,0,Not selected
+person,race_asian_4,1,Selected
+person,race_asian_4,995,Missing
+person,race_asian_5,0,Not selected
+person,race_asian_5,1,Selected
+person,race_asian_5,995,Missing
+person,race_asian_6,0,Not selected
+person,race_asian_6,1,Selected
+person,race_asian_6,995,Missing
+person,race_asian_7,0,Not selected
+person,race_asian_7,1,Selected
+person,race_asian_7,995,Missing
+person,race_asian_997,0,Not selected
+person,race_asian_997,1,Selected
+person,race_asian_997,995,Missing
+person,race_asian_998,0,Not selected
+person,race_asian_998,1,Selected
+person,race_asian_998,995,Missing
+person,race_asian_999,0,Not selected
+person,race_asian_999,1,Selected
+person,race_asian_999,995,Missing
+person,race_hispanic_1,0,Not selected
+person,race_hispanic_1,1,Selected
+person,race_hispanic_1,995,Missing
+person,race_hispanic_2,0,Not selected
+person,race_hispanic_2,1,Selected
+person,race_hispanic_2,995,Missing
+person,race_hispanic_3,0,Not selected
+person,race_hispanic_3,1,Selected
+person,race_hispanic_3,995,Missing
+person,race_hispanic_997,0,Not selected
+person,race_hispanic_997,1,Selected
+person,race_hispanic_997,995,Missing
+person,race_hispanic_998,0,Not selected
+person,race_hispanic_998,1,Selected
+person,race_hispanic_998,995,Missing
+person,race_hispanic_999,0,Not selected
+person,race_hispanic_999,1,Selected
+person,race_hispanic_999,995,Missing
+person,education,1,Less than high school
+person,education,2,High school graduate/GED
+person,education,3,Some college
+person,education,4,Vocational/technical training
+person,education,5,Associate degree
+person,education,6,Bachelor's degree
+person,education,7,Graduate/post-graduate degree
+person,education,995,Missing
+person,education,999,Prefer not to answer
+person,student_status,1,Not a student
+person,student_status,2,"Part-time student, currently attending some or all classes in-person"
+person,student_status,3,"Part-time student, ONLY online classes"
+person,student_status,4,"Full-time student, currently attending some or all classes in-person"
+person,student_status,5,"Full-time student, ONLY online classes"
+person,student_status,995,Missing
+person,school_attend,1,"All in-person classes at school (e.g., 4 or 5 days/week)"
+person,school_attend,2,"Partially in-person at school (e.g., only mornings/afternoons or 1-3 days/week)"
+person,school_attend,3,All remote/online classes (no in-person classes)
+person,school_attend,995,Missing
+person,remote_class_freq,1,6-7 days
+person,remote_class_freq,2,5 days
+person,remote_class_freq,3,4 days
+person,remote_class_freq,4,3 days
+person,remote_class_freq,5,2 days
+person,remote_class_freq,6,1 day
+person,remote_class_freq,995,Missing
+person,remote_class_freq,996,None
+person,school_freq,1,6-7 days
+person,school_freq,2,5 days
+person,school_freq,3,4 days
+person,school_freq,4,3 days
+person,school_freq,5,2 days
+person,school_freq,6,1 day
+person,school_freq,995,Missing
+person,school_freq,996,None
+person,school_type,1,Cared for at home (not enrolled in school or daycare)
+person,school_type,2,Daycare outside home
+person,school_type,3,Preschool
+person,school_type,4,Home school
+person,school_type,5,"Elementary school (public, private, charter)"
+person,school_type,6,"Middle school (public, private, charter)"
+person,school_type,7,"High school (public, private, charter)"
+person,school_type,10,Vocational/technical school
+person,school_type,11,2-year college
+person,school_type,12,4-year college
+person,school_type,13,Graduate/professional school
+person,school_type,995,Missing
+person,school_type,997,Other
+person,school_bus,1,Yes
+person,school_bus,2,No
+person,school_bus,995,Missing
+person,school_mode,1,"Walk, jog, or roll using a mobility device"
+person,school_mode,24,School bus
+person,school_mode,100,Household vehicle (or motorcycle)
+person,school_mode,101,"Other vehicle (e.g., friend's car, rental, carshare, work car)"
+person,school_mode,102,"Bus, shuttle, or vanpool"
+person,school_mode,103,Bicycle or e-bicycle
+person,school_mode,104,Other way of traveling
+person,school_mode,105,"Rail (e.g., light rail)"
+person,school_mode,106,"Uber/Lyft, taxi, or car service"
+person,school_mode,107,"Scooter, moped, or skateboard"
+person,school_mode,201,SouthWest Prime or MVTA Connect
+person,school_mode,995,Missing
+person,school_mode_seasonality,1,Yes
+person,school_mode_seasonality,2,No
+person,school_mode_seasonality,995,Missing
+person,school_mode_season,1,"Walk, jog, or roll using a mobility device"
+person,school_mode_season,24,School bus
+person,school_mode_season,100,Household vehicle (or motorcycle)
+person,school_mode_season,101,"Other vehicle (e.g., friend's car, rental, carshare, work car)"
+person,school_mode_season,102,"Bus, shuttle, or vanpool"
+person,school_mode_season,103,Bicycle or e-bicycle
+person,school_mode_season,104,Other way of traveling
+person,school_mode_season,105,"Rail (e.g., light rail)"
+person,school_mode_season,106,"Uber/Lyft, taxi, or car service"
+person,school_mode_season,107,"Scooter, moped, or skateboard"
+person,school_mode_season,201,SouthWest Prime or MVTA Connect
+person,school_mode_season,995,Missing
+person,school_county,995,Missing
+person,school_county,27001,Aitkin
+person,school_county,27003,Anoka
+person,school_county,27005,Becker
+person,school_county,27007,Beltrami
+person,school_county,27009,Benton
+person,school_county,27011,Big Stone
+person,school_county,27013,Blue Earth
+person,school_county,27015,Brown
+person,school_county,27017,Carlton
+person,school_county,27019,Carver
+person,school_county,27021,Cass
+person,school_county,27023,Chippewa
+person,school_county,27025,Chisago
+person,school_county,27027,Clay
+person,school_county,27029,Clearwater
+person,school_county,27031,Cook
+person,school_county,27033,Cottonwood
+person,school_county,27035,Crow Wing
+person,school_county,27037,Dakota
+person,school_county,27039,Dodge
+person,school_county,27041,Douglas
+person,school_county,27043,Faribault
+person,school_county,27045,Fillmore
+person,school_county,27047,Freeborn
+person,school_county,27049,Goodhue
+person,school_county,27051,Grant
+person,school_county,27053,Hennepin
+person,school_county,27055,Houston
+person,school_county,27057,Hubbard
+person,school_county,27059,Isanti
+person,school_county,27061,Itasca
+person,school_county,27063,Jackson
+person,school_county,27065,Kanabec
+person,school_county,27067,Kandiyohi
+person,school_county,27069,Kittson
+person,school_county,27071,Koochiching
+person,school_county,27073,Lac qui Parle
+person,school_county,27075,Lake
+person,school_county,27077,Lake of the Woods
+person,school_county,27079,Le Sueur
+person,school_county,27081,Lincoln
+person,school_county,27083,Lyon
+person,school_county,27085,McLeod
+person,school_county,27087,Mahnomen
+person,school_county,27089,Marshall
+person,school_county,27091,Martin
+person,school_county,27093,Meeker
+person,school_county,27095,Mille Lacs
+person,school_county,27097,Morrison
+person,school_county,27099,Mower
+person,school_county,27101,Murray
+person,school_county,27103,Nicollet
+person,school_county,27105,Nobles
+person,school_county,27107,Norman
+person,school_county,27109,Olmsted
+person,school_county,27111,Otter Tail
+person,school_county,27113,Pennington
+person,school_county,27115,Pine
+person,school_county,27117,Pipestone
+person,school_county,27119,Polk
+person,school_county,27121,Pope
+person,school_county,27123,Ramsey
+person,school_county,27125,Red Lake
+person,school_county,27127,Redwood
+person,school_county,27129,Renville
+person,school_county,27131,Rice
+person,school_county,27133,Rock
+person,school_county,27135,Roseau
+person,school_county,27137,St Louis
+person,school_county,27139,Scott
+person,school_county,27141,Sherburne
+person,school_county,27143,Sibley
+person,school_county,27145,Stearns
+person,school_county,27147,Steele
+person,school_county,27149,Stevens
+person,school_county,27151,Swift
+person,school_county,27153,Todd
+person,school_county,27155,Traverse
+person,school_county,27157,Wabasha
+person,school_county,27159,Wadena
+person,school_county,27161,Waseca
+person,school_county,27163,Washington
+person,school_county,27165,Watonwan
+person,school_county,27167,Wilkin
+person,school_county,27169,Winona
+person,school_county,27171,Wright
+person,school_county,27173,Yellow Medicine
+person,school_county,55001,Adams
+person,school_county,55003,Ashland
+person,school_county,55005,Barron
+person,school_county,55007,Bayfield
+person,school_county,55009,Brown
+person,school_county,55011,Buffalo
+person,school_county,55013,Burnett
+person,school_county,55015,Calumet
+person,school_county,55017,Chippewa
+person,school_county,55019,Clark
+person,school_county,55021,Columbia
+person,school_county,55023,Crawford
+person,school_county,55025,Dane
+person,school_county,55027,Dodge
+person,school_county,55029,Door
+person,school_county,55031,Douglas
+person,school_county,55033,Dunn
+person,school_county,55035,Eau Claire
+person,school_county,55037,Florence
+person,school_county,55039,Fond du Lac
+person,school_county,55041,Forest
+person,school_county,55043,Grant
+person,school_county,55045,Green
+person,school_county,55047,Green Lake
+person,school_county,55049,Iowa
+person,school_county,55051,Iron
+person,school_county,55053,Jackson
+person,school_county,55055,Jefferson
+person,school_county,55057,Juneau
+person,school_county,55059,Kenosha
+person,school_county,55061,Kewaunee
+person,school_county,55063,La Crosse
+person,school_county,55065,Lafayette
+person,school_county,55067,Langlade
+person,school_county,55069,Lincoln
+person,school_county,55071,Manitowoc
+person,school_county,55073,Marathon
+person,school_county,55075,Marinette
+person,school_county,55077,Marquette
+person,school_county,55078,Menominee
+person,school_county,55079,Milwaukee
+person,school_county,55081,Monroe
+person,school_county,55083,Oconto
+person,school_county,55085,Oneida
+person,school_county,55087,Outagamie
+person,school_county,55089,Ozaukee
+person,school_county,55091,Pepin
+person,school_county,55093,Pierce
+person,school_county,55095,Polk
+person,school_county,55097,Portage
+person,school_county,55099,Price
+person,school_county,55101,Racine
+person,school_county,55103,Richland
+person,school_county,55105,Rock
+person,school_county,55107,Rusk
+person,school_county,55109,St Croix
+person,school_county,55111,Sauk
+person,school_county,55113,Sawyer
+person,school_county,55115,Shawano
+person,school_county,55117,Sheboygan
+person,school_county,55119,Taylor
+person,school_county,55121,Trempealeau
+person,school_county,55123,Vernon
+person,school_county,55125,Vilas
+person,school_county,55127,Walworth
+person,school_county,55129,Washburn
+person,school_county,55131,Washington
+person,school_county,55133,Waukesha
+person,school_county,55135,Waupaca
+person,school_county,55137,Waushara
+person,school_county,55139,Winnebago
+person,school_county,55141,Wood
+person,school_state,27,Minnesota
+person,school_state,55,Wisconsin
+person,school_state,995,Missing
+person,school_in_region,0,Not in study region
+person,school_in_region,1,In study region
+person,school_in_region,995,Missing
+person,num_jobs,1,1
+person,num_jobs,2,2
+person,num_jobs,3,3
+person,num_jobs,4,4
+person,num_jobs,5,5
+person,num_jobs,6,6
+person,num_jobs,995,Missing
+person,employment_status,1,Employed full-time (paid)
+person,employment_status,2,Employed part-time (paid)
+person,employment_status,3,Self-employed
+person,employment_status,5,"Not employed and not looking for work (e.g., retired, stay-at-home parent, student)"
+person,employment_status,6,Unemployed and looking for work
+person,employment_status,7,Unpaid volunteer or intern
+person,employment_status,8,"Employed, but not currently working (e.g., on leave, furloughed 100%)"
+person,employment_status,995,Missing
+person,employment_pre_covid,1,Employed full-time (paid)
+person,employment_pre_covid,2,Employed part-time (paid)
+person,employment_pre_covid,3,Self-employed
+person,employment_pre_covid,5,"Not employed and not looking for work (e.g., retired, stay-at-home parent, student)"
+person,employment_pre_covid,6,Unemployed and looking for work
+person,employment_pre_covid,7,Unpaid volunteer or intern
+person,employment_pre_covid,995,Missing
+person,job_type,1,Go to one work location ONLY (outside of home)
+person,job_type,2,Work location regularly varies (different offices/jobsites)
+person,job_type,3,"Work ONLY from home or remotely (telework, self-employed)"
+person,job_type,4,"Drive/bike/travel for work (driver, sales, deliveries)"
+person,job_type,5,Telework some days and travel to a work location some days
+person,job_type,995,Missing
+person,job_type_pre_covid,1,Went to one work location ONLY (outside of home)
+person,job_type_pre_covid,2,Work location regularly varied (different offices/jobsites)
+person,job_type_pre_covid,3,"Worked ONLY from home or remotely (telework, self-employed)"
+person,job_type_pre_covid,4,"Drove/biked/traveled for work (driver, sales, deliveries)"
+person,job_type_pre_covid,5,Teleworked some days and traveled to a work location some days
+person,job_type_pre_covid,995,Missing
+person,job_type_post_covid,1,Go to one work location ONLY (outside of home)
+person,job_type_post_covid,2,Work location regularly varies (different offices/jobsites)
+person,job_type_post_covid,3,"Work ONLY from home or remotely (telework, self-employed)"
+person,job_type_post_covid,4,"Drive/bike/travel for work (driver, sales, deliveries)"
+person,job_type_post_covid,5,Telework some days and travel to a work location some days
+person,job_type_post_covid,995,Missing
+person,work_freq,1,6-7 days a week
+person,work_freq,2,5 days a week
+person,work_freq,3,4 days a week
+person,work_freq,4,3 days a week
+person,work_freq,5,2 days a week
+person,work_freq,6,1 day a week
+person,work_freq,7,9 days every 2 weeks
+person,work_freq,995,Missing
+person,work_freq,997,Other
+person,work_hours,1,50 or more
+person,work_hours,2,40 to 49
+person,work_hours,3,35 to 39
+person,work_hours,4,30 to 34
+person,work_hours,5,20 to 29
+person,work_hours,6,10 to 19
+person,work_hours,7,Fewer than 10
+person,work_hours,8,Hours vary greatly week to week
+person,work_hours,995,Missing
+person,work_mode,1,"Walk, jog, or roll using a mobility device"
+person,work_mode,100,Household vehicle (or motorcycle)
+person,work_mode,101,"Other vehicle (e.g., friend's car, rental, carshare, work car)"
+person,work_mode,102,"Bus, shuttle, or vanpool"
+person,work_mode,103,Bicycle or e-bicycle
+person,work_mode,104,Other
+person,work_mode,105,"Rail (e.g., light rail)"
+person,work_mode,106,"Uber/Lyft, taxi, or car service"
+person,work_mode,107,"Scooter, moped, or skateboard"
+person,work_mode,201,SouthWest Prime or MVTA Connect
+person,work_mode,995,Missing
+person,work_mode_pre_covid,1,"Walk, jog, or roll using a mobility device"
+person,work_mode_pre_covid,100,Household vehicle (or motorcycle)
+person,work_mode_pre_covid,101,"Other vehicle (e.g., friend's car, rental, carshare, work car)"
+person,work_mode_pre_covid,102,"Bus, shuttle, or vanpool"
+person,work_mode_pre_covid,103,Bicycle or e-bicycle
+person,work_mode_pre_covid,105,"Rail (e.g., light rail)"
+person,work_mode_pre_covid,106,"Uber/Lyft, taxi, or car service"
+person,work_mode_pre_covid,107,"Scooter, moped, or skateboard"
+person,work_mode_pre_covid,201,SouthWest Prime or MVTA Connect
+person,work_mode_pre_covid,995,Missing
+person,work_mode_pre_covid,997,Other
+person,work_mode_seasonality,1,Yes
+person,work_mode_seasonality,2,No
+person,work_mode_seasonality,995,Missing
+person,work_mode_season,1,"Walk, jog, or roll using a mobility device"
+person,work_mode_season,100,Household vehicle (or motorcycle)
+person,work_mode_season,101,"Other vehicle (e.g., friend's car, rental, carshare, work car)"
+person,work_mode_season,102,"Bus, shuttle, or vanpool"
+person,work_mode_season,103,Bicycle or e-bicycle
+person,work_mode_season,104,Other
+person,work_mode_season,105,"Rail (e.g., light rail)"
+person,work_mode_season,106,"Uber/Lyft, taxi, or car service"
+person,work_mode_season,107,"Scooter, moped, or skateboard"
+person,work_mode_season,201,SouthWest Prime or MVTA Connect
+person,work_mode_season,995,Missing
+person,work_county,995,Missing
+person,work_county,27001,Aitkin
+person,work_county,27003,Anoka
+person,work_county,27005,Becker
+person,work_county,27007,Beltrami
+person,work_county,27009,Benton
+person,work_county,27011,Big Stone
+person,work_county,27013,Blue Earth
+person,work_county,27015,Brown
+person,work_county,27017,Carlton
+person,work_county,27019,Carver
+person,work_county,27021,Cass
+person,work_county,27023,Chippewa
+person,work_county,27025,Chisago
+person,work_county,27027,Clay
+person,work_county,27029,Clearwater
+person,work_county,27031,Cook
+person,work_county,27033,Cottonwood
+person,work_county,27035,Crow Wing
+person,work_county,27037,Dakota
+person,work_county,27039,Dodge
+person,work_county,27041,Douglas
+person,work_county,27043,Faribault
+person,work_county,27045,Fillmore
+person,work_county,27047,Freeborn
+person,work_county,27049,Goodhue
+person,work_county,27051,Grant
+person,work_county,27053,Hennepin
+person,work_county,27055,Houston
+person,work_county,27057,Hubbard
+person,work_county,27059,Isanti
+person,work_county,27061,Itasca
+person,work_county,27063,Jackson
+person,work_county,27065,Kanabec
+person,work_county,27067,Kandiyohi
+person,work_county,27069,Kittson
+person,work_county,27071,Koochiching
+person,work_county,27073,Lac qui Parle
+person,work_county,27075,Lake
+person,work_county,27077,Lake of the Woods
+person,work_county,27079,Le Sueur
+person,work_county,27081,Lincoln
+person,work_county,27083,Lyon
+person,work_county,27085,McLeod
+person,work_county,27087,Mahnomen
+person,work_county,27089,Marshall
+person,work_county,27091,Martin
+person,work_county,27093,Meeker
+person,work_county,27095,Mille Lacs
+person,work_county,27097,Morrison
+person,work_county,27099,Mower
+person,work_county,27101,Murray
+person,work_county,27103,Nicollet
+person,work_county,27105,Nobles
+person,work_county,27107,Norman
+person,work_county,27109,Olmsted
+person,work_county,27111,Otter Tail
+person,work_county,27113,Pennington
+person,work_county,27115,Pine
+person,work_county,27117,Pipestone
+person,work_county,27119,Polk
+person,work_county,27121,Pope
+person,work_county,27123,Ramsey
+person,work_county,27125,Red Lake
+person,work_county,27127,Redwood
+person,work_county,27129,Renville
+person,work_county,27131,Rice
+person,work_county,27133,Rock
+person,work_county,27135,Roseau
+person,work_county,27137,St Louis
+person,work_county,27139,Scott
+person,work_county,27141,Sherburne
+person,work_county,27143,Sibley
+person,work_county,27145,Stearns
+person,work_county,27147,Steele
+person,work_county,27149,Stevens
+person,work_county,27151,Swift
+person,work_county,27153,Todd
+person,work_county,27155,Traverse
+person,work_county,27157,Wabasha
+person,work_county,27159,Wadena
+person,work_county,27161,Waseca
+person,work_county,27163,Washington
+person,work_county,27165,Watonwan
+person,work_county,27167,Wilkin
+person,work_county,27169,Winona
+person,work_county,27171,Wright
+person,work_county,27173,Yellow Medicine
+person,work_county,55001,Adams
+person,work_county,55003,Ashland
+person,work_county,55005,Barron
+person,work_county,55007,Bayfield
+person,work_county,55009,Brown
+person,work_county,55011,Buffalo
+person,work_county,55013,Burnett
+person,work_county,55015,Calumet
+person,work_county,55017,Chippewa
+person,work_county,55019,Clark
+person,work_county,55021,Columbia
+person,work_county,55023,Crawford
+person,work_county,55025,Dane
+person,work_county,55027,Dodge
+person,work_county,55029,Door
+person,work_county,55031,Douglas
+person,work_county,55033,Dunn
+person,work_county,55035,Eau Claire
+person,work_county,55037,Florence
+person,work_county,55039,Fond du Lac
+person,work_county,55041,Forest
+person,work_county,55043,Grant
+person,work_county,55045,Green
+person,work_county,55047,Green Lake
+person,work_county,55049,Iowa
+person,work_county,55051,Iron
+person,work_county,55053,Jackson
+person,work_county,55055,Jefferson
+person,work_county,55057,Juneau
+person,work_county,55059,Kenosha
+person,work_county,55061,Kewaunee
+person,work_county,55063,La Crosse
+person,work_county,55065,Lafayette
+person,work_county,55067,Langlade
+person,work_county,55069,Lincoln
+person,work_county,55071,Manitowoc
+person,work_county,55073,Marathon
+person,work_county,55075,Marinette
+person,work_county,55077,Marquette
+person,work_county,55078,Menominee
+person,work_county,55079,Milwaukee
+person,work_county,55081,Monroe
+person,work_county,55083,Oconto
+person,work_county,55085,Oneida
+person,work_county,55087,Outagamie
+person,work_county,55089,Ozaukee
+person,work_county,55091,Pepin
+person,work_county,55093,Pierce
+person,work_county,55095,Polk
+person,work_county,55097,Portage
+person,work_county,55099,Price
+person,work_county,55101,Racine
+person,work_county,55103,Richland
+person,work_county,55105,Rock
+person,work_county,55107,Rusk
+person,work_county,55109,St Croix
+person,work_county,55111,Sauk
+person,work_county,55113,Sawyer
+person,work_county,55115,Shawano
+person,work_county,55117,Sheboygan
+person,work_county,55119,Taylor
+person,work_county,55121,Trempealeau
+person,work_county,55123,Vernon
+person,work_county,55125,Vilas
+person,work_county,55127,Walworth
+person,work_county,55129,Washburn
+person,work_county,55131,Washington
+person,work_county,55133,Waukesha
+person,work_county,55135,Waupaca
+person,work_county,55137,Waushara
+person,work_county,55139,Winnebago
+person,work_county,55141,Wood
+person,work_state,27,Minnesota
+person,work_state,55,Wisconsin
+person,work_state,995,Missing
+person,work_in_region,0,Not in study region
+person,work_in_region,1,In study region
+person,work_in_region,995,Missing
+person,work_park_pay,1,"Parking is always free at/near work, at park & ride, etc."
+person,work_park_pay,2,Employer pays ALL parking costs (for me)
+person,work_park_pay,3,Employer offers discounted parking (I pay some)
+person,work_park_pay,4,I pay some or all parking costs with a pre-tax transportation card
+person,work_park_pay,5,I pay some or all parking costs (employer pays none)
+person,work_park_pay,995,Missing
+person,work_park_pay,998,Don't know
+person,work_offers_bike_tune,0,Not selected
+person,work_offers_bike_tune,1,Selected
+person,work_offers_bike_tune,995,Missing
+person,work_offers_bikeshare,0,Not selected
+person,work_offers_bikeshare,1,Selected
+person,work_offers_bikeshare,995,Missing
+person,work_offers_carshare,0,Not selected
+person,work_offers_carshare,1,Selected
+person,work_offers_carshare,995,Missing
+person,work_offers_incentives,0,Not selected
+person,work_offers_incentives,1,Selected
+person,work_offers_incentives,995,Missing
+person,work_offers_parking,0,Not selected
+person,work_offers_parking,1,Selected
+person,work_offers_parking,995,Missing
+person,work_offers_shuttle,0,Not selected
+person,work_offers_shuttle,1,Selected
+person,work_offers_shuttle,995,Missing
+person,work_offers_tnc,0,Not selected
+person,work_offers_tnc,1,Selected
+person,work_offers_tnc,995,Missing
+person,work_offers_transit,0,Not selected
+person,work_offers_transit,1,Selected
+person,work_offers_transit,995,Missing
+person,work_offers_vanpool,0,Not selected
+person,work_offers_vanpool,1,Selected
+person,work_offers_vanpool,995,Missing
+person,work_offers_none,0,Not selected
+person,work_offers_none,1,Selected
+person,work_offers_none,995,Missing
+person,work_offers_dk,0,Not selected
+person,work_offers_dk,1,Selected
+person,work_offers_dk,995,Missing
+person,work_uses_bike_tune,0,Not selected
+person,work_uses_bike_tune,1,Selected
+person,work_uses_bike_tune,995,Missing
+person,work_uses_bikeshare,0,Not selected
+person,work_uses_bikeshare,1,Selected
+person,work_uses_bikeshare,995,Missing
+person,work_uses_carshare,0,Not selected
+person,work_uses_carshare,1,Selected
+person,work_uses_carshare,995,Missing
+person,work_uses_incentives,0,Not selected
+person,work_uses_incentives,1,Selected
+person,work_uses_incentives,995,Missing
+person,work_uses_parking,0,Not selected
+person,work_uses_parking,1,Selected
+person,work_uses_parking,995,Missing
+person,work_uses_shuttle,0,Not selected
+person,work_uses_shuttle,1,Selected
+person,work_uses_shuttle,995,Missing
+person,work_uses_tnc,0,Not selected
+person,work_uses_tnc,1,Selected
+person,work_uses_tnc,995,Missing
+person,work_uses_transit,0,Not selected
+person,work_uses_transit,1,Selected
+person,work_uses_transit,995,Missing
+person,work_uses_vanpool,0,Not selected
+person,work_uses_vanpool,1,Selected
+person,work_uses_vanpool,995,Missing
+person,work_uses_none,0,Not selected
+person,work_uses_none,1,Selected
+person,work_uses_none,995,Missing
+person,work_vehicle_park,3,Parking lot/ramp/garage
+person,work_vehicle_park,4,On-street parking
+person,work_vehicle_park,5,Park & Ride lot
+person,work_vehicle_park,6,"Don't park (e.g., get dropped off)"
+person,work_vehicle_park,7,Other
+person,work_vehicle_park,995,Missing
+person,workplace_post_covid,1,Yes
+person,workplace_post_covid,2,No
+person,workplace_post_covid,995,Missing
+person,telework_freq,1,6-7 days a week
+person,telework_freq,2,5 days a week
+person,telework_freq,3,4 days a week
+person,telework_freq,4,2-3 days a week
+person,telework_freq,5,1 day a week
+person,telework_freq,6,1 day every 2 weeks
+person,telework_freq,7,1-3 days a month
+person,telework_freq,8,Less than monthly
+person,telework_freq,995,Missing
+person,telework_freq,996,Never
+person,commute_freq,1,6-7 days a week
+person,commute_freq,2,5 days a week
+person,commute_freq,3,4 days a week
+person,commute_freq,4,3 days a week
+person,commute_freq,5,2 days a week
+person,commute_freq,6,1 day a week
+person,commute_freq,7,9 days every 2 weeks
+person,commute_freq,8,1-3 days a month
+person,commute_freq,9,Never
+person,commute_freq,10,Less than monthly
+person,commute_freq,995,Missing
+person,commute_freq_pre_covid,1,6-7 days a week
+person,commute_freq_pre_covid,2,5 days a week
+person,commute_freq_pre_covid,3,4 days a week
+person,commute_freq_pre_covid,4,3 days a week
+person,commute_freq_pre_covid,5,2 days a week
+person,commute_freq_pre_covid,6,1 day a week
+person,commute_freq_pre_covid,7,9 days every 2 weeks
+person,commute_freq_pre_covid,8,1-3 days a month
+person,commute_freq_pre_covid,9,Never
+person,commute_freq_pre_covid,10,Less than monthly
+person,commute_freq_pre_covid,995,Missing
+person,other_school_mode_season_1,0,Not selected
+person,other_school_mode_season_1,1,Selected
+person,other_school_mode_season_1,995,Missing
+person,other_school_mode_season_2,0,Not selected
+person,other_school_mode_season_2,1,Selected
+person,other_school_mode_season_2,995,Missing
+person,other_school_mode_season_3,0,Not selected
+person,other_school_mode_season_3,1,Selected
+person,other_school_mode_season_3,995,Missing
+person,other_school_mode_season_4,0,Not selected
+person,other_school_mode_season_4,1,Selected
+person,other_school_mode_season_4,995,Missing
+person,other_work_mode_season_1,0,Not selected
+person,other_work_mode_season_1,1,Selected
+person,other_work_mode_season_1,995,Missing
+person,other_work_mode_season_2,0,Not selected
+person,other_work_mode_season_2,1,Selected
+person,other_work_mode_season_2,995,Missing
+person,other_work_mode_season_3,0,Not selected
+person,other_work_mode_season_3,1,Selected
+person,other_work_mode_season_3,995,Missing
+person,other_work_mode_season_4,0,Not selected
+person,other_work_mode_season_4,1,Selected
+person,other_work_mode_season_4,995,Missing
+person,share_work_1,0,Not selected
+person,share_work_1,1,"I drive passengers for Uber, Lyft, or another smartphone-app ride service"
+person,share_work_1,995,Missing
+person,share_work_2,0,Not selected
+person,share_work_2,1,"I deliver packages for a smartphone-app service (e.g., Amazon Flex)"
+person,share_work_2,995,Missing
+person,share_work_3,0,Not selected
+person,share_work_3,1,"I deliver food/groceries for a smartphone-app service (e.g., DoorDash, Uber Eats)"
+person,share_work_3,995,Missing
+person,share_work_4,0,Not selected
+person,share_work_4,1,"I rent a personal vehicle for money (e.g., Turo)"
+person,share_work_4,995,Missing
+person,share_work_5,0,Not selected
+person,share_work_5,1,I redistribute bicycles for a bikeshare company
+person,share_work_5,995,Missing
+person,share_work_6,0,Not selected
+person,share_work_6,1,I redistribute scooters for a scooter share company
+person,share_work_6,995,Missing
+person,share_work_996,0,Not selected
+person,share_work_996,1,None of the above
+person,share_work_996,995,Missing
+person,share_work_997,0,Not selected
+person,share_work_997,1,Other for-hire service related to transportation
+person,share_work_997,995,Missing
+person,uses_bus,0,Not selected
+person,uses_bus,1,SouthWest Prime or MVTA Connect
+person,uses_bus,995,Missing
+person,uses_carshare,0,Not selected
+person,uses_carshare,1,Carshare
+person,uses_carshare,995,Missing
+person,uses_moped,0,Not selected
+person,uses_moped,1,"Moped share (e.g., Scoot)"
+person,uses_moped,995,Missing
+person,uses_p2p_share,0,Not selected
+person,uses_p2p_share,1,"Peer-to-peer car rental (e.g., Turo)"
+person,uses_p2p_share,995,Missing
+person,uses_scooter,0,Not selected
+person,uses_scooter,1,"Scooter share (e.g., Bird, Lime, Nice Ride, Lyft)"
+person,uses_scooter,995,Missing
+person,uses_tnc,0,Not selected
+person,uses_tnc,1,"Uber, Lyft, or other smartphone-app ride service"
+person,uses_tnc,995,Missing
+person,uses_vanpool,0,Not selected
+person,uses_vanpool,1,Vanpool
+person,uses_vanpool,995,Missing
+person,uses_bikeshare,0,Not selected
+person,uses_bikeshare,1,"Bikeshare (e.g., Nice Ride, Lyft)"
+person,uses_bikeshare,995,Missing
+person,vanpool_freq,1,6-7 days a week
+person,vanpool_freq,2,5 days a week
+person,vanpool_freq,3,4 days a week
+person,vanpool_freq,4,2-3 days a week
+person,vanpool_freq,5,1 day a week
+person,vanpool_freq,6,1-3 days a month
+person,vanpool_freq,7,Less than monthly
+person,vanpool_freq,995,Missing
+person,tnc_freq,1,6-7 days a week
+person,tnc_freq,2,5 days a week
+person,tnc_freq,3,4 days a week
+person,tnc_freq,4,2-3 days a week
+person,tnc_freq,5,1 day a week
+person,tnc_freq,6,1-3 days a month
+person,tnc_freq,7,Less than monthly
+person,tnc_freq,995,Missing
+person,tnc_work_hours,1,50 or more
+person,tnc_work_hours,2,40 to 49
+person,tnc_work_hours,3,35 to 39
+person,tnc_work_hours,4,30 to 34
+person,tnc_work_hours,5,20 to 29
+person,tnc_work_hours,6,10 to 19
+person,tnc_work_hours,7,Fewer than 10
+person,tnc_work_hours,8,Hours vary greatly week to week
+person,tnc_work_hours,995,Missing
+person,transit_freq,1,6-7 days a week
+person,transit_freq,2,5 days a week
+person,transit_freq,3,4 days a week
+person,transit_freq,4,2-3 days a week
+person,transit_freq,5,1 day a week
+person,transit_freq,6,1-3 days a month
+person,transit_freq,7,Less than monthly
+person,transit_freq,995,Missing
+person,transit_freq,996,Never
+person,peer_rent_freq,1,6-7 days a week
+person,peer_rent_freq,2,5 days a week
+person,peer_rent_freq,3,4 days a week
+person,peer_rent_freq,4,2-3 days a week
+person,peer_rent_freq,5,1 day a week
+person,peer_rent_freq,6,1-3 days a month
+person,peer_rent_freq,7,Less than monthly
+person,peer_rent_freq,995,Missing
+person,scoot_share_freq,1,6-7 days a week
+person,scoot_share_freq,2,5 days a week
+person,scoot_share_freq,3,4 days a week
+person,scoot_share_freq,4,2-3 days a week
+person,scoot_share_freq,5,1 day a week
+person,scoot_share_freq,6,1-3 days a month
+person,scoot_share_freq,7,Less than monthly
+person,scoot_share_freq,995,Missing
+person,moped_share_freq,1,6-7 days a week
+person,moped_share_freq,2,5 days a week
+person,moped_share_freq,3,4 days a week
+person,moped_share_freq,4,2-3 days a week
+person,moped_share_freq,5,1 day a week
+person,moped_share_freq,6,1-3 days a month
+person,moped_share_freq,7,Less than monthly
+person,moped_share_freq,995,Missing
+person,carshare_freq,1,6-7 days a week
+person,carshare_freq,2,5 days a week
+person,carshare_freq,3,4 days a week
+person,carshare_freq,4,2-3 days a week
+person,carshare_freq,5,1 day a week
+person,carshare_freq,6,1-3 days a month
+person,carshare_freq,7,Less than monthly
+person,carshare_freq,995,Missing
+person,bikeshare_freq,1,6-7 days a week
+person,bikeshare_freq,2,5 days a week
+person,bikeshare_freq,3,4 days a week
+person,bikeshare_freq,4,2-3 days a week
+person,bikeshare_freq,5,1 day a week
+person,bikeshare_freq,6,1-3 days a month
+person,bikeshare_freq,7,Less than monthly
+person,bikeshare_freq,995,Missing
+person,bike_freq,1,6-7 days a week
+person,bike_freq,2,5 days a week
+person,bike_freq,3,4 days a week
+person,bike_freq,4,2-3 days a week
+person,bike_freq,5,1 day a week
+person,bike_freq,6,1-3 days a month
+person,bike_freq,7,Less than monthly
+person,bike_freq,995,Missing
+person,bike_freq,996,Never
+person,no_shared_mobility,0,Not selected
+person,no_shared_mobility,1,None of the above
+person,no_shared_mobility,995,Missing
+person,transportation_barriers_1,0,Not selected
+person,transportation_barriers_1,1,Parking was too expensive
+person,transportation_barriers_1,995,Missing
+person,transportation_barriers_2,0,Not selected
+person,transportation_barriers_2,1,Vehicle was not working
+person,transportation_barriers_2,995,Missing
+person,transportation_barriers_3,0,Not selected
+person,transportation_barriers_3,1,Vehicle was not available
+person,transportation_barriers_3,995,Missing
+person,transportation_barriers_4,0,Not selected
+person,transportation_barriers_4,1,Bus was not running
+person,transportation_barriers_4,995,Missing
+person,transportation_barriers_5,0,Not selected
+person,transportation_barriers_5,1,This has not happened in the past 7 days
+person,transportation_barriers_5,995,Missing
+person,transportation_barriers_997,0,Not selected
+person,transportation_barriers_997,1,Other
+person,transportation_barriers_997,995,Missing
+person,transportation_barriers_999,0,Not selected
+person,transportation_barriers_999,1,Prefer not to answer
+person,transportation_barriers_999,995,Missing
+person,vehicle_name,6,Household vehicle 1
+person,vehicle_name,7,Household vehicle 2
+person,vehicle_name,8,Household vehicle 3
+person,vehicle_name,9,Household vehicle 4
+person,vehicle_name,10,Household vehicle 5
+person,vehicle_name,11,Household vehicle 6
+person,vehicle_name,18,"A carshare vehicle (e.g., Zipcar)"
+person,vehicle_name,995,Missing
+person,vehicle_name,996,None (I do not drive a vehicle)
+person,vehicle_name,997,Other vehicle
+person,vehicle_purchase,1,Very likely
+person,vehicle_purchase,2,Somewhat likely
+person,vehicle_purchase,3,Neutral
+person,vehicle_purchase,4,Somewhat unlikely
+person,vehicle_purchase,5,Very unlikely
+person,vehicle_purchase,995,Missing
+person,home_vehicle_park,1,Home driveway/garage
+person,home_vehicle_park,2,Parking lot/ramp/garage
+person,home_vehicle_park,3,On-street parking
+person,home_vehicle_park,995,Missing
+person,home_vehicle_park,997,Other
+person,home_vehicle_park_pay,1,Yes
+person,home_vehicle_park_pay,2,No
+person,home_vehicle_park_pay,995,Missing
+person,ev_purchase,1,"Yes, I have considered purchasing a fully electric vehicle and may purchase one in the next few years"
+person,ev_purchase,2,"Yes, I have considered purchasing a fully electric vehicle, but am NOT likely to purchase one in the next few years"
+person,ev_purchase,3,"No, I have not considered purchasing a fully electric vehicle"
+person,ev_purchase,4,"Yes, I have already purchased a fully electric vehicle but no longer own it, or do not drive it as my primary vehicle"
+person,ev_purchase,995,Missing
+person,ev_outlet,1,Yes
+person,ev_outlet,2,No
+person,ev_outlet,995,Missing
+person,ev_typical_charge_1,0,Not selected
+person,ev_typical_charge_1,1,Selected
+person,ev_typical_charge_1,995,Missing
+person,ev_typical_charge_2,0,Not selected
+person,ev_typical_charge_2,1,Selected
+person,ev_typical_charge_2,995,Missing
+person,ev_typical_charge_3,0,Not selected
+person,ev_typical_charge_3,1,Selected
+person,ev_typical_charge_3,995,Missing
+person,ev_typical_charge_4,0,Not selected
+person,ev_typical_charge_4,1,Selected
+person,ev_typical_charge_4,995,Missing
+person,ev_typical_charge_5,0,Not selected
+person,ev_typical_charge_5,1,Selected
+person,ev_typical_charge_5,995,Missing
+person,ev_typical_charge_6,0,Not selected
+person,ev_typical_charge_6,1,Selected
+person,ev_typical_charge_6,995,Missing
+person,ev_typical_charge_997,0,Not selected
+person,ev_typical_charge_997,1,Selected
+person,ev_typical_charge_997,995,Missing
+person,language_at_home,1,English
+person,language_at_home,2,Hmong
+person,language_at_home,3,Karen
+person,language_at_home,4,Oromo
+person,language_at_home,5,Somali
+person,language_at_home,6,Spanish
+person,language_at_home,995,Missing
+person,language_at_home,997,Other
+person,language_at_home,999,Prefer not to answer
+person,num_person_days,1,1 day
+person,num_person_days,2,2 days
+person,num_person_days,3,3 days
+person,num_person_days,4,4 days
+person,num_person_days,5,5 days
+person,num_person_days,6,6 days
+person,num_person_days,7,7 days
+person,second_home,0,Does not regularly spend night at second home
+person,second_home,1,Regularly spends night at second home
+person,second_home,995,Missing
+person,second_home_all,1,No
+person,second_home_all,2,Yes
+person,second_home_all,995,Missing
+person,participate,1,Yes
+person,participate,2,No
+person,participate,995,Missing
+person,work_zone,1,Anoka County
+person,work_zone,2,Carver County
+person,work_zone,3,Dakota County
+person,work_zone,4,Hennepin County
+person,work_zone,5,Ramsey County
+person,work_zone,6,Scott County
+person,work_zone,7,Washington County
+person,work_zone,8,MPO outside seven counties
+person,work_zone,9,"In study region, but not in MPO"
+person,work_zone,10,Not in study region
+person,school_zone,1,Anoka County
+person,school_zone,2,Carver County
+person,school_zone,3,Dakota County
+person,school_zone,4,Hennepin County
+person,school_zone,5,Ramsey County
+person,school_zone,6,Scott County
+person,school_zone,7,Washington County
+person,school_zone,8,MPO outside seven counties
+person,school_zone,9,"In study region, but not in MPO"
+person,school_zone,10,Not in study region
+vehicle,vehicle_num,1,Household vehicle 1
+vehicle,vehicle_num,2,Household vehicle 2
+vehicle,vehicle_num,3,Household vehicle 3
+vehicle,vehicle_num,4,Household vehicle 4
+vehicle,vehicle_num,5,Household vehicle 5
+vehicle,vehicle_num,6,Household vehicle 6
+vehicle,vehicle_num,7,Household vehicle 7
+vehicle,vehicle_num,8,Household vehicle 8
+vehicle,fuel,1,Gas
+vehicle,fuel,2,Hybrid (HEV)
+vehicle,fuel,3,Plug-in hybrid (PHEV)
+vehicle,fuel,4,Electric (EV)
+vehicle,fuel,5,Diesel
+vehicle,fuel,6,Flex fuel (FFV)
+vehicle,fuel,7,"Other (e.g., natural gas, bio-diesel)"
+vehicle,fuel,995,Missing
+vehicle,vehicle_ownership,1,Owned (making payments)
+vehicle,vehicle_ownership,2,Leased
+vehicle,vehicle_ownership,3,Employer provided
+vehicle,vehicle_ownership,4,Fully owned (not making payments)
+vehicle,vehicle_ownership,995,Missing
+vehicle,vehicle_ownership,997,Other
+vehicle,vehicle_cost,1,Less than $250
+vehicle,vehicle_cost,2,$250-$499
+vehicle,vehicle_cost,3,$500-$749
+vehicle,vehicle_cost,4,$750-$999
+vehicle,vehicle_cost,5,"$1,000 or more"
+vehicle,vehicle_cost,995,Missing
+vehicle,vehicle_cost,998,Don't know
+vehicle,vehicle_cost,999,Prefer not to answer
+vehicle,toll_transponder,1,No
+vehicle,toll_transponder,2,Yes
+vehicle,toll_transponder,995,Missing
+day,travel_dow,1,Monday
+day,travel_dow,2,Tuesday
+day,travel_dow,3,Wednesday
+day,travel_dow,4,Thursday
+day,travel_dow,5,Friday
+day,travel_dow,6,Saturday
+day,travel_dow,7,Sunday
+day,travel_dow,995,Missing
+day,day_complete,0,No
+day,day_complete,1,Yes
+day,day_complete,995,Missing
+day,daily_complete,0,No
+day,daily_complete,1,Yes
+day,daily_complete,995,Missing
+day,hh_day_complete,0,No
+day,hh_day_complete,1,Yes
+day,hh_day_complete,995,Missing
+day,proxy_complete,0,No
+day,proxy_complete,1,Yes
+day,proxy_complete,995,Missing
+day,made_travel,1,"Yes, made trips this day"
+day,made_travel,2,"No, did not go anywhere or make trips this day"
+day,made_travel,995,Missing
+day,made_travel,998,Don't know
+day,made_travel,999,Prefer not to answer
+day,no_travel_delivery,0,Not selected
+day,no_travel_delivery,1,Selected
+day,no_travel_delivery,995,Missing
+day,no_travel_home_school,0,Not selected
+day,no_travel_home_school,1,Selected
+day,no_travel_home_school,995,Missing
+day,no_travel_house_work,0,Not selected
+day,no_travel_house_work,1,Selected
+day,no_travel_house_work,995,Missing
+day,no_travel_kids_break,0,Not selected
+day,no_travel_kids_break,1,Selected
+day,no_travel_kids_break,995,Missing
+day,no_travel_no_transport,0,Not selected
+day,no_travel_no_transport,1,Selected
+day,no_travel_no_transport,995,Missing
+day,no_travel_no_work,0,Not selected
+day,no_travel_no_work,1,Selected
+day,no_travel_no_work,995,Missing
+day,no_travel_sick,0,Not selected
+day,no_travel_sick,1,Selected
+day,no_travel_sick,995,Missing
+day,no_travel_telework,0,Not selected
+day,no_travel_telework,1,Selected
+day,no_travel_telework,995,Missing
+day,no_travel_weather,0,Not selected
+day,no_travel_weather,1,Selected
+day,no_travel_weather,995,Missing
+day,no_travel_adult_traveled,0,Not selected
+day,no_travel_adult_traveled,1,Selected
+day,no_travel_adult_traveled,995,Missing
+day,no_travel_proxy_traveled,0,Not selected
+day,no_travel_proxy_traveled,1,Selected
+day,no_travel_proxy_traveled,995,Missing
+day,no_travel_other,0,Not selected
+day,no_travel_other,1,Selected
+day,no_travel_other,995,Missing
+day,shop_online,1,Yes
+day,shop_online,2,No
+day,shop_online,995,Missing
+day,begin_day,1,Home
+day,begin_day,2,"Someone else's home (e.g., friend)"
+day,begin_day,3,Work
+day,begin_day,4,"Their other home (e.g., other parent, partner, second home)"
+day,begin_day,5,"Traveling (e.g., red-eye flight)"
+day,begin_day,7,"Temporary lodging (e.g., hotel, vacation rental)"
+day,begin_day,995,Missing
+day,begin_day,997,Other
+day,end_day,1,Home
+day,end_day,2,"Someone else's home (e.g., friend)"
+day,end_day,3,Work
+day,end_day,4,"Their other home (e.g., other parent, partner, second home)"
+day,end_day,5,"Traveling (e.g., red-eye flight)"
+day,end_day,7,"Temporary lodging (e.g., hotel, vacation rental)"
+day,end_day,995,Missing
+day,end_day,997,Other
+day,attend_school_1,0,Not selected
+day,attend_school_1,1,Selected
+day,attend_school_1,995,Missing
+day,attend_school_2,0,Not selected
+day,attend_school_2,1,Selected
+day,attend_school_2,995,Missing
+day,attend_school_3,0,Not selected
+day,attend_school_3,1,Selected
+day,attend_school_3,995,Missing
+day,attend_school_998,0,Not selected
+day,attend_school_998,1,Selected
+day,attend_school_998,995,Missing
+day,attend_school_999,0,Not selected
+day,attend_school_999,1,Selected
+day,attend_school_999,995,Missing
+day,attend_school_no_1,0,Not selected
+day,attend_school_no_1,1,Selected
+day,attend_school_no_1,995,Missing
+day,attend_school_no_2,0,Not selected
+day,attend_school_no_2,1,Selected
+day,attend_school_no_2,995,Missing
+day,attend_school_no_3,0,Not selected
+day,attend_school_no_3,1,Selected
+day,attend_school_no_3,995,Missing
+day,attend_school_no_4,0,Not selected
+day,attend_school_no_4,1,Selected
+day,attend_school_no_4,995,Missing
+day,attend_school_no_5,0,Not selected
+day,attend_school_no_5,1,Selected
+day,attend_school_no_5,995,Missing
+day,attend_school_no_6,0,Not selected
+day,attend_school_no_6,1,Selected
+day,attend_school_no_6,995,Missing
+day,attend_school_no_998,0,Not selected
+day,attend_school_no_998,1,Selected
+day,attend_school_no_998,995,Missing
+day,attend_school_no_999,0,Not selected
+day,attend_school_no_999,1,Selected
+day,attend_school_no_999,995,Missing
+day,delivery_food,0,Not selected
+day,delivery_food,1,Selected
+day,delivery_food,995,Missing
+day,delivery_grocery,0,Not selected
+day,delivery_grocery,1,Selected
+day,delivery_grocery,995,Missing
+day,delivery_home,0,Not selected
+day,delivery_home,1,Selected
+day,delivery_home,995,Missing
+day,delivery_locker,0,Not selected
+day,delivery_locker,1,Selected
+day,delivery_locker,995,Missing
+day,delivery_service,0,Not selected
+day,delivery_service,1,Selected
+day,delivery_service,995,Missing
+day,delivery_work,0,Not selected
+day,delivery_work,1,Selected
+day,delivery_work,995,Missing
+day,delivery_none,0,Not selected
+day,delivery_none,1,Selected
+day,delivery_none,995,Missing
+day,delivery_other,0,Not selected
+day,delivery_other,1,Selected
+day,delivery_other,995,Missing
+day,ev_charge,1,Yes
+day,ev_charge,2,No
+day,ev_charge,995,Missing
+day,ev_charge,998,Don't know
+day,ev_charge_time,1,12:00 AM - 12:59 AM
+day,ev_charge_time,2,1:00 AM - 1:59 AM
+day,ev_charge_time,3,2:00 AM - 2:59 AM
+day,ev_charge_time,4,3:00 AM - 3:59 AM
+day,ev_charge_time,5,4:00 AM - 4:59 AM
+day,ev_charge_time,6,5:00 AM - 5:59 AM
+day,ev_charge_time,7,6:00 AM - 6:59 AM
+day,ev_charge_time,8,7:00 AM - 7:59 AM
+day,ev_charge_time,9,8:00 AM - 8:59 AM
+day,ev_charge_time,10,9:00 AM - 9:59 AM
+day,ev_charge_time,11,10:00 AM - 10:59 AM
+day,ev_charge_time,12,11:00 AM - 11:59 AM
+day,ev_charge_time,13,12:00 PM - 12:59 PM
+day,ev_charge_time,14,1:00 PM - 1:59 PM
+day,ev_charge_time,15,2:00 PM - 2:59 PM
+day,ev_charge_time,16,3:00 PM - 3:59 PM
+day,ev_charge_time,17,4:00 PM - 4:59 PM
+day,ev_charge_time,18,5:00 PM - 5:59 PM
+day,ev_charge_time,19,6:00 PM - 6:59 PM
+day,ev_charge_time,20,7:00 PM - 7:59 PM
+day,ev_charge_time,21,8:00 PM - 8:59 PM
+day,ev_charge_time,22,9:00 PM - 9:59 PM
+day,ev_charge_time,23,10:00 PM - 10:59 PM
+day,ev_charge_time,24,11:00 PM - 11:59 PM
+day,ev_charge_time,995,Missing
+day,ev_charge_duration,1,Under 4 hours
+day,ev_charge_duration,2,4-6 hours
+day,ev_charge_duration,3,More than 6 hours
+day,ev_charge_duration,995,Missing
+trip,depart_dow,1,Monday
+trip,depart_dow,2,Tuesday
+trip,depart_dow,3,Wednesday
+trip,depart_dow,4,Thursday
+trip,depart_dow,5,Friday
+trip,depart_dow,6,Saturday
+trip,depart_dow,7,Sunday
+trip,depart_dow,995,Missing
+trip,depart_hour,0,12AM
+trip,depart_hour,1,1AM
+trip,depart_hour,2,2AM
+trip,depart_hour,3,3AM
+trip,depart_hour,4,4AM
+trip,depart_hour,5,5AM
+trip,depart_hour,6,6AM
+trip,depart_hour,7,7AM
+trip,depart_hour,8,8AM
+trip,depart_hour,9,9AM
+trip,depart_hour,10,10AM
+trip,depart_hour,11,11AM
+trip,depart_hour,12,12PM
+trip,depart_hour,13,1PM
+trip,depart_hour,14,2PM
+trip,depart_hour,15,3PM
+trip,depart_hour,16,4PM
+trip,depart_hour,17,5PM
+trip,depart_hour,18,6PM
+trip,depart_hour,19,7PM
+trip,depart_hour,20,8PM
+trip,depart_hour,21,9PM
+trip,depart_hour,22,10PM
+trip,depart_hour,23,11PM
+trip,arrive_dow,1,Monday
+trip,arrive_dow,2,Tuesday
+trip,arrive_dow,3,Wednesday
+trip,arrive_dow,4,Thursday
+trip,arrive_dow,5,Friday
+trip,arrive_dow,6,Saturday
+trip,arrive_dow,7,Sunday
+trip,arrive_dow,995,Missing
+trip,arrive_hour,0,12AM
+trip,arrive_hour,1,1AM
+trip,arrive_hour,2,2AM
+trip,arrive_hour,3,3AM
+trip,arrive_hour,4,4AM
+trip,arrive_hour,5,5AM
+trip,arrive_hour,6,6AM
+trip,arrive_hour,7,7AM
+trip,arrive_hour,8,8AM
+trip,arrive_hour,9,9AM
+trip,arrive_hour,10,10AM
+trip,arrive_hour,11,11AM
+trip,arrive_hour,12,12PM
+trip,arrive_hour,13,1PM
+trip,arrive_hour,14,2PM
+trip,arrive_hour,15,3PM
+trip,arrive_hour,16,4PM
+trip,arrive_hour,17,5PM
+trip,arrive_hour,18,6PM
+trip,arrive_hour,19,7PM
+trip,arrive_hour,20,8PM
+trip,arrive_hour,21,9PM
+trip,arrive_hour,22,10PM
+trip,arrive_hour,23,11PM
+trip,o_county,995,Missing
+trip,o_county,27001,Aitkin
+trip,o_county,27003,Anoka
+trip,o_county,27005,Becker
+trip,o_county,27007,Beltrami
+trip,o_county,27009,Benton
+trip,o_county,27011,Big Stone
+trip,o_county,27013,Blue Earth
+trip,o_county,27015,Brown
+trip,o_county,27017,Carlton
+trip,o_county,27019,Carver
+trip,o_county,27021,Cass
+trip,o_county,27023,Chippewa
+trip,o_county,27025,Chisago
+trip,o_county,27027,Clay
+trip,o_county,27029,Clearwater
+trip,o_county,27031,Cook
+trip,o_county,27033,Cottonwood
+trip,o_county,27035,Crow Wing
+trip,o_county,27037,Dakota
+trip,o_county,27039,Dodge
+trip,o_county,27041,Douglas
+trip,o_county,27043,Faribault
+trip,o_county,27045,Fillmore
+trip,o_county,27047,Freeborn
+trip,o_county,27049,Goodhue
+trip,o_county,27051,Grant
+trip,o_county,27053,Hennepin
+trip,o_county,27055,Houston
+trip,o_county,27057,Hubbard
+trip,o_county,27059,Isanti
+trip,o_county,27061,Itasca
+trip,o_county,27063,Jackson
+trip,o_county,27065,Kanabec
+trip,o_county,27067,Kandiyohi
+trip,o_county,27069,Kittson
+trip,o_county,27071,Koochiching
+trip,o_county,27073,Lac qui Parle
+trip,o_county,27075,Lake
+trip,o_county,27077,Lake of the Woods
+trip,o_county,27079,Le Sueur
+trip,o_county,27081,Lincoln
+trip,o_county,27083,Lyon
+trip,o_county,27085,McLeod
+trip,o_county,27087,Mahnomen
+trip,o_county,27089,Marshall
+trip,o_county,27091,Martin
+trip,o_county,27093,Meeker
+trip,o_county,27095,Mille Lacs
+trip,o_county,27097,Morrison
+trip,o_county,27099,Mower
+trip,o_county,27101,Murray
+trip,o_county,27103,Nicollet
+trip,o_county,27105,Nobles
+trip,o_county,27107,Norman
+trip,o_county,27109,Olmsted
+trip,o_county,27111,Otter Tail
+trip,o_county,27113,Pennington
+trip,o_county,27115,Pine
+trip,o_county,27117,Pipestone
+trip,o_county,27119,Polk
+trip,o_county,27121,Pope
+trip,o_county,27123,Ramsey
+trip,o_county,27125,Red Lake
+trip,o_county,27127,Redwood
+trip,o_county,27129,Renville
+trip,o_county,27131,Rice
+trip,o_county,27133,Rock
+trip,o_county,27135,Roseau
+trip,o_county,27137,St Louis
+trip,o_county,27139,Scott
+trip,o_county,27141,Sherburne
+trip,o_county,27143,Sibley
+trip,o_county,27145,Stearns
+trip,o_county,27147,Steele
+trip,o_county,27149,Stevens
+trip,o_county,27151,Swift
+trip,o_county,27153,Todd
+trip,o_county,27155,Traverse
+trip,o_county,27157,Wabasha
+trip,o_county,27159,Wadena
+trip,o_county,27161,Waseca
+trip,o_county,27163,Washington
+trip,o_county,27165,Watonwan
+trip,o_county,27167,Wilkin
+trip,o_county,27169,Winona
+trip,o_county,27171,Wright
+trip,o_county,27173,Yellow Medicine
+trip,o_county,55001,Adams
+trip,o_county,55003,Ashland
+trip,o_county,55005,Barron
+trip,o_county,55007,Bayfield
+trip,o_county,55009,Brown
+trip,o_county,55011,Buffalo
+trip,o_county,55013,Burnett
+trip,o_county,55015,Calumet
+trip,o_county,55017,Chippewa
+trip,o_county,55019,Clark
+trip,o_county,55021,Columbia
+trip,o_county,55023,Crawford
+trip,o_county,55025,Dane
+trip,o_county,55027,Dodge
+trip,o_county,55029,Door
+trip,o_county,55031,Douglas
+trip,o_county,55033,Dunn
+trip,o_county,55035,Eau Claire
+trip,o_county,55037,Florence
+trip,o_county,55039,Fond du Lac
+trip,o_county,55041,Forest
+trip,o_county,55043,Grant
+trip,o_county,55045,Green
+trip,o_county,55047,Green Lake
+trip,o_county,55049,Iowa
+trip,o_county,55051,Iron
+trip,o_county,55053,Jackson
+trip,o_county,55055,Jefferson
+trip,o_county,55057,Juneau
+trip,o_county,55059,Kenosha
+trip,o_county,55061,Kewaunee
+trip,o_county,55063,La Crosse
+trip,o_county,55065,Lafayette
+trip,o_county,55067,Langlade
+trip,o_county,55069,Lincoln
+trip,o_county,55071,Manitowoc
+trip,o_county,55073,Marathon
+trip,o_county,55075,Marinette
+trip,o_county,55077,Marquette
+trip,o_county,55078,Menominee
+trip,o_county,55079,Milwaukee
+trip,o_county,55081,Monroe
+trip,o_county,55083,Oconto
+trip,o_county,55085,Oneida
+trip,o_county,55087,Outagamie
+trip,o_county,55089,Ozaukee
+trip,o_county,55091,Pepin
+trip,o_county,55093,Pierce
+trip,o_county,55095,Polk
+trip,o_county,55097,Portage
+trip,o_county,55099,Price
+trip,o_county,55101,Racine
+trip,o_county,55103,Richland
+trip,o_county,55105,Rock
+trip,o_county,55107,Rusk
+trip,o_county,55109,St Croix
+trip,o_county,55111,Sauk
+trip,o_county,55113,Sawyer
+trip,o_county,55115,Shawano
+trip,o_county,55117,Sheboygan
+trip,o_county,55119,Taylor
+trip,o_county,55121,Trempealeau
+trip,o_county,55123,Vernon
+trip,o_county,55125,Vilas
+trip,o_county,55127,Walworth
+trip,o_county,55129,Washburn
+trip,o_county,55131,Washington
+trip,o_county,55133,Waukesha
+trip,o_county,55135,Waupaca
+trip,o_county,55137,Waushara
+trip,o_county,55139,Winnebago
+trip,o_county,55141,Wood
+trip,o_state,27,Minnesota
+trip,o_state,55,Wisconsin
+trip,o_state,995,Missing
+trip,o_in_region,0,Not in study region
+trip,o_in_region,1,In study region
+trip,d_county,995,Missing
+trip,d_county,27001,Aitkin
+trip,d_county,27003,Anoka
+trip,d_county,27005,Becker
+trip,d_county,27007,Beltrami
+trip,d_county,27009,Benton
+trip,d_county,27011,Big Stone
+trip,d_county,27013,Blue Earth
+trip,d_county,27015,Brown
+trip,d_county,27017,Carlton
+trip,d_county,27019,Carver
+trip,d_county,27021,Cass
+trip,d_county,27023,Chippewa
+trip,d_county,27025,Chisago
+trip,d_county,27027,Clay
+trip,d_county,27029,Clearwater
+trip,d_county,27031,Cook
+trip,d_county,27033,Cottonwood
+trip,d_county,27035,Crow Wing
+trip,d_county,27037,Dakota
+trip,d_county,27039,Dodge
+trip,d_county,27041,Douglas
+trip,d_county,27043,Faribault
+trip,d_county,27045,Fillmore
+trip,d_county,27047,Freeborn
+trip,d_county,27049,Goodhue
+trip,d_county,27051,Grant
+trip,d_county,27053,Hennepin
+trip,d_county,27055,Houston
+trip,d_county,27057,Hubbard
+trip,d_county,27059,Isanti
+trip,d_county,27061,Itasca
+trip,d_county,27063,Jackson
+trip,d_county,27065,Kanabec
+trip,d_county,27067,Kandiyohi
+trip,d_county,27069,Kittson
+trip,d_county,27071,Koochiching
+trip,d_county,27073,Lac qui Parle
+trip,d_county,27075,Lake
+trip,d_county,27077,Lake of the Woods
+trip,d_county,27079,Le Sueur
+trip,d_county,27081,Lincoln
+trip,d_county,27083,Lyon
+trip,d_county,27085,McLeod
+trip,d_county,27087,Mahnomen
+trip,d_county,27089,Marshall
+trip,d_county,27091,Martin
+trip,d_county,27093,Meeker
+trip,d_county,27095,Mille Lacs
+trip,d_county,27097,Morrison
+trip,d_county,27099,Mower
+trip,d_county,27101,Murray
+trip,d_county,27103,Nicollet
+trip,d_county,27105,Nobles
+trip,d_county,27107,Norman
+trip,d_county,27109,Olmsted
+trip,d_county,27111,Otter Tail
+trip,d_county,27113,Pennington
+trip,d_county,27115,Pine
+trip,d_county,27117,Pipestone
+trip,d_county,27119,Polk
+trip,d_county,27121,Pope
+trip,d_county,27123,Ramsey
+trip,d_county,27125,Red Lake
+trip,d_county,27127,Redwood
+trip,d_county,27129,Renville
+trip,d_county,27131,Rice
+trip,d_county,27133,Rock
+trip,d_county,27135,Roseau
+trip,d_county,27137,St Louis
+trip,d_county,27139,Scott
+trip,d_county,27141,Sherburne
+trip,d_county,27143,Sibley
+trip,d_county,27145,Stearns
+trip,d_county,27147,Steele
+trip,d_county,27149,Stevens
+trip,d_county,27151,Swift
+trip,d_county,27153,Todd
+trip,d_county,27155,Traverse
+trip,d_county,27157,Wabasha
+trip,d_county,27159,Wadena
+trip,d_county,27161,Waseca
+trip,d_county,27163,Washington
+trip,d_county,27165,Watonwan
+trip,d_county,27167,Wilkin
+trip,d_county,27169,Winona
+trip,d_county,27171,Wright
+trip,d_county,27173,Yellow Medicine
+trip,d_county,55001,Adams
+trip,d_county,55003,Ashland
+trip,d_county,55005,Barron
+trip,d_county,55007,Bayfield
+trip,d_county,55009,Brown
+trip,d_county,55011,Buffalo
+trip,d_county,55013,Burnett
+trip,d_county,55015,Calumet
+trip,d_county,55017,Chippewa
+trip,d_county,55019,Clark
+trip,d_county,55021,Columbia
+trip,d_county,55023,Crawford
+trip,d_county,55025,Dane
+trip,d_county,55027,Dodge
+trip,d_county,55029,Door
+trip,d_county,55031,Douglas
+trip,d_county,55033,Dunn
+trip,d_county,55035,Eau Claire
+trip,d_county,55037,Florence
+trip,d_county,55039,Fond du Lac
+trip,d_county,55041,Forest
+trip,d_county,55043,Grant
+trip,d_county,55045,Green
+trip,d_county,55047,Green Lake
+trip,d_county,55049,Iowa
+trip,d_county,55051,Iron
+trip,d_county,55053,Jackson
+trip,d_county,55055,Jefferson
+trip,d_county,55057,Juneau
+trip,d_county,55059,Kenosha
+trip,d_county,55061,Kewaunee
+trip,d_county,55063,La Crosse
+trip,d_county,55065,Lafayette
+trip,d_county,55067,Langlade
+trip,d_county,55069,Lincoln
+trip,d_county,55071,Manitowoc
+trip,d_county,55073,Marathon
+trip,d_county,55075,Marinette
+trip,d_county,55077,Marquette
+trip,d_county,55078,Menominee
+trip,d_county,55079,Milwaukee
+trip,d_county,55081,Monroe
+trip,d_county,55083,Oconto
+trip,d_county,55085,Oneida
+trip,d_county,55087,Outagamie
+trip,d_county,55089,Ozaukee
+trip,d_county,55091,Pepin
+trip,d_county,55093,Pierce
+trip,d_county,55095,Polk
+trip,d_county,55097,Portage
+trip,d_county,55099,Price
+trip,d_county,55101,Racine
+trip,d_county,55103,Richland
+trip,d_county,55105,Rock
+trip,d_county,55107,Rusk
+trip,d_county,55109,St Croix
+trip,d_county,55111,Sauk
+trip,d_county,55113,Sawyer
+trip,d_county,55115,Shawano
+trip,d_county,55117,Sheboygan
+trip,d_county,55119,Taylor
+trip,d_county,55121,Trempealeau
+trip,d_county,55123,Vernon
+trip,d_county,55125,Vilas
+trip,d_county,55127,Walworth
+trip,d_county,55129,Washburn
+trip,d_county,55131,Washington
+trip,d_county,55133,Waukesha
+trip,d_county,55135,Waupaca
+trip,d_county,55137,Waushara
+trip,d_county,55139,Winnebago
+trip,d_county,55141,Wood
+trip,d_state,27,Minnesota
+trip,d_state,55,Wisconsin
+trip,d_state,995,Missing
+trip,d_in_region,0,Not in study region
+trip,d_in_region,1,In study region
+trip,trip_survey_complete,0,No
+trip,trip_survey_complete,1,Yes
+trip,trip_survey_complete,995,Missing
+trip,d_purpose,-1,Not imputable
+trip,d_purpose,1,Went home
+trip,d_purpose,10,Primary workplace
+trip,d_purpose,11,"Went to work-related activity (e.g., meeting, delivery, worksite)"
+trip,d_purpose,13,Volunteering
+trip,d_purpose,14,Other work-related
+trip,d_purpose,21,Attend K-12 school
+trip,d_purpose,22,Attend college/university
+trip,d_purpose,23,"Attend other type of class (e.g., cooking class)"
+trip,d_purpose,24,"Attend other education-related activity (e.g., field trip)"
+trip,d_purpose,25,Attend vocational education class
+trip,d_purpose,26,Attend daycare or preschool
+trip,d_purpose,30,Grocery shopping
+trip,d_purpose,31,Got gas
+trip,d_purpose,32,"Other routine shopping (e.g., pharmacy)"
+trip,d_purpose,33,"Errand without appointment (e.g., post office)"
+trip,d_purpose,34,"Medical visit (e.g., doctor, dentist)"
+trip,d_purpose,36,"Shopping for major item (e.g., furniture, car)"
+trip,d_purpose,37,"Errand with appointment (e.g., haircut)"
+trip,d_purpose,44,"Other activity only (e.g., attend meeting, pick-up or drop-off item)"
+trip,d_purpose,45,Pick someone up
+trip,d_purpose,46,Drop someone off
+trip,d_purpose,47,"Accompany someone only (e.g., go along for the ride)"
+trip,d_purpose,48,BOTH pick up AND drop off
+trip,d_purpose,50,"Dined out, got coffee or take-out"
+trip,d_purpose,51,"Exercise or recreation (e.g., gym, jog, bike, walk dog)"
+trip,d_purpose,52,"Social activity (e.g., visit friends/relatives)"
+trip,d_purpose,53,"Leisure/entertainment/cultural (e.g., cinema, museum, park)"
+trip,d_purpose,54,Religious/civic/volunteer activity
+trip,d_purpose,56,"Family activity (e.g., watch child's game)"
+trip,d_purpose,60,"Changed or transferred mode (e.g., waited for bus, drove onto ferry)"
+trip,d_purpose,61,"Other shopping or errand (e.g., pharmacy, post office)"
+trip,d_purpose,62,Other leisure activity
+trip,d_purpose,99,Other reason
+trip,d_purpose,150,"Went to another residence (e.g., someone else's home, second home)"
+trip,d_purpose,151,Loop trip (split by analyst at furthest location)
+trip,d_purpose,152,"Went to temporary lodging (e.g., hotel, vacation rental)"
+trip,d_purpose_category,-1,Not imputable
+trip,d_purpose_category,1,Home
+trip,d_purpose_category,2,Work
+trip,d_purpose_category,3,Work-related
+trip,d_purpose_category,4,School
+trip,d_purpose_category,5,School-related
+trip,d_purpose_category,6,Escort
+trip,d_purpose_category,7,Shopping
+trip,d_purpose_category,8,Meal
+trip,d_purpose_category,9,Social/Recreation
+trip,d_purpose_category,10,Errand
+trip,d_purpose_category,11,Change mode
+trip,d_purpose_category,12,Overnight
+trip,d_purpose_category,13,Other
+trip,o_purpose,-1,Not imputable
+trip,o_purpose,1,Went home
+trip,o_purpose,10,Primary workplace
+trip,o_purpose,11,"Went to work-related activity (e.g., meeting, delivery, worksite)"
+trip,o_purpose,13,Volunteering
+trip,o_purpose,14,Other work-related
+trip,o_purpose,21,Attend K-12 school
+trip,o_purpose,22,Attend college/university
+trip,o_purpose,23,"Attend other type of class (e.g., cooking class)"
+trip,o_purpose,24,"Attend other education-related activity (e.g., field trip)"
+trip,o_purpose,25,Attend vocational education class
+trip,o_purpose,26,Attend daycare or preschool
+trip,o_purpose,30,Grocery shopping
+trip,o_purpose,31,Got gas
+trip,o_purpose,32,"Other routine shopping (e.g., pharmacy)"
+trip,o_purpose,33,"Errand without appointment (e.g., post office)"
+trip,o_purpose,34,"Medical visit (e.g., doctor, dentist)"
+trip,o_purpose,36,"Shopping for major item (e.g., furniture, car)"
+trip,o_purpose,37,"Errand with appointment (e.g., haircut)"
+trip,o_purpose,44,"Other activity only (e.g., attend meeting, pick-up or drop-off item)"
+trip,o_purpose,45,Pick someone up
+trip,o_purpose,46,Drop someone off
+trip,o_purpose,47,"Accompany someone only (e.g., go along for the ride)"
+trip,o_purpose,48,BOTH pick up AND drop off
+trip,o_purpose,50,"Dined out, got coffee or take-out"
+trip,o_purpose,51,"Exercise or recreation (e.g., gym, jog, bike, walk dog)"
+trip,o_purpose,52,"Social activity (e.g., visit friends/relatives)"
+trip,o_purpose,53,"Leisure/entertainment/cultural (e.g., cinema, museum, park)"
+trip,o_purpose,54,Religious/civic/volunteer activity
+trip,o_purpose,56,"Family activity (e.g., watch child's game)"
+trip,o_purpose,60,"Changed or transferred mode (e.g., waited for bus, drove onto ferry)"
+trip,o_purpose,61,"Other shopping or errand (e.g., pharmacy, post office)"
+trip,o_purpose,62,Other leisure activity
+trip,o_purpose,99,Other reason
+trip,o_purpose,150,"Went to another residence (e.g., someone else's home, second home)"
+trip,o_purpose,151,Loop trip (split by analyst at furthest location)
+trip,o_purpose,152,"Went to temporary lodging (e.g., hotel, vacation rental)"
+trip,o_purpose,995,Missing
+trip,o_purpose_category,-1,Not imputable
+trip,o_purpose_category,1,Home
+trip,o_purpose_category,2,Work
+trip,o_purpose_category,3,Work related
+trip,o_purpose_category,4,School
+trip,o_purpose_category,5,School related
+trip,o_purpose_category,6,Escort
+trip,o_purpose_category,7,Shopping
+trip,o_purpose_category,8,Meal
+trip,o_purpose_category,9,Social/Recreation
+trip,o_purpose_category,10,Errand
+trip,o_purpose_category,11,Change mode
+trip,o_purpose_category,12,Overnight
+trip,o_purpose_category,13,Other
+trip,o_purpose_category,995,Missing
+trip,mode_1,1,Walk (or jog/wheelchair)
+trip,mode_1,2,Standard bicycle (my household's)
+trip,mode_1,3,"Borrowed bicycle (e.g., a friend's)"
+trip,mode_1,4,Other rented bicycle
+trip,mode_1,5,Other
+trip,mode_1,6,Household vehicle 1
+trip,mode_1,7,Household vehicle 2
+trip,mode_1,8,Household vehicle 3
+trip,mode_1,9,Household vehicle 4
+trip,mode_1,10,Household vehicle 5
+trip,mode_1,11,Household vehicle 6
+trip,mode_1,12,Household vehicle 7
+trip,mode_1,13,Household vehicle 8
+trip,mode_1,16,Other vehicle in household
+trip,mode_1,17,Car rental
+trip,mode_1,18,"Carshare service (e.g., Zipcar)"
+trip,mode_1,21,Vanpool
+trip,mode_1,22,Other car
+trip,mode_1,23,Local fixed-route bus
+trip,mode_1,24,School bus
+trip,mode_1,25,"Intercity bus (e.g., BoltBus, Greyhound)"
+trip,mode_1,26,"Other private shuttle/bus (e.g., Bellair Charters, Airporter Shuttle)"
+trip,mode_1,27,Paratransit/Dial-A-Ride
+trip,mode_1,28,Other bus
+trip,mode_1,31,Airplane/helicopter
+trip,mode_1,32,Boat/ferry
+trip,mode_1,33,Work vehicle
+trip,mode_1,34,Friend's vehicle
+trip,mode_1,36,"Regular taxi (e.g., Yellow Cab)"
+trip,mode_1,38,University/college shuttle/bus
+trip,mode_1,39,Light rail
+trip,mode_1,41,"Intercity rail (e.g., Amtrak)"
+trip,mode_1,42,Other rail
+trip,mode_1,43,Skateboard or rollerblade
+trip,mode_1,44,Golf cart
+trip,mode_1,45,ATV or snowmobile
+trip,mode_1,47,Other motorcycle in household
+trip,mode_1,49,"Uber, Lyft, or other smartphone-app ride service"
+trip,mode_1,54,Other motorcycle (not my household's)
+trip,mode_1,55,Express/commuter bus
+trip,mode_1,59,"Peer-to-peer car rental (e.g., Turo)"
+trip,mode_1,60,"Other hired car service (e.g., black car, limo)"
+trip,mode_1,61,"Bus rapid transit (e.g., A Line, C Line, Red Line)"
+trip,mode_1,62,Employer-provided shuttle/bus
+trip,mode_1,63,Medical transportation service
+trip,mode_1,69,Bike-share - standard bicycle
+trip,mode_1,70,Bike-share - electric bicycle
+trip,mode_1,73,"Moped-share (e.g., Scoot)"
+trip,mode_1,74,Segway
+trip,mode_1,75,Other
+trip,mode_1,76,"Carpool match (e.g., Waze Carpool)"
+trip,mode_1,77,Personal scooter or moped (not shared)
+trip,mode_1,79,Vehicle ferry (took vehicle on board)
+trip,mode_1,80,"Other boat (e.g., kayak)"
+trip,mode_1,81,Snowmobile
+trip,mode_1,82,Electric bicycle (my household's)
+trip,mode_1,83,"Scooter-share (e.g., Bird, Lime)"
+trip,mode_1,171,Metro Mobility
+trip,mode_1,172,Northstar
+trip,mode_1,201,SouthWest Prime or MVTA Connect
+trip,mode_1,995,Missing
+trip,mode_2,1,Walk (or jog/wheelchair)
+trip,mode_2,2,Standard bicycle (my household's)
+trip,mode_2,3,"Borrowed bicycle (e.g., a friend's)"
+trip,mode_2,4,Other rented bicycle
+trip,mode_2,5,Other
+trip,mode_2,6,Household vehicle 1
+trip,mode_2,7,Household vehicle 2
+trip,mode_2,8,Household vehicle 3
+trip,mode_2,9,Household vehicle 4
+trip,mode_2,10,Household vehicle 5
+trip,mode_2,11,Household vehicle 6
+trip,mode_2,12,Household vehicle 7
+trip,mode_2,13,Household vehicle 8
+trip,mode_2,16,Other vehicle in household
+trip,mode_2,17,Car rental
+trip,mode_2,18,"Carshare service (e.g., Zipcar)"
+trip,mode_2,21,Vanpool
+trip,mode_2,22,Other car
+trip,mode_2,23,Local fixed-route bus
+trip,mode_2,24,School bus
+trip,mode_2,25,"Intercity bus (e.g., BoltBus, Greyhound)"
+trip,mode_2,26,"Other private shuttle/bus (e.g., Bellair Charters, Airporter Shuttle)"
+trip,mode_2,27,Paratransit/Dial-A-Ride
+trip,mode_2,28,Other bus
+trip,mode_2,31,Airplane/helicopter
+trip,mode_2,32,Boat/ferry
+trip,mode_2,33,Work vehicle
+trip,mode_2,34,Friend's vehicle
+trip,mode_2,36,"Regular taxi (e.g., Yellow Cab)"
+trip,mode_2,38,University/college shuttle/bus
+trip,mode_2,39,Light rail
+trip,mode_2,41,"Intercity rail (e.g., Amtrak)"
+trip,mode_2,42,Other rail
+trip,mode_2,43,Skateboard or rollerblade
+trip,mode_2,44,Golf cart
+trip,mode_2,45,ATV or snowmobile
+trip,mode_2,47,Other motorcycle in household
+trip,mode_2,49,"Uber, Lyft, or other smartphone-app ride service"
+trip,mode_2,54,Other motorcycle (not my household's)
+trip,mode_2,55,Express/commuter bus
+trip,mode_2,59,"Peer-to-peer car rental (e.g., Turo)"
+trip,mode_2,60,"Other hired car service (e.g., black car, limo)"
+trip,mode_2,61,"Bus rapid transit (e.g., A Line, C Line, Red Line)"
+trip,mode_2,62,Employer-provided shuttle/bus
+trip,mode_2,63,Medical transportation service
+trip,mode_2,69,Bike-share - standard bicycle
+trip,mode_2,70,Bike-share - electric bicycle
+trip,mode_2,73,"Moped-share (e.g., Scoot)"
+trip,mode_2,74,Segway
+trip,mode_2,75,Other
+trip,mode_2,76,"Carpool match (e.g., Waze Carpool)"
+trip,mode_2,77,Personal scooter or moped (not shared)
+trip,mode_2,79,Vehicle ferry (took vehicle on board)
+trip,mode_2,80,"Other boat (e.g., kayak)"
+trip,mode_2,81,Snowmobile
+trip,mode_2,82,Electric bicycle (my household's)
+trip,mode_2,83,"Scooter-share (e.g., Bird, Lime)"
+trip,mode_2,171,Metro Mobility
+trip,mode_2,172,Northstar
+trip,mode_2,176,Non-emergency medical transportation service
+trip,mode_2,201,SouthWest Prime or MVTA Connect
+trip,mode_2,995,Missing
+trip,mode_3,1,Walk (or jog/wheelchair)
+trip,mode_3,2,Standard bicycle (my household's)
+trip,mode_3,3,"Borrowed bicycle (e.g., a friend's)"
+trip,mode_3,4,Other rented bicycle
+trip,mode_3,5,Other
+trip,mode_3,6,Household vehicle 1
+trip,mode_3,7,Household vehicle 2
+trip,mode_3,8,Household vehicle 3
+trip,mode_3,9,Household vehicle 4
+trip,mode_3,10,Household vehicle 5
+trip,mode_3,11,Household vehicle 6
+trip,mode_3,12,Household vehicle 7
+trip,mode_3,13,Household vehicle 8
+trip,mode_3,16,Other vehicle in household
+trip,mode_3,17,Car rental
+trip,mode_3,18,"Carshare service (e.g., Zipcar)"
+trip,mode_3,21,Vanpool
+trip,mode_3,22,Other car
+trip,mode_3,23,Local fixed-route bus
+trip,mode_3,24,School bus
+trip,mode_3,25,"Intercity bus (e.g., BoltBus, Greyhound)"
+trip,mode_3,26,"Other private shuttle/bus (e.g., Bellair Charters, Airporter Shuttle)"
+trip,mode_3,27,Paratransit/Dial-A-Ride
+trip,mode_3,28,Other bus
+trip,mode_3,31,Airplane/helicopter
+trip,mode_3,32,Boat/ferry
+trip,mode_3,33,Work vehicle
+trip,mode_3,34,Friend's vehicle
+trip,mode_3,36,"Regular taxi (e.g., Yellow Cab)"
+trip,mode_3,38,University/college shuttle/bus
+trip,mode_3,39,Light rail
+trip,mode_3,41,"Intercity rail (e.g., Amtrak)"
+trip,mode_3,42,Other rail
+trip,mode_3,43,Skateboard or rollerblade
+trip,mode_3,44,Golf cart
+trip,mode_3,45,ATV or snowmobile
+trip,mode_3,47,Other motorcycle in household
+trip,mode_3,49,"Uber, Lyft, or other smartphone-app ride service"
+trip,mode_3,54,Other motorcycle (not my household's)
+trip,mode_3,55,Express/commuter bus
+trip,mode_3,59,"Peer-to-peer car rental (e.g., Turo)"
+trip,mode_3,60,"Other hired car service (e.g., black car, limo)"
+trip,mode_3,61,"Bus rapid transit (e.g., A Line, C Line, Red Line)"
+trip,mode_3,62,Employer-provided shuttle/bus
+trip,mode_3,63,Medical transportation service
+trip,mode_3,69,Bike-share - standard bicycle
+trip,mode_3,70,Bike-share - electric bicycle
+trip,mode_3,73,"Moped-share (e.g., Scoot)"
+trip,mode_3,74,Segway
+trip,mode_3,75,Other
+trip,mode_3,76,"Carpool match (e.g., Waze Carpool)"
+trip,mode_3,77,Personal scooter or moped (not shared)
+trip,mode_3,79,Vehicle ferry (took vehicle on board)
+trip,mode_3,80,"Other boat (e.g., kayak)"
+trip,mode_3,81,Snowmobile
+trip,mode_3,82,Electric bicycle (my household's)
+trip,mode_3,83,"Scooter-share (e.g., Bird, Lime)"
+trip,mode_3,171,Metro Mobility
+trip,mode_3,172,Northstar
+trip,mode_3,176,Non-emergency medical transportation service
+trip,mode_3,201,SouthWest Prime or MVTA Connect
+trip,mode_3,995,Missing
+trip,mode_type,1,Walk
+trip,mode_type,2,Bicycle or e-bicycle
+trip,mode_type,3,Bike-share
+trip,mode_type,4,Scooter-share
+trip,mode_type,5,Taxi
+trip,mode_type,6,Smartphone-app ride-hailing service
+trip,mode_type,7,Other
+trip,mode_type,8,Vehicle
+trip,mode_type,9,Carshare
+trip,mode_type,10,School bus
+trip,mode_type,11,Shuttle
+trip,mode_type,12,Ferry
+trip,mode_type,13,Transit
+trip,mode_type,14,Long distance passenger mode
+trip,mode_type,995,Missing
+trip,is_access,0,Trip is not access portion of linked trip
+trip,is_access,1,Trip is  access portion of linked trip
+trip,is_access,995,Missing
+trip,is_egress,0,Trip is not egress portion of linked trip
+trip,is_egress,1,Trip is egress portion of linked trip
+trip,is_egress,995,Missing
+trip,transit_access,1,"Walked, jogged, or rolled using a mobility device"
+trip,transit_access,2,Bicycle
+trip,transit_access,3,Transferred from another bus
+trip,transit_access,4,"Scooter, moped, or skateboard"
+trip,transit_access,5,Transferred from another rail line
+trip,transit_access,6,"Uber/Lyft, taxi, or car service"
+trip,transit_access,7,Drove and parked my own household's vehicle (or motorcycle)
+trip,transit_access,8,Drove and parked another vehicle (or motorcycle)
+trip,transit_access,9,Got dropped off in my own household's vehicle (or motorcycle)
+trip,transit_access,10,Got dropped off in another vehicle (or motorcycle)
+trip,transit_access,201,SouthWest Prime or MVTA Connect
+trip,transit_access,995,Missing
+trip,transit_access,997,Other
+trip,transit_egress,1,"Walked, jogged, or rolled using a mobility device"
+trip,transit_egress,2,Bicycle
+trip,transit_egress,3,Transferred to another bus
+trip,transit_egress,4,"Scooter, moped, or skateboard"
+trip,transit_egress,5,Transferred to another rail line
+trip,transit_egress,6,"Uber/Lyft, taxi, or car service"
+trip,transit_egress,7,Drove my own household's vehicle (or motorcycle)
+trip,transit_egress,8,Drove another vehicle (or motorcycle)
+trip,transit_egress,9,Got picked up in my own household's vehicle (or motorcycle)
+trip,transit_egress,10,Got picked up in another vehicle (or motorcycle)
+trip,transit_egress,201,SouthWest Prime or MVTA Connect
+trip,transit_egress,995,Missing
+trip,transit_egress,997,Other
+trip,unlinked_trip,0,No
+trip,unlinked_trip,1,Yes
+trip,unlinked_trip,995,Missing
+trip,bike_park_location,1,"Inside house/apartment (includes garage, porch, storage area)"
+trip,bike_park_location,2,Bike rack
+trip,bike_park_location,3,Bike locker
+trip,bike_park_location,4,Secured bike room
+trip,bike_park_location,5,"Locked to other object (e.g., post, tree)"
+trip,bike_park_location,6,Bike-share designated docking station
+trip,bike_park_location,7,Unlocked on-street
+trip,bike_park_location,8,In a parking garage/ramp/lot
+trip,bike_park_location,10,Carried it with me
+trip,bike_park_location,997,Other
+trip,bike_park_location,995,Missing
+trip,scooter_park_location,1,"Inside house/apartment (includes garage, porch, storage area)"
+trip,scooter_park_location,2,Bike/scooter rack
+trip,scooter_park_location,3,Locker for bikes/scooters
+trip,scooter_park_location,4,Secured room
+trip,scooter_park_location,5,"Locked to other object (e.g., post, tree)"
+trip,scooter_park_location,6,Scooter-share designated docking station
+trip,scooter_park_location,7,Unlocked on-street
+trip,scooter_park_location,8,In a parking garage/ramp/lot
+trip,scooter_park_location,9,Moped-share designated docking station
+trip,scooter_park_location,10,Carried it with me
+trip,scooter_park_location,997,Other
+trip,scooter_park_location,995,Missing
+trip,vehicle_park_location,1,Home driveway/garage (yours or someone else's)
+trip,vehicle_park_location,3,Parking lot/ramp/garage
+trip,vehicle_park_location,4,On-street parking
+trip,vehicle_park_location,5,Park & Ride lot
+trip,vehicle_park_location,6,"Didn't park (waited, drop-off, drive-thru, gas)"
+trip,vehicle_park_location,7,Other
+trip,vehicle_park_location,995,Missing
+trip,vehicle_park_type,1,Free parking (no cost at all)
+trip,vehicle_park_type,2,Used a parking pass (any type)
+trip,vehicle_park_type,3,"Paid via cash, credit card, or ticket(s)"
+trip,vehicle_park_type,4,"Parking reservation service (e.g., SpotHero, ParkMobile)"
+trip,vehicle_park_type,6,Other
+trip,vehicle_park_type,995,Missing
+trip,vehicle_driver,1,Driver
+trip,vehicle_driver,2,Passenger
+trip,vehicle_driver,3,Both (switched drivers during trip)
+trip,vehicle_driver,995,Missing
+trip,tnc_type,1,"Pooled (e.g., UberPool, Lyft Shared)"
+trip,tnc_type,2,"Regular (e.g., UberX, UberXL, Lyft, LyftXL)"
+trip,tnc_type,3,"Premium (e.g., UberBlack, Lyft Lux)"
+trip,tnc_type,995,Missing
+trip,tnc_type,998,Don't know
+trip,taxi_who_paid,1,I paid the fare myself (no reimbursement)
+trip,taxi_who_paid,2,Employer paid (I am reimbursed)
+trip,taxi_who_paid,3,Split/shared fare with other(s)
+trip,taxi_who_paid,4,Someone else paid 100% (all of fare)
+trip,taxi_who_paid,5,Other
+trip,taxi_who_paid,995,Missing
+trip,taxi_pay,1,$
+trip,taxi_pay,2,Don't know
+trip,taxi_pay,995,Missing
+trip,ev_charge_station,1,No
+trip,ev_charge_station,2,"Yes, and I did NOT charge the vehicle here"
+trip,ev_charge_station,3,"Yes, and I charged the vehicle here"
+trip,ev_charge_station,995,Missing
+trip,ev_charge_station,998,Don't know
+trip,ev_charge_station_decision,1,Agree
+trip,ev_charge_station_decision,2,Neutral
+trip,ev_charge_station_decision,3,Disagree
+trip,ev_charge_station_decision,995,Missing
+trip,ev_charge_station_level_1,0,Not selected
+trip,ev_charge_station_level_1,1,Selected
+trip,ev_charge_station_level_1,995,Missing
+trip,ev_charge_station_level_2,0,Not selected
+trip,ev_charge_station_level_2,1,Selected
+trip,ev_charge_station_level_2,995,Missing
+trip,ev_charge_station_level_3,0,Not selected
+trip,ev_charge_station_level_3,1,Selected
+trip,ev_charge_station_level_3,995,Missing
+trip,ev_charge_station_level_998,0,Not selected
+trip,ev_charge_station_level_998,1,Selected
+trip,ev_charge_station_level_998,995,Missing
+trip,num_travelers,1,1
+trip,num_travelers,2,2
+trip,num_travelers,3,3
+trip,num_travelers,4,4
+trip,num_travelers,5,5
+trip,num_travelers,995,Missing
+trip,num_hh_travelers,1,1
+trip,num_hh_travelers,2,2
+trip,num_hh_travelers,3,3
+trip,num_hh_travelers,4,4
+trip,num_hh_travelers,5,5
+trip,num_hh_travelers,6,6
+trip,num_hh_travelers,7,7
+trip,num_hh_travelers,995,Missing
+trip,num_non_hh_travelers,0,0
+trip,num_non_hh_travelers,1,1
+trip,num_non_hh_travelers,2,2
+trip,num_non_hh_travelers,3,3
+trip,num_non_hh_travelers,4,4
+trip,num_non_hh_travelers,5,5
+trip,num_non_hh_travelers,995,Missing
+trip,hh_member_1,0,No
+trip,hh_member_1,1,Yes
+trip,hh_member_1,995,Missing
+trip,hh_member_2,0,No
+trip,hh_member_2,1,Yes
+trip,hh_member_2,995,Missing
+trip,hh_member_3,0,No
+trip,hh_member_3,1,Yes
+trip,hh_member_3,995,Missing
+trip,hh_member_4,0,No
+trip,hh_member_4,1,Yes
+trip,hh_member_4,995,Missing
+trip,hh_member_5,0,No
+trip,hh_member_5,1,Yes
+trip,hh_member_5,995,Missing
+trip,hh_member_6,0,No
+trip,hh_member_6,1,Yes
+trip,hh_member_6,995,Missing
+trip,hh_member_7,0,No
+trip,hh_member_7,1,Yes
+trip,hh_member_7,995,Missing
+trip,hh_member_8,0,No
+trip,hh_member_8,1,Yes
+trip,hh_member_8,995,Missing
+trip,hh_member_9,0,No
+trip,hh_member_9,1,Yes
+trip,hh_member_9,995,Missing
+trip,hh_member_10,0,No
+trip,hh_member_10,1,Yes
+trip,hh_member_10,995,Missing
+trip,hh_member_11,0,No
+trip,hh_member_11,1,Yes
+trip,hh_member_11,995,Missing
+trip,o_zone,1,Anoka County
+trip,o_zone,2,Carver County
+trip,o_zone,3,Dakota County
+trip,o_zone,4,Hennepin County
+trip,o_zone,5,Ramsey County
+trip,o_zone,6,Scott County
+trip,o_zone,7,Washington County
+trip,o_zone,8,MPO outside seven counties
+trip,o_zone,9,"In study region, but not in MPO"
+trip,o_zone,10,Not in study region
+trip,d_zone,1,Anoka County
+trip,d_zone,2,Carver County
+trip,d_zone,3,Dakota County
+trip,d_zone,4,Hennepin County
+trip,d_zone,5,Ramsey County
+trip,d_zone,6,Scott County
+trip,d_zone,7,Washington County
+trip,d_zone,8,MPO outside seven counties
+trip,d_zone,9,"In study region, but not in MPO"
+trip,d_zone,10,Not in study region
+trip,mode_type_detailed,1,Northstar 
+trip,mode_type_detailed,2,"Light rail (e.g., Blue Line, Green Line) "
+trip,mode_type_detailed,3,Other rail 
+trip,mode_type_detailed,4,School bus 
+trip,mode_type_detailed,5,"Bus Rapid Transit (BRT) (e.g., A Line, C Line, Red Line) "
+trip,mode_type_detailed,6,Express bus 
+trip,mode_type_detailed,7,SouthWest Prime or MVTA Connect
+trip,mode_type_detailed,8,Local fixed-route bus
+trip,mode_type_detailed,9,Paratransit/Dial-A-Ride
+trip,mode_type_detailed,10,Metro Mobility 
+trip,mode_type_detailed,11,Employer-provided shuttle/bus
+trip,mode_type_detailed,12,University/college shuttle/bus
+trip,mode_type_detailed,13,"Other private shuttle/bus (e.g., a hotel's, an airport's) "
+trip,mode_type_detailed,14,Vanpool 
+trip,mode_type_detailed,15,Other bus 
+trip,mode_type_detailed,16,"Intercity rail (e.g., Amtrak) "
+trip,mode_type_detailed,17,"Intercity bus (e.g., Greyhound, Bolt Bus) "
+trip,mode_type_detailed,18,Airplane/helicopter 
+trip,mode_type_detailed,19,"Uber, Lyft, or other smartphone-app ride service "
+trip,mode_type_detailed,20,Regular taxi 
+trip,mode_type_detailed,21,"Other hired car service (e.g., black car, limo) "
+trip,mode_type_detailed,22,Household vehicle 1 
+trip,mode_type_detailed,23,Household vehicle 2 
+trip,mode_type_detailed,24,Household vehicle 3 
+trip,mode_type_detailed,25,Household vehicle 4 
+trip,mode_type_detailed,26,Household vehicle 5 
+trip,mode_type_detailed,27,Household vehicle 6 
+trip,mode_type_detailed,28,Household vehicle 7 
+trip,mode_type_detailed,29,Household vehicle 8 
+trip,mode_type_detailed,30,Other vehicle in household 
+trip,mode_type_detailed,31,Other motorcycle 
+trip,mode_type_detailed,32,Work vehicle
+trip,mode_type_detailed,33,Friend/relative/colleague's car 
+trip,mode_type_detailed,34,Other motorcycle (not my household's)
+trip,mode_type_detailed,35,Car rental
+trip,mode_type_detailed,36,"Carpool match (e.g., Waze Carpool) "
+trip,mode_type_detailed,37,"Carshare service (e.g., Zipcar) "
+trip,mode_type_detailed,38,"Peer-to-peer car rental (e.g., Turo, Getaround) "
+trip,mode_type_detailed,39,Other car
+trip,mode_type_detailed,40,Standard bicycle (my household's)
+trip,mode_type_detailed,41,Electric bicycle (my household's)
+trip,mode_type_detailed,42,"Borrowed bicycle (e.g., from friend) "
+trip,mode_type_detailed,43,Bike-share - standard bicycle
+trip,mode_type_detailed,44,Bike-share - electric bicycle
+trip,mode_type_detailed,45,Other rented bicycle 
+trip,mode_type_detailed,46,Personal scooter or moped (not shared) 
+trip,mode_type_detailed,47,"Scooter-share (e.g., Bird, Lime)"
+trip,mode_type_detailed,48,"Moped share (e.g., Scoot) "
+trip,mode_type_detailed,49,Segway 
+trip,mode_type_detailed,50,Other scooter or moped 
+trip,mode_type_detailed,51,Skateboard/rollerblade 
+trip,mode_type_detailed,52,Boat/ferry/water taxi 
+trip,mode_type_detailed,53,Vehicle ferry (took vehicle on board)
+trip,mode_type_detailed,54,"Other boat (e.g., kayak)"
+trip,mode_type_detailed,55,Golf cart 
+trip,mode_type_detailed,56,ATV or snowmobile 
+trip,mode_type_detailed,57,Snowmobile
+trip,mode_type_detailed,58,Medical transportation service
+trip,mode_type_detailed,59,Other 
+trip,mode_type_detailed,60,Walk (or jog/wheelchair)
+trip,mode_type_detailed,995,Missing
