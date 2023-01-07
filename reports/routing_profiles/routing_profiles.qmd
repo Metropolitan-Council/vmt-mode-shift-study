@@ -12,7 +12,12 @@ format:
     html:
         embed-resources: true
 ---
+<!-- if RStudio won't render quarto, run this command in TERMINAL -->
+<!--    quarto preview reports/routing_profiles/routing_profiles.qmd -->
 
+<!-- You may need to install python libraries -->
+<!--    python3 -m pip install matplotlib -->
+<!--    python3 -m pip install pandas -->
 ```{python}
 import pandas as pd
 import json
