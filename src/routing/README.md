@@ -36,13 +36,21 @@ _Note:_ If you get an error about not being able to find `libosrmjl.so`, it mean
 
 ### Street routing
 
-To perform street routing, use the `route_street.jl` script like so, from within this directory (to run from elsewhere, use `--project=/path/to/this/directory`). Replace car with whatever network/mode you're using. If you run into the couldn't find `libosrmjl.so` error, follow the steps above under "Transit network"
+To perform street routing, use the `route.jl` script like so, from within this directory (to run from elsewhere, use `--project=/path/to/this/directory`). Replace car with whatever network/mode you're using. If you run into the couldn't find `libosrmjl.so` error, follow the steps above under "Transit network"
 
-    julia -t auto --project route_street.jl /path/to/tbi_merged.csv ~/vmt-networks/car/car.osrm /path/to/output.gpkg
+    julia -t auto --project route.jl /path/to/tbi_merged.csv ~/vmt-networks/car/car.osrm /path/to/output.gpkg
 
 You can change the output format to any GDAL/OGR supported format with the `--output-driver` option. I used GeoPackage because GeoJSON is unwieldy with this large of a dataset. `-t auto` uses as many threads as your CPU has cores to speed up the routing. On my machine, routing all of the TBI trips by car takes 1 minute 11 seconds, and several minutes to write the output.
 
 Eventually, this will have to be modified for congestion routing, to select an OSRM network based on departure time.
+
+### Transit routing
+
+To perform transit routing, simply add `--transit path/to/transit.trjl` to the `route.jl` command line. It is still necessary to pass an OSRM network as well - this is used to find access and egress to/from transit.
+
+    julia -t auto --project route.jl --transit /path/to/transit.trjl /path/to/tbi_merged.csv ~/vmt-networks/car/car.osrm /path/to/output.gpkg
+
+Transit routing is slower; this takes about 10 minutes on my machine, again with a significant amount of time to write the result to disk.
 
 
 

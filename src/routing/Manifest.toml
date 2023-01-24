@@ -265,9 +265,9 @@ version = "0.4.1"
 
 [[deps.GeoInterface]]
 deps = ["Extents"]
-git-tree-sha1 = "e315c4f9d43575cf6b4e511259433803c15ebaa2"
+git-tree-sha1 = "e07a1b98ed72e3cdd02c6ceaab94b8a606faca40"
 uuid = "cf35fbd7-0cd7-5166-be24-54bfbe79505f"
-version = "1.1.0"
+version = "1.2.1"
 
 [[deps.GeoInterfaceRecipes]]
 deps = ["GeoInterface", "RecipesBase"]
@@ -800,8 +800,8 @@ version = "0.4.75"
 
 [[deps.TransitRouter]]
 deps = ["ArchGDAL", "ArgParse", "CSV", "DataFrames", "Dates", "Geodesy", "LibGEOS", "Logging", "OSRM", "ProgressBars", "Revise", "Serialization", "Tables", "ZipFile"]
-git-tree-sha1 = "c849061d1dca96329f3ec9eb27491b634da9b629"
-repo-rev = "main"
+git-tree-sha1 = "4bb27be40bc61c5f1878f426de880cc27f546fba"
+repo-rev = "no-consecutive-transfers"
 repo-url = "https://github.com/mattwigway/TransitRouter.jl.git"
 uuid = "f9e57d04-be1f-4339-a529-971801331ddb"
 version = "0.0.2"
