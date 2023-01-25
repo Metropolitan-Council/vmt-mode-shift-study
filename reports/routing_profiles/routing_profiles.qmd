@@ -1,0 +1,274 @@
+---
+title: Routing profiles
+author: Matt Bhagat-Conway
+institute: Department of City and Regional Planning, University of North Carolina at Chapel Hill
+bibliography: ../bibliography.bib
+execute:
+    echo: false
+    include: true
+standalone: true
+toc: true
+format:
+    html:
+        embed-resources: true
+---
+<!-- if RStudio won't render quarto, run this command in TERMINAL -->
+<!--    quarto preview reports/routing_profiles/routing_profiles.qmd -->
+
+<!-- You may need to install python libraries -->
+<!--    python3 -m pip install matplotlib -->
+<!--    python3 -m pip install pandas -->
+```{python}
+import pandas as pd
+import json
+import numpy as np
+import matplotlib.pyplot as plt
+```
+
+# Introduction
+
+The goal of the re-routing analysis is to determine the route details for each trip if it had been taken by a different mode—for instance, how long a driving trip would have taken by cycling, or how many transfers would be required if a trip were shifted to transit from another mode. We need to define a “profile” for each alternate mode modeled. These profiles contain the detailed parameters needed to find the paths we have determined to be best. For instance, a walking profile would define how quickly people walk, how far out of their way they will go to travel on a flatter or safer route.
+
+These profiles will be used to determine the weights which will be used in routing. Each street segment is assigned a weight, based on its length, steepness, safety, and anything else the profile deems relevant to route choice. The route that will be found will be the one where the weights of all constituent street segments sum to the lowest amount.
+
+We plan to have four profiles for on street modes: driving, walking, bicycling, and e-bicycling (similar to bicycling but with higher speed and reduced/eliminated penalties for hill climbing). We will additionally have a single profile for transit routing.
+
+In addition to weighting, each profile will have rules for selecting which links are preserved. For instance, freeways will be removed from bicycle and pedestrian routing, and footpaths will be removed from automobile routing. Additionally, we may remove certain links from bicycle and pedestrian routing based on level of traffic stress.
+
+This document discusses the components of the weighting and filtering for each of these modes. Some of these may need to be adjusted once software is selected, as some software may not support all of the desired features presented in this document.
+
+# Multiobjective and single-objective routing
+
+A key question that needs to be resolved before routing software can be selected is whether a multi-objective or single-objective routing algorithm is desired. Single-objective algorithms use a single set of weights, and find the lowest cost path as described above. Single-objective optimization algorithms are by far the most common optimization algorithms used in transport. They are simple to implement, computationally efficient, and universally available in network analysis packages.
+
+Multi-objective optimization algorithms, by contrast, find shortest paths using multiple weights, or _objectives_, simultaneously. For instance, @fig-paretomap shows three routes between two points in St. Paul, Minnesota, produced by a multiobjective optimization algorithm, using two weights—one based on travel time, and one based on elevation gain. The algorithm found three paths, unlike the single path found by a single-objective algorithm. One direct path minimizes travel time, while another roundabout path avoids the steep hill between the origin and destination. A third path represents a compromise between the two.
+
+![Three Pareto-optimal routes based on travel time and elevation gain for a walking trip in St. Paul, Minnesota](pareto_map.png){#fig-paretomap fig-alt="Three Pareto-optimal routes are shown between the east and west sides of Highland Park, St. Paul, Minnesota. One path is direct, but traverses significant terrain. A second is a slight variation on the first, avoiding some of the highest elevations. A third avoids the large hill altogether by taking a significantly longer route around it."}
+
+In more specific terms, a multiobjective routing algorithm finds all _Pareto-optimal_ paths. A path is Pareto-optimal if there is no path that is better in terms of one objective without also being worse in terms of another. That is, Pareto-optimal paths represent all the possible tradeoffs between the objectives, without including paths that are clearly worse options in terms of multiple objectives. For a more in-depth discussion of Pareto optimality and urban planning, see @conway_pareto_2016.
+
+The tradeoffs between travel time and elevation gain among the three paths are shown in @fig-pareto. This figure represents a "Pareto surface"; anything in the white area above the surface would be suboptimal, as there are other options which are better in terms of _both_ travel time and elevation gain. Anywhere on the line, you cannot improve either elevation gain or travel time without worsening the other. There are no possible paths below the line.
+
+```{python}
+#| fig-cap: Travel time and elevation gain for the three paths shown in @fig-paretomap
+#| fig-alt: Line plot with three points forming a curve concave to the origin, showing the three tradeoffs between travel time and cost for the paths in the previous figure. Two have lower travel times and relatively high elevation gains, one is much slower and flatter.
+#| label: fig-pareto
+with open("pareto_demo.geojson") as f:
+    raw = json.load(f)
+
+data = pd.DataFrame([{"id": f["id"], **f["properties"]} for f in raw["features"]])
+sel = data[data.id.isin([1, 5, 9])]
+
+# make it a step function
+xs = sel.time / 60
+ys = sel.elev
+
+x2 = np.repeat(xs, 2).iloc[1:]
+y2 = np.repeat(ys, 2).iloc[:-1]
+
+plt.fill_between([0, x2.iloc[0], *x2, 200], [0, 0, 0, 0, 0, 0, 0, 0], [100, 100, *y2, y2.iloc[-1]], color="#ccc", zorder=1, lw=0.5)
+plt.plot([x2.iloc[0], *x2, 200], [100, *y2, y2.iloc[-1]], color="#444", zorder=1)
+plt.scatter(xs, ys, zorder=2, color=["#4B9CD3", "#EF426F", "#00A5AD"])
+plt.xlabel("Travel time (minutes)")
+plt.ylabel("Elevation gain (meters)")
+
+plt.annotate("Impossible", (70, 40))
+plt.annotate("Suboptimal", (80, 48))
+
+plt.ylim(30, 50)
+plt.xlim(56, 108)
+
+None
+```
+
+Multiobjective routing algorithms allow finding multiple feasible paths between an origin and a destination, based on a variety of criteria. This makes them particularly attractive for active travel research, as people use many factors beyond travel time to choose routes for activate travel. The significant downside, however, to multiobjective routing is that it is considerably more computationally intensive than single-objective routing, and network analysis packages are much less likely to include multiobjective routing algorithms.
+
+A single-objective routing algorithm can incorporate multiple factors through use of a generalized cost or weight (for instance, travel distance in meters plus 0.5 times elevation gain in meters). This would result in finding one of the Pareto-optimal paths above; which one would depend on the relative weights of elevation and distance. This gives some of the advantages of multiobjective routing, without the significant computational burden and limited software support of multiobjective algorithms.
+
+The downside of using a generalized cost comes when you wish to impose limits on the routing, for instance a maximum walking distance of 5 kilometers. A single-objective algorithm will find the shortest path in terms of the generalized cost, which may not be the shortest path in terms of time or distance. If the path with the lowest generalized cost exceeded 5 kilometers, but there was a shorter path that used steeper or less safe streets, a single-objective generalized-cost algorithm would not find it. If we used a 5-kilometer maximum walking distance, we would declare this location inaccessible. When finding access routes for transit, we have the same issue, as the departure time of the transit vehicle is an implicit time limit.
+
+A multiobjective routing algorithm would find both paths, as they are both Pareto-optimal. However, this creates another issue. For nearby destinations, the optimal paths will be based on a combination of multiple factors—distance, slope, safety, and so on. However, as distances approach the cutoff, slope and safety are effectively considered less important, because the longer paths that represent a tradeoff between distance and these other factors will exceed the distance limit and not be found.
+
+For this reason, we propose to use a single-objective routing algorithm. Any cutoffs we impose based on time or distance may lead some paths that meet the criteria to not be found, but we believe this is preferable to the situation where near the time cutoff the relative weights of different path attributes begin to change as time or distance become more important.
+
+# Street routing
+
+We will have four profiles for on-street routing: walking, bicycling, e-bicycling, and driving. We expect to use a common network dataset and routing software for these four modes, with different weights and network filtering rules for each profile. We plan to base the network on OpenStreetMap data from the same vintage as Streetlight Data uses in their network.
+
+## Walking
+
+The weights used for walking are based first on the walking speed and distance traveled. The typical adult walks between 0.9 and 1.4 meters per second (2.0 to 3.1 mph), with most adults traveling about 1.35 meters per second (3.0 mph) [@bohannon_normal_2011]. Thus, a walking speed of 1.35 meters per second will be used as the basis for pedestrian weights. Future research could investigate varying this walking speed based on respondent characteristics, but that is beyond the scope of this project. It would additionally introduce additional variables into the routing, complicating result interpretation.
+
+### Slope
+
+Another key aspect of the pedestrian environment is slope. Pedestrians avoid steep slopes [@meeder_influence_2017], and walk more slowly when traveling on sloped ground than flat ground [@campbell_using_2019]. @broach_travel_2016 found that pedestrians equate one meter of travel on steep climbs (greater than 10% grade) with roughly two meters of travel on flat ground when choosing routes. A 10% grade is quite steep; a local example is Ramsey Street between Grand Avenue and Summit Avenue in St. Paul (@fig-ramsey). We found no research providing quantitative estimates of how far pedestrians are willing to walk to avoid less steep slopes.
+
+![Ramsey Street west of Grand Avenue in Saint Paul, looking uphill towards Summit Avenue, an 11% grade _(source: Bing Maps)_](ramsey_st.png){#fig-ramsey fig-alt="A steep residential street sloping up from the viewer"}
+
+The resolution of elevation measurement can significantly impact overall slope estimation [@mandelbrot_how_1967]. In general, higher resolution measurement will result in steeper slopes. Over a long street segment, average slope may be moderate, but may be much higher in certain short segments. @broach_travel_2016 measured elevation every 10 meters along each street segment and computed a street-segment-level average. A segment-level average may understate slopes when there is a segment with a steep portion and a flatter portion. That said, since @broach_travel_2016's model was estimated using data derived this way, we propose to estimate average slope in the same way. Then, we can adopt the weights implied by the model in that research, and treat each meter traveled along very steep streets as equivalent to two meters on flatter streets.
+
+@broach_travel_2016 used a 1-meter resolution elevation data. This resolution of data is not widely available, but one-third-arc-second (approximately 10 meter) data is available for the Twin Cities. We do not anticipate this being an issue, as @broach_travel_2016 sampled elevations every 10 meters along each path anyhow.
+
+Bridges can be a challenge, as the elevation data represents the ground level, not the level of the bridge deck. We propose assuming bridges and tunnels are straight between the elevations of their endpoints. While some bridges have a significant arch to them, we propose this as a reasonable simplification since data is not readily available. If there are specific bridges for which this is an issue, we may be able to manually modify the weights of those bridges to reflect their actual slopes.
+
+### Safety
+
+There are two approaches to handling safety in routing algorithms. One is to to treat unsafe streets as an additional cost---for instance, pedestrians might be willing to travel up to two meters on a safe street to avoid one meter on a dangerous street. The other is to remove streets deemed unsafe from the network; this assumes that the lack of a safe route is a complete barrier to walking. This latter approach has been popularized for bicycling through the Level of Traffic Stress street typology [@furth_network_2016].
+
+The challenge is defining what an unsafe street is. We will remove freeways and other streets where pedestrians are not permitted from the network, of course. Beyond this, authors have taken a variety of approaches to network filtering rules. @hosford_15minute_2022 used no additional filtering for walking, though they did filter out unsafe streets for cycling. In contrast, @owen_access_2015 removed all streets that were not either residential or explicitly marked as allowing pedestrians.
+
+An important aspect of safety is the presence of a sidewalk [@lue_estimating_2019].^[@broach_travel_2016 did not find this factor to be statistically significant, though they believe this to be due to collinearity.] A busy street with a high-quality sidewalk may be relatively comfortable for pedestrians, while a much less busy street with no pedestrian infrastructure may or may not be comfortable. Unfortunately, no comprehensive sidewalk inventory exists in the region, and OpenStreetMap data on sidewalk presence is limited.
+
+We propose to use the approach defined by the Virginia DOT, where weights are adjusted based on assumed safety of the roadway [@hardy_accessibility_2019]. They classify roads into five classes, where walking is prohibited, available, low-quality, medium-quality, or high-quality (with available being roads where walking is permitted but assumed to be of the lowest quality). Pedestrians are assumed to be willing to travel 2 km on high-quality facilities to avoid 1 km on available-quality facilities. Similarly, they will travel 1.25 km on high-quality facilities to avoid 1 km on low-quality facilities, and 1.1 km to avoid 1 km on medium-quality facilities.^[@hardy_accessibility_2019 specify this as walk speed adjustments, but these figures are equivalent.] Facility quality will be defined the same way as in @hardy_accessibility_2019 (@fig-quality), based on roadway type, number of lanes, and observed traffic speed. We will obtain the latter from StreetLight Data, filling in with OpenStreetMap tags when necessary, and the former two from OpenStreetMap directly.
+
+![Pedestrian facility quality; figure from @hardy_accessibility_2019](hardy_facilities.png){#fig-quality fig-alt="Facility quality definitions. Multi-lane or high-speed streets are lower quality even with sidewalks, whereas most streets without sidewalks or without sidewalk information are available quality, except for small low speed streets which are low-quality."}
+
+Sidewalks are represented in OpenStreetMap in two ways [@openstreetmapwiki_sidewalks_2022]. First, sidewalks may be mapped as separate ways^[A "way" in OpenStreetMap is a line feature.] running alongside the street; this is common in downtown Minneapolis (@fig-sidewalk, left panel). Second, sidewalks may be added as tags to the main roadway (@fig-sidewalk, right panel). Which technique is used will affect the facility quality assignment. Sidewalks mapped separately will always be considered high-quality facilities (equivalent to off-street paths), unless we perform explicit post-processing to link these sidewalks to road segments. Sidewalks included as tags on ways will be affected by the pedestrian quality determinations above. If this is determined to be an issue in QA, we can consider performing post-processing to adjust weights on sidewalks mapped separately.
+
+![Two ways of mapping sidewalks in OpenStreetMap](sidewalks.png){#fig-sidewalk fig-alt="Maps from the Minneapolis-St. Paul area showing sidewalks mapped as separate ways (left) and sidewalks tagged onto roads (right)"}
+
+Intersections are another major aspect of safety. @broach_travel_2016 found that pedestrians were willing to travel 72 m to avoid an unsignalized crossing of an arterial. Since route choice models don't include people who chose not to walk, the true number may be higher as crossing may discourage someone from taking the trip at all. Most routing tools use a weighting approach to avoiding difficult crossings, but it may be desirable to remove some crossings altogether.
+
+Depending on the software and network data used, weighting or removing crossings may be challenging. Most OpenStreetMap data does not map sidewalks separately from road centerlines, meaning that the routing software does not know which side of the street the pedestrian is on and whether a crossing is necessary. Pedestrian networks including sidewalk and crossing features are preferable, and often yield different results [@zhang_pedestrian_2019]. However, creating such a dataset is non-trivial and beyond the scope of this project.
+
+Some routing software supports crossing costs. We plan to weight crossings of arterials using weights derived from @broach_travel_2016, if possible in the routing. Since we may not have a detailed pedestrian network, we may not always know what side of the street a pedestrian is on, meaning we may penalize some turns that do not involve crossing the street as if they were crossing the street. 
+
+Total traffic volumes are included in some models of pedestrian route choice [@broach_travel_2016; @lue_estimating_2019]. However, total traffic volumes may not reflect the pedestrian environment, as infrastructure can compensate for high traffic volumes, and low-traffic but high-speed roads may feel unsafe.
+
+### Route complexity
+
+Another factor that often enters models is route complexity, with models finding turns to be equivalent to 35–55 meters of travel [@lue_estimating_2019; @broach_travel_2016]. We do not plan to include turn costs for pedestrians, but if we choose routing software that supports it we could do so if it was determined to be desirable during the QA process.
+
+### Land use
+
+Some authors find land use along the route to be correlated with route choice [@broach_travel_2016; @lue_estimating_2019; @tribby_analyzing_2017]. This is rare in transportation studies, and does not reflect the quality of the transport infrastructure. Thus, we intend to exclude it from this analysis.
+
+<!-- ### Final weights
+
+The weights we propose are shown in @tbl-walkweight.
+
+| Component | Unit | Weight |
+|-----------|------|--------|
+| Distance  |  meters | $1.35^{-1} \approxeq 0.74$ |
+| Distance on steep hills (>10% grade) | meters | 0.74 |
+| Unsignalized arterial crossing | each | 53.28 |
+
+: Weight components for walking {#tbl-walkweight} -->
+
+## Bicycling
+
+As with the other profiles, weights for bicycling will start with travel time. Bicycling speed is quite variable [@xu_modeling_2015; @allen_operational_1998], with speeds depending on facility type [@el-geneidy_predicting_2007], slope [@manum_improving_2019; @bigazzi_utilitybased_2019], and user characteristics [@lissner_gpsdata_2020]. Even estimates of "typical" bicycling speed vary widely, from 12 to 20 km/h (7.5 to 12.4 mph), and likely depend on the context of the trip [@allen_operational_1998].
+
+Due to this wide variation in the literature, we used the TBI data itself to estimate speeds. In the 2019 TBI data, the mean and median speed of bicycling trips are both 8.0 mph. A regression of bicycle trip speed on age, gender, and bicycle mode (owned, borrowed, bikeshare, and e-bikeshare) showed that bike speeds are relatively homogenous across demographic groups. 25-34 year old females bike at an average of 7.6 mph. Men bike 0.9 mph faster on average. Across adults, average speed varies less than 1.5 mph by age, except for adults over 75, who bike 2.2 mph slower. This relative homogeneity may be in part due to selection bias; for example, the typical 65-75 year old cyclist is probably not representative of the typical 65-75 year old resident.
+
+Since there is minimal variation in observed bike speeds by demographic groups, we propose to use the overall mean of 8 mph as the bicycling speed. This is a trip-level average, including stops at traffic lights, etc. This explains why it is at the low end of the speeds cited earlier; this also makes it appropriate for use to derive overall trip travel times from trip distances.
+
+### Slope
+
+Upslopes slow a bicyclist down. Bicyclists travel faster than normal on downslopes, but this effect is smaller than the slowdown from upslopes [@parkin_design_2010]. Bicyclists avoid upslopes more than the time difference would suggest.[^morethanspeed] @hood_gpsbased_2011 find that cyclists will travel 0.59 km to avoid 10m of elevation gain. @zimmermann_bike_2017 finds that bicyclists are willing to travel 2.44 km to avoid 1 km of slopes 4% or greater.[^zimmermann] @broach_where_2012 finds that aversion to upslopes increases with the steepness of the slope, but use a nonlinear model form that is not directly translatable into routing weights. The advantage to @hood_gpsbased_2011's specification is that it does penalize steeper slopes more heavily,[^comparison] but it also penalizes nearly-flat streets with minor, even unnoticeable, elevation change.
+
+[^morethanspeed]: @zimmermann_bike_2017 find that the substitution rate of no upslope for 4% upslope is 2.44:1 (see next footnote). In @parkin_design_2010's work, they find a coefficient for upslope of -40.02 m/s, so for a 4% slope is expected to slow you down $0.04 \times 40.02~\mathrm{m/s} = -1.6~\mathrm{m/s}$. They find the constant (flat average) speed to be 6.01 m/s, so purely in time substitution rate should be 6.01:(6.01 - 1.6) = 1.36:1. For a 6% slope, the equivalent value is 1.67:1. Both are less than @zimmermann_bike_2017's estimated 2.44:1
+
+[^zimmermann]: @zimmermann_bike_2017 uses a recursive logit model, which estimates utilities for each link in the network. In their model labeled "RL", they find a coefficient of -2.25 per 1000 feet, and an additional -3.24 per 1000 feet if the link has a slope over 4%. Thus, 1000 feet of distance uphill have a utility of -5.49, vs. -2.25 on the flat. Thus, a 1000 foot link with a steep slope is considered equivalent to -5.49 / -2.25 = 2.44 thousand foot flat link. The units cancel, making this a marginal rate of substitution; bicyclists will travel 2.44 flat km to avoid 1 steep km.
+
+[^comparison]: @zimmermann_bike_2017 assumes a constant marginal rate of substitution between a kilometer traveled on uphill streets of at least 4% steepness and a flat kilometer, whereas @hood_gpsbased_2011 assume a constant marginal rate of substitution between a meter of elevation gained and a kilometer of travel. We can convert the latter calculations to the former. On a 5% grade, it takes 200m to gain 10m of elevation. Using @hood_gpsbased_2011's coefficients, someone would be willing to travel up to 790m on flat ground to avoid 200m on a 5% grade, or 3.95 km on flat ground for 1km on a slope.
+
+    On a steeper 7% grade, it takes 143m to gain 10m of elevation, so someone would be willing to travel up to 733m to avoid 200m on a 7% slope, or 5.13 flat km to avoid 1 sloped km.
+
+For travel time calculations, the 8 mph average speed cited above includes the slopes on typical bicycle routes in Minneapolis, so we propose to assume an 8 mph travel speed by bicycle regardless of slope. One caveat is that the observed bicycle trips may be flatter than the simulated ones, due to survivorship bias (survey respondents may be less likely to chose to bike if their trip would be steep). If we wanted to address this, we could add slope terms to the regression model described above to estimate differential travel speeds for different slopes. For generalized cost calculations, we plan to adopt the additional per-meter cost used in @hood_gpsbased_2011.
+
+### Safety
+
+Safety is a major driver of both the decision whether or not to bicycle at all [@jacobsen_cycling_2012] and what routes to choose when cycling [e.g., @broach_where_2012; @zimmermann_bike_2017]. Safety is most often measured by either the presence of infrastructure or by total daily traffic volumes, or a combination of both. Like walking, bicycling safety can be addressed in routing either by treating less-safe streets as a higher cost, or by removing unsafe streets from the network altogether. The latter approach was popularized by @furth_network_2016, who assign streets to a "Level of Traffic Stress" between 1 and 4. LTS 1 streets are considered safe and comfortable by almost all riders, LTS 2 for most adults, whereas LTS 3 and 4 are more stressful.
+
+The Level of Traffic Stress (LTS) methodology is based on presence of bike infrastructure, presence of parking, street width, number of lanes, prevailing speed, and configuration of turn lanes [@furth_network_2016]. We do not have much of this information in the Twin Cities area. However, several procedures have been developed to estimate LTS based on OpenStreetMap tags [@murphy_implementing_2019]. We additionally have information on AADT and prevailing speeds for major streets from StreetLight, which can improve LTS estimates.
+
+LTS has received some criticism for being based on expert opinion rather than empirical data [@foster_levelofservice_2015]. Others have pointed out it does not sufficiently represent people's preference for separated infrastructure and wide, quiet streets [@ralph_will_2019]. It is not completely predictive of neighborhood bicycle trip generation [@wang_does_2016]. Some alternate classification schemes perform slightly better in identifying the actual route choices of cyclists [@pritchard_bicycle_2019].^[This study used LTS levels as an additional cost, rather than the more common removal of higher-cost links altogether, which may limit its applicability to this study.] Nonetheless, LTS is the predominant method for assessing bicycle safety, and we propose using a bicycling network consisting of LTS 1 and 2 links. We will develop a methodology to assign LTS based on OpenStreetMap and StreetLight data.
+
+When removing a large number of LTS 3 and 4 links from the network, we run the risk of small network coding errors resulting in large impacts, for instance by disconnecting a neighborhood from the bicycle network when it shouldn't be. To avoid this, we will take the approach proposed by @conway_better_2015 and retain all streets in the pedestrian network, with high weights that represent the cost of walking a bike down a street where riding is not safe. Specifically, we will consider a kilometer of LTS 3+ street equivalent to 3 km of LTS 1 or 2 street—assuming a 2.4 mph walking speed, which is what we would assume for a low-quality pedestrian street (High LTS streets are likely to be low quality for pedestrians as well).
+
+We also run the risk of connecting areas that shouldn't be connected because of a street incorrectly labeled as low traffic stress; we will address this through the QA tool.
+
+### Route complexity
+
+Cyclists avoid turns [@hood_gpsbased_2011], stop signs, and traffic lights, though they will still seek signalized crossings of busy streets [@broach_where_2012]. Not all routing packages allow the assignment of turn costs, but if we select a package that does, we propose to include turn costs. @broach_where_2012 is a possible source for these costs, but the nonlinearities in their model make converting coefficients into weights difficult an inexact. We do not propose to include arterial crossing costs, as the LTS methodology already penalizes unsignalized arterial crossings.
+
+### E-bikes
+
+E-bikes are an increasing part of the bicycle fleet [@surico_popularity_2021]. E-bike riders travel faster than non-electric bike riders. Studies have found e-bike riders travel 2–9 km/h faster than non-electric bike riders, depending on the type of e-bike [@schleinitz_german_2017; @lin_comparison_2008; @xu_modeling_2015]. These studies were based on either free-flow speeds or moving speeds with stops removed but including acceleration and deceleration. The effect on overall trip speed will likely be lower, since we must include stopped time at traffic signals and so on in the speed calculation (and these are included in the 8 mph average speed cited above). Since there is limited information on e-bike effects on mean speed, we propose using an estimate of an additional 2 mph when riding an e-bike—at the low end of the range cited above.
+
+There is minimal evidence in the literature on the effects of slope on e-bike users' route choice, but anecdotally this is a major motivator of e-bike purchasing. We propose to remove slope penalities entirely, as there are few very steep slopes in the Twin Cities.
+
+The increased speed of e-bikes may make riders feel safer mixing with traffic. We suspect this is a small effect, and do not plan to make any changes to the network used for e-bike routing.
+
+## Driving
+
+Fewer factors go into route choice for driving, with travel time being the dominant factor. However, unlike other modes, driving travel time is quite variable based on traffic conditions. We will use traffic congestion data derived from StreetLight Data to attach congested travel times to the network.
+
+Turns impose costs on drivers in terms of travel time and route complexity. If the software used supports it, we will attach turn penalties to account for the time needed to make turns; many routing packages already include estimated turn times for motor vehicles. StreetLight does not offer turn time estimates.
+
+We do not propose to model the additional costs of turns due to route complexity. Turn-by-turn navigation systems are ubiquitous, which greatly reduces the cognitive burden of complex routes.
+
+Some drivers base their route choices on safety or perceived safety, avoiding freeways, rush hour, night driving, driving in inclement weather, etc. [@ball_driving_1998]. We believe the variability of these avoidance behaviors makes modeling them difficult and prone to error in this type of study, and thus we propose a network consisting of all links where driving is legal.
+
+# Transit
+
+Transit routing differs from routing on the street network, due to the temporal element of transit. Different routing algorithms are generally used for transit [e.g., @delling_roundbased_2015]. Routing packages that support transit are much less common than those for on-street routing.
+
+Generalized cost routing is also not appropriate for transit. For example, walking time is generally considered to be more onerous that in-vehicle time. However, if we were to use a generalized cost metric with walking time weighted more heavily than in-vehicle time, we might fail to find an optimal path. Suppose there were two ways to get to a transfer point, one that was faster overall but involved more walking, and one that was somewhat slower but with less walking. A generalized cost algorithm might find the slower with less walking route to be preferable. However, the later arrival of the slower route might mean missing a connection to another transit vehicle.
+
+This is an example of the issues with imposing cutoffs on a generalized-cost shortest path algorithm described earlier. The departure time of the transit vehicle is effectively a time limit; only routes that arrive before a certain time can be used to access that departure.
+
+Imposing cutoffs on a generalized-cost street search is less problematic than doing so with a transit search. Limits on a generalized cost street search may fail to find paths that do meet selection criteria. However, these paths are likely close to the cutoff anyhow, as travel time and travel distance are major components of the generalized cost, and this cutoff always occurs at the end of trips. With transit, however, the cutoff might occur early on in the trip, with saving some walking time causing a missed transfer even on an otherwise quite reasonable trip. For this reason, using generalized costs with transit routing is inadvisable, and many transit routing packages do not even support it.
+
+Many common transit routing packages (e.g., `r5r`, `tidytransit`) are based on the RAPTOR algorithm [@delling_roundbased_2015]. This algorithm is a multiobjective optimization algorithm, finding all Pareto-optimal journeys based on travel time and number of transfers. Unlike multiobjective street routing, this multiobjective functionality is a consequence of how the routing the algorithm is designed, and does not result in diminished computational performance. Not every package exposes the full results including all tradeoffs for time and transfers. For those that do, it would be possible to include a penalty for number of transfers in the routing. However, @guthrie_multimodal_2019 found that simple shortest path searches, with no additional additional transfer penalties, was most predictive of rider behavior in the Twin Cities, with a higher transfer cost scenario coming in a distant second. Thus, we do not intend to add additional costs for transfers beyond their time cost.
+
+Including other costs, such as fares, differential weights for walking, waiting, and in-vehicle time, or varying preferences for different modes, requires more advanced multiobjective algorithms. Multiobjective transit routing beyond time and transfers is still an active area of research, and thus we recommend against including it in the scope of this project.
+
+There are multiple ways to access transit; however, the majority of transit users in the Twin Cities access transit by walking or using a mobility device—88% in the 2016 Transit On-Board Survey. For this reason, we propose to only model transit access by walking. We propose to use the same generalized costs described above, for consistency. This may cause some trips to not be found or to be declared infeasible when the generalized cost path misses a transit vehicle but there is another faster path that would not. However, these are believed to be a small portion of all trips, and they have some other undesirable attribute, such as an unsignalized arterial crossing. If this appears to be causing issues during QA, we can revisit this decision.
+
+Transit routing needs to be anchored in time, either as depart-at or arrive-by requests. We will determine whether to use a depart-at or arrive-by request based on the trip purposes at either end. For instance, a work destination purpose would use an arrive-by request, as work is likely more fixed in time than other trip purposes. Not all routing software supports arrive-by requests, but they can be approximated by running multiple depart-at requests if needed.
+
+Transit routing used in the academic literature increasingly uses multiple departure times over a time window to calculate a travel time accounting for variation due to the schedule [e.g., @conway_accounting_2018]. Our application is somewhat different, as we know the times the trips were actually taken, and can use those as exact arrival/departure times. However, some trips are flexible in time (e.g. shopping/errands). We plan to account for this flexibility in certain trip types by calculating percentiles of travel time over a time window, particularly in the tour-based analysis.
+
+# Conclusion
+
+This document detailed the five routing profiles we intend to use for this project: walking, bicycling, e-bike, driving, and transit. This document presented ideal scenarios; it may not be possible to implement all desired features, depending on the software packages chosen; these tradeoffs will be detailed in the routing tools memo. For street modes, we intend to use a generalized cost; the recommendations by mode are summarized in @tbl-recommendations. Note that these are additive. For instance, for bicycling, a meter on an LTS 3 street would have a weight of 3: 1 from the distance itself, and 2 additional from the penalty for LTS 3+.
+
+| Component | Unit | Weight |
+|-----------|------|--------|
+| **Walk** | | |
+| Distance  |  meters | $1.35^{-1} \approxeq 0.74$ |
+| Distance on steep hills (>10% grade) | meters | 0.74 |
+| Unsignalized arterial crossing | each | 53.28 |
+| Distance on available-quality streets | meters | 0.74 |
+| Distance on low-quality streets | meters | $0.25 \cdot 0.74 = 0.19$ |
+| Distance on medium-quality streets | meters | $0.1 \cdot 0.74 = 0.07$ |
+| **Bike** | | |
+| Distance | meters | 1 |
+| Elevation gain | meters | 59 |
+| Distance on LTS 3+ streets | meters | 2 |
+| Turn costs | | TBD |
+| **E-Bike** |||
+| Distance | meters | 1 |
+| Elevation gain | meters | 59 |
+| Distance on LTS 3+ streets | meters | 1 |
+| **Car** | | | 
+| Travel time (from StreetLight or assumed free-flow) | seconds | 1 |
+| Turn costs (likely pre-specified by routing software) | seconds | 1 |
+
+: Generalized cost components {#tbl-recommendations}
+
+In addition to generalized costs used to select paths, travel times are needed for statistical purposes as well as when accessing transit. For walking, we will assume a speed of 4.8 km/h (3.0 mph). Bicycling will assume a speed of 12.9 km/h (8.0 mph). E-bicycling will assume a speed of 16.1 km/h (10.0 mph). Transit speeds will be based on GTFS schedules. Car speeds will be based on observed speeds from StreetLight data, or free-flow speeds based on OpenStreetMap data for segments without StreetLight information.
+
+
+
+<!-- notes from call
+- How will pedestrian infrastructure and safety be incorporated into the routing, if at all? - done
+- Should weights for slopes for bicycles be based on total elevation change, or distance along steep streets? 
+- Should turn costs be modeled for bicycles and pedestrians?
+- Can turn costs for drivers be retrieved from StreetLight? No
+- What trip purposes should be treated as origin or destination "anchors"—i.e., trip departure or arrival times are fixed for these locations?
+- Should transit routing ever use multiple times over a time window? Yes, not clear what. Tour based analysis more important
+
+- Map ped infra, and lane infra. Weighting approach to safety. -->

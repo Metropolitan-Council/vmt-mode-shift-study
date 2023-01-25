@@ -131,4 +131,11 @@ dmypy.json
 
 README.html
 
+# data files
 *.csv
+
+# Quarto output files
+reports/**/*.html
+reports/**/*_cache
+reports/**/*_files
+
