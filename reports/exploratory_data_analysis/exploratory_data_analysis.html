@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Greg Erhardt">
-<meta name="dcterms.date" content="2022-12-23">
+<meta name="dcterms.date" content="2023-02-01">
 <meta name="description" content="Metropolitan Council VMT Reduction Mode Shift Project">
 
 <title>Technical Memo 1-Exploratory Data Analysis</title>
@@ -2573,7 +2573,7 @@ vertical-align: -.125em;
       <div>
       <div class="quarto-title-meta-heading">Published</div>
       <div class="quarto-title-meta-contents">
-        <p class="date">December 23, 2022</p>
+        <p class="date">February 1, 2023</p>
       </div>
     </div>
     
@@ -2605,6 +2605,7 @@ vertical-align: -.125em;
 <h1>Introduction</h1>
 <p>The VMT Reduction Mode Shift Study relies on an analysis of real-world trips reported in the 2019 and 2021 Travel Behavior Inventory (TBI) surveys of the Minneapolis/St. Paul Region. This technical memorandum describes how those trips were processed to support this study.</p>
 <p>That processing is completed in the accompanying notebook <code>Clean and Code TBI.ipynb</code> stored in the project github repository. The result of that processing is the file <code>tbi_merged.csv</code> which is stored on the project Teams site. The resulting data file contains one record for each linked trip to be analyzed for its mode shift potential, along with associated household, person and day attributes.</p>
+<p>Note: To convert this notebook to an HTML or other file, use Quarto. See https://quarto.org/docs/get-started/hello/jupyter.html</p>
 </section>
 <section id="main-data-processing" class="level1">
 <h1>Main Data Processing</h1>
@@ -2616,7 +2617,7 @@ vertical-align: -.125em;
 <li>day.csv: One record for each travel day, generally 7 days per person.</li>
 <li>trip.csv: One record for each unlinked trip made by those travelers.</li>
 <li>location.csv: A series of point locations and timestamps for each trip from the smartphone traces. These files are not processed further, and will only be used in this study to QA/QC the routes.</li>
-<li>vehicle.csv: One record for each vehicle in the household. Ideally, this would allow us to link VMT reductions to the emissions reductions associated with specific vehicles. However, the vehicle ID is rarely recorded in the trip data, so doing so would require matching trips to vehicles when there is more than one vehicle in the household.</li>
+<li>vehicle.csv: One record for each vehicle in the household. This will us to link VMT reductions to the emissions reductions associated with specific vehicles. Ignore vehicle_id in the Wave 2 trip list and instead use mode_type_detailed for matching.</li>
 </ul>
 <p>The core data processing in this task involves:</p>
 <ol type="1">
@@ -2807,9 +2808,14 @@ vertical-align: -.125em;
 <td style="text-align: center;">0%</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">Distance is less than 0.01 miles (52.8 ft).</td>
+<td style="text-align: left;">Distance is more than 100 miles (5280 ft).</td>
 <td style="text-align: center;">243</td>
 <td style="text-align: center;">3.3%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Detailed mode is ferry</td>
+<td style="text-align: center;">12</td>
+<td style="text-align: center;">0%</td>
 </tr>
 </tbody>
 </table>
@@ -2820,7 +2826,7 @@ vertical-align: -.125em;
 <section id="weighting" class="level1">
 <h1>Weighting</h1>
 <p>The data include four weights: household, person, day and trip. Please refer to the TBI documentation for details on how they are calculated. Each is an expansion factor, which means that when it is applied the data are “expanded” to represent the full population of the study area. For the household and person weights, this aligns with the number of households and the population of the study area. The day and trip weights are expanded to represent average weekday (Monday through Thursday) conditions.</p>
-<p>For this study, we recommend using the person weight. When applied, the data should expand to roughly the VMT over the course of a typical week. This may vary somewhat due to the exclusions above, or if some respondents reported fewer than 7 days of travel. Wave 1 and Wave 2 are each expanded separately, so should each be reported separately to avoid doubling the expanded VMT.</p>
+<p>For this study, we recommend using the day weight. When applied, the data should expand to roughly the VMT over the course of a typical weekday, accounting for people who reported different numbers of days of travel. In the future, we might consider weekend VMT, but this requires some more thought about how to adjust the weights.</p>
 </section>
 
 </main>
