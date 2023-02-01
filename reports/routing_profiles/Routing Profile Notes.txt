@@ -1,0 +1,34 @@
+Routing Profile Notes
+
+Bike
+ - Use level of traffic stress
+ - LTS 2 is where people actually bike.
+ - Weight: LTS 1 = 1
+           LTS 2 = 1.1
+		   LTS 3 = walking speed with 25% slower for pushing a bike. (same weight as walking weight below).
+		   LTS 4 = walking speed with 25% slower for pushing a bike. (same weight as walking weight below).
+ - Protected Bike Lanes: Improves LTS by one level.
+ - Speed estimated as average speed over TBI. 
+ - Penalize slope as outlined in memo. 
+
+
+Walk
+ - Use Virginia DOT Classification
+ - Use their weights for weightings paths, but track unweighted travel time and distance. 
+ - Slopes over 10% double the travel time (account for that in the travel time). 
+ - Walk at 1.35 m/s (3 mph)
+ 
+ - Optional: Give option to ban by changing weights to infinity. That comes later. 
+
+ 
+Driving
+ - shortest path based on congested time
+ - Some terminal time? Pull some assumptions to add in. 
+ 
+Transit
+ - Departure time flexibility
+ - Non-home end should be fixed at arrival end upon arrival and departure end upon departure
+ - NHB: If there is a work end, the work end is fixed. 
+ - Everything else: assume departure is fixed
+ - Flexibilty: Choose a time window and choose the best travel time out of that. Allow +/- 5 minutes of desired departure/arrival. 
+ - Special cases: to be determined by Greg from TBI.  Running into next trip? 
