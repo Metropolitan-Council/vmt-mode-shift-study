@@ -70,6 +70,7 @@ dependencies:
   - joblib=1.2.0=pyhd8ed1ab_0
   - jpeg=9e=hac89ed1_2
   - json-c=0.16=h01d06f9_0
+  - jsonschema=4.16.0=py310hecd8cb5_0
   - jupyter_client=7.4.8=py310hecd8cb5_0
   - jupyter_core=5.1.1=py310hecd8cb5_0
   - kealib=1.5.0=h5c1f988_0
@@ -123,6 +124,7 @@ dependencies:
   - mkl_random=1.2.2=py310hc081a56_0
   - munch=2.5.0=py_0
   - munkres=1.1.4=pyh9f0ad1d_0
+  - nbformat=5.7.0=py310hecd8cb5_0
   - ncurses=6.4=hcec6c5f_0
   - nest-asyncio=1.5.6=py310hecd8cb5_0
   - networkx=3.0=pyhd8ed1ab_0
@@ -157,9 +159,11 @@ dependencies:
   - pyopenssl=23.0.0=pyhd8ed1ab_0
   - pyparsing=3.0.9=pyhd8ed1ab_0
   - pyproj=3.4.1=py310ha48f28b_1
+  - pyrsistent=0.18.0=py310hca72f7f_0
   - pysocks=1.7.1=pyha2e5f31_6
   - python=3.10.9=h218abb5_0
   - python-dateutil=2.8.2=pyhd3eb1b0_0
+  - python-fastjsonschema=2.16.2=py310hecd8cb5_0
   - python_abi=3.10=2_cp310
   - pytz=2022.7=py310hecd8cb5_0
   - pyzmq=23.2.0=py310he9d5cce_0
