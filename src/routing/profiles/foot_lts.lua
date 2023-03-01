@@ -8,6 +8,7 @@ Handlers = require("lualib/way_handlers")
 Tags = require("lualib/tags")
 find_access_tag = require("lualib/access").find_access_tag
 drive_profile = require("car_traffic")
+LTS = require("lts")
 
 local miles_to_kilometers = 1.609
 
@@ -212,57 +213,14 @@ end
 -- Prohibited to be handled by the existing OSRM processing code.
 function get_walking_quality_multiplier(profile, way, data)
   -- first, extract some information about the way
-  -- We use the car profile in extracting the maxspeed, as we want the car maxspeed, not the walking maxspeed
-  -- copied from WayHandlers.maxspeed, modified to use car_profile
-  local keys = Sequence {  'maxspeed:advisory', 'maxspeed', 'source:maxspeed', 'maxspeed:type' }
-  local forward, backward = Tags.get_forward_backward_by_set(way,data,keys)
-  forward = WayHandlers.parse_maxspeed(forward, profile.car_profile)
-  backward = WayHandlers.parse_maxspeed(backward, profile.car_profile)
-
-  -- find highest maxspeed from forward, backward
-  -- TODO figure out how the string.match code based on source in way_handlers.lua works
-  local maxspeed = 0
-  if forward and forward > maxspeed then
-    maxspeed = forward
-  end
-
-  if backward and backward > maxspeed then
-    maxspeed = backward
-  end
-
-  if maxspeed == 0 then
-    -- no maxspeed for way, use default speeds from profile, copied from WayHandlers.speed
-    local key,value,speed = Tags.get_constant_by_key_value(way,profile.car_profile.speeds)
-    if speed then
-      maxspeed = speed
-    else
-      maxspeed = profile.car_profile.default_speed
-    end
-  end
+  local maxspeed = LTS.get_ltsspeed(way, profile, data)
 
   -- handle lanes
   -- TODO lanes on dual carriageways. On a dual carriageway, lanes will be the one-direction lanes
   -- while on a single carriageway lanes are supposed to be the sum of lanes in both directions, though
   -- the OSM wiki suggests that this is often mapped incorrectly as per-direction lanes.
-  local lanes = tonumber(way:get_value_by_key("lanes"))
-  -- TODO lanes:motorcar
-  if not lanes then
-    -- check forward/backward
-    local lanes_fwd = tonumber(way:get_value_by_key("lanes:forward"))
-    local lanes_bwd = tonumber(way:get_value_by_key("lanes:backward"))
-
-    if not lanes_fwd and not lanes_bwd then
-      lanes = 2
-    else
-      lanes = 0
-      if lanes_fwd then
-        lanes = lanes + lanes_fwd
-      end
-      if lanes_bwd then
-        lanes = lanes + lanes_bwd
-      end
-    end
-  end
+  local lanes_fwd, lanes_bwd = LTS.get_lanes(way, data, true)
+  local lanes = lanes_fwd + lanes_bwd
 
   -- check for sidewalk _tagged on way_
   -- Sidewalks mapped as separate ways are treated as low-stress footpaths
