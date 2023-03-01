@@ -12,7 +12,9 @@ NET_NAME=`basename ${OUTPUT_DIR}`
 OSM_TARGET="${OUTPUT_DIR}/${NET_NAME}.osm.pbf"
 OSRM_TARGET="${OSM_TARGET%.osm.pbf}.osrm"
 
-ln -s "${OSM_FILE}" "${OSM_TARGET}"
+# use readlink to get the absolute path, to avoid differences between macOS and Linux when
+# creating symlinks to a relative path in a subdirectory.
+ln -s `readlink -f "${OSM_FILE}"` "${OSM_TARGET}"
 osrm-extract -p "${PROFILE}" "${OSM_TARGET}"
 osrm-partition "${OSRM_TARGET}"
 osrm-customize "${OSRM_TARGET}"
