@@ -51,7 +51,8 @@ function setup()
         unclassified_link = FunctionalClass.minor,
         -- not specifying local roads here, this is the default
         footway = FunctionalClass.pedestrian,
-        cycleway = FunctionalClass.pedestrian
+        cycleway = FunctionalClass.pedestrian,
+        path = FunctionalClass.pedestrian
       }
     },
 
