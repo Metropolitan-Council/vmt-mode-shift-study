@@ -1,5 +1,6 @@
 -- Bicycle profile
 
+-- TODO version incompatibilities with api version 2
 api_version = 4
 
 Set = require('lualib/set')
@@ -10,7 +11,8 @@ find_access_tag = require("lualib/access").find_access_tag
 limit = require("lualib/maxspeed").limit
 Measure = require("lualib/measure")
 walk_profile = require("foot_lts")
-car_profile = require("car_lts")
+car_profile = require("car_traffic")
+LTS = require("lts")
 
 function setup()
   local default_speed = 15
@@ -20,8 +22,8 @@ function setup()
     properties = {
       u_turn_penalty                = 20,
       traffic_light_penalty         = 2,
-      --weight_name                   = 'cyclability',
-      weight_name                   = 'duration',
+      weight_name                   = 'bikelts',
+      --weight_name                   = 'duration',
       process_call_tagless_node     = false,
       max_speed_for_map_matching    = 110/3.6, -- kmph -> m/s
       use_turn_restrictions         = false,
@@ -35,7 +37,7 @@ function setup()
     oneway_handling           = true,
     turn_penalty              = 6,
     turn_bias                 = 1.4,
-    use_public_transport      = true,
+    use_public_transport      = false,  -- don't route on railway tracks (?)
 
     allowed_start_modes = Set {
       mode.cycling,
@@ -104,17 +106,6 @@ function setup()
       'opposite',
       'opposite_lane',
       'opposite_track',
-    },
-
-    -- reduce the driving speed by 30% for unsafe roads
-    -- only used for cyclability metric
-    unsafe_highway_list = {
-      primary = 0.5,
-      secondary = 0.65,
-      tertiary = 0.8,
-      primary_link = 0.5,
-      secondary_link = 0.65,
-      tertiary_link = 0.8,
     },
 
     service_penalties = {
@@ -201,7 +192,9 @@ function setup()
     },
 
     classes = Sequence {
-        'ferry', 'tunnel'
+        -- store LTS levels as classes. These will be used in direction output
+        -- and also used in calculating turn costs (i.e. crossing costs)
+        'ferry', 'tunnel', 'lts1', 'lts2', 'lts3', 'lts4'
     },
 
     -- Which classes should be excludable
@@ -219,7 +212,10 @@ function setup()
     avoid = Set {
       'impassable',
       'construction'
-    }
+    },
+
+    walk_profile = walk_profile.setup(),
+    car_profile = car_profile.setup()
   }
 end
 
@@ -262,8 +258,9 @@ function handle_bicycle_tags(profile,way,result,data)
   (not profile.use_public_transport or not data.railway or data.railway=='') and
   (not data.amenity or data.amenity=='') and
   (not data.man_made or data.man_made=='') and
-  (not data.public_transport or data.public_transport=='') and
-  (not data.bridge or data.bridge=='')
+  (not data.public_transport or data.public_transport=='') --and
+  -- don't include bridges not tagged as highways
+  --(not data.bridge or data.bridge=='')
   then
     return false
   end
@@ -300,7 +297,6 @@ function handle_bicycle_tags(profile,way,result,data)
 
   bike_push_handler(profile,way,result,data)
 
-
   -- maxspeed
   limit( result, data.maxspeed, data.maxspeed_forward, data.maxspeed_backward )
 
@@ -312,8 +308,6 @@ function handle_bicycle_tags(profile,way,result,data)
   if result.backward_speed <= 0 and result.duration <= 0 then
     result.backward_mode = mode.inaccessible
   end
-
-  safety_handler(profile,way,result,data)
 end
 
 
@@ -508,52 +502,150 @@ function bike_push_handler(profile,way,result,data)
   end
 end
 
-function safety_handler(profile,way,result,data)
-  -- convert duration into cyclability
-  if profile.properties.weight_name == 'cyclability' then
-    local safety_penalty = profile.unsafe_highway_list[data.highway] or 1.
-    local is_unsafe = safety_penalty < 1
 
-    -- primaries that are one ways are probably huge primaries where the lanes need to be separated
-    if is_unsafe and data.highway == 'primary' and not data.is_twoway then
-      safety_penalty = safety_penalty * 0.5
-    end
-    if is_unsafe and data.highway == 'secondary' and not data.is_twoway then
-      safety_penalty = safety_penalty * 0.6
-    end
-
-    local forward_is_unsafe = is_unsafe and not data.has_cycleway_forward
-    local backward_is_unsafe = is_unsafe and not data.has_cycleway_backward
-    local is_undesireable = data.highway == "service" and profile.service_penalties[data.service]
-    local forward_penalty = 1.
-    local backward_penalty = 1.
-    if forward_is_unsafe then
-      forward_penalty = math.min(forward_penalty, safety_penalty)
-    end
-    if backward_is_unsafe then
-       backward_penalty = math.min(backward_penalty, safety_penalty)
-    end
-
-    if is_undesireable then
-       forward_penalty = math.min(forward_penalty, profile.service_penalties[data.service])
-       backward_penalty = math.min(backward_penalty, profile.service_penalties[data.service])
-    end
-
-    if result.forward_speed > 0 then
-      -- convert from km/h to m/s
-      result.forward_rate = result.forward_speed / 3.6 * forward_penalty
-    end
-    if result.backward_speed > 0 then
-      -- convert from km/h to m/s
-      result.backward_rate = result.backward_speed / 3.6 * backward_penalty
-    end
-    if result.duration > 0 then
-      result.weight = result.duration / forward_penalty
-    end
+-- calculate LTS using Access Across America methodology
+-- reference implementation: https://github.com/AccessibilityObservatory/AOBikeLTS/blob/main/LTS_assignment.py#L171
+function lts_for_way(profile, way)
+  local highway = way:get_value_by_key("highway")
+  
+  if not highway then
+    -- handle things like parking lots, etc. These are not in the AO algorithm.
+    -- Parking lots: LTS 2
+    if way:get_value_by_key("amenity") == "parking" then return 2 end
   end
+
+  -- Subtract 0.5 mph to account for floating point issues, in case unit
+  -- conversions are not exact
+  -- TODO handle missing maxspeed
+  local maxspeed_mph = LTS.get_ltsspeed(way, profile) / 1.609 - 0.5
+
+  local lanes_fwd, lanes_bwd = LTS.get_lanes(way, profile, false)
+  local lanes_each_way = ((lanes_fwd and lanes_bwd) and math.max(lanes_fwd, lanes_bwd)) or nil
+
+  local lanes_total = ((lanes_fwd and lanes_bwd) and lanes_fwd + lanes_bwd) or nil
+  
+  -- TODO a bunch of stuff disallowed by the methodology - OSRM should handle most of this already
+  -- audit.
+
+  -- generic paths that don't disallow bicycles
+  if highway == "path" then return 1 end
+
+  -- crossings are LTS 1
+  if highway == "crossing" then return 1 end
+
+  -- footpaths are LTS 1 (TODO only if they explicitly allow bikes - does OSRM allow routing on ones that don't?)
+  if highway == "footway" or highway == "pedestrian" then return 1 end
+
+  -- restricted access facilities that allow bikes (allow bikes taken care of by OSRM)
+  -- TODO AAA codes this as 2, but shouldn't it really be 1?
+  if way:get_value_by_key("access") == "no" then return 2 end
+
+  -- separated cycletracks
+  -- TODO handle situations where there is only a cycle track in one direction of a two-way street (possibly contraflow)
+  -- moreover, LTS may be different forwards and backwards
+  local cycleway = way:get_value_by_key("cycleway")
+  local cycleway_left = way:get_value_by_key("cycleway:left")
+  local cycleway_right = way:get_value_by_key("cycleway:right")
+  if highway == "cycleway" or cycleway == "track" or cycleway_left == "track" or
+    cycleway_right == "track" or cycleway == "opposite_track" then
+      -- TODO cycleway:left=opposite_track etc
+      return 1
+  end
+
+  -- shared busways
+  -- TODO cycleway_left etc
+  if cycleway == "share_busway" or cycleway == "opposite_share_busway" then return 2 end
+
+  -- low speed shared lanes
+  -- TODO share_busway vs shared_lane - correct?
+  if cycleway == "shared_lane" and maxspeed_mph <= 25 then return 2 end
+
+  -- higher speed, non-residential shared lanes
+  -- TODO what about residential high-speed shared lanes? seems to not be covered in the LTS methodology
+  if cycleway == "shared_lane" and highway ~= "residential" then return 3 end
+
+  if cycleway == "lane" or cycleway_right == "lane" or cycleway_left == "lane" or
+    cycleway == "opposite_lane" or cycleway_right == "opposite_lane" or cycleway_left == "opposite_lane" then
+      assert(lanes_each_way == nil or lanes_each_way > 0, lanes_each_way and "invalid lanes_each_way value " .. lanes_each_way .. " at way " .. way:id())
+      assert(maxspeed_mph == nil or maxspeed_mph > 0, maxspeed_mph and "invalid maxspeed parsed as " .. maxspeed_mph .. " at way " .. way:id())
+      if lanes_each_way and lanes_each_way < 2 then
+        if maxspeed_mph and maxspeed_mph <= 25 then return 1
+        elseif maxspeed_mph and maxspeed_mph <= 30 then return 2
+        elseif maxspeed_mph and maxspeed_mph > 30 then return 3 end
+      elseif lanes_each_way and lanes_each_way == 2 then
+        if maxspeed_mph and maxspeed_mph <= 25 then return 2
+        elseif maxspeed_mph and maxspeed_mph > 25 then return 3 end
+      elseif lanes_each_way and lanes_each_way > 2 then
+        if maxspeed_mph and maxspeed_mph <= 35 then return 3
+        elseif maxspeed_mph and maxspeed_mph > 35 then return 4 end
+      end
+
+      -- if we don't have speed or lane info we wind up here
+      assert(lanes_each_way == nil or maxspeed_mph == nil, "lanes and maxspeed present but no LTS assigned at way " .. way:id())
+
+      if highway == "unclassified" or highway == "tertiary" or highway == "tertiary_link" then
+        -- TODO should this include residential? Or residential should be 1, even with no lane information?
+        return 2
+      else
+        return 3
+      end
+  end -- bike lane logic
+
+  -- TODO move above the bike lane logic? It wasn't in AAA work but I think it should be.
+  if highway == "residential" or highway == "living_street" then
+    return 1
+  end
+
+  -- #21 - small & slow (under 3 lanes & maxspeed <= 25), LTS 2
+  if lanes_total and maxspeed_mph and lanes_total <= 3 and maxspeed_mph <= 25 then
+    return 2
+  end
+
+  -- #22 -- slow but more than 3 lanes, LTS 3 -- informed by PFB
+  if lanes_total and maxspeed_mph and lanes_total > 3 and maxspeed_mph <= 25 then
+    return 3
+  end
+
+  -- #23 - slow and lanes not specified, LTS 2
+  if not lanes_total and maxspeed_mph and maxspeed_mph <= 25 then
+    return 2
+  end
+
+  -- #24 - highway = tertiary & no assignment yet (built in), LTS 3
+  if highway == "tertiary" then
+    return 3
+  end
+
+  -- #25 - highway = tertiary_link or unclassified & no assignment yet (built in), LTS 2
+  if highway == "tertiary_link" or highway == "unclassified" then
+    return 2
+  end
+
+  -- #26 - highway = primary, trunk, primary_link, trunk_link, & no assignment yet (no separated facilities), LTS 4
+  if highway == "primary" or highway == "trunk" or highway == "primary_link" or highway == "trunk_link" then
+    return 4
+  end
+
+  -- catch-all
+  return 4
 end
 
-
+-- add a weight of 1.1x for LTS 2
+function lts_weighter(profile, way, result, data)
+  if data.lts == 2 then
+    -- 10% penalty for LTS 2 vs 1
+    result.forward_speed = result.forward_speed / 1.1
+    result.backward_speed = result.backward_speed / 1.1
+    result.forward_rate = result.forward_speed / 1.1
+    result.backward_rate = result.backward_speed / 1.1
+  else
+    assert(data.lts == 1, "LTS not 1 when it should be at way" .. way:id())
+    result.forward_speed = result.forward_speed
+    result.backward_speed = result.backward_speed
+    result.forward_rate = result.forward_speed
+    result.backward_rate = result.backward_speed
+  end
+end
 
 function process_way(profile, way, result)
   -- the initial filtering of ways based on presence of tags
@@ -562,87 +654,122 @@ function process_way(profile, way, result)
   -- to increase performance, prefetching and initial tag check
   -- is done directly instead of via a handler.
 
-  -- in general we should try to abort as soon as
-  -- possible if the way is not routable, to avoid doing
-  -- unnecessary work. this implies we should check things that
-  -- commonly forbids access early, and handle edge cases later.
+  -- We first check LTS. If it's over 2, we short-circuit and hand off to the
+  -- walk profile as we assume people walk their bikes in these locations
+  local lts = lts_for_way(profile, way)
 
-  -- data table for storing intermediate values during processing
+  if lts == 1 then
+     result.forward_classes["lts1"] = true
+     result.backward_classes["lts1"] = true
+  elseif lts == 2 then
+     result.forward_classes["lts2"] = true
+     result.backward_classes["lts2"] = true
+  elseif lts == 3 then
+     result.forward_classes["lts3"] = true
+     result.backward_classes["lts3"] = true
+  elseif lts == 4 then
+     result.forward_classes["lts4"] = true
+     result.backward_classes["lts4"] = true
+  end
 
-  local data = {
-    -- prefetch tags
-    highway = way:get_value_by_key('highway'),
+  if lts > 2 then
+    -- process as a walk-bike segment
+    walk_profile.process_way(profile.walk_profile, way, result)
 
-    route = nil,
-    man_made = nil,
-    railway = nil,
-    amenity = nil,
-    public_transport = nil,
-    bridge = nil,
+    -- and apply a 25% speed and weight penalty to account for walking the bike
+    result.forward_speed = result.forward_speed / 1.25
+    result.backward_speed = result.backward_speed / 1.25
+    result.forward_rate = result.forward_rate / 1.25
+    result.backward_rate = result.backward_rate / 1.25
+  else
+    -- process as bike segment
 
-    access = nil,
+    -- in general we should try to abort as soon as
+    -- possible if the way is not routable, to avoid doing
+    -- unnecessary work. this implies we should check things that
+    -- commonly forbids access early, and handle edge cases later.
 
-    junction = nil,
-    maxspeed = nil,
-    maxspeed_forward = nil,
-    maxspeed_backward = nil,
-    barrier = nil,
-    oneway = nil,
-    oneway_bicycle = nil,
-    cycleway = nil,
-    cycleway_left = nil,
-    cycleway_right = nil,
-    duration = nil,
-    service = nil,
-    foot = nil,
-    foot_forward = nil,
-    foot_backward = nil,
-    bicycle = nil,
+    -- data table for storing intermediate values during processing
 
-    way_type_allows_pushing = false,
-    has_cycleway_forward = false,
-    has_cycleway_backward = false,
-    is_twoway = true,
-    reverse = false,
-    implied_oneway = false
-  }
+    local data = {
+      -- prefetch tags
+      highway = way:get_value_by_key('highway'),
 
-  local handlers = Sequence {
-    -- set the default mode for this profile. if can be changed later
-    -- in case it turns we're e.g. on a ferry
-    WayHandlers.default_mode,
+      route = nil,
+      man_made = nil,
+      railway = nil,
+      amenity = nil,
+      public_transport = nil,
+      bridge = nil,
 
-    -- check various tags that could indicate that the way is not
-    -- routable. this includes things like status=impassable,
-    -- toll=yes and oneway=reversible
-    WayHandlers.blocked_ways,
+      access = nil,
 
-    -- our main handler
-    handle_bicycle_tags,
+      junction = nil,
+      maxspeed = nil,
+      maxspeed_forward = nil,
+      maxspeed_backward = nil,
+      barrier = nil,
+      oneway = nil,
+      oneway_bicycle = nil,
+      cycleway = nil,
+      cycleway_left = nil,
+      cycleway_right = nil,
+      duration = nil,
+      service = nil,
+      foot = nil,
+      foot_forward = nil,
+      foot_backward = nil,
+      bicycle = nil,
 
-    -- compute speed taking into account way type, maxspeed tags, etc.
-    WayHandlers.surface,
+      way_type_allows_pushing = false,
+      has_cycleway_forward = false,
+      has_cycleway_backward = false,
+      is_twoway = true,
+      reverse = false,
+      implied_oneway = false,
 
-    -- handle turn lanes and road classification, used for guidance
-    WayHandlers.classification,
+      lts = lts
+    }
 
-    -- handle allowed start/end modes
-    WayHandlers.startpoint,
+    local handlers = Sequence {
+      -- set the default mode for this profile. if can be changed later
+      -- in case it turns we're e.g. on a ferry
+      WayHandlers.default_mode,
 
-    -- handle roundabouts
-    WayHandlers.roundabouts,
+      -- check various tags that could indicate that the way is not
+      -- routable. this includes things like status=impassable,
+      -- toll=yes and oneway=reversible
+      WayHandlers.blocked_ways,
 
-    -- set name, ref and pronunciation
-    WayHandlers.names,
+      -- our main handler
+      handle_bicycle_tags,
 
-    -- set classes
-    WayHandlers.classes,
+      -- compute speed taking into account way type, maxspeed tags, etc.
+      WayHandlers.surface,
 
-    -- set weight properties of the way
-    WayHandlers.weights
-  }
+      -- handle turn lanes and road classification, used for guidance
+      WayHandlers.classification,
 
-  WayHandlers.run(profile, way, result, data, handlers)
+      -- handle allowed start/end modes
+      WayHandlers.startpoint,
+
+      -- handle roundabouts
+      WayHandlers.roundabouts,
+
+      -- set name, ref and pronunciation
+      WayHandlers.names,
+
+      -- set classes
+      WayHandlers.classes,
+
+      -- set weight properties of the way
+      WayHandlers.weights,
+
+      lts_weighter
+    }
+
+    WayHandlers.run(profile, way, result, data, handlers)
+  end
 end
 
 function process_turn(profile, turn)

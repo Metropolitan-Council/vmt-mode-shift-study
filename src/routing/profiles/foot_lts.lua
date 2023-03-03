@@ -220,7 +220,7 @@ function get_walking_quality_multiplier(profile, way, data)
   -- TODO lanes on dual carriageways. On a dual carriageway, lanes will be the one-direction lanes
   -- while on a single carriageway lanes are supposed to be the sum of lanes in both directions, though
   -- the OSM wiki suggests that this is often mapped incorrectly as per-direction lanes.
-  local lanes_fwd, lanes_bwd = LTS.get_lanes(way, data, true)
+  local lanes_fwd, lanes_bwd = LTS.get_lanes(way, profile, true)
   local lanes = lanes_fwd + lanes_bwd
 
   -- check for sidewalk _tagged on way_
