@@ -15,7 +15,7 @@ car_profile = require("car_traffic")
 LTS = require("lts")
 
 function setup()
-  local default_speed = 15
+  local default_speed = 8 * 1.609
   local walking_speed = 4
 
   return {
@@ -29,6 +29,21 @@ function setup()
       use_turn_restrictions         = false,
       continue_straight_at_waypoint = false,
       mode_change_penalty           = 30,
+    },
+
+    -- Penalties for unsignalized intersections of different LTS values, in "weighted seconds"
+    unsignalized_intersection_penalties = {
+      1,
+      20,
+      60,
+      180 -- heavily avoid unsignalized crossings
+    },
+
+    signalized_intersection_penalties = {
+      15,
+      30,
+      60,
+      120 -- will generally not be used, only if intersection is all LTS 4
     },
 
     default_mode              = mode.cycling,
@@ -639,12 +654,18 @@ function lts_weighter(profile, way, result, data)
     result.forward_rate = result.forward_speed / 1.1
     result.backward_rate = result.backward_speed / 1.1
   else
-    assert(data.lts == 1, "LTS not 1 when it should be at way" .. way:id())
+    --  assert(data.lts == 1, "LTS not 1 when it should be at way" .. way:id())
     result.forward_speed = result.forward_speed
     result.backward_speed = result.backward_speed
     result.forward_rate = result.forward_speed
     result.backward_rate = result.backward_speed
   end
+
+  -- use highway classification to store LTS so it's available in turns
+  -- This will mess up guidance/direction generation, but should not affect routes
+  result.road_classification.road_priority_class = data.lts
+
+  --assert(result.forward_speed > 0 and result.backward_speed > 0 and result.forward_rate > 0 and result.backward_rate > 0, "speeds/rates not positive at way " .. way:id())
 end
 
 function process_way(profile, way, result)
@@ -657,6 +678,7 @@ function process_way(profile, way, result)
   -- We first check LTS. If it's over 2, we short-circuit and hand off to the
   -- walk profile as we assume people walk their bikes in these locations
   local lts = lts_for_way(profile, way)
+  assert(lts > 0 and lts <= 4, "Found unexpected LTS " .. lts .. " at way " .. way:id())
 
   if lts == 1 then
      result.forward_classes["lts1"] = true
@@ -672,6 +694,8 @@ function process_way(profile, way, result)
      result.backward_classes["lts4"] = true
   end
 
+  assert(lts >= 1 and lts <= 4, "Unexpected LTS " .. lts .. " at way " .. way:id())
+
   if lts > 2 then
     -- process as a walk-bike segment
     walk_profile.process_way(profile.walk_profile, way, result)
@@ -681,6 +705,9 @@ function process_way(profile, way, result)
     result.backward_speed = result.backward_speed / 1.25
     result.forward_rate = result.forward_rate / 1.25
     result.backward_rate = result.backward_rate / 1.25
+
+    result.forward_mode = mode.pushing_bike
+    result.backward_mode = mode.pushing_bike
   else
     -- process as bike segment
 
@@ -748,7 +775,8 @@ function process_way(profile, way, result)
       WayHandlers.surface,
 
       -- handle turn lanes and road classification, used for guidance
-      WayHandlers.classification,
+      -- don't overwrite LTS values
+      --WayHandlers.classification,
 
       -- handle allowed start/end modes
       WayHandlers.startpoint,
@@ -770,30 +798,60 @@ function process_way(profile, way, result)
 
     WayHandlers.run(profile, way, result, data, handlers)
   end
+  
+  -- Store LTS as road priority class so we can access it in process_turn
+  -- This will reduce the quality of the narrative directions, but should not affect routing.
+  result.road_classification.road_priority_class = lts
 end
 
 function process_turn(profile, turn)
-  -- compute turn penalty as angle^2, with a left/right bias
-  local normalized_angle = turn.angle / 90.0
-  if normalized_angle >= 0.0 then
-    turn.duration = normalized_angle * normalized_angle * profile.turn_penalty / profile.turn_bias
-  else
-    turn.duration = normalized_angle * normalized_angle * profile.turn_penalty * profile.turn_bias
-  end
-
-  if turn.is_u_turn then
-    turn.duration = turn.duration + profile.properties.u_turn_penalty
-  end
-
+  local lts
   if turn.has_traffic_light then
-     turn.duration = turn.duration + profile.properties.traffic_light_penalty
+    -- minimum of all LTS at intersection
+    lts = math.min(turn.source_priority_class, turn.target_priority_class)
+
+    for i,road in ipairs(turn.roads_on_the_right) do
+      if road.priority_class < lts then lts = road.priority_class end
+    end
+
+    for i,road in ipairs(turn.roads_on_the_left) do
+      if road.priority_class < lts then lts = road.priority_class end
+    end
+
+    local weight = profile.signalized_intersection_penalties[lts]
+
+    if weight == nil then
+      print("WARN: weight was nil for lts " .. lts)
+      weight = 1
+    end
+
+    turn.duration = weight
+    turn.weight = weight
+
+    assert(turn.duration > 0 and turn.weight > 0, "Signalized LTS " .. lts .. " turn does not have duration/weight")
+
+  else
+    lts = math.max(turn.source_priority_class, turn.target_priority_class)
+    -- maximum of all LTS at intersection
+    for i,road in ipairs(turn.roads_on_the_right) do
+      if road.priority_class > lts then lts = road.priority_class end
+    end
+
+    for i,road in ipairs(turn.roads_on_the_left) do
+      if road.priority_class > lts then lts = road.priority_class end
+    end
+
+    local weight = profile.unsignalized_intersection_penalties[lts]
+    if weight == nil then
+      print("WARN: weight was nil for lts " .. lts)
+      weight = 1
+    end
+    turn.duration = weight
+    turn.weight = weight
+    assert(turn.duration > 0 and turn.weight > 0, "Unsignalized LTS " .. lts .. " turn does not have duration/weight")
   end
-  if profile.properties.weight_name == 'cyclability' then
-    turn.weight = turn.duration
-  end
-  if turn.source_mode == mode.cycling and turn.target_mode ~= mode.cycling then
-    turn.weight = turn.weight + profile.properties.mode_change_penalty
-  end
+
+  assert(turn.duration > 0 and turn.weight > 0, "Turn does not have duration/weight")
 end
 
 return {
