@@ -180,6 +180,7 @@ dependencies:
   - stack_data=0.2.0=pyhd3eb1b0_0
   - threadpoolctl=3.1.0=pyh8a188c0_0
   - tiledb=2.13.2=h3b7b576_0
+  - timezonefinder=6.1.5
   - tk=8.6.12=h5d9f67b_0
   - tornado=6.2=py310hca72f7f_0
   - traitlets=5.7.1=py310hecd8cb5_0
