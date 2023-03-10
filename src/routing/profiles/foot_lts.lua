@@ -214,7 +214,7 @@ end
 -- Prohibited to be handled by the existing OSRM processing code.
 function get_walking_quality_multiplier(profile, way, data)
   -- first, extract some information about the way
-  local maxspeed = LTS.get_ltsspeed(way, profile, data)
+  local maxspeed = LTS.get_ltsspeed(way, profile, true)
 
   -- handle lanes
   -- TODO lanes on dual carriageways. On a dual carriageway, lanes will be the one-direction lanes
