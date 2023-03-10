@@ -38,7 +38,7 @@ function get_oneway_data (way, profile)
   return data
 end
 
-function LTS.get_ltsspeed(way, profile)
+function LTS.get_ltsspeed(way, profile, infer)
   local oneway_data = get_oneway_data(way, profile)
 
   -- We use the car profile in extracting the maxspeed, as we want the car maxspeed, not the walking maxspeed
@@ -60,12 +60,16 @@ function LTS.get_ltsspeed(way, profile)
   end
 
   if maxspeed == 0 then
-    -- no maxspeed for way, use default speeds from profile, copied from WayHandlers.speed
-    local key,value,speed = Tags.get_constant_by_key_value(way,profile.car_profile.speeds)
-    if speed then
-      maxspeed = speed
+    if infer then
+      -- no maxspeed for way, use default speeds from profile, copied from WayHandlers.speed
+      local key,value,speed = Tags.get_constant_by_key_value(way,profile.car_profile.speeds)
+      if speed then
+        maxspeed = speed
+      else
+        maxspeed = profile.car_profile.default_speed
+      end
     else
-      maxspeed = profile.car_profile.default_speed
+      return nil
     end
   end
 

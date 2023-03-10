@@ -531,8 +531,13 @@ function lts_for_way(profile, way)
 
   -- Subtract 0.5 mph to account for floating point issues, in case unit
   -- conversions are not exact
-  -- TODO handle missing maxspeed
-  local maxspeed_mph = LTS.get_ltsspeed(way, profile) / 1.609 - 0.5
+  local maxspeed = LTS.get_ltsspeed(way, profile, false)
+  local maxspeed_mph
+  if maxspeed then
+    maxspeed_mph = maxspeed / 1.609 - 0.5
+  else
+    maxspeed_mph = nil
+  end
 
   local lanes_fwd, lanes_bwd = LTS.get_lanes(way, profile, false)
   local lanes_each_way = ((lanes_fwd and lanes_bwd) and math.max(lanes_fwd, lanes_bwd)) or nil
@@ -573,7 +578,7 @@ function lts_for_way(profile, way)
 
   -- low speed shared lanes
   -- TODO share_busway vs shared_lane - correct?
-  if cycleway == "shared_lane" and maxspeed_mph <= 25 then return 2 end
+  if cycleway == "shared_lane" and maxspeed and maxspeed_mph <= 25 then return 2 end
 
   -- higher speed, non-residential shared lanes
   -- TODO what about residential high-speed shared lanes? seems to not be covered in the LTS methodology
