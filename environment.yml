@@ -154,6 +154,7 @@ dependencies:
   - pthread-stubs=0.4=hc929b4f_1001
   - ptyprocess=0.7.0=pyhd3eb1b0_2
   - pure_eval=0.2.2=pyhd3eb1b0_0
+  - pyarrow=11.0.0
   - pycparser=2.21=pyhd8ed1ab_0
   - pygments=2.11.2=pyhd3eb1b0_0
   - pyopenssl=23.0.0=pyhd8ed1ab_0
