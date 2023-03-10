@@ -40,9 +40,12 @@ To perform street routing, use the `route.jl` script like so, from within this d
 
     julia -t auto --project route.jl /path/to/tbi_merged.csv ~/vmt-networks/car/car.osrm /path/to/output.gpkg
 
-You can change the output format to any GDAL/OGR supported format with the `--output-driver` option. I used GeoPackage because GeoJSON is unwieldy with this large of a dataset. `-t auto` uses as many threads as your CPU has cores to speed up the routing. On my machine, routing all of the TBI trips by car takes 1 minute 11 seconds, and several minutes to write the output.
+You can change the output format to any GDAL/OGR supported format with the `--output-driver` option. I used GeoPackage because GeoJSON is unwieldy with this large of a dataset. `-t auto` uses as many threads as your CPU has cores to speed up the routing. On my machine, routing all of the TBI trips by car takes 1 minute 11 seconds, and several minutes to write the output. If you're using Windows Subsystem for Linux, you should store the output within WSL, not in `/mnt/c/...` as access to Windows volumes is very slow in WSL. You can move the file to `/mnt/c/` after it's written if you need access to it from Windows.
+
+Add `--bike-lts` to include statistics
 
 Eventually, this will have to be modified for congestion routing, to select an OSRM network based on departure time.
+
 
 ### Transit routing
 
