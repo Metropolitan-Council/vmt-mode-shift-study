@@ -54,6 +54,8 @@ end
 
 "Perform street routing using OSRM"
 function do_street_route(osrm, data_itr, n_rows, bikelts)
+    # uncomment for single thread debugging
+    #map(enumerate(data_itr)) do (i, row)
     ThreadsX.mapi(enumerate(data_itr)) do (i, row)
         if i % 10_000 == 0
             @info "Processed $i trips ($(round(i / n_rows * 100, digits=1))%)"
@@ -78,8 +80,6 @@ struct RouteSegment
     lts::Int32
     geometry::Vector{LatLon}
     distance_meters::Float64
-    duration_seconds::Float64
-    weight::Float64
 end
 
 
@@ -95,8 +95,13 @@ function split_route_by_lts(route::OSRM.Route)
 
     current_lts = -1
 
-    for step in route.legs[1].steps
-        for intersection in step.intersections
+    for (stepidx, step) in enumerate(route.legs[1].steps)
+        for (intidx, intersection) in enumerate(step.intersections)
+            if isnothing(intersection.classes) && stepidx == length(route.legs[1].steps) && intidx == length(step.intersections)
+                # classes are missing on last "intersection" arriving at destination
+                continue
+            end
+
             lts = if "lts1" ∈ intersection.classes
                 1
             elseif "lts2" ∈ intersection.classes
@@ -116,16 +121,18 @@ function split_route_by_lts(route::OSRM.Route)
                 else
                     # write out the current segment
                     # figure out where we are in the geometry
-                    new_coord_idx = findfirst(route.geometry .≈ intersection.location)
+                    new_coord_idx = current_coord_index + findfirst(route.geometry[current_coord_index:end] .≈ Ref(intersection.location)) - 1
                     @assert !isnothing(new_coord_idx)
 
                     geom = route.geometry[current_coord_index:new_coord_idx]
                     # -1 because these are the distances _between_ coordinates
                     distance_meters = sum(route.legs[1].annotation.distance_meters[current_coord_index:(new_coord_idx - 1)])
-                    duration_seconds = sum(route.legs[1].annotation.duration_seconds[current_coord_index:(new_coord_idx - 1)])
-                    weight = sum(route.legs[1].annotation.weight[current_coord_index:(new_coord_idx - 1)])
 
-                    push!(result, RouteSegment(lts, geom, distance_meters, duration_seconds, weight))
+                    # duration and weight are non-trivial, because the annotation does not include
+                    # turn costs. So just summing up duration the way we do distance won't work. For now,
+                    # punt on this, and just don't include duration/weight at the segment level.
+
+                    push!(result, RouteSegment(current_lts, geom, distance_meters))
 
                     current_lts = lts
                     current_coord_index = new_coord_idx
@@ -137,11 +144,10 @@ function split_route_by_lts(route::OSRM.Route)
     # finish up
     geom = route.geometry[current_coord_index:end]
     # -1 because these are the distances _between_ coordinates
-    distance_meters = sum(route.legs[1].annotation.distance_meters[current_coord_index:(end - 1)])
-    duration_seconds = sum(route.legs[1].annotation.duration_seconds[current_coord_index:(end - 1)])
-    weight = sum(route.legs[1].annotation.weight[current_coord_index:(end - 1)])
+    distance_meters = sum(route.legs[1].annotation.distance_meters[current_coord_index:end])
 
-    push!(result, RouteSegment(current_lts, geom, distance_meters, duration_seconds, weight))
+
+    push!(result, RouteSegment(current_lts, geom, distance_meters))
 end
 
 "Add the columns stored for street routes to an ArchGDAL layer"
@@ -153,9 +159,7 @@ function create_street_columns!(layer, bikelts)
 
     if bikelts
         for lts in 1:4
-            ArchGDAL.addfielddefn!(layer, "duration_seconds_lts$lts", ArchGDAL.OFTReal)
-            ArchGDAL.addfielddefn!(layer, "distance_meters_lts$lts", ArchGDAL.OFTReal)
-            ArchGDAL.addfielddefn!(later, "weight_lts$lts", ArchGDAL.OFTReal)
+            ArchGDAL.addfielddefn!(layer, "distance_meters_$lts", ArchGDAL.OFTReal)
         end
     end
 end
@@ -173,10 +177,8 @@ function write_street_feature!(layer, route)
 
         if :segments ∈ keys(route)
             for lts in 1:4
-                lts_segments = filter(s -> s.lts == lts, segments)
-                ArchGDAL.setfield(feature, (lts - 1 * 3) + 4, sum_if_nonzero(map(s -> s.duration_seconds, lts_segments)))
-                ArchGDAL.setfield(feature, (lts - 1 * 3) + 5, sum_if_nonzero(map(s -> s.distance_meters, lts_segments)))
-                ArchGDAL.setfield(feature, (lts - 1 * 3) + 6, sum_if_nonzero(map(s -> s.weight, lts_segments)))
+                lts_segments = filter(s -> s.lts == lts, route.segments)
+                ArchGDAL.setfield!(feature, 3 + lts, sum_if_nonzero(map(s -> s.distance_meters, lts_segments)))
             end
         end
     end
@@ -187,21 +189,17 @@ function create_bike_segment_columns!(layer)
     ArchGDAL.addfielddefn!(layer, "trip_id", ArchGDAL.OFTString)
     ArchGDAL.addfielddefn!(layer, "segment_index", ArchGDAL.OFTReal)
     ArchGDAL.addfielddefn!(layer, "lts", ArchGDAL.OFTInteger)
-    ArchGDAL.addfielddefn!(layer, "duration_seconds", ArchGDAL.OFTReal)
     ArchGDAL.addfielddefn!(layer, "distance_meters", ArchGDAL.OFTReal)
-    ArchGDAL.addfielddefn!(layer, "weight", ArchGDAL.OFTReal)
 end
 
 function write_bike_segments!(layer, route)
     for (i, segment) in enumerate(route.segments)
-        ArchGDAL.addfeature!(layer) do feature
+        ArchGDAL.addfeature(layer) do feature
             ArchGDAL.setgeom!(feature, geodesy_to_gdal(segment.geometry))
             ArchGDAL.setfield!(feature, 0, route.id)
             ArchGDAL.setfield!(feature, 1, i)
             ArchGDAL.setfield!(feature, 2, segment.lts)
-            ArchGDAL.setfield!(feature, 3, segment.duration_seconds)
-            ArchGDAL.setfield!(feature, 4, segment.distance_meters)
-            ArchGDAL.setfield!(feature, 5, segment.weight)
+            ArchGDAL.setfield!(feature, 3, segment.distance_meters)
         end
     end
 end
@@ -213,6 +211,8 @@ end
 select_representative_date(date) = Dates.tonext(x -> dayofweek(x) == dayofweek(date), REPRESENTATIVE_WEEK)
 
 function do_transit_route(net, osrm, data_itr, n_rows)
+    # uncomment for single-thread debugging
+    #map(enumerate(data_itr)) do (i, row)
     ThreadsX.mapi(enumerate(data_itr)) do (i, row)
         if i % 10_000 == 0
             @info "Processed $i trips ($(round(i / n_rows * 100, digits=1))%)"
@@ -335,7 +335,7 @@ function main(args)
     if transit
         time = @elapsed result = do_transit_route(transit_network, osrm, Tables.namedtupleiterator(data), nrow(data))
     else
-        time = @elapsed result = do_street_route(osrm, Tables.namedtupleiterator(data), nrow(data))
+        time = @elapsed result = do_street_route(osrm, Tables.namedtupleiterator(data), nrow(data), args["bike-lts"])
     end
 
     not_found_count = sum(map(x -> isnothing(x.route), result))
@@ -350,7 +350,7 @@ function main(args)
             if transit
                 create_transit_columns!(layer)
             else
-                create_street_columns!(layer, args["bikelts"])
+                create_street_columns!(layer, args["bike-lts"])
             end
 
             for (i, route) in enumerate(result)
@@ -368,7 +368,7 @@ function main(args)
             end
         end
 
-        if args["bikelts"]
+        if args["bike-lts"]
             ArchGDAL.createlayer(name="segments",  geom=ArchGDAL.wkbLineString, dataset=ds, spatialref=ArchGDAL.importEPSG(4326)) do layer
                 create_bike_segment_columns!(layer)
                 for (i, route) in enumerate(result)
