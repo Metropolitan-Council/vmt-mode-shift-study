@@ -32,7 +32,7 @@ Care should be taken to avoid committing any PII to the repository.  This includ
 
 Project documentation and reports will generally be written in markdown or equivalent such that the version can be tracked.  
 
-The code and documents stored on the Council's Github site will be considered a deliverable that is property of the council.  That code may reference other third-party software, including software developed by members of the project team, such as TransitRouter.js.  Such third-party software will still be owned by its original developer, even if it is used in this project, or enhanced as part of this project.  In general, the delineation of ownership will be determined by the owner of the Github repository where it lives.   
+The code and documents stored on the Council's Github site will be considered a deliverable that is property of the council.  That code may reference other third-party software, including software developed by members of the project team, such as TransitRouter.jl.  Such third-party software will still be owned by its original developer, even if it is used in this project, or enhanced as part of this project.  In general, the delineation of ownership will be determined by the owner of the Github repository where it lives.   
 
 ## Data Retention and Availability
 
