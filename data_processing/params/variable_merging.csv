@@ -81,8 +81,8 @@ trip,d_state,d_state,d_state,1,Destination: State
 trip,trip_survey_complete,trip_survey_complete,trip_survey_complete,1,Trip survey is complete
 trip,o_purpose_imputed,o_purpose,o_purpose,1,Origin purpose
 trip,o_purpose_category_imputed,o_purpose_category,o_purpose_category,1,Origin purpose category
-trip,d_purpose_imputed,d_purpose,d_purpose,1,Destination purpose
-trip,d_purpose_category_imputed,d_purpose_category,d_purpose_category,1,Destination purpose category
+trip,d_purpose,d_purpose,d_purpose,1,Destination purpose
+trip,d_purpose_category,d_purpose_category,d_purpose_category,1,Destination purpose category
 trip,mode_type,mode_type,mode_type,1,Trip mode type
 trip,leg_num,leg_num,leg_num,1,Leg number along linked trip
 trip,linked_trip_num,linked_trip_id,linked_trip_id,1,Trip number for linked trip
