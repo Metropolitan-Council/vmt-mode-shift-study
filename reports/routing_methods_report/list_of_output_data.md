@@ -10,48 +10,64 @@ If the trip cannot be routed on a particular mode, the record does not appear.  
 
 In addition to the geometry, each trip record include the following attributes:
 
-### Car
-- Duration in seconds
-- Distance in meters
-- Generalized cost (as used in the routing)
+### Car 
+`car_trips.gpkg` contains a single layer called `car_trips routes` with one record for each route. The attributes on each record include:
+
+- `trip_id` string, identifier for each trip record, formatted as a list.  For car, trips at gas stations are "linked out", so `[12345, 67890]` would indicate that two legs were linked and `[12345]` would indicate a trip with just one leg. 
+- `duration_seconds` numeric, duration in seconds
+- `distance_meters` numeric, distance in meters
+- `weight` numeric, generalized cost as used in the routing
 
 ### Walk
-- Duration in seconds
-- Distance in meters
-- Generalized cost (as used in the routing)
-- Distance in meters on pedestrian Quality of Service (QOS) 1 facilities (Available)
-- Distance in meters on pedestrian QOS 2 facilities (Low QOS)
-- Distance in meters on pedestrian QOS 3 facilities (Medium QOS)
-- Distance in meters on pedestrian QOS 4 facilities (High QOS)
-- Distance in meters on slopes over 10%
+`walk_trips.gpkg` contains a single layer called `walk_trips routes` with one record for each route.  The attributes on each record include:
+
+- `trip_id` string, identifier for each trip record, formatted as a list. `[12345]` would indicate a single trip. 
+- `duration_seconds` numeric, duration in seconds
+- `distance_meters` numeric, distance in meters
+- `weight` numeric, generalized cost as used in the routing
+- `distance_meters_1` numeric, distance in meters on Pedestrian Traffic Stress (PTS) 1 facilities (best)
+- `distance_meters_2` numeric, distance in meters on PTS 2 facilities 
+- `distance_meters_3` numeric, distance in meters on PTS 3 facilities 
+- `distance_meters_4` numeric, distance in meters on PTS 4 facilities (Worst)
+- `distance_meters_slope` numeric, distance in meters on slopes over 10%
 
 ### Bike 
-- Duration in seconds
-- Distance in meters
-- Generalized cost (as used in the routing)
-- Distance in meters on Level of Traffic Stress (LTS) 1 facilities (best)
-- Distance in meters on LTS 2 facilities 
-- Distance in meters on LTS 3 facilities 
-- Distance in meters on LTS 4 facilities (worst)
-- Distance in meters on pedestrian QOS 3 facilities (Medium QOS)
-- Distance in meters on pedestrian QOS 4 facilities (High QOS)
-- Change in slope calculated consistent with its use in generalized cost
+`bike_lts.gpkg` contains a layer called `bike_lts routes` with one record for each route.  The attributes on each record include:
+
+- `trip_id` String, identifier for each trip record, formatted as a list. `[12345]` would indicate a single trip. 
+- `duration_seconds` numeric, duration in seconds
+- `distance_meters` numeric, distance in meters
+- `weight` numeric, generalized cost as used in the routing
+- `distance_meters_1` numeric, distance in meters on Level of Traffic Stress (LTS) 1 facilities (best)
+- `distance_meters_2` numeric, distance in meters on LTS 2 facilities
+- `distance_meters_3` numeric, distance in meters on 3 facilities 
+- `distance_meters_4` numeric, distance in meters on 4 facilities (worst)
+- `elevation_gain_meters` numeric, change in slope calculated consistent with its use in generalized cost
+
+`bike_lts.gpkg` contains a second layer called `bike_lts segments` in which the routes are split into segments any time there is a change in LTS.  This way, we can easily exclude or separately summarize the high LTS facilities.  The attributes on each record include:
+
+- `trip_id` string, identifier for each trip record, formatted as a list. `[12345]` would indicate a single trip. 
+- `segment_index` numeric, an index for each segment on a trip, in order.  
+- `lts` integer, the level of traffic stress on this segment.
+- `distance_meters` numeric, distance in meters
 
 ### Transit
-These attributes are recorded for each leg, and can be aggregated to the trip level.  All transit attributes are as recorded in the GTFS files. 
+`transit_trips.gpkg` contains a single layer called `transit_trips routes` with one record for leg of a transit trip.  For example, a trip that is walk-bus-walk contains three legs and will contain three records in this layer. These attributes are recorded for each leg, and can be aggregated to the trip level.  All transit attributes are as recorded in the GTFS files. The attributes on each record include:
 
-- Start time
-- End time
-- Duration in seconds
-- Origin stop ID
-- Origin stop name
-- Destination stop ID
-- Destination stop name
-- Route ID 
-- Route short name
-- Route long name 
-- Route type
-- Leg type (transit, access, egress or transfer)
+
+- `trip_id` string, identifier for each trip record, formatted as a list. `[12345, 67890]` would indicate that two legs were linked and `[12345]` would indicate a trip with just one leg. 
+- `leg_index` integer, an index for each leg on a trip, in order.  
+- `start_time` DateTime, start time.  This is recorded as a DateTime field, and when displayed in QGIS has the format YYYY-MM-DD HH:MM:SS
+- `end_time` DateTime, end time. This is recorded as a DateTime field, and when displayed in QGIS has the format YYYY-MM-DD HH:MM:SS
+- `origin_stop_id` string, origin stop ID
+- `origin_stop_name` string, origin stop name
+- `destination_stop_id` string, destination stop ID
+- `destination_stop_name` string, destination stop name
+- `route_id` string, route ID 
+- `route_short_name` string, route short name
+- `route_long_name` string, route long name 
+- `route_type` integer, route type (usually indicates bus or rail)
+- `leg_type` string, leg type (transit, access, egress or transfer)
 
 The start times and end times of car, walk and bike trips will be added when these data are merged with the TBI records. 
  
