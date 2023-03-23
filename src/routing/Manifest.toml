@@ -522,7 +522,7 @@ version = "1.2.0"
 [[deps.OSRM]]
 deps = ["ArchGDAL", "EnumX", "Geodesy", "Revise", "ThreadsX"]
 git-tree-sha1 = "691a5f5fe3c15d4c6e0f29f2a4585aaeb5f8ad44"
-repo-rev = "full-osrm-route"
+repo-rev = "main"
 repo-url = "https://github.com/mattwigway/OSRM.jl.git"
 uuid = "b59920ca-ae83-47b1-a52c-d6d89e4b4b86"
 version = "0.1.0"
