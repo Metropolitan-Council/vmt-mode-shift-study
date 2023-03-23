@@ -560,6 +560,10 @@ function lts_for_way(profile, way)
   -- TODO AAA codes this as 2, but shouldn't it really be 1?
   if way:get_value_by_key("access") == "no" then return 2 end
 
+  -- service roads - special LTS 5 value - equivalent to LTS 4 as in AAA, but doesn't
+  -- bleed over to crossings
+  if highway == "service" then return 5 end
+
   -- separated cycletracks
   -- TODO handle situations where there is only a cycle track in one direction of a two-way street (possibly contraflow)
   -- moreover, LTS may be different forwards and backwards
@@ -683,7 +687,8 @@ function process_way(profile, way, result)
   -- We first check LTS. If it's over 2, we short-circuit and hand off to the
   -- walk profile as we assume people walk their bikes in these locations
   local lts = lts_for_way(profile, way)
-  assert(lts > 0 and lts <= 4, "Found unexpected LTS " .. lts .. " at way " .. way:id())
+  -- special LTS 5 is LTS 4 but does not bleed into intersections
+  assert(lts > 0 and lts <= 5, "Found unexpected LTS " .. lts .. " at way " .. way:id())
 
   if lts == 1 then
      result.forward_classes["lts1"] = true
@@ -694,12 +699,12 @@ function process_way(profile, way, result)
   elseif lts == 3 then
      result.forward_classes["lts3"] = true
      result.backward_classes["lts3"] = true
-  elseif lts == 4 then
+  elseif lts == 4 or lts == 5 then -- LTS 5 is like LTS 4 but does not bleed through intersections
      result.forward_classes["lts4"] = true
      result.backward_classes["lts4"] = true
   end
 
-  assert(lts >= 1 and lts <= 4, "Unexpected LTS " .. lts .. " at way " .. way:id())
+  assert(lts >= 1 and lts <= 5, "Unexpected LTS " .. lts .. " at way " .. way:id())
 
   if lts > 2 then
     -- process as a walk-bike segment
@@ -823,6 +828,11 @@ function process_turn(profile, turn)
       if road.priority_class < lts then lts = road.priority_class end
     end
 
+    -- LTS 5 is used for service roads, a special LTS 4 derivative that does not bleed
+    -- onto crossing roads.
+    -- Will only happen at intersections between all service roads, as otherwise there would be a lower min LTS
+    if lts == 5 then lts = 4 end
+
     local weight = profile.signalized_intersection_penalties[lts]
 
     if weight == nil then
@@ -838,13 +848,19 @@ function process_turn(profile, turn)
   else
     lts = math.max(turn.source_priority_class, turn.target_priority_class)
     -- maximum of all LTS at intersection
+    -- priority class 5 is a special class that's treated like class 4 for node weights, but does
+    -- not bleed over to streets. See the Beaudry Meadows Park test for an example of why this is
+    -- needed
     for i,road in ipairs(turn.roads_on_the_right) do
-      if road.priority_class > lts then lts = road.priority_class end
+      if road.priority_class > lts and road.priority_class ~= 5 then lts = road.priority_class end
     end
 
     for i,road in ipairs(turn.roads_on_the_left) do
-      if road.priority_class > lts then lts = road.priority_class end
+      if road.priority_class > lts and road.priority_class ~= 5 then lts = road.priority_class end
     end
+
+    -- will only occur where this street is an lts 5 (service road) - so crossings should be treated as LTS 4
+    if lts == 5 then lts = 4 end
 
     local weight = profile.unsignalized_intersection_penalties[lts]
     if weight == nil then
