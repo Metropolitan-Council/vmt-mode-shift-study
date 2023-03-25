@@ -1,4 +1,14 @@
 -- Car profile
+-- Needs a database from Streetlight with speeds specified in the SPEED_DATABASE environment variable, and
+--   the desired speed column in the SPEED_COLUMN environment variable
+-- Requires Lua library lsqlite3, install with
+--   luarocks install lsqlite3
+-- (on a Mac, you can get luarocks from homebrew)
+-- Note: if running on macOS with Homebrew-installed SQLite, you may need to run
+--   luarocks install lsqlite3 SQLITE_DIR=/opt/homebrew/opt/sqlite3/ SQLITE_LIBDIR=/opt/homebrew/opt/sqlite3/lib/ SQLITE_INCDIR=/opt/homebrew/opt/sqlite3/include/
+-- to get it to pick up the proper SQLite version.
+-- Note: This will be horrendously slow without the proper indices in the database (tens of hours or more), whereas with the
+--   proper indices it takes less than a minute on my laptop.
 
 api_version = 4
 
@@ -11,8 +21,54 @@ find_access_tag = require("lualib/access").find_access_tag
 limit = require("lualib/maxspeed").limit
 Utils = require("lualib/utils")
 Measure = require("lualib/measure")
+sqlite3 = require("lsqlite3")
+MPH_TO_MS = 1609 / 3600
+
 
 function setup()
+  local DB_URL = assert(os.getenv("SPEED_DATABASE"), "SPEED_DATABASE environment variable not specified!")
+  local SPEED_COLUMN = assert(os.getenv("SPEED_COLUMN"), "SPEED_COLUMN environment variable not specified!")
+  local speed_db = sqlite3.open(DB_URL, sqlite3.OPEN_READONLY)
+
+  assert(string.find(SPEED_COLUMN, "[^a-zA-Z0-9_\\-]") == nil, "Malformed speed column")
+
+  -- In general it's not good practice to interpolate variable names into SQL queries,
+  -- but you can't interpolate a variable name using standard SQL prepared syntax.
+  -- There's a check above to make sure it looks like a column name in the database.
+  -- Also, this is run in a controlled environment; if you have the ability to set an
+  -- environment variable, you have the ability to do all kinds of other nasty things
+  -- see also: https://xkcd.com/1957/ "an attacker can execute malicious code on their
+  --   own machine and no one can stop them"
+
+  -- TODO confirm speed is MPH
+
+  -- DISTINCT prevents false positives for duplicated nodes - we only need to warn about ambiguous
+  -- segment identification if the speeds would be different.
+  -- seg_id is selected so that we have it for error messages
+  local speed_query = assert(speed_db:prepare([[SELECT DISTINCT c."]] .. SPEED_COLUMN .. [[" AS speed_mph,
+      n1.seg_id,
+      CASE n2.way_seqid - n1.way_seqid
+        WHEN 1 THEN 'forward'
+        WHEN -1 THEN 'reverse'
+      END dir,
+      n1.way_id
+  FROM stl_nodes_table n1
+  INNER JOIN stl_nodes_table n2
+      ON (n1.way_id = n2.way_id AND n1.seg_id = n2.seg_id AND abs(n2.way_seqid - n1.way_seqid) = 1)
+  LEFT JOIN stl_congestion_data_2019 c
+      ON (
+          c.seg_id = n1.seg_id AND
+          c.direction = dir
+      )
+  WHERE -- this notation is confusing - we are checking to make sure that lat/lon is close
+      -- previously used abs(difference) but SQLite wasn't clever enough to use the index
+      -- in that case.
+      $srclat + 0.000001 > n1.lat AND $srclat - 0.000001 < n1.lat AND
+      $srclon + 0.000001 > n1.lon AND $srclon - 0.000001 < n1.lon AND
+      $tgtlat + 0.000001 > n2.lat AND $tgtlat - 0.000001 < n2.lat AND
+      $tgtlon + 0.000001 > n2.lon AND $tgtlon - 0.000001 < n2.lon;
+  ]]), "SQL query preparation failed")
+
   return {
     properties = {
       max_speed_for_map_matching      = 180/3.6, -- 180kmph -> m/s
@@ -320,7 +376,11 @@ function setup()
 
     -- classify access tags when necessary for turn weights
     access_turn_classification = {
-    }
+    },
+
+    speed_db = speed_db,
+    speed_query = speed_query,
+    force_split_edges = true -- ensure splits at every node
   }
 end
 
@@ -503,9 +563,53 @@ function process_turn(profile, turn)
   end
 end
 
+function process_segment(profile, segment)
+  -- find the segment
+  -- TODO I believe this should be okay as different threads have their complete
+  -- own Lua interpreter
+  profile.speed_query:bind_names({
+    srclat=segment.source.lat,
+    srclon=segment.source.lon,
+    tgtlat=segment.target.lat,
+    tgtlon=segment.target.lon
+  })
+
+  local stat = profile.speed_query:step()
+  if stat == sqlite3.DONE then
+    -- no speed info found for way
+    --print("found no speed info for segment from " .. segment.source.lat .. ", " ..segment.source.lon ..
+    --" to " .. segment.target.lat .. ", " .. segment.target.lon .. ", existing speed " .. segment.distance / segment.duration / MPH_TO_MS .. "mph")
+  elseif stat == sqlite3.ROW then
+    local speed_mph = profile.speed_query:get_value(0)
+    local seg_id = profile.speed_query:get_value(1)
+    local dir = profile.speed_query:get_value(2)
+    local way_id = profile.speed_query:get_value(3)
+
+    -- make sure there was just one row
+    if profile.speed_query:step() ~= sqlite3.DONE then
+      print("WARN: Segment ID " .. seg_id .. " " .. dir .. " (way " .. way_id ..") has multiple results (or other SQLite error)")
+    end
+
+    if speed_mph == nil then
+      print("WARN: Segment id " .. seg_id .. " " .. dir .. " (way " .. way_id .. ") has null speed")
+      -- Lua has no continue. They recommend goto instead: https://stackoverflow.com/questions/3524970
+      -- someone didn't listen to Edgar Dijkstra
+    else
+      -- TODO assuming distance is in meters, duration and weight in seconds
+      segment.duration = segment.distance / (speed_mph * MPH_TO_MS)
+      segment.weight = segment.duration
+    end
+  else
+    error("Unexpected status from SQLite")
+  end
+
+  profile.speed_query:reset()
+end
+
 return {
   setup = setup,
   process_way = process_way,
   process_node = process_node,
-  process_turn = process_turn
+  process_turn = process_turn,
+  process_segment = process_segment
 }
