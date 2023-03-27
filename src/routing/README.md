@@ -22,6 +22,25 @@ OSRM requires the original `analysis-area.osm.pbf` to be processed into a networ
 
 These each took about a minute on my desktop, but _much_ longer on my laptop---likely due to memory requirements. I have 128GB on my desktop.
 
+#### Congestion data
+
+The `car_traffic` profile expects two environment variables to be set, `SPEED_DATABASE` and `SPEED_COLUMN`, referring to the SQLite database and the column to retrieve speeds from. This will be very slow without the proper indices; create them by running `sqlite3 path/to/speed_database.db < prepare_speed_database.sql`
+
+OSRM does have functionality to update speeds on the fly, but we do not use this—instead, we just build separate networks for each time period. Running the network build for all of these time periods can be tedious, but we can automate it like this:
+
+    (
+        export SPEED_DATABASE="/path/to/streetlight_data.db";
+        echo ".schema stl_congestion_data_2019" |
+            sqlite3 "$SPEED_DATABASE" |
+            grep REAL |
+            sed -E 's/^ +"([^"]+).*$/\1/' | 
+            xargs -n 1 -Icol env SPEED_COLUMN=col bash build_street_network.sh /path/to/analysis-area.osm.pbf /usr/local/share/osrm/profiles/car.lua ~/vmt-networks/car_col
+    )
+
+(The parentheses are optional, but create a subshell to avoid polluting the main environment in your shell. `export` is necessary because we need SPEED_DATABASE to be available in the variable expansion after `sqlite3` - otherwise that variable expansion occurs before the variable is set).
+
+This will build all of the networks, one for each time period.
+
 ### Transit network
 
 The `build_transit_network.sh` file builds the transit network from GTFS and the walking street network (used to find transfers). Run it like this, assuming networks are again in `~/vmt-networks`. This will build a file `transit.trjl` with the transit data in it.
@@ -38,14 +57,24 @@ _Note:_ If you get an error about not being able to find `libosrmjl.so`, it mean
 
 To perform street routing, use the `route.jl` script like so, from within this directory (to run from elsewhere, use `--project=/path/to/this/directory`). Replace car with whatever network/mode you're using. If you run into the couldn't find `libosrmjl.so` error, follow the steps above under "Transit network"
 
-    julia -t auto --project route.jl /path/to/tbi_merged.csv ~/vmt-networks/car/car.osrm /path/to/output.gpkg
+    julia -t auto --project route.jl /path/to/tbi_merged.csv ~/vmt-networks/walk/walk.osrm /path/to/output.gpkg
 
 You can change the output format to any GDAL/OGR supported format with the `--output-driver` option. I used GeoPackage because GeoJSON is unwieldy with this large of a dataset. `-t auto` uses as many threads as your CPU has cores to speed up the routing. On my machine, routing all of the TBI trips by car takes 1 minute 11 seconds, and several minutes to write the output. If you're using Windows Subsystem for Linux, you should store the output within WSL, not in `/mnt/c/...` as access to Windows volumes is very slow in WSL. You can move the file to `/mnt/c/` after it's written if you need access to it from Windows.
 
-Add `--bike-lts` to include statistics
+Add `--bike-lts` to include statistics about bicycle level of traffic stress.
 
-Eventually, this will have to be modified for congestion routing, to select an OSRM network based on departure time.
+#### Car congestion
 
+Car congestion uses a set of many networks. Since routing is so fast, we just route every trip using congestion data from every time period. You can run this similarly to how the network build was run:
+
+    (
+        export SPEED_DATABASE="/path/to/streetlight_data.db";
+        echo ".schema stl_congestion_data_2019" | 
+        sqlite3 "$SPEED_DATABASE" | 
+        grep REAL |
+        sed -E 's/^ +"([^"]+).*$/\1/' |
+        xargs -n 1 -Icol env julia -t auto --project route.jl /path/to/tbi_merged.csv ~/vmt-networks/car_col/car_col.osrm /path/to/car_col.gpkg
+    )
 
 ### Transit routing
 
