@@ -133,6 +133,8 @@ README.html
 
 # data files
 *.csv
+!config.csv
+!USW00014922.csv
 
 # Quarto output files
 reports/**/*.html
