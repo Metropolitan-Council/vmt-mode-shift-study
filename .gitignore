@@ -138,6 +138,7 @@ README.html
 
 # Quarto output files
 reports/**/*.html
+!feasibility_analysis_cleaned.html
 reports/**/*_cache
 reports/**/*_files
 
