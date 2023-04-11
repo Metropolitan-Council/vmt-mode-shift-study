@@ -36,3 +36,9 @@
 - On the way home from work/school/kid pudo, departure time is held constatn.  Recalculate the arrival time
   based on teh travel time of the alternative mode.  If that arrival time is later than the departure time
   of the next trip, tehn we consider it to be an infeasible switch. 
+
+  feasible trips
+
+- non-ability to drive -- can't drive (unless escorted)
+- don't own car -- can't drive
+- age < 16 -- driving non-feasible
