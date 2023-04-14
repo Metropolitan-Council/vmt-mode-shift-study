@@ -11,7 +11,6 @@ find_access_tag = require("lualib/access").find_access_tag
 limit = require("lualib/maxspeed").limit
 Measure = require("lualib/measure")
 walk_profile = require("foot_lts")
-car_profile = require("car_traffic")
 LTS = require("lts")
 
 function setup()
@@ -229,8 +228,7 @@ function setup()
       'construction'
     },
 
-    walk_profile = walk_profile.setup(),
-    car_profile = car_profile.setup()
+    walk_profile = walk_profile.setup()
   }
 end
 
