@@ -11,4 +11,4 @@ println(joinpath(dirname(dirname(pathof(TransitRouter))), "build_network.jl"))
 EOF
 )"
 
-julia "${SCRIPT_PATH}" "$@"
+julia -t auto "${SCRIPT_PATH}" "$@"

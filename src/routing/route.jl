@@ -3,6 +3,8 @@
 using OSRM, DataFrames, CSV, ArchGDAL, ArgParse, Logging, ProgressMeter, Geodesy, ThreadsX,
     TransitRouter, Dates
 
+const MAX_LEG_WALK_DIST_METERS = 1.5 * 1609 # 1.5 mile walk allowed
+
 # used for transit routing, all transit routes will use the first
 # day after this date that is the same day of the week as the original
 # trip.
@@ -35,6 +37,10 @@ s = ArgParseSettings()
     "--bike-lts"
         help = "Consider bicycle LTS in output"
         action = :store_true
+    "--max-rides"
+        help = "Maximum number of rides for transit"
+        arg_type = Int
+        default = 4
 end
 
 # Try to check that the path is not inside the git repository. Won't work if you've
@@ -210,7 +216,7 @@ end
 #TODO automated test
 select_representative_date(date) = Dates.tonext(x -> dayofweek(x) == dayofweek(date), REPRESENTATIVE_WEEK)
 
-function do_transit_route(net, osrm, data_itr, n_rows)
+function do_transit_route(net, osrm, max_rides, data_itr, n_rows)
     # uncomment for single-thread debugging
     #map(enumerate(data_itr)) do (i, row)
     ThreadsX.mapi(enumerate(data_itr)) do (i, row)
@@ -229,7 +235,10 @@ function do_transit_route(net, osrm, data_itr, n_rows)
             DateTime(
                 date,
                 row.depart_time  # TODO reverse routing
-            )
+            ),
+            max_access_distance_meters=MAX_LEG_WALK_DIST_METERS,
+            max_egress_distance_meters=MAX_LEG_WALK_DIST_METERS,
+            max_rides=max_rides
         )
 
         path = trace_path(net, result, 1)
@@ -333,7 +342,7 @@ function main(args)
     end 
 
     if transit
-        time = @elapsed result = do_transit_route(transit_network, osrm, Tables.namedtupleiterator(data), nrow(data))
+        time = @elapsed result = do_transit_route(transit_network, osrm, args["max-rides"], Tables.namedtupleiterator(data), nrow(data))
     else
         time = @elapsed result = do_street_route(osrm, Tables.namedtupleiterator(data), nrow(data), args["bike-lts"])
     end

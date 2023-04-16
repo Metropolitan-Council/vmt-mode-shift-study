@@ -26,6 +26,8 @@ These each took about a minute on my desktop, but _much_ longer on my laptop---l
 
 The `car_traffic` profile expects two environment variables to be set, `SPEED_DATABASE` and `SPEED_COLUMN`, referring to the SQLite database and the column to retrieve speeds from. This will be very slow without the proper indices; create them by running `sqlite3 path/to/speed_database.db < prepare_speed_database.sql`
 
+Note that the car profile is also used in the foot and bicycle profiles to get car speeds for safety perception, so these variables must be set even when not creating congested networks.
+
 OSRM does have functionality to update speeds on the fly, but we do not use this—instead, we just build separate networks for each time period. Running the network build for all of these time periods can be tedious, but we can automate it like this:
 
     (
@@ -43,9 +45,9 @@ This will build all of the networks, one for each time period.
 
 ### Transit network
 
-The `build_transit_network.sh` file builds the transit network from GTFS and the walking street network (used to find transfers). Run it like this, assuming networks are again in `~/vmt-networks`. This will build a file `transit.trjl` with the transit data in it.
+The `build_transit_network.sh` file builds the transit network from GTFS and the walking street network (used to find transfers). Run it like this, assuming networks are again in `~/vmt-networks`. This will build a file `transit.trjl` with the transit data in it. 2413.5 specifies a 1.5-mile maximum transfer distance
 
-    bash build_transit_network.sh --osrm-network ~/vmt-networks/walk/walk.osrm -t 1000 ~/vmt-networks/transit.trjl /path/to/gtfs.zip
+    bash build_transit_network.sh --osrm-network ~/vmt-networks/walk/walk.osrm -t 2413.5 ~/vmt-networks/transit.trjl /path/to/gtfs.zip
 
 _Note:_ If you get an error about not being able to find `libosrmjl.so`, it means either (1) OSRM.jl wasn't installed correctly (see above) or, more likely, (2) `libosrmjl.[so|dylib]` is not in your library path. Look for `libosrmjl.[so|dylib]` and then add the directory it's in to your LD_LIBRARY_PATH. It's most likely in `/usr/local/lib` which is not part of the default search path on WSL.
 
@@ -55,9 +57,9 @@ _Note:_ If you get an error about not being able to find `libosrmjl.so`, it mean
 
 ### Street routing
 
-To perform street routing, use the `route.jl` script like so, from within this directory (to run from elsewhere, use `--project=/path/to/this/directory`). Replace car with whatever network/mode you're using. If you run into the couldn't find `libosrmjl.so` error, follow the steps above under "Transit network"
+To perform street routing, use the `route.jl` script like so, from within this directory (to run from elsewhere, use `--project=/path/to/this/directory`). Replace car with whatever network/mode you're using. If you run into the couldn't find `libosrmjl.so` error, follow the steps above under "Transit network". The `git rev-parse` portion of the command line inserts the latest commit ID into the output file name so we can track what version of the code produced what output.
 
-    julia -t auto --project route.jl /path/to/tbi_merged.csv ~/vmt-networks/walk/walk.osrm /path/to/output.gpkg
+    julia -t auto --project route.jl /path/to/tbi_merged.csv ~/vmt-networks/walk/walk.osrm /path/to/output-$(git rev-parse --short 6 HEAD).gpkg
 
 You can change the output format to any GDAL/OGR supported format with the `--output-driver` option. I used GeoPackage because GeoJSON is unwieldy with this large of a dataset. `-t auto` uses as many threads as your CPU has cores to speed up the routing. On my machine, routing all of the TBI trips by car takes 1 minute 11 seconds, and several minutes to write the output. If you're using Windows Subsystem for Linux, you should store the output within WSL, not in `/mnt/c/...` as access to Windows volumes is very slow in WSL. You can move the file to `/mnt/c/` after it's written if you need access to it from Windows.
 
@@ -78,7 +80,7 @@ Car congestion uses a set of many networks. Since routing is so fast, we just ro
 
 ### Transit routing
 
-To perform transit routing, simply add `--transit path/to/transit.trjl` to the `route.jl` command line. It is still necessary to pass an OSRM network as well - this is used to find access and egress to/from transit.
+To perform transit routing, simply add `--transit path/to/transit.trjl` to the `route.jl` command line. It is still necessary to pass an OSRM network as well - this is used to find access and egress to/from transit. You can also add `--max-rides` to limit the number of rides that can be taken.
 
     julia -t auto --project route.jl --transit /path/to/transit.trjl /path/to/tbi_merged.csv ~/vmt-networks/car/car.osrm /path/to/output.gpkg
 
