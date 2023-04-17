@@ -805,7 +805,7 @@ version = "0.4.75"
 
 [[deps.TransitRouter]]
 deps = ["ArchGDAL", "ArgParse", "CSV", "DataFrames", "Dates", "Geodesy", "LibGEOS", "Logging", "OSRM", "ProgressBars", "Revise", "Serialization", "Tables", "ThreadsX", "ZipFile"]
-git-tree-sha1 = "f233d46f942b96852f6f7dd1b9a830b7a1729bbb"
+git-tree-sha1 = "333d19a8bd69deec38b79761df5f18e7a52c5662"
 repo-rev = "main"
 repo-url = "https://github.com/mattwigway/TransitRouter.jl.git"
 uuid = "f9e57d04-be1f-4339-a529-971801331ddb"

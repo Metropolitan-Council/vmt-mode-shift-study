@@ -8,7 +8,7 @@ const MAX_LEG_WALK_DIST_METERS = 1.5 * 1609 # 1.5 mile walk allowed
 # used for transit routing, all transit routes will use the first
 # day after this date that is the same day of the week as the original
 # trip.
-const REPRESENTATIVE_WEEK = Date(2023, 1, 23)
+const REPRESENTATIVE_WEEK = Date(2019, 10, 19)
 
 s = ArgParseSettings()
 
