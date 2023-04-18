@@ -53,7 +53,12 @@ within_git_repo(path) = contains(abspath(path), "vmt-mode-shift-study")
 
 # convert Vector{Geodesy.LatLon} to ArchGDAL linestring
 function geodesy_to_gdal(latlons)
-    # first, check that the geometry is valid (i.e. does not contain only two identical points)
+    # first, check that the geometry is valid (i.e. does not contain only one point, or two identical points)
+    if length(latlons) == 1
+        latlons = [latlons[1], latlons[1]]
+        # will be jittered below
+    end
+
     # This can happen when there is a transfer leg between two coincident stops
     # There will be no transfer leg generated when boarding a trip at the same stop you previously
     # alighted from, but sometimes GTFS contains multiple stops with identical coordinates.
