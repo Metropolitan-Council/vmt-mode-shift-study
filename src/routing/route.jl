@@ -3,6 +3,10 @@
 using OSRM, DataFrames, CSV, ArchGDAL, ArgParse, Logging, ProgressMeter, Geodesy, ThreadsX,
     TransitRouter, Dates
 
+# how much to move a point to make geometries valid when the geometry
+# is two identical points. Generally caused by transfers between stops coded as coincident
+# in the GTFS.
+const GEOMETRY_VALIDITY_EPSILON_DEGREES = 1e-7 # 1e-7 degrees ≈ 1 cm
 const MAX_LEG_WALK_DIST_METERS = 1.5 * 1609 # 1.5 mile walk allowed
 
 # used for transit routing, all transit routes will use the first
@@ -49,6 +53,14 @@ within_git_repo(path) = contains(abspath(path), "vmt-mode-shift-study")
 
 # convert Vector{Geodesy.LatLon} to ArchGDAL linestring
 function geodesy_to_gdal(latlons)
+    # first, check that the geometry is valid (i.e. does not contain only two identical points)
+    # This can happen when there is a transfer leg between two coincident stops
+    # There will be no transfer leg generated when boarding a trip at the same stop you previously
+    # alighted from, but sometimes GTFS contains multiple stops with identical coordinates.
+    if length(latlons) == 2 && first(latlons) ≈ last(latlons)
+        latlons = [latlons[1], LatLon(latlons[2].lat + GEOMETRY_VALIDITY_EPSILON_DEGREES, latlons[2].lon + GEOMETRY_VALIDITY_EPSILON_DEGREES)]
+    end
+
     geom = ArchGDAL.createlinestring()
     for latlon in latlons
         ArchGDAL.addpoint!(geom, latlon.lon, latlon.lat)
