@@ -25,6 +25,23 @@ This repository is in active development. See the [CONTRIBUTING](CONTRIBUTING.md
   * `data`: Placeholder for input data. Only limited publicly available data should be stored here to test the system.  To run with real data, the user should instead point to a data folder on the Teams site.  See handling data. 
   * `output`: A placeholder for where output data would be written.  This is empty, and output data should be stored locally. 
 
+## Install
+
+The files here are mostly jupyter notebooks running python.  The installed packages used for development are stored in environment.yml.  You can use `conda` to set up the environment with the right installs:
+
+	conda env create -n msp --file environment.yml
+
+Then to activate the environment:
+
+	conda activate msp
+
+After installing the packages, you'll use keyring to set the main directory on our shared drive.  This avoids the need to hard-code file names in the scripts:
+
+	import keyring
+	keyring.set_password("msp", "vmt_reduction_dir", <directory>)
+
+
+
 ## Handling data
 
 **Non-private and non-proprietary example data are the only data we store in this GitHub repository.**  The analyses used for this project are based on the Travel Behavior Inventory (TBI) which includes personal information for the respondents, including trip locations.  It is important to keep those data safe, including both the raw data and outputs of individual records or traces. Aggregated data summaries are ok. Users should take the following precautions: 
