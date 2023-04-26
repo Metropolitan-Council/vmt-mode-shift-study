@@ -158,10 +158,11 @@ class RouteMapper(object):
     
         bike_trip = self.bike[self.bike['trip_id']==trip_id]        
         route_bounds = bike_trip.bounds
+        x_range = route_bounds['maxx'].values[0] - route_bounds['minx'].values[0]
         route_map.fit_bounds([[route_bounds['miny'].values[0], 
                          route_bounds['minx'].values[0]], 
                         [route_bounds['maxy'].values[0], 
-                         route_bounds['maxx'].values[0]]])
+                         route_bounds['maxx'].values[0] + x_range]])
         
         return(route_map)
         
@@ -190,14 +191,28 @@ class RouteMapper(object):
         # create html string for legend
         legend_html = '''
         <div style="position: fixed; 
-            bottom: 50px; right: 50px; width: 150px; height: 125px; 
-            border:2px solid grey; z-index: 9999; font-size:14px;">
-            &nbsp;<b>Legend</b><br>
+            background-color: #FFFFFF;
+            bottom: 50px; right: 50px; width: 200px; height: 275px; 
+            border:2px solid grey; z-index: 9999; font-size:10px;">
+            &nbsp;<b>Trip ID: ''' + str(trip_id) + ''' </b><br>
             &nbsp;<i class="fa fa-circle" style="color:#006400"></i>&nbsp;Walking<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbspDistance (m): <br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbspDuration (sec): <br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbspGen Cost (sec): <br>
             &nbsp;<i class="fa fa-circle" style="color:#00008B"></i>&nbsp;Biking<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Distance (m): <br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Duration (sec): <br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gen Cost (sec): <br>
             &nbsp;<i class="fa fa-circle" style="color:#8B4513"></i>&nbsp;Driving<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Distance (m): <br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Duration (sec): <br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gen Cost (sec): <br>
             &nbsp;<i class="fa fa-circle" style="color:#4B0082"></i>&nbsp;Transit<br>
-            &nbsp;<i class="fa fa-circle" style="color:#E46707"></i>&nbsp;Observed
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Start Time: <br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;End Time: <br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Duration (sec): <br>
+            &nbsp;<i class="fa fa-circle" style="color:#E46707"></i>&nbsp;Observed<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Duration (sec): <br>
         </div>
         '''
         
