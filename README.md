@@ -59,6 +59,10 @@ Full instructions are [available on the nbstripout site](https://github.com/kyna
 
 I recommend using this as a failsafe, and using the "Clear All Outputs" menu item in JupyterLab before committing so that you are always committing clean files anyhow.
 
+### Data Management Plan
+
+Please see our [DATA MANAGEMENT PLAN](DATA_MANAGEMENT_PLAN.md)  for further details on our data practices for this project. 
+
 ## Related repositories
 
 [metc-tbi-helper](https://github.com/Metropolitan-Council/metc.tbi.helper) and metc-tbi-internal: These repositories create the data objects and .csv files containing the Travel Behavior Inventory (TBI) 2019 and 2021 data.
