@@ -37,8 +37,8 @@ Then to activate the environment:
 
 If you have difficulties solving pacakges on macOS, try using the Mac-specific environment.
 
-  conda env create -n msp-mac --file mac-environment.yml
-  conda activate msp-mac
+	conda env create -n msp-mac --file mac-environment.yml
+	conda activate msp-mac
 
 After installing the packages, you'll use keyring to set the main directory on our shared drive.  This avoids the need to hard-code file names in the scripts:
 
