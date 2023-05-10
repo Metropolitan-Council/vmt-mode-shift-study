@@ -142,3 +142,4 @@ reports/**/*.html
 reports/**/*_cache
 reports/**/*_files
 
+.vscode
