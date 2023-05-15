@@ -39,7 +39,8 @@ def transit_cleanup(transit):
     
     # project to US equidistant projection to calculate lengths of paths (in meters)
     # https://spatialreference.org/ref/esri/usa-contiguous-equidistant-conic/
-    transit.to_crs("ESRI:102005", inplace=True)
+    transit.crs = "EPSG:4326"
+    transit = transit.to_crs("ESRI:102005")
     
     transit["length"] = transit.length
     transit["access_length"] = transit["length"]
@@ -76,7 +77,6 @@ def merge_transit_trip_details(df: pd.DataFrame, data_dir: str):
     wave1_trips = pd.read_csv(data_dir + "/Data/TBI Wave 1 Dataset 20200630/trip.csv")
     wave2_trips = pd.read_csv(data_dir + "/Data/Wave 2 Data Deliverable/trip.csv")
     raw_trips = pd.concat([wave1_trips, wave2_trips]).set_index("trip_id")
-    raw_trips
     
     def get_dist_to_stop(trips, wave): # calculate distance to get to stop to start transit trip
         target = raw_trips.loc[trips[0]] # consider the first trip of the linked trip
@@ -111,12 +111,12 @@ def add_community(df: pd.DataFrame):
     
     gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df["home_lon"], df["home_lat"]), crs="EPSG:4326")
     
-    df["community"] = "na"
+    df["community"] = -1
     for i, row in communities.iterrows():
         df["community"] = np.where(gdf["geometry"].within(row["geometry"]), row.name, df["community"])
 
 def prepare_csv(df: pd.DataFrame, data_dir: str):
-    merge_weather(df)
+    # merge_weather(df)
 
     print("reading in rerouting files")
     car = pd.read_parquet(data_dir + "/Data_Processed/geodata/car_congestion_nogeom.parquet")
