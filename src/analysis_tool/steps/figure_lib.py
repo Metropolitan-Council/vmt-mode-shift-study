@@ -1,0 +1,39 @@
+import pandas as pd
+import itertools
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+def show_summaries(df: pd.DataFrame, modes, percentile=[0.95]): # show normal summaries for each mode side by side
+    res = []
+    labels = []
+    if type(percentile) != type([]):
+        percentile = [percentile]
+    p = [0.25, 0.5, 0.75]
+    p += percentile
+    p = list(set(p))
+    for m in modes:        
+        mode = m[0]
+        column = m[1]
+        labels.append(mode + ' ' + column)
+        
+        group = df[df["mode"] == mode]
+        res.append(group[column].describe(percentiles=p))
+    x = pd.concat(res, axis=1)
+    x.columns = labels
+    return x
+
+def plot_mode_density(df: pd.DataFrame, modes, percentile=0.95, size=(12, 6), bins=300, function=lambda x: x):
+    palette = itertools.cycle(sns.color_palette()) # cycle through colors to make sure each mode gets a unique one
+    fig, ax = plt.subplots(figsize=size)
+    for m in modes: # cycle through all modes
+        mode = m[0]
+        column = m[1]
+        label = mode + ' ' + column
+        
+        c = next(palette) # get color to use
+        group = df[df["mode"] == mode] # filter out the current mode
+        sns.histplot(function(group[column]), ax=ax, stat="density", kde=True, label=label, color=c, bins=bins) # plot hist plot with kde overlayed in the color
+        val = function(group[column]).quantile(q=percentile) # calculate the value of the given percentile (default 0.95)
+        plt.axvline(x=val, color=c) # plot line representing that value on the plot        
+        plt.legend()
+    return fig, ax
