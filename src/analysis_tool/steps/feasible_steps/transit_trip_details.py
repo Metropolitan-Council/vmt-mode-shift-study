@@ -63,6 +63,9 @@ class TransitReroutedStep(CategoricalStep):
         self.df.loc[:, "valid_transit_route"] = ~self.df["transit_trip_id"].isna()
         self.column_name = "valid_transit_route"
         self.categories = [[x, self.column_name] for x in [self.mode, Mode.CAR]]
+        
+    def get_summary_statistics(self):
+        return self.df[self.column_name].value_counts()
     
     def get_summary_figure(self):
         fig, ax = plt.subplots(1, 2, figsize=(10, 5))

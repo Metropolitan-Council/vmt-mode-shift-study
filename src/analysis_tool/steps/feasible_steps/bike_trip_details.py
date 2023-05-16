@@ -19,14 +19,11 @@ class BikeSnowDepthStep(ContinuousStep):
     def get_summary_figure(self):
         fig, ax = plot_mode_density(self.df, [(self.mode, self.column_name), (Mode.CAR, self.column_name)], percentile=self.cutoff) 
         ax.set_xlim(left=0, right=10)
-        plt.title("Rerouted transit access distance for canonical transit and car trips")
+        plt.title("Snow depth during travel day for canonical bike and car trips")
         return fig, ax
     
     def apply_step(self):
         super().apply_step(self.df[self.column_name] > self.df[self.df["mode"] == self.mode][self.column_name].quantile(self.cutoff))
-    
-    def __repr__(self):
-        return super().__repr__() + ". NOTE: With the current rerouting methodology, this step is superseded by assumptions made during rerouting."
     
     
 class BikeHighLTSDistStep(ContinuousStep):

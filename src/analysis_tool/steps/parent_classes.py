@@ -7,7 +7,7 @@ from matplotlib.colors import LinearSegmentedColormap
 rg = LinearSegmentedColormap.from_list('rg',["r", "w", "g"], N=256) 
 rg.set_bad(color="grey")
 
-from mode_enum import Mode
+from . mode_enum import Mode
 
 communities = gpd.read_file(r"C:\Work\research\vmt-mode-shift-study\src\analysis_tool\data\shp_society_thrive_msp2040_com_des").to_crs("EPSG:4326")
     
@@ -33,11 +33,11 @@ class BaseStep:
         self.df.loc[expression, f"feasible_{self.mode}_shift"] = False
     
     def get_step_statistics(self):
-        percent_shifts_before = len(self.df[(self.df['mode']=='Car') & (self.prev)]) / len(self.df[self.df['mode']=='Car']) * 100
-        percent_shifts_after = len(self.df[(self.df['mode']=='Car') & (self.df[f'feasible_{self.mode}_shift'])]) / len(self.df[self.df['mode']=='Car']) * 100
+        percent_shifts_before = len(self.df[(self.df['mode']==Mode.CAR) & (self.prev)]) / len(self.df[self.df['mode']==Mode.CAR]) * 100
+        percent_shifts_after = len(self.df[(self.df['mode']==Mode.CAR) & (self.df[f'feasible_{self.mode}_shift'])]) / len(self.df[self.df['mode']==Mode.CAR]) * 100
         
-        prev_vmt = self.df[(self.df["mode"] == "Car") & (self.prev)]["vmt"].sum()
-        after_vmt = self.df[(self.df["mode"] == "Car") & self.df[f"feasible_{self.mode}_shift"]]["vmt"].sum()
+        prev_vmt = self.df[(self.df["mode"] == Mode.CAR) & (self.prev)]["vmt"].sum()
+        after_vmt = self.df[(self.df["mode"] == Mode.CAR) & self.df[f"feasible_{self.mode}_shift"]]["vmt"].sum()
         
         return ((percent_shifts_before, percent_shifts_after), (prev_vmt, after_vmt))
     
@@ -63,6 +63,4 @@ class ContinuousStep(BaseStep):
     
 
 class CategoricalStep(BaseStep):
-    
-    def get_summary_statistics(self):
-        return self.df[self.column_name].value_counts()
+    pass
