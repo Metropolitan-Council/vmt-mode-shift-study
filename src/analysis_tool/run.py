@@ -8,10 +8,10 @@ from matplotlib.figure import Figure
 import sys
 import steps as st
 
-# data_dir = keyring.get_password("msp", "vmt_reduction_dir")
-# df = pd.read_csv(data_dir + "/data_processed/feasible_shifts.csv")
+data_dir = keyring.get_password("msp", "vmt_reduction_dir")
+df = pd.read_csv(data_dir + "/data_processed/feasible_shifts.csv")
 
-# x = prepare_csv(df, data_dir)
+x = prepare_csv(df, data_dir)
 
 # class MplCanvas(FigureCanvasQTAgg):
 
@@ -34,5 +34,5 @@ import steps as st
 
 #         self.show()
 
-df = pd.read_csv("data/tbi_full.csv")
-temp = st.feasible_steps.WalkDistanceStep(df)
+# df = pd.read_csv("data/tbi_full.csv")
+# temp = st.feasible_steps.WalkDistanceStep(df)

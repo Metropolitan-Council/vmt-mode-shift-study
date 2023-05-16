@@ -3,6 +3,15 @@ import pandas as pd
 import geopandas as gpd
 from ast import literal_eval
 
+from steps.mode_enum import Mode
+
+def clean_mode_names(df: pd.DataFrame):
+    print("cleaning mode names")
+    df["mode"] = np.where(df["mode"] == "Car", Mode.CAR, df["mode"])
+    df["mode"] = np.where(df["mode"] == "Transit", Mode.TRANSIT, df["mode"])
+    df["mode"] = np.where(df["mode"] == "Bike/Scooter", Mode.BIKE, df["mode"])
+    df["mode"] = np.where(df["mode"] == "Walk", Mode.WALK, df["mode"])
+
 def merge_weather(df: pd.DataFrame):
     print("merging in weather")
     # reading in weather data
@@ -172,14 +181,16 @@ def prepare_csv(df: pd.DataFrame, data_dir: str):
     df = df.merge(transit.drop("transit_geometry", axis=1), left_on="trip_id", right_on="transit_trip_id", how="left")
     
     # everything is feasible initially
-    df['feasible_walk_shift'] = True
-    df['feasible_bike_shift'] = True
-    df['feasible_transit_shift'] = True
+    df[f'feasible_{Mode.WALK}_shift'] = True
+    df[f'feasible_{Mode.BIKE}_shift'] = True
+    df[f'feasible_{Mode.TRANSIT}_shift'] = True
     df['feasible_shift'] = True
     
     merge_transit_trip_details(df, data_dir)
     
     add_community(df)
+    
+    clean_mode_names(df)
     
     df.to_csv("data/tbi_full.csv")
     
