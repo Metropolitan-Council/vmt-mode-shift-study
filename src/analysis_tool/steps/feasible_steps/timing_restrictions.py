@@ -67,7 +67,7 @@ def evaluate_feasible_timing(chunk, alt_mode_times: str):
 
 class WalkTimingStep(CategoricalStep):
     
-    def __init__(self, df: pd.Dataframe):
+    def __init__(self, df: pd.DataFrame):
         super().__init__(df, "feasible_walk_timing", Mode.WALK)
         
         self.df.loc[:, "walk_duration"] = self.df["walk_duration_seconds"] / 60
@@ -97,7 +97,7 @@ class WalkTimingStep(CategoricalStep):
         
 class TransiotTimingStep(CategoricalStep):
     
-    def __init__(self, df: pd.Dataframe):
+    def __init__(self, df: pd.DataFrame):
         super().__init__(df, "feasible_transit_timing", Mode.TRANSIT)
         
         self.df.loc[:, "transit_duration"] = self.df["transit_duration"].fillna(-1)
@@ -127,7 +127,7 @@ class TransiotTimingStep(CategoricalStep):
         
 class BikeTimingStep(CategoricalStep):
     
-    def __init__(self, df: pd.Dataframe):
+    def __init__(self, df: pd.DataFrame):
         super().__init__(df, "feasible_bike_timing", Mode.WALK)
         
         self.df.loc[:, "bike_duration"] = self.df["bike_weight"] / 60

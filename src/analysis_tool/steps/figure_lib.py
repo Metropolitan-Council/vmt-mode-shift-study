@@ -2,6 +2,7 @@ import pandas as pd
 import itertools
 import seaborn as sns
 import matplotlib.pyplot as plt
+import numpy as np
 
 def show_summaries(df: pd.DataFrame, modes, percentile=[0.95]): # show normal summaries for each mode side by side
     res = []
@@ -46,7 +47,7 @@ def plot_mode_density(df: pd.DataFrame, modes, percentile=0.95, size=(12, 6), bi
         
         c = next(palette) # get color to use
         group = df[df["mode"] == mode] # filter out the current mode
-        sns.histplot(function(group[column]), ax=ax, stat="density", kde=True, label=label, color=c, bins=bins) # plot hist plot with kde overlayed in the color
+        sns.histplot(np.random.choice(function(group[column]), 10000), ax=ax, stat="density", kde=True, label=label, color=c, bins=bins) # plot hist plot with kde overlayed in the color
         val = function(group[column]).quantile(q=percentile) # calculate the value of the given percentile (default 0.95)
         plt.axvline(x=val, color=c) # plot line representing that value on the plot        
         plt.legend()

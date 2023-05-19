@@ -1,6 +1,7 @@
 import pandas as pd
 import geopandas as gpd
-import geoplot as gplt
+import plotly.express as px
+import streamlit as st
 
 from matplotlib.colors import LinearSegmentedColormap
 
@@ -9,7 +10,13 @@ rg.set_bad(color="grey")
 
 from . mode_enum import Mode
 
-communities = gpd.read_file(r"C:\Work\research\vmt-mode-shift-study\src\analysis_tool\data\shp_society_thrive_msp2040_com_des").to_crs("EPSG:4326")
+@st.cache(allow_output_mutation=True)
+def get_communities():
+    communities = gpd.read_file(r"C:\Work\research\vmt-mode-shift-study\src\analysis_tool\data\shp_society_thrive_msp2040_com_des").to_crs("EPSG:4326")
+    communities["geometry"] = (
+        communities.to_crs(communities.estimate_utm_crs()).simplify(50).to_crs(communities.crs)
+    )
+    return communities
     
 class BaseStep:
     
@@ -45,12 +52,19 @@ class BaseStep:
         temp = self.df[self.df["community"] != -1][["community", self.name]]
         
         values = (temp.groupby("community")[self.name].mean()).fillna(0)
+        communities = get_communities()
         communities["val"] = values
-        return gplt.choropleth(communities, hue=communities["val"], projection=gplt.crs.AlbersEqualArea(), cmap=rg, figsize=(12, 12))
+        fig = px.choropleth(communities, geojson=communities.geometry, locations=communities.index, color="val", color_continuous_scale="RdBu")
+        fig.update_layout(margin=dict(l=0, r=0, b=0, t=0),
+                  width=900, 
+                  height=500,
+        )
+        fig.update_geos(fitbounds="locations", visible=False)
+        return fig
     
     def disable(self) -> None:
-        self.df["temp"] = False
-        self.apply_step(self.df["temp"])
+        self.df.loc[:, f"feasible_{self.mode}_shift"] = self.prev
+        self.df.loc[:, self.name] = True
     
     def __repr__(self) -> str:
         return "Running the step with " + self.name + " as a criteria for shifts to " + self.mode
@@ -64,6 +78,9 @@ class ContinuousStep(BaseStep):
         
     def set_cutoff(self, new_cutoff: float) -> None:
         self.cutoff = new_cutoff
+        
+    def is_continuous(self):
+        return True
     
 
 class CategoricalStep(BaseStep):
@@ -71,3 +88,8 @@ class CategoricalStep(BaseStep):
     def apply_step(self, expression: pd.Series) -> None:
         self.df.loc[:, f"feasible_{self.mode}_shift"] = self.prev
         self.df.loc[expression, f"feasible_{self.mode}_shift"] = False
+        
+    def is_continuous(self):
+        return False
+        
+    
