@@ -22,6 +22,20 @@ def show_summaries(df: pd.DataFrame, modes, percentile=[0.95]): # show normal su
     x.columns = labels
     return x
 
+def show_value_counts(df: pd.DataFrame, modes):
+    res = []
+    labels = []
+    for m in modes:        
+        mode = m[0]
+        column = m[1]
+        labels.append(mode + ' ' + column)
+        
+        group = df[df["mode"] == mode]
+        res.append(group[column].value_counts())
+    x = pd.concat(res, axis=1)
+    x.columns = labels
+    return x
+
 def plot_mode_density(df: pd.DataFrame, modes, percentile=0.95, size=(12, 6), bins=300, function=lambda x: x):
     palette = itertools.cycle(sns.color_palette()) # cycle through colors to make sure each mode gets a unique one
     fig, ax = plt.subplots(figsize=size)
@@ -37,3 +51,4 @@ def plot_mode_density(df: pd.DataFrame, modes, percentile=0.95, size=(12, 6), bi
         plt.axvline(x=val, color=c) # plot line representing that value on the plot        
         plt.legend()
     return fig, ax
+

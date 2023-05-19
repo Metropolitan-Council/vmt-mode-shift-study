@@ -11,10 +11,9 @@ class WalkDistanceStep(ContinuousStep):
         super().__init__(df, "feasible_walking_dist", Mode.WALK, cutoff)
         
         self.column_name = "walk_distance_miles"
-        self.categories = [[x, self.column_name] for x in [self.mode, Mode.CAR]]
     
     def get_summary_statistics(self):
-        return show_summaries(self.df, modes=self.categories, percentile=self.cutoff)
+        return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.cutoff)
     
     def get_summary_figure(self):
         fig, ax = plot_mode_density(self.df, [(self.mode, self.column_name), (Mode.CAR, self.column_name)], percentile=self.cutoff) 
@@ -30,10 +29,9 @@ class BikeDistanceStep(ContinuousStep):
     def __init__(self, df: pd.DataFrame, cutoff=0.95):
         super().__init__(df, "feasible_biking_dist", Mode.BIKE, cutoff)
         self.column_name = "bike_weight"
-        self.categories = [[x, self.column_name] for x in [self.mode, Mode.CAR]]
     
     def get_summary_statistics(self):
-        return show_summaries(self.df, modes=self.categories, percentile=self.cutoff)
+        return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.cutoff)
     
     def get_summary_figure(self):
         fig, ax = plot_mode_density(self.df, [(self.mode, self.column_name), (Mode.CAR, self.column_name)], percentile=self.cutoff) 

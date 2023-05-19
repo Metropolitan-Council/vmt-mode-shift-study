@@ -48,6 +48,10 @@ class BaseStep:
         communities["val"] = values
         return gplt.choropleth(communities, hue=communities["val"], projection=gplt.crs.AlbersEqualArea(), cmap=rg, figsize=(12, 12))
     
+    def disable(self) -> None:
+        self.df["temp"] = False
+        self.apply_step(self.df["temp"])
+    
     def __repr__(self) -> str:
         return "Running the step with " + self.name + " as a criteria for shifts to " + self.mode
 
@@ -63,4 +67,7 @@ class ContinuousStep(BaseStep):
     
 
 class CategoricalStep(BaseStep):
-    pass
+    
+    def apply_step(self, expression: pd.Series) -> None:
+        self.df.loc[:, f"feasible_{self.mode}_shift"] = self.prev
+        self.df.loc[expression, f"feasible_{self.mode}_shift"] = False

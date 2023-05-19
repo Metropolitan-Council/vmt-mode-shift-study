@@ -11,10 +11,9 @@ class TransitAccessDistanceStep(ContinuousStep):
         
         self.df.loc[:, "transit_access_length_miles"] = df["transit_access_length"] / 1609.34
         self.column_name = "transit_access_length_miles"
-        self.categories = [[x, self.column_name] for x in [self.mode, Mode.CAR]]
     
     def get_summary_statistics(self):
-        return show_summaries(self.df, modes=self.categories, percentile=self.cutoff)
+        return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.cutoff)
     
     def get_summary_figure(self):
         fig, ax = plot_mode_density(self.df, [(self.mode, self.column_name), (Mode.CAR, self.column_name)], percentile=self.cutoff) 
@@ -35,10 +34,9 @@ class TransitTransferCountStep(ContinuousStep):
         super().__init__(df, "feasible_transit_transfer_number", Mode.TRANSIT, cutoff)
         
         self.column_name = "transit_num_transfers"
-        self.categories = [[x, self.column_name] for x in [self.mode, Mode.CAR]]
     
     def get_summary_statistics(self):
-        return show_summaries(self.df, self.categories, self.cutoff)
+        return show_summaries(self.df, [[x, self.column_name] for x in [self.mode, Mode.CAR]], self.cutoff)
     
     def get_summary_figure(self):
         fig, ax = plt.subplots(1, 2, figsize=(10, 5))
@@ -60,12 +58,10 @@ class TransitReroutedStep(CategoricalStep):
     def __init__(self, df: pd.DataFrame):
         super().__init__(df, "feasible_transit_route_found", Mode.TRANSIT)
         
-        self.df.loc[:, "valid_transit_route"] = ~self.df["transit_trip_id"].isna()
-        self.column_name = "valid_transit_route"
-        self.categories = [[x, self.column_name] for x in [self.mode, Mode.CAR]]
+        self.df.loc[:, self.name] = ~self.df["transit_trip_id"].isna()
         
     def get_summary_statistics(self):
-        return self.df[self.column_name].value_counts()
+        return show_value_counts(self.df, [[x, self.name] for x in [self.mode, Mode.CAR]])
     
     def get_summary_figure(self):
         fig, ax = plt.subplots(1, 2, figsize=(10, 5))
@@ -77,4 +73,4 @@ class TransitReroutedStep(CategoricalStep):
         return fig, ax
     
     def apply_step(self):
-        super().apply_step(~self.df[self.column_name])
+        super().apply_step(~self.df[self.name])
