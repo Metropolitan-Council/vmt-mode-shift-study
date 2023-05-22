@@ -3,11 +3,37 @@
 using OSRM, DataFrames, CSV, ArchGDAL, ArgParse, Logging, ProgressMeter, Geodesy, ThreadsX,
     TransitRouter, Dates
 
+# Maximum distance for access, egress, or transfers from transit
+const MAX_LEG_WALK_DIST_METERS = 1.5 * 1609 # 1.5 mile walk allowed
+
+# How much earlier than the observed departure we allow departure-constrained trips to depart
+const DEPARTURE_CONSTRAINED_FLEXIBILITY_SECONDS = 300 # five minutes
+
+# How much later than the observed arrival we allow arrival-constrained trips to arrive
+const ARRIVAL_CONSTRAINED_FLEXIBILITY_SECONDS = 300 # five minutes
+
+# Some trips may be flexible at the departure end, and some at the arrival end. Whichever purpose category
+# (imputed version) is earlier in this list will be the end that is constrained. Anything not in the list is assumed
+# to be after the end of the list
+const CONSTRAINED_PURPOSE_CATEGORY_PECKING_ORDER = [
+    2 # work
+]
+
+# Like most transit routing algorithms, RAPTOR and range-RAPTOR guarantee they will find the earliest arrival at the destination,
+# not necessarily the shortest path. However, range-RAPTOR and clever filtering allow us to find the shortest path,
+# but only if it departs within the range-RAPTOR period. This controls the length of the range-RAPTOR period after the requested
+# departure time. Reverse routing does not suffer from this issue, as the burn in period extends until the desired arrival time,
+# so the shortest path is guaranteed to be found.
+# We allow compressing up to 1 hour of extra wait time off the start of the trip.
+const RANGE_RAPTOR_BURN_IN_PERIOD_SECONDS = 3600
+
+# When routing in reverse, how far back in time to go to find a trip?
+const RANGE_RAPTOR_MAX_REVERSE_TIME = 24 * 3600
+
 # how much to move a point to make geometries valid when the geometry
 # is two identical points. Generally caused by transfers between stops coded as coincident
 # in the GTFS.
 const GEOMETRY_VALIDITY_EPSILON_DEGREES = 1e-7 # 1e-7 degrees ≈ 1 cm
-const MAX_LEG_WALK_DIST_METERS = 1.5 * 1609 # 1.5 mile walk allowed
 
 # used for transit routing, all transit routes will use the first
 # day after this date that is the same day of the week as the original
@@ -243,28 +269,68 @@ function do_transit_route(net, osrm, max_rides, data_itr, n_rows)
 
         date = select_representative_date(row.travel_date)
 
-        result = street_raptor(
-            net,
-            osrm,
-            osrm, # same access and egress router
-            LatLon(row.o_lat, row.o_lon),
-            [LatLon(row.d_lat, row.d_lon)], # single destination
-            DateTime(
-                date,
-                row.depart_time  # TODO reverse routing
-            ),
-            max_access_distance_meters=MAX_LEG_WALK_DIST_METERS,
-            max_egress_distance_meters=MAX_LEG_WALK_DIST_METERS,
-            max_rides=max_rides
-        )
+        # figure out if we're routing forwards or backwards (which end of trip is constrained)
+        # if purpose is not in constrained categories, it is lowest priority (typemax(Int64))
+        origin_priority = coalesce(findfirst(row.o_purpose_category_imputed .== CONSTRAINED_PURPOSE_CATEGORY_PECKING_ORDER), typemax(Int64))
+        destination_priority = coalesce(findfirst(row.o_purpose_category_imputed .== CONSTRAINED_PURPOSE_CATEGORY_PECKING_ORDER), typemax(Int64))
 
-        path = trace_path(net, result, 1)
-        return (id=row.trip_id, route=ismissing(path) ? nothing : path, date=date)
+        # we route in reverse iff the destination is higher priority (smaller number) than the origin priority
+        # otherwise (if they are equal or origin priority is higher) we route forwards
+        reverse_route = destination_priority < origin_priority
+
+        paths = if reverse_route
+            res = street_raptor(
+                net,
+                osrm,
+                osrm, # same access and egress router
+                LatLon(row.o_lat, row.o_lon),
+                [LatLon(row.d_lat, row.d_lon)], # single destination
+                DateTime(
+                    date,
+                    row.arrive_time
+                ),
+                -RANGE_RAPTOR_MAX_REVERSE_TIME, # search up to this amount of time before the requested arrival
+                max_access_distance_meters=MAX_LEG_WALK_DIST_METERS,
+                max_egress_distance_meters=MAX_LEG_WALK_DIST_METERS,
+                max_rides=max_rides
+            )
+
+            all_paths = trace_all_optimal_paths(net, res, 1)
+            # sort by arrival time, get all paths that arrive within the grace period
+            filter(p -> p[end].end_time ≤ DateTime(date, row.arrive_time) + Seconds(ARRIVAL_CONSTRAINED_FLEXIBILITY_SECONDS), all_paths)
+        else
+            street_raptor(
+                net,
+                osrm,
+                osrm, # same access and egress router
+                LatLon(row.o_lat, row.o_lon),
+                [LatLon(row.d_lat, row.d_lon)], # single destination
+                DateTime(
+                    date,
+                    row.depart_time - Seconds(DEPARTURE_CONSTRAINED_FLEXIBILITY_SECONDS)
+                ),
+                # run range-RAPTOR until departure time + burn in period
+                RANGE_RAPTOR_BURN_IN_PERIOD_SECONDS + DEPARTURE_CONSTRAINED_FLEXIBILITY_SECONDS,
+                max_access_distance_meters=MAX_LEG_WALK_DIST_METERS,
+                max_egress_distance_meters=MAX_LEG_WALK_DIST_METERS,
+                max_rides=max_rides
+            )
+
+            all_paths = trace_all_optimal_paths(net, res, 1)
+
+            # get all paths that depart within the grace period, plus all that depart after the departure time
+            # and result in the earliest arrival time
+            best_arrival_time_given_departure = minimum(map(p -> p[end].end_time, filter(p -> p[begin].start_time ≥ DateTime(date, row.depart_time), all_paths)))
+            filter(p -> p[end].end_time ≤ best_arrival_time_given_departure, all_paths)
+        end
+
+        return (id=row.trip_id, route=paths, date=date)
     end
 end
 
 function create_transit_columns!(layer)
     ArchGDAL.addfielddefn!(layer, "trip_id", ArchGDAL.OFTString)
+    ArchGDAL.addfielddefn!(layer, "option_index", ArchGDAL.OFTInteger)
     ArchGDAL.addfielddefn!(layer, "leg_index", ArchGDAL.OFTInteger)
     ArchGDAL.addfielddefn!(layer, "start_time", ArchGDAL.OFTDateTime)
     ArchGDAL.addfielddefn!(layer, "end_time", ArchGDAL.OFTDateTime)
@@ -288,38 +354,41 @@ function setfield_with_missing!(feature, field, value)
 end
 
 function write_transit_feature!(layer, route)
-    for (legidx, leg) in enumerate(route.route)
-        ArchGDAL.addfeature(layer) do feature
-            ArchGDAL.setgeom!(feature, geodesy_to_gdal(leg.geometry))
-            setfield_with_missing!(feature, 0, route.id)
-            setfield_with_missing!(feature, 1, legidx)
-            setfield_with_missing!(feature, 2, leg.start_time)
-            setfield_with_missing!(feature, 3, leg.end_time)
-            
-            if leg.type != TransitRouter.access
-                setfield_with_missing!(feature, 4, leg.origin_stop.stop_id)
-                setfield_with_missing!(feature, 5, leg.origin_stop.stop_name)
-            else
-                ArchGDAL.setfieldnull!.(Ref(feature), 4:5)
-            end
-            
-            if leg.type != TransitRouter.egress
-                setfield_with_missing!(feature, 6, leg.destination_stop.stop_id)
-                setfield_with_missing!(feature, 7, leg.destination_stop.stop_name)
-            else
-                ArchGDAL.setfieldnull!.(Ref(feature), 6:7)
-            end
-            
-            if leg.type == TransitRouter.transit
-                setfield_with_missing!(feature, 8, leg.route.route_id)
-                setfield_with_missing!(feature, 9, leg.route.route_short_name)
-                setfield_with_missing!(feature, 10, leg.route.route_long_name)
-                setfield_with_missing!(feature, 11, leg.route.route_type)
-            else
-                ArchGDAL.setfieldnull!.(Ref(feature), 8:11)
-            end
+    for (optidx, opt) in enumerate(route.route)
+        for (legidx, leg) in enumerate(opt)
+            ArchGDAL.addfeature(layer) do feature
+                ArchGDAL.setgeom!(feature, geodesy_to_gdal(leg.geometry))
+                setfield_with_missing!(feature, 0, route.id)
+                setfield_with_missing!(feature, 1, optidx)
+                setfield_with_missing!(feature, 2, legidx)
+                setfield_with_missing!(feature, 3, leg.start_time)
+                setfield_with_missing!(feature, 4, leg.end_time)
+                
+                if leg.type != TransitRouter.access
+                    setfield_with_missing!(feature, 5, leg.origin_stop.stop_id)
+                    setfield_with_missing!(feature, 6, leg.origin_stop.stop_name)
+                else
+                    ArchGDAL.setfieldnull!.(Ref(feature), 5:6)
+                end
+                
+                if leg.type != TransitRouter.egress
+                    setfield_with_missing!(feature, 7, leg.destination_stop.stop_id)
+                    setfield_with_missing!(feature, 8, leg.destination_stop.stop_name)
+                else
+                    ArchGDAL.setfieldnull!.(Ref(feature), 7:8)
+                end
+                
+                if leg.type == TransitRouter.transit
+                    setfield_with_missing!(feature, 9, leg.route.route_id)
+                    setfield_with_missing!(feature, 10, leg.route.route_short_name)
+                    setfield_with_missing!(feature, 11, leg.route.route_long_name)
+                    setfield_with_missing!(feature, 12, leg.route.route_type)
+                else
+                    ArchGDAL.setfieldnull!.(Ref(feature), 9:12)
+                end
 
-            ArchGDAL.setfield!(feature, 12, repr(leg.type))
+                ArchGDAL.setfield!(feature, 13, repr(leg.type))
+            end
         end
     end
 end
