@@ -410,8 +410,17 @@ function process_way(profile, way, result)
   -- Divide by 3.6 so that rate is in (roughly) meter-equivalents per second, and thus weights are comparable to
   -- durations. This should not affect the routing whatsoever. This conversion is done automatically within OSRM for
   -- speeds.
-  result.forward_rate = result.forward_speed / multiplier / 3.6
-  result.backward_rate = result.backward_speed / multiplier / 3.6
+  if result.forward_speed > 0
+    result.forward_rate = result.forward_speed / multiplier / 3.6
+  else
+    result.forward_rate = -1
+  end
+
+  if result.backward_speed > 0
+    result.backward_rate = result.backward_speed / multiplier / 3.6
+  else
+    result.backward_rate = -1
+  end
 end
 
 function process_turn (profile, turn)
