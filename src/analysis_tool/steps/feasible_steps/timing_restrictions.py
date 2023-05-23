@@ -1,5 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import streamlit as st
+import inspect
 
 from steps.parent_classes import CategoricalStep, Mode
 from steps.figure_lib import *
@@ -15,7 +17,8 @@ def convert_to_minutes(str):
     return hours * 60 + minutes + seconds / 60
 
 def evaluate_timing(df, alt_mode_times):
-    return df.groupby(["wave", "person_id", "travel_date"]).apply(lambda x: evaluate_feasible_timing(x, alt_mode_times))
+    with st.spinner("Running the timing logic..."):
+        return df.groupby(["wave", "person_id", "travel_date"]).apply(lambda x: evaluate_feasible_timing(x, alt_mode_times))
 
 def evaluate_feasible_timing(chunk, alt_mode_times: str):
     # if there is only an inbound and outbound trip, don't need to worry about timing
@@ -98,8 +101,28 @@ class WalkTimingStep(CategoricalStep):
     def apply_step(self) -> None:
         super().apply_step(~self.df[self.name])
         
+    def get_text(self) -> list[str]:
+        conclusion = super().get_text()
+        res = []
+        # intro
+        res.append("""For some people, it is infeasible to switch from a car mode to an alternative mode due to timing constraints; with the longer durations of alternative modes, a person may not have the ability to do everything they need to in a given day.
+
+        Here, trips are feasible with respect to timing if it is possible to fit in all the fixed trips of a day (which have purposes related to work or school), even if the more discretionary, non-fixed trips of a day (e.g., shopping, social visits) may have to be rescheduled or cancelled. """)
         
-class TransiotTimingStep(CategoricalStep):
+        # summary figure
+        res.append("""Here, a bar plot of the result of the timing logic when applied to walk shifts can be seen.""")
+        
+        # summary statistics
+        res.append("Here, the value counts of the result of the timing logic when applied to walk shifts can be seen.")
+        
+        
+        res = res + conclusion
+        res = [inspect.cleandoc(x) for x in res]
+        
+        return res
+        
+        
+class TransitTimingStep(CategoricalStep):
     
     def __init__(self, df: pd.DataFrame):
         super().__init__(df, "feasible_transit_timing", Mode.TRANSIT)
@@ -127,6 +150,26 @@ class TransiotTimingStep(CategoricalStep):
     
     def apply_step(self) -> None:
         super().apply_step(~self.df[self.name])
+        
+    def get_text(self) -> list[str]:
+        conclusion = super().get_text()
+        res = []
+        # intro
+        res.append("""For some people, it is infeasible to switch from a car mode to an alternative mode due to timing constraints; with the longer durations of alternative modes, a person may not have the ability to do everything they need to in a given day.
+
+        Here, trips are feasible with respect to timing if it is possible to fit in all the fixed trips of a day (which have purposes related to work or school), even if the more discretionary, non-fixed trips of a day (e.g., shopping, social visits) may have to be rescheduled or cancelled. """)
+        
+        # summary figure
+        res.append("""Here, a bar plot of the result of the timing logic when applied to transit shifts can be seen.""")
+        
+        # summary statistics
+        res.append("Here, the value counts of the result of the timing logic when applied to transit shifts can be seen.")
+        
+        
+        res = res + conclusion
+        res = [inspect.cleandoc(x) for x in res]
+        
+        return res
         
         
 class BikeTimingStep(CategoricalStep):
@@ -157,6 +200,26 @@ class BikeTimingStep(CategoricalStep):
     
     def apply_step(self) -> None:
         super().apply_step(~self.df[self.name])
+        
+    def get_text(self) -> list[str]:
+        conclusion = super().get_text()
+        res = []
+        # intro
+        res.append("""For some people, it is infeasible to switch from a car mode to an alternative mode due to timing constraints; with the longer durations of alternative modes, a person may not have the ability to do everything they need to in a given day.
+
+        Here, trips are feasible with respect to timing if it is possible to fit in all the fixed trips of a day (which have purposes related to work or school), even if the more discretionary, non-fixed trips of a day (e.g., shopping, social visits) may have to be rescheduled or cancelled. """)
+        
+        # summary figure
+        res.append("""Here, a bar plot of the result of the timing logic when applied to bike shifts can be seen.""")
+        
+        # summary statistics
+        res.append("Here, the value counts of the result of the timing logic when applied to bike shifts can be seen.")
+        
+        
+        res = res + conclusion
+        res = [inspect.cleandoc(x) for x in res]
+        
+        return res
     
         
     

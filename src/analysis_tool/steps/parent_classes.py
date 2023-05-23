@@ -70,11 +70,19 @@ class BaseStep:
         # there should be # figures + 2 text blocks to return for each step typically (intro, n figure explanations, ending conclusion)
         # this builds the conclusion and the generic map snippet
         stats = self.get_step_statistics()
-        total_vmt = self.df[(self.df["mode"] == "Car")]["vmt"].sum()
+        total_vmt = self.df[(self.df["mode"] == Mode.CAR)]["vmt"].sum()
         return [
-            f"Here, the map of the % of car trips in each community area that meet this mode's specified criteria for shifting to {self.mode} can be seen. There are a few transparent/white areas; these are the areas with no people to report."
-            f"Before this step, {stats[0][0]}% of trips could shift to {self.mode} feasibly/with likelihood, and after this step, {stats[0][1]}% of trips could shift to {self.mode} feasibly/with likelihood. Additionally, after this step, {stats[1][1] / total_vmt * 100}% of VMT can be mitigated with shifts to {self.mode}, compared to {stats[1][0] / total_vmt * 100}% of VMT before the step."
+            f"Here, the map of the % of car trips in each community area that meet this mode's specified criteria for shifting to {self.mode} can be seen. There are a few transparent/white areas; these are the areas with no people to report.",
+            f"""Before this step, {stats[0][0]}% of trips could shift to {self.mode} feasibly/with likelihood, and after this step, {stats[0][1]}% of trips could shift to {self.mode} feasibly/with likelihood.
+            
+            Additionally, after this step, {stats[1][1] / total_vmt * 100}% of VMT can be mitigated with shifts to {self.mode}, compared to {stats[1][0] / total_vmt * 100}% of VMT before the step."""
         ]
+        
+    def get_name(self) -> str:
+        return self.name.replace("_", " ").title()
+    
+    def get_cutoff(self) -> float:
+        return -1
 
 
 class ContinuousStep(BaseStep):
@@ -89,6 +97,12 @@ class ContinuousStep(BaseStep):
     def is_continuous(self):
         return True
     
+    def disable(self) -> None:
+        super().disable()
+        self.cutoff = -1
+        
+    def get_cutoff(self) -> float:
+        return self.cutoff
 
 class CategoricalStep(BaseStep):
     

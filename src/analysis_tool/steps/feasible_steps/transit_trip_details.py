@@ -11,7 +11,7 @@ class TransitAccessDistanceStep(ContinuousStep):
     def __init__(self, df: pd.DataFrame, cutoff=0.95):
         super().__init__(df, "feasible_transit_access_distance", Mode.TRANSIT, cutoff)
         
-        self.df.loc[:, "transit_access_length_miles"] = df["transit_access_length"] / 1609.34
+        self.df.loc[:, "transit_access_length_miles"] = df["transit_access_length"] * 0.000621371
         self.column_name = "transit_access_length_miles"
     
     def get_summary_statistics(self):
@@ -19,7 +19,7 @@ class TransitAccessDistanceStep(ContinuousStep):
     
     def get_summary_figure(self):
         fig, ax = plot_mode_density(self.df, [(self.mode, self.column_name), (Mode.CAR, self.column_name)], percentile=self.cutoff) 
-        ax.set_xlim(left=0, right=10)
+        ax.set_xlim(left=0, right=5)
         plt.title("Rerouted transit access distance for canonical transit and car trips")
         return fig, ax
     
@@ -115,8 +115,8 @@ class TransitReroutedStep(CategoricalStep):
     
     def get_summary_figure(self):
         fig, ax = plt.subplots(1, 2, figsize=(10, 5))
-        sns.countplot(x=self.column_name, data=self.df[self.df["mode"] == self.mode], ax=ax[0])
-        sns.countplot(x=self.column_name, data=self.df[self.df["mode"] == Mode.CAR], ax=ax[1])
+        sns.countplot(x=self.name, data=self.df[self.df["mode"] == self.mode], ax=ax[0])
+        sns.countplot(x=self.name, data=self.df[self.df["mode"] == Mode.CAR], ax=ax[1])
         ax[0].set_title("Whether a trip had a valid rerouted trip for canonical transit trips")
         ax[1].set_title("Whether a trip had a valid rerouted trip for canonical car trips")
         

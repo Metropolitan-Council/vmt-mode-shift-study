@@ -12,6 +12,7 @@ class WalkDistanceStep(ContinuousStep):
     def __init__(self, df: pd.DataFrame, cutoff=0.95):
         super().__init__(df, "feasible_walking_dist", Mode.WALK, cutoff)
         
+        self.df.loc[:, "walk_distance_miles"] = self.df["walk_distance_meters"] * 0.000621371
         self.column_name = "walk_distance_miles"
     
     def get_summary_statistics(self):
@@ -51,14 +52,15 @@ class BikeDistanceStep(ContinuousStep):
     
     def __init__(self, df: pd.DataFrame, cutoff=0.95):
         super().__init__(df, "feasible_biking_dist", Mode.BIKE, cutoff)
-        self.column_name = "bike_weight"
+        self.df.loc[:, "bike_distance_miles"] = self.df["bike_distance_meters"] * 0.000621371
+        self.column_name = "bike_distance_miles"
     
     def get_summary_statistics(self):
         return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.cutoff)
     
     def get_summary_figure(self):
         fig, ax = plot_mode_density(self.df, [(self.mode, self.column_name), (Mode.CAR, self.column_name)], percentile=self.cutoff) 
-        ax.set_xlim(left=0, right=10)
+        ax.set_xlim(left=0, right=25)
         plt.title("Rerouted bike distance distributions for canonical bike and car trips")
         return fig, ax
     

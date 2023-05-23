@@ -2,21 +2,24 @@ import numpy as np
 import pandas as pd
 import geopandas as gpd
 from ast import literal_eval
+import streamlit as st
 
 from steps.mode_enum import Mode
 
+from settings import handler
+
 def clean_mode_names(df: pd.DataFrame):
     print("cleaning mode names")
-    df["mode"] = np.where(df["mode"] == "Car", Mode.CAR, df["mode"])
-    df["mode"] = np.where(df["mode"] == "Transit", Mode.TRANSIT, df["mode"])
-    df["mode"] = np.where(df["mode"] == "Bike/Scooter", Mode.BIKE, df["mode"])
-    df["mode"] = np.where(df["mode"] == "Walk", Mode.WALK, df["mode"])
+    df["mode"] = np.where(df["mode"] == "Car", Mode.CAR[:], df["mode"])
+    df["mode"] = np.where(df["mode"] == "Transit", Mode.TRANSIT[:], df["mode"])
+    df["mode"] = np.where(df["mode"] == "Bike/Scooter", Mode.BIKE[:], df["mode"])
+    df["mode"] = np.where(df["mode"] == "Walk", Mode.WALK[:], df["mode"])
 
 def merge_weather(df: pd.DataFrame):
     print("merging in weather")
     # reading in weather data
     # https://www.ncei.noaa.gov/pub/data/ghcn/daily/
-    weather = pd.read_csv("data/USW00014922.csv")
+    weather = pd.read_csv("data/" + handler["weather_file_name"])
     weather = weather[["Date", "Measurement", "Value"]]
     weather = weather.pivot(index="Date", columns="Measurement", values="Value")
     
@@ -83,8 +86,8 @@ def transit_cleanup(transit):
 def merge_transit_trip_details(df: pd.DataFrame, data_dir: str):
     print("merging in transit details from raw tbi data")
     # read in raw tbi data
-    wave1_trips = pd.read_csv(data_dir + "/Data/TBI Wave 1 Dataset 20200630/trip.csv")
-    wave2_trips = pd.read_csv(data_dir + "/Data/Wave 2 Data Deliverable/trip.csv")
+    wave1_trips = pd.read_csv(handler["drive_data_dir"] + "/Data/TBI Wave 1 Dataset 20200630/trip.csv")
+    wave2_trips = pd.read_csv(handler["drive_data_dir"] + "/Data/Wave 2 Data Deliverable/trip.csv")
     raw_trips = pd.concat([wave1_trips, wave2_trips]).set_index("trip_id")
     
     def get_dist_to_stop(trips, wave): # calculate distance to get to stop to start transit trip
@@ -116,7 +119,7 @@ def merge_transit_trip_details(df: pd.DataFrame, data_dir: str):
     
 def add_community(df: pd.DataFrame):
     print("adding communities")
-    communities = gpd.read_file("data/shp_society_thrive_msp2040_com_des").to_crs("EPSG:4326")
+    communities = gpd.read_file("data/" + handler["community_shape_file_name"]).to_crs("EPSG:4326")
     
     gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df["home_lon"], df["home_lat"]), crs="EPSG:4326")
     
@@ -129,7 +132,7 @@ def prepare_csv(df: pd.DataFrame, data_dir: str):
 
     print("reading in rerouting files")
     car = pd.read_parquet(data_dir + "/Data_Processed/geodata/car_congestion_nogeom.parquet")
-    bike = pd.read_parquet(data_dir + "/Data_Processed/geodata/bike_lts.parquet", columns=["trip_id", "duration_seconds", "distance_meters", "weight", "distance_meters_1", "distance_meters_2", "distance_meters_3", "distance_meters_4"]).rename(columns={"weight": "duration_seconds", "duration_seconds": "weight"})
+    bike = pd.read_parquet(data_dir + "/Data_Processed/geodata/bike_lts.parquet", columns=["trip_id", "duration_seconds", "distance_meters", "weight", "distance_meters_1", "distance_meters_2", "distance_meters_3", "distance_meters_4"])
     transit = gpd.read_parquet(data_dir + "/Data_Processed/geodata/transit_trips.parquet")
     walk = pd.read_parquet(data_dir + "/Data_Processed/geodata/walk_trips_nogeom.parquet")
     
@@ -137,11 +140,11 @@ def prepare_csv(df: pd.DataFrame, data_dir: str):
     
     print("merging rerouting to dataframe")
     # rename columns to distinguish by mode
-    def add_mode_to_column_name(df, mode_name): 
+    def add_mode_to_column_name(mode_df, mode_name): 
         renames = {}
-        for col in df.columns:
+        for col in mode_df.columns:
             renames[col] = mode_name + '_' + col
-        return df.rename(columns = renames)
+        return mode_df.rename(columns = renames)
 
     car = add_mode_to_column_name(car, 'car')
     walk = add_mode_to_column_name(walk, 'walk')
@@ -192,6 +195,7 @@ def prepare_csv(df: pd.DataFrame, data_dir: str):
     
     clean_mode_names(df)
     
+    # possibly change to provided name
     df.to_csv("data/tbi_full.csv")
     
     return df

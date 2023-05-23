@@ -1,67 +1,105 @@
 import streamlit as st
-import matplotlib.pyplot as plt
-import numpy as np
-import keyring
-
-from initialize import prepare_csv
-
 import pandas as pd
-import steps
 
+import steps
+from initialize import prepare_csv
 from settings import handler
 
 if "df" not in st.session_state:
-    try:
-        df = pd.read_csv("data/tbi_full.csv")
-        
-    except Exception as e:
-        raw = pd.read_csv(handler["drive_data_dir"] + "/data_processed/feasible_shifts.csv")
+    if handler["force_reinitialize"]:
+        with st.spinner(text="Building the input data"):
+            raw = pd.read_csv(handler["drive_data_dir"] + "/data_processed/tbi_cleaned.csv")
 
-        df = prepare_csv(raw, handler["drive_data_dir"])
+            df = prepare_csv(raw, handler["drive_data_dir"])
+    else:
+        try:
+            df = pd.read_csv("data/" + handler["tbi_file_name"])
+            
+        except Exception as e:
+            with st.spinner(text="Building the input data"):
+                
+                raw = pd.read_csv(handler["drive_data_dir"] + "/data_processed/tbi_cleaned.csv")
+
+                df = prepare_csv(raw, handler["drive_data_dir"])
     
     st.session_state["df"] = df
     st.session_state["step"] = "WalkDistanceStep"
     st.session_state["overall_step"] = steps.feasible_steps
+    st.session_state["step_class"] = steps.feasible_steps.WalkDistanceStep(df)
+    st.session_state["percentiles"] = dict()
     
-def show_step(step):
+def show_step():
+    curr = st.session_state["step_class"]
+    st.title(curr.get_name())
     
-    if st.session_state.step.is_continuous():
+    if curr.is_continuous():
         value = st.sidebar.slider("Select a value:", 0.0, 1.0, 0.95, 0.01)
-        st.session_state.step.set_cutoff(value)
-    
+        curr.set_cutoff(value)
     
     if st.sidebar.button("Disable step"):
-        st.session_state.step.disable()
+        curr.disable()
     else:
-        st.session_state.step.apply_step()
-    temp = st.session_state.step.get_map()
+        curr.apply_step()
+        
+    st.sidebar.markdown("To export this page to PDF, click the x button above to dismiss the sidebar, and then manually print to PDF")
+        
+    text = curr.get_text()
     
-    st.dataframe(st.session_state.step.get_summary_statistics())
-    st.pyplot(st.session_state.step.get_summary_figure()[0])
-    st.plotly_chart(temp)
-    st.text(st.session_state.step.get_step_statistics())
+    st.markdown(text[0])
+    st.text("")
     
-def SequentialMode(step):
-    pass
+    slots = []
+    
+    for section in text[1:]:
+        st.markdown(section)
+        temp = st.empty()
+        slots.append(temp)
+        
+    slots[0].pyplot(curr.get_summary_figure()[0])
+    slots[1].dataframe(curr.get_summary_statistics())
+    slots[2].plotly_chart(curr.get_map())
+    
+def SequentialMode():
+    if st.sidebar.button("Move to next mode"):
+        curr = handler["feasible_steps"].index(st.session_state.step)
+        if curr == len(handler["feasible_steps"]):
+            st.experimental_rerun()
+            pass
+        else:
+            st.session_state.percentiles[st.session_state.step_class.get_name()] = st.session_state.step_class.get_cutoff()
+            st.session_state.step = handler["feasible_steps"][curr + 1]
+            st.session_state.step_class = getattr(st.session_state.overall_step, st.session_state.step)(st.session_state.df)        
+        
+    show_step()
 
-def FreeformMode(step):
-    pass
+def FreeformMode():
+    option = st.sidebar.selectbox("Choose the step you want to run.", handler["feasible_steps"])
+    if st.sidebar.button("Move to next overall step"):
+        pass
+        
+    if st.session_state.step != option:
+        st.session_state.percentiles[st.session_state.step_class.get_name()] = st.session_state.step_class.get_cutoff()
+        st.session_state.step = option
+        st.session_state.step_class = getattr(st.session_state.overall_step, option)(st.session_state.df)
+        
+    show_step()
+    
 
 if __name__ == "__main__":
-    
     if "settings" not in st.session_state:
         mode = st.radio("Choose the mode for the tool", ("Sequential", "Freeform"))
         if st.button("Start tool"):
             st.session_state["settings"] = True
             st.session_state["mode"] = mode
+            st.experimental_rerun()
             
     else:
-        step = getattr(st.session_state["overall_step"], st.session_state["step"])
-        
-        
-    x = getattr(steps.feasible_steps, "WalkDistanceStep")
-    
-    if "step" not in st.session_state:
-        st.session_state["step"] = x(st.session_state.df)
+        st.sidebar.header("Actions")
+        if st.session_state.mode == "Sequential":
+            SequentialMode()
+        elif st.session_state.mode == "Freeform":
+            FreeformMode()
+        else:
+            raise RuntimeError("Invalid mode passed -- shouldn't be possible")
 
     
