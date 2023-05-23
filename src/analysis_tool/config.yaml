@@ -2,7 +2,7 @@
 
 fixed_purposes: ["Work", "Work-related", "Escort", "School", "School-related"]
 
-force_reinitialize: True
+force_reinitialize: False
 
 # assumed to be in data
 community_shape_file_name: "shp_society_thrive_msp2040_com_des"

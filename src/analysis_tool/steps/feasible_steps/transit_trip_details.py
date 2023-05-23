@@ -9,10 +9,9 @@ import inspect
 class TransitAccessDistanceStep(ContinuousStep):
     
     def __init__(self, df: pd.DataFrame, cutoff=0.95):
-        super().__init__(df, "feasible_transit_access_distance", Mode.TRANSIT, cutoff)
+        super().__init__(df, "feasible_transit_access_distance", Mode.TRANSIT, cutoff, "transit_access_length_miles")
         
         self.df.loc[:, "transit_access_length_miles"] = df["transit_access_length"] * 0.000621371
-        self.column_name = "transit_access_length_miles"
     
     def get_summary_statistics(self):
         return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.cutoff)
@@ -61,9 +60,7 @@ class TransitAccessDistanceStep(ContinuousStep):
 class TransitTransferCountStep(ContinuousStep):
     
     def __init__(self, df: pd.DataFrame, cutoff=0.95):
-        super().__init__(df, "feasible_transit_transfer_number", Mode.TRANSIT, cutoff)
-        
-        self.column_name = "transit_num_transfers"
+        super().__init__(df, "feasible_transit_transfer_number", Mode.TRANSIT, cutoff, "transit_num_transfers")
     
     def get_summary_statistics(self):
         return show_summaries(self.df, [[x, self.column_name] for x in [self.mode, Mode.CAR]], self.cutoff)

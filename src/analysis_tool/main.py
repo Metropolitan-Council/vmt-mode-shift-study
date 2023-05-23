@@ -35,6 +35,7 @@ def show_step():
     if curr.is_continuous():
         value = st.sidebar.slider("Select a value:", 0.0, 1.0, 0.95, 0.01)
         curr.set_cutoff(value)
+        st.sidebar.markdown(f"Cutoff: {curr.get_cutoff_numerical()}")
     
     if st.sidebar.button("Disable step"):
         curr.disable()
@@ -86,20 +87,22 @@ def FreeformMode():
     
 
 if __name__ == "__main__":
-    if "settings" not in st.session_state:
-        mode = st.radio("Choose the mode for the tool", ("Sequential", "Freeform"))
-        if st.button("Start tool"):
-            st.session_state["settings"] = True
-            st.session_state["mode"] = mode
-            st.experimental_rerun()
+    st.sidebar.header("Actions")
+    FreeformMode()
+    # if "settings" not in st.session_state:
+    #     mode = st.radio("Choose the mode for the tool", ("Sequential", "Freeform"))
+    #     if st.button("Start tool"):
+    #         st.session_state["settings"] = True
+    #         st.session_state["mode"] = mode
+    #         st.experimental_rerun()
             
-    else:
-        st.sidebar.header("Actions")
-        if st.session_state.mode == "Sequential":
-            SequentialMode()
-        elif st.session_state.mode == "Freeform":
-            FreeformMode()
-        else:
-            raise RuntimeError("Invalid mode passed -- shouldn't be possible")
+    # else:
+    #     st.sidebar.header("Actions")
+    #     if st.session_state.mode == "Sequential":
+    #         SequentialMode()
+    #     elif st.session_state.mode == "Freeform":
+    #         FreeformMode()
+    #     else:
+    #         raise RuntimeError("Invalid mode passed -- shouldn't be possible")
 
     

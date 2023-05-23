@@ -128,7 +128,7 @@ def add_community(df: pd.DataFrame):
         df["community"] = np.where(gdf["geometry"].within(row["geometry"]), row.name, df["community"])
 
 def prepare_csv(df: pd.DataFrame, data_dir: str):
-    # merge_weather(df)
+    merge_weather(df)
 
     print("reading in rerouting files")
     car = pd.read_parquet(data_dir + "/Data_Processed/geodata/car_congestion_nogeom.parquet")

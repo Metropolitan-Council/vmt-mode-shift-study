@@ -75,7 +75,7 @@ class BaseStep:
             f"Here, the map of the % of car trips in each community area that meet this mode's specified criteria for shifting to {self.mode} can be seen. There are a few transparent/white areas; these are the areas with no people to report.",
             f"""Before this step, {stats[0][0]}% of trips could shift to {self.mode} feasibly/with likelihood, and after this step, {stats[0][1]}% of trips could shift to {self.mode} feasibly/with likelihood.
             
-            Additionally, after this step, {stats[1][1] / total_vmt * 100}% of VMT can be mitigated with shifts to {self.mode}, compared to {stats[1][0] / total_vmt * 100}% of VMT before the step."""
+            Additionally, before this step, {stats[1][0] / total_vmt * 100}% of VMT could be mitigated with shifts to {self.mode}, and after this step, {stats[1][1] / total_vmt * 100}% of VMT could be mitigated with shifts to {self.mode}."""
         ]
         
     def get_name(self) -> str:
@@ -87,9 +87,10 @@ class BaseStep:
 
 class ContinuousStep(BaseStep):
     
-    def __init__(self, df: pd.DataFrame, name: str, mode: Mode, cutoff: float):
+    def __init__(self, df: pd.DataFrame, name: str, mode: Mode, cutoff: float, column_name: str):
         super().__init__(df, name, mode)
         self.cutoff = cutoff
+        self.column_name = column_name
         
     def set_cutoff(self, new_cutoff: float) -> None:
         self.cutoff = new_cutoff
@@ -103,6 +104,9 @@ class ContinuousStep(BaseStep):
         
     def get_cutoff(self) -> float:
         return self.cutoff
+    
+    def get_cutoff_numerical(self) -> float:
+        return self.df[self.df["mode"] == self.mode][self.column_name].quantile(self.cutoff)
 
 class CategoricalStep(BaseStep):
     
