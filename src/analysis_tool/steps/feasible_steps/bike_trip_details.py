@@ -5,6 +5,8 @@ from steps.parent_classes import ContinuousStep
 from steps.mode_enum import Mode
 from steps.figure_lib import *
 
+import inspect
+
 class BikeSnowDepthStep(ContinuousStep):
     
     def __init__(self, df: pd.DataFrame, cutoff=0.95):
@@ -16,13 +18,33 @@ class BikeSnowDepthStep(ContinuousStep):
         return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.cutoff)
     
     def get_summary_figure(self):
-        fig, ax = plot_mode_density(self.df, [(self.mode, self.column_name), (Mode.CAR, self.column_name)], percentile=self.cutoff) 
+        fig, ax = plot_mode_density(self.df, [(x, "snow_depth") for x in [Mode.BIKE, Mode.CAR, Mode.TRANSIT, Mode.WALK]], percentile=self.cutoff) 
         ax.set_xlim(left=0, right=10)
-        plt.title("Snow depth during travel day for canonical bike and car trips")
+        plt.title("Snow depth during travel day for all modes")
         return fig, ax
     
     def apply_step(self):
         super().apply_step(self.df[self.column_name] > self.df[self.df["mode"] == self.mode][self.column_name].quantile(self.cutoff))
+        
+    def get_text(self) -> list[str]:
+        conclusion = super().get_text()
+        res = []
+        # intro
+        res.append("""Snowing can impact the feasibility for various modes significant, but this effect is particularly pronounced for biking. This is due to the snow decreasing the traction a bike can get to manuever and due to the discomfort that would arise from traveling through freezing temperatures at fast speeds, exposed fully to the elements. 
+
+        Snow depth is measured in mm and is defined by NOAA (https://www.weather.gov/gsp/snow) as the total depth of snow, ice pellets, or ice on the ground at the time of observation, gauged using a measuring stick. This figure is meant to represent the average depth of snow/ice at ground level at the usual measurement site. (snowfall is measured using a snowboard w.r.t. the previous observation--is accumulation of snow over a day).""")
+        
+        # summary figure
+        res.append("""Below is a comparison of snow depth distributions between all the different modes. It is clear here that bike/scooter is an outlier, with the specified percentile much more to the left than the other mode percentiles. This indicates that snow depth is a strong and unique indicator for determining whether a bike trip is feasible. """)
+        
+        # summary statistics
+        res.append("Below, the summary statistics for the snow depth (in mm) for observed bike/scooter trips can be seen. It should be noted that at the default 95th percentile parameter, the snow depth for these trips remain at 0. ")
+        
+        
+        res = res + conclusion
+        res = [inspect.cleandoc(x) for x in res]
+        
+        return res
     
     
 class BikeHighLTSDistStep(ContinuousStep):
@@ -46,3 +68,24 @@ class BikeHighLTSDistStep(ContinuousStep):
     
     def apply_step(self):
         super().apply_step(self.df[self.column_name] > self.df[self.df["mode"] == self.mode][self.column_name].quantile(self.cutoff))
+        
+    def get_text(self) -> list[str]:
+        conclusion = super().get_text()
+        res = []
+        # intro
+        res.append("""The level of traffic stress (lts) quantifies how stressful/difficult it is to bike in a location, ranging from places with dedicated bike lanes at lts 1 to main streets without any developed biking infrasturcture at lts 4. LTS 1 streets are considered safe and comfortable by almost all riders, LTS 2 for most adults, whereas LTS 3 and 4 are more stressful.
+
+        The distance through high traffic stress locations an individual would have to bike through to reach a destination is thus likely strong indicator for the feasibility that a trip could switch to biking. Here, we consider the percent distance traveled during a trip on the higher lts categories, 3 and 4. 
+
+        We consider the percentage in particular because car trips are naturally longer than biking trips and distances are already accounted for, so percentages even things out for consideration. """)
+        
+        # summary figure
+        res.append("""It is very clear here from this figure that observed bike trips tend to be far more left-heavy for high stress distance than car trips (if they were to switch to biking), which makes sense as the reason these bike trips are observed is because they are feasible. The lines represent the specified percentiles for each of the two distributions, and any part of the orange distribution to the left of the blue line can feasibly switch to biking, under the high stress biking distance feasibility indicator. """)
+        
+        # summary statistics
+        res.append("Here, we can see the summary statistics for high stress biking distance between observed biking/observed car trips, if the latter were to switch to biking. This largely reflects what was seen in the distribution comparison figure. ")
+        
+        res = res + conclusion
+        res = [inspect.cleandoc(x) for x in res]
+        
+        return res

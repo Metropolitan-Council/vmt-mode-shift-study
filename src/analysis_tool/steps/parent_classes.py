@@ -10,13 +10,9 @@ rg.set_bad(color="grey")
 
 from . mode_enum import Mode
 
-@st.cache(allow_output_mutation=True)
-def get_communities():
-    communities = gpd.read_file(r"C:\Work\research\vmt-mode-shift-study\src\analysis_tool\data\shp_society_thrive_msp2040_com_des").to_crs("EPSG:4326")
-    communities["geometry"] = (
-        communities.to_crs(communities.estimate_utm_crs()).simplify(50).to_crs(communities.crs)
-    )
-    return communities
+import sys
+sys.path.append("..")
+from settings import get_communities
     
 class BaseStep:
     
@@ -68,6 +64,17 @@ class BaseStep:
     
     def __repr__(self) -> str:
         return "Running the step with " + self.name + " as a criteria for shifts to " + self.mode
+    
+    def get_text(self) -> list[str]:
+        # these are interlaced between the figures in each step
+        # there should be # figures + 2 text blocks to return for each step typically (intro, n figure explanations, ending conclusion)
+        # this builds the conclusion and the generic map snippet
+        stats = self.get_step_statistics()
+        total_vmt = self.df[(self.df["mode"] == "Car")]["vmt"].sum()
+        return [
+            f"Here, the map of the % of car trips in each community area that meet this mode's specified criteria for shifting to {self.mode} can be seen. There are a few transparent/white areas; these are the areas with no people to report."
+            f"Before this step, {stats[0][0]}% of trips could shift to {self.mode} feasibly/with likelihood, and after this step, {stats[0][1]}% of trips could shift to {self.mode} feasibly/with likelihood. Additionally, after this step, {stats[1][1] / total_vmt * 100}% of VMT can be mitigated with shifts to {self.mode}, compared to {stats[1][0] / total_vmt * 100}% of VMT before the step."
+        ]
 
 
 class ContinuousStep(BaseStep):

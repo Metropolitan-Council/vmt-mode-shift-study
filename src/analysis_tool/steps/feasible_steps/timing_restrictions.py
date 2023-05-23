@@ -4,7 +4,11 @@ import matplotlib.pyplot as plt
 from steps.parent_classes import CategoricalStep, Mode
 from steps.figure_lib import *
 
-fixed_purposes = ["Work", "Work-related", "Escort", "School", "School-related"]
+import sys
+sys.path.append("...")
+from settings import handler
+
+fixed_purposes = handler["fixed_purposes"]
 
 def convert_to_minutes(str):
     hours, minutes, seconds = [int(x) for x in str.split(":")]

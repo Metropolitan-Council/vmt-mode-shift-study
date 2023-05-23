@@ -1,1 +1,7 @@
-﻿
+﻿feasible_steps: ["WalkDistanceStep", "BikeDistanceStep", "TransitReroutedStep", "BikeSnowDepthStep", "BikeHighLTSDistStep", "WalkTimingStep", "TransitTimingStep", "BikeTimingStep"]
+
+fixed_purposes: ["Work", "Work-related", "Escort", "School", "School-related"]
+
+# assumed to be in data
+community_shape_file_path: "shp_society_thrive_msp2040_com_des"
+drive_data_dir: 'C:/Users/fishl/University of Kentucky/VMT Reduction Mode Shift - General'
