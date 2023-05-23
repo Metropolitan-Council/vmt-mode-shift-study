@@ -660,14 +660,14 @@ function lts_weighter(profile, way, result, data)
     -- 10% penalty for LTS 2 vs 1
     result.forward_speed = result.forward_speed / 1.1
     result.backward_speed = result.backward_speed / 1.1
-    result.forward_rate = result.forward_speed / 1.1
-    result.backward_rate = result.backward_speed / 1.1
+    result.forward_rate = result.forward_speed / 3.6 / 1.1
+    result.backward_rate = result.backward_speed / 3.6 / 1.1
   else
     --  assert(data.lts == 1, "LTS not 1 when it should be at way" .. way:id())
     result.forward_speed = result.forward_speed
     result.backward_speed = result.backward_speed
-    result.forward_rate = result.forward_speed
-    result.backward_rate = result.backward_speed
+    result.forward_rate = result.forward_speed / 3.6
+    result.backward_rate = result.backward_speed / 3.6
   end
 
   -- use highway classification to store LTS so it's available in turns
