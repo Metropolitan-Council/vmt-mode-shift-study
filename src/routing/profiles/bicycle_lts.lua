@@ -15,7 +15,7 @@ car_profile = require("car_traffic")
 LTS = require("lts")
 
 function setup()
-  local default_speed = 8 * 1.609
+  local default_speed = 14 * 1.609
   local walking_speed = 4
 
   return {
@@ -815,7 +815,9 @@ function process_way(profile, way, result)
 end
 
 function process_turn(profile, turn)
-  local lts
+  turn.duration = 0
+  turn.weight = 0
+
   if turn.has_traffic_light then
     -- minimum of all LTS at intersection
     lts = math.min(turn.source_priority_class, turn.target_priority_class)
