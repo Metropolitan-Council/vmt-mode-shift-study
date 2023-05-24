@@ -8,7 +8,7 @@ with open("config.yaml", "r", encoding="utf-8") as stream:
     except yaml.YAMLError as exc:
         raise RuntimeError("Error parsing the yaml file")
     
-@st.cache(allow_output_mutation=True)
+@st.cache_data()
 def get_communities():
     communities = gpd.read_file(f"data/{handler['community_shape_file_name']}").to_crs("NAD83")
     communities["geometry"] = (
