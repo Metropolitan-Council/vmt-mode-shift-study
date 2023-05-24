@@ -54,7 +54,7 @@ def final_summary():
     communities["val"] = values
     
     st.markdown(r"This map shows the % of trips in each community region that can feasibly shift to any alternative non-car mode.")
-    fig = px.choropleth(communities, geojson=communities.geometry, locations=communities.index, color="val", color_continuous_scale=["red", "yellow", "green"], range_color=(0, 1))
+    fig = px.choropleth(communities, geojson=communities.geometry, locations=communities.index, color="val", color_continuous_scale=["red", "yellow", "green"], range_color=(0, 1), projection="albers usa")
     fig.update_layout(margin=dict(l=0, r=0, b=0, t=0),
                 width=900, 
                 height=500,
@@ -86,32 +86,30 @@ def final_summary():
     
     st.text("")
     
-    # with st.spinner("Running cold start logic"):
-    #     temp = df[df["mode"] == Mode.CAR].groupby(["wave", "person_id", "travel_date"]).apply(lambda x: get_num_cold_starts(x))
+    with st.spinner("Running cold start logic"):
+        before_cold_starts = df[df["mode"] == Mode.CAR].groupby(["wave", "person_id", "travel_date"]).apply(lambda x: get_num_cold_starts(x)).sum()
+        after_cold_starts = df[(df['mode'] == Mode.CAR) & (~df['feasible_shift'])].groupby(['wave', 'person_id', 'travel_date']).apply(lambda x: get_num_cold_starts(x)).sum()
+        if (~df["feasible_shift"]).sum() == 0:
+            after_cold_starts = 0
+        
     
-    # st.markdown(inspect.cleandoc(
-    #     f"""- Number of cold starts before applying feasible mode shifts: **{temp.sum()}**
-    #         - Number of cold starts after applying feasible mode shifts: **{
-    #             df[(df['mode'] == Mode.CAR) & (~df['feasible_shift'])].groupby(['wave', 'person_id', 'travel_date']).apply(lambda x: get_num_cold_starts(x)).sum()
-    #         }**"""
-    #     )
-    # )
+    st.markdown(inspect.cleandoc(
+        f"""- Number of cold starts before applying feasible mode shifts: **{before_cold_starts}**
+            - Number of cold starts after applying feasible mode shifts: **{after_cold_starts}**"""
+        )
+    )
     
     st.markdown(r"Below, the % of trips that can shift when segmented by income bracket are shown.")
     
-    fig1, ax1 = plt.subplots()
     income_pct = df.groupby("income_broad")["feasible_shift"].mean().reindex(["Prefer not to answer", "Under $25,000", "$25,000-$49,999", "$50,000-$74,999", "$75,000-$99,999", "$100,000 or more", "$100,000-$199,999", "$200,000 or more"])
-    income_pct.plot(kind="bar", color=rvb(income_pct.values), ax=ax1)
-    add_value_labels(ax1)
-    st.pyplot(fig1)
+    fig1 = px.bar(x=income_pct.index, y=income_pct.values)
+    st.plotly_chart(fig1)
     
     st.markdown(r"Below, the % of trips that can shift when segmented by trip purpose are shown.")
-            
-    fig2, ax2 = plt.subplots()    
+              
     purpose_pct = df.groupby("d_purpose_category")["feasible_shift"].mean()
-    purpose_pct.plot(kind="bar", color=rvb(purpose_pct.values), ax=ax2)
-    add_value_labels(ax2)
-    st.pyplot(fig2)
+    fig2 = px.bar(x=purpose_pct.index, y=purpose_pct.values)
+    st.plotly_chart(fig2)
     
     df["child"] = df["age"].isin(["5-15", "5 to 15", "16-17", "16 to 17", "Under 5"])
     df["senior"] = df["age"].isin(["65-74", "65 to 74", "75 or older", "75 to 84", "85 or older"])
@@ -128,19 +126,16 @@ def final_summary():
     df["person_type"] = np.where(df["unemployed"] & ~df["parent"], "non-working adult without kids", df["person_type"])
     df["person_type"] = np.where(df["senior"] & df["unemployed"], "retired", df["person_type"])
     
-    print(df["person_type"].value_counts())
-    
     st.markdown(r"Below, the % of trips that can shift when segmented by person type are shown.")
                 
-    fig3, ax3 = plt.subplots()
     person_pct = df[df["person_type"] != "na"].groupby("person_type")["feasible_shift"].mean()
-    person_pct.plot(kind="bar", color=rvb(person_pct.values), ax=ax3)
-    add_value_labels(ax3)
-    st.pyplot(fig3)
+    fig3 = px.bar(x=person_pct.index, y=person_pct.values)
+    st.plotly_chart(fig3)
     
-    # with st.spinner("Exporting to csv"):
-    #     df.to_csv("data/feasible_trips.csv")
-    
+    if handler["save_result"]:
+        with st.spinner("Exporting to csv"):
+            df.to_csv("data/feasible_trips.csv")
+        
     
 def show_step():
     curr = st.session_state["step_class"]

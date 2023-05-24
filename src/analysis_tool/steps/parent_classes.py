@@ -50,7 +50,8 @@ class BaseStep:
         values = (temp.groupby("community")[self.name].mean()).fillna(0)
         communities = get_communities()
         communities["val"] = values
-        fig = px.choropleth(communities, geojson=communities.geometry, locations=communities.index, color="val", color_continuous_scale=["red", "yellow", "green"], range_color=(0, 1))
+        # UTM 15-n, crs 26915
+        fig = px.choropleth(communities, geojson=communities.geometry, locations=communities.index, color="val", color_continuous_scale=["red", "yellow", "green"], range_color=(0, 1), projection="albers usa")
         fig.update_layout(margin=dict(l=0, r=0, b=0, t=0),
                   width=900, 
                   height=500,

@@ -3,6 +3,7 @@
 fixed_purposes: ["Work", "Work-related", "Escort", "School", "School-related"]
 
 force_reinitialize: False
+save_result: False
 
 # assumed to be in data
 community_shape_file_name: "shp_society_thrive_msp2040_com_des"
