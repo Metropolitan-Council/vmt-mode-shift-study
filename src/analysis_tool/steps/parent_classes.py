@@ -73,9 +73,9 @@ class BaseStep:
         total_vmt = self.df[(self.df["mode"] == Mode.CAR)]["vmt"].sum()
         return [
             f"Here, the map of the % of car trips in each community area that meet this mode's specified criteria for shifting to {self.mode} can be seen. There are a few transparent/white areas; these are the areas with no people to report.",
-            f"""Before this step, {stats[0][0]}% of trips could shift to {self.mode} feasibly/with likelihood, and after this step, {stats[0][1]}% of trips could shift to {self.mode} feasibly/with likelihood.
+            f"""Before this step, **{stats[0][0]}%** of trips could shift to {self.mode} feasibly/with likelihood, and after this step, **{stats[0][1]}%** of trips could shift to {self.mode} feasibly/with likelihood.
             
-            Additionally, before this step, {stats[1][0] / total_vmt * 100}% of VMT could be mitigated with shifts to {self.mode}, and after this step, {stats[1][1] / total_vmt * 100}% of VMT could be mitigated with shifts to {self.mode}."""
+            Additionally, before this step, **{stats[1][0] / total_vmt * 100}%** of VMT could be mitigated with shifts to {self.mode}, and after this step, **{stats[1][1] / total_vmt * 100}%** of VMT could be mitigated with shifts to {self.mode}."""
         ]
         
     def get_name(self) -> str:

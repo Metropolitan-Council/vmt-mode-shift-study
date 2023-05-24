@@ -75,7 +75,7 @@ def SequentialMode():
 
 def FreeformMode():
     option = st.sidebar.selectbox("Choose the step you want to run.", handler["feasible_steps"])
-    if st.sidebar.button("Move to next overall step"):
+    if st.sidebar.button("Finish and move to summary"):
         pass
         
     if st.session_state.step != option:
