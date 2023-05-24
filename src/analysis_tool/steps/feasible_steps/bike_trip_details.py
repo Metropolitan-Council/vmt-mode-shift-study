@@ -57,7 +57,7 @@ class BikeHighLTSDistStep(ContinuousStep):
     
     def get_summary_figure(self):
         fig, ax = plot_mode_density(self.df, [(self.mode, self.column_name), (Mode.CAR, self.column_name)], percentile=self.cutoff) 
-        ax.set_xlim(left=0, right=500)
+        ax.set_xlim(left=0, right=1)
         plt.title(r"% of bike trip on high LTS routes for canonical bike and car trips")
         return fig, ax
     
