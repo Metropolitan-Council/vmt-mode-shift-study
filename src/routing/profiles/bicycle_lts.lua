@@ -310,8 +310,6 @@ function handle_bicycle_tags(profile,way,result,data)
 
   cycleway_handler(profile,way,result,data)
 
-  bike_push_handler(profile,way,result,data)
-
   -- maxspeed
   limit( result, data.maxspeed, data.maxspeed_forward, data.maxspeed_backward )
 
@@ -724,7 +722,8 @@ function process_way(profile, way, result)
 
   assert(lts >= 1 and lts <= 5, "Unexpected LTS " .. lts .. " at way " .. way:id())
 
-  if lts > 2 then
+  if lts > 2 or result.forward_mode == mode.inaccessible or result.backward_mode == mode.inaccessible or
+  result.forward_speed == -1 or result.backward_speed == -1 then
     -- process as a walk-bike segment
     walk_profile.process_way(profile.walk_profile, way, result)
 
