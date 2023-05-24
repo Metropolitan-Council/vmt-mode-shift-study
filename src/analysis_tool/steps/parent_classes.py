@@ -82,7 +82,7 @@ class BaseStep:
         return self.name.replace("_", " ").title()
     
     def get_cutoff(self) -> float:
-        return -1
+        raise NotImplementedError("Please implement this function")
 
 
 class ContinuousStep(BaseStep):
@@ -117,4 +117,6 @@ class CategoricalStep(BaseStep):
     def is_continuous(self):
         return False
         
+    def get_cutoff(self) -> float:
+        return -1
     

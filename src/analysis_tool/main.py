@@ -3,11 +3,13 @@ import pandas as pd
 import plotly.express as px
 import numpy as np
 import inspect
+import matplotlib.pyplot as plt
 
 import steps
 from initialize import prepare_csv
 from settings import handler, get_communities
 from steps.mode_enum import Mode
+from util import get_num_cold_starts, add_value_labels, rvb
 
 if "df" not in st.session_state:
     if handler["force_reinitialize"]:
@@ -32,35 +34,11 @@ if "df" not in st.session_state:
     st.session_state["step_class"] = steps.feasible_steps.WalkDistanceStep(df)
     st.session_state["percentiles"] = dict()
     
-def get_num_cold_starts(chunk):
-    def convert_to_minutes(str):
-        hours, minutes, seconds = [int(x) for x in str.split(":")]
-        return hours * 60 + minutes + seconds / 60
-    
-    leg_starts = chunk["depart_time"].apply(lambda x: convert_to_minutes(x)).values
-    ref = leg_starts[0]
-    # start times, starting by 0 and accounting for midnight wraparound with the mod function, for each leg of the complete tour
-    leg_starts = [(x - ref) % 1440 for x in chunk["depart_time"].apply(lambda x: convert_to_minutes(x)).values]
-    leg_durations = chunk["duration"].values
-    # calculate end times relative to the start times using the duration category
-    leg_ends = [(x + y) for (x, y) in zip(leg_starts, leg_durations)]
-    modes = chunk["mode"].values
-    
-    cold_starts = 0
-    prev_end = -1
-    # iterate over all trips in a complete tour
-    for i in range(len(leg_starts)):
-        # if the current leg mode i car
-        if modes[i] == Mode.CAR:
-            # if there wasn't a previous or the difference between the end of the last car trip and the beginning of this car trip is more than 15 minutes, it is a cold start
-            if prev_end == -1 or leg_starts[i] - leg_ends[i] > handler["cold_start_threshold"]:
-                cold_starts += 1
-            # update previous end of car trip
-            prev_end = leg_ends[i]
-    return cold_starts  
-    
 def final_summary():
     st.title("Summary")
+    
+    st.markdown("Below are the set percentiles for each step (if it is -1, it is not applicable--either disabled/not set or categorical).")
+    st.write(st.session_state.percentiles)
     
     df = st.session_state.df
     df.loc[:, "feasible_shift"] = (
@@ -108,20 +86,60 @@ def final_summary():
     
     st.text("")
     
-    with st.spinner("Running cold start logic..."):
-        temp = df[df["mode"] == Mode.CAR].groupby(["wave", "person_id", "travel_date"]).apply(lambda x: get_num_cold_starts(x))
+    # with st.spinner("Running cold start logic"):
+    #     temp = df[df["mode"] == Mode.CAR].groupby(["wave", "person_id", "travel_date"]).apply(lambda x: get_num_cold_starts(x))
     
-    st.markdown(inspect.cleandoc(
-        f"""- Number of cold starts before applying feasible mode shifts: **{temp.sum()}**
-            - Number of cold starts after applying feasible mode shifts: **{
-                df[(df['mode'] == Mode.CAR) & (~df['feasible_shift'])].groupby(['wave', 'person_id', 'travel_date']).apply(lambda x: get_num_cold_starts(x)).sum()
-            }**"""
-        )
-    )
+    # st.markdown(inspect.cleandoc(
+    #     f"""- Number of cold starts before applying feasible mode shifts: **{temp.sum()}**
+    #         - Number of cold starts after applying feasible mode shifts: **{
+    #             df[(df['mode'] == Mode.CAR) & (~df['feasible_shift'])].groupby(['wave', 'person_id', 'travel_date']).apply(lambda x: get_num_cold_starts(x)).sum()
+    #         }**"""
+    #     )
+    # )
     
+    st.markdown(r"Below, the % of trips that can shift when segmented by income bracket are shown.")
     
-    with st.spinner("Exporting to csv..."):
-        df.to_csv("data/feasible_trips.csv")
+    fig1, ax1 = plt.subplots()
+    income_pct = df.groupby("income_broad")["feasible_shift"].mean().reindex(["Prefer not to answer", "Under $25,000", "$25,000-$49,999", "$50,000-$74,999", "$75,000-$99,999", "$100,000 or more", "$100,000-$199,999", "$200,000 or more"])
+    income_pct.plot(kind="bar", color=rvb(income_pct.values), ax=ax1)
+    add_value_labels(ax1)
+    st.pyplot(fig1)
+    
+    st.markdown(r"Below, the % of trips that can shift when segmented by trip purpose are shown.")
+            
+    fig2, ax2 = plt.subplots()    
+    purpose_pct = df.groupby("d_purpose_category")["feasible_shift"].mean()
+    purpose_pct.plot(kind="bar", color=rvb(purpose_pct.values), ax=ax2)
+    add_value_labels(ax2)
+    st.pyplot(fig2)
+    
+    df["child"] = df["age"].isin(["5-15", "5 to 15", "16-17", "16 to 17", "Under 5"])
+    df["senior"] = df["age"].isin(["65-74", "65 to 74", "75 or older", "75 to 84", "85 or older"])
+    df["student"] = ~df["student_status"].str.contains("No")
+    df["unemployed"] = df["job_type"].str.contains("Missing")
+    df["parent"] = df["num_kids"] != 0
+        
+    df["person_type"] = "na"
+    df["person_type"] = np.where(df["child"], "child", df["person_type"])
+    df["person_type"] = np.where((~df["child"]) & (df["student"]), "college student", df["person_type"])
+    df["person_type"] = np.where(~df["unemployed"] & df["parent"], "working adult with kids", df["person_type"])
+    df["person_type"] = np.where(df["unemployed"] & df["parent"], "non-working adult with kids", df["person_type"])
+    df["person_type"] = np.where(~df["unemployed"] & ~df["parent"], "working adult without kids", df["person_type"])
+    df["person_type"] = np.where(df["unemployed"] & ~df["parent"], "non-working adult without kids", df["person_type"])
+    df["person_type"] = np.where(df["senior"] & df["unemployed"], "retired", df["person_type"])
+    
+    print(df["person_type"].value_counts())
+    
+    st.markdown(r"Below, the % of trips that can shift when segmented by person type are shown.")
+                
+    fig3, ax3 = plt.subplots()
+    person_pct = df[df["person_type"] != "na"].groupby("person_type")["feasible_shift"].mean()
+    person_pct.plot(kind="bar", color=rvb(person_pct.values), ax=ax3)
+    add_value_labels(ax3)
+    st.pyplot(fig3)
+    
+    # with st.spinner("Exporting to csv"):
+    #     df.to_csv("data/feasible_trips.csv")
     
     
 def show_step():
@@ -156,9 +174,12 @@ def show_step():
     
 
 def run():
+    st.session_state.percentiles[st.session_state.step_class.get_name()] = st.session_state.step_class.get_cutoff()
+    
     st.sidebar.header("Actions")
     option_slot = st.sidebar.empty()
     if st.sidebar.button("Finish and move to summary"):
+        
         final_summary()
         return
     
@@ -168,7 +189,6 @@ def run():
         st.experimental_rerun()
         
     if st.session_state.step != option:
-        st.session_state.percentiles[st.session_state.step_class.get_name()] = st.session_state.step_class.get_cutoff()
         st.session_state.step = option
         st.session_state.step_class = getattr(st.session_state.overall_step, option)(st.session_state.df)
         
