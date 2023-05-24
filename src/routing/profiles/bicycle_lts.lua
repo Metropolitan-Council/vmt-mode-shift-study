@@ -722,26 +722,7 @@ function process_way(profile, way, result)
 
   assert(lts >= 1 and lts <= 5, "Unexpected LTS " .. lts .. " at way " .. way:id())
 
-  if lts > 2 or result.forward_mode == mode.inaccessible or result.backward_mode == mode.inaccessible or
-    result.forward_speed == -1 or result.backward_speed == -1 or data.bicycle == "dismount" then
-    -- process as a walk-bike segment
-    walk_profile.process_way(profile.walk_profile, way, result)
-
-    -- and apply a 25% speed and weight penalty to account for walking the bike
-    if result.forward_speed > 0 then
-      assert(result.forward_rate > 0)
-      result.forward_speed = result.forward_speed / 1.25
-      result.forward_rate = result.forward_rate / 1.25
-      result.forward_mode = mode.pushing_bike
-    end
-
-    if result.backward_speed > 0 then
-      assert(result.backward_rate > 0)
-      result.backward_speed = result.backward_speed / 1.25
-      result.backward_rate = result.backward_rate / 1.25
-      result.backward_mode = mode.pushing_bike
-    end
-  else
+  if lts <= 2 then
     -- process as bike segment
 
     -- in general we should try to abort as soon as
@@ -830,6 +811,30 @@ function process_way(profile, way, result)
     }
 
     WayHandlers.run(profile, way, result, data, handlers)
+  end
+
+  -- handle walking bikes by calling out to the walk profile. We walk bikes if LTS > 2 or biking is not allowed.
+  -- TODO audit the walk profile to make sure nothing in there is affected by the bike profile being run first
+  -- in places where biking is not allowed.
+  if lts > 2 or result.forward_mode == mode.inaccessible or result.backward_mode == mode.inaccessible or
+    result.forward_speed == -1 or result.backward_speed == -1 or data.bicycle == "dismount" then
+    -- process as a walk-bike segment
+    walk_profile.process_way(profile.walk_profile, way, result)
+
+    -- and apply a 25% speed and weight penalty to account for walking the bike
+    if result.forward_speed > 0 then
+      assert(result.forward_rate > 0)
+      result.forward_speed = result.forward_speed / 1.25
+      result.forward_rate = result.forward_rate / 1.25
+      result.forward_mode = mode.pushing_bike
+    end
+
+    if result.backward_speed > 0 then
+      assert(result.backward_rate > 0)
+      result.backward_speed = result.backward_speed / 1.25
+      result.backward_rate = result.backward_rate / 1.25
+      result.backward_mode = mode.pushing_bike
+    end
   end
   
   -- Store LTS as road priority class so we can access it in process_turn
