@@ -1,0 +1,1 @@
+To run this tool locally, setup the python environment locally, configure the config.yaml drive_data_dir value, cd to this directory, and then run ```streamlit run main.py``` in the command line.
