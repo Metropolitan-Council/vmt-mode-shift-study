@@ -607,15 +607,16 @@ function lts_for_way(profile, way)
       -- if we don't have speed or lane info we wind up here
       assert(lanes_each_way == nil or maxspeed_mph == nil, "lanes and maxspeed present but no LTS assigned at way " .. way:id())
 
-      if highway == "unclassified" or highway == "tertiary" or highway == "tertiary_link" then
-        -- TODO should this include residential? Or residential should be 1, even with no lane information?
+      if highway == "unclassified" or highway == "tertiary" or highway == "tertiary_link" or highway == "residential" then
+        -- residential was not included in this in the AAA reference implementation, but that leave you with residential streets that are
+        -- LTS 3 if they have a bike lane and LTS 1 otherwise. I can see an argument for residential streets with bike lanes being higher
+        -- stress than those without, as bike lanes probably proxy for a busier street to begin with.
         return 2
       else
         return 3
       end
   end -- bike lane logic
 
-  -- TODO move above the bike lane logic? It wasn't in AAA work but I think it should be.
   if highway == "residential" or highway == "living_street" then
     return 1
   end
@@ -871,7 +872,17 @@ function process_turn(profile, turn)
     assert(turn.duration > 0 and turn.weight > 0, "Signalized LTS " .. lts .. " turn does not have duration/weight")
 
   else
-    lts = math.max(turn.source_priority_class, turn.target_priority_class)
+    -- We want to ignore LTS 5 (service) 
+    lts = 1
+    if turn.source_priority_class > lts and turn.source_priority_class ~= 5 then
+      lts = turn.source_priority_class
+    end
+
+    if turn.target_priority_class > lts and turn.target_priority_class ~= 5 then
+      lts = turn.target_priority_class
+    end
+
+
     -- maximum of all LTS at intersection
     -- priority class 5 is a special class that's treated like class 4 for node weights, but does
     -- not bleed over to streets. See the Beaudry Meadows Park test for an example of why this is
@@ -883,9 +894,6 @@ function process_turn(profile, turn)
     for i,road in ipairs(turn.roads_on_the_left) do
       if road.priority_class > lts and road.priority_class ~= 5 then lts = road.priority_class end
     end
-
-    -- will only occur where this street is an lts 5 (service road) - so crossings should be treated as LTS 4
-    if lts == 5 then lts = 4 end
 
     local weight = profile.unsignalized_intersection_penalties[lts]
     if weight == nil then
