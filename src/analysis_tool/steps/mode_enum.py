@@ -5,3 +5,6 @@ class Mode(str, Enum):
     WALK = "walk"
     BIKE = "bike"
     TRANSIT = "transit"
+    
+    def __str__(self) -> str:
+        return self.value

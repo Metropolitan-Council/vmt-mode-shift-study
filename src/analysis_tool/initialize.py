@@ -10,10 +10,10 @@ from settings import handler
 
 def clean_mode_names(df: pd.DataFrame):
     print("cleaning mode names")
-    df["mode"] = np.where(df["mode"] == "Car", Mode.CAR[:], df["mode"])
-    df["mode"] = np.where(df["mode"] == "Transit", Mode.TRANSIT[:], df["mode"])
-    df["mode"] = np.where(df["mode"] == "Bike/Scooter", Mode.BIKE[:], df["mode"])
-    df["mode"] = np.where(df["mode"] == "Walk", Mode.WALK[:], df["mode"])
+    df["mode"] = np.where(df["mode"] == "Car", Mode.CAR, df["mode"])
+    df["mode"] = np.where(df["mode"] == "Transit", Mode.TRANSIT, df["mode"])
+    df["mode"] = np.where(df["mode"] == "Bike/Scooter", Mode.BIKE, df["mode"])
+    df["mode"] = np.where(df["mode"] == "Walk", Mode.WALK, df["mode"])
 
 def merge_weather(df: pd.DataFrame):
     print("merging in weather")
