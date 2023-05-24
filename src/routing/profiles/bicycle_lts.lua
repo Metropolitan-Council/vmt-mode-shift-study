@@ -723,7 +723,7 @@ function process_way(profile, way, result)
   assert(lts >= 1 and lts <= 5, "Unexpected LTS " .. lts .. " at way " .. way:id())
 
   if lts > 2 or result.forward_mode == mode.inaccessible or result.backward_mode == mode.inaccessible or
-  result.forward_speed == -1 or result.backward_speed == -1 then
+    result.forward_speed == -1 or result.backward_speed == -1 or data.bicycle == "dismount" then
     -- process as a walk-bike segment
     walk_profile.process_way(profile.walk_profile, way, result)
 
