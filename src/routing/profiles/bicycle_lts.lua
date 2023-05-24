@@ -843,6 +843,8 @@ function process_way(profile, way, result)
 end
 
 function process_turn(profile, turn)
+  -- TODO: on an LTS 3-4 turn, should we use the pedestrian turn weighting?
+
   turn.duration = 0
   turn.weight = 0
 
