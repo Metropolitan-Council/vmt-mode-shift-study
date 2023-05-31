@@ -2,6 +2,7 @@ import pandas as pd
 import geopandas as gpd
 import plotly.express as px
 import streamlit as st
+import re
 
 from matplotlib.colors import LinearSegmentedColormap
 
@@ -80,7 +81,9 @@ class BaseStep:
         ]
         
     def get_name(self) -> str:
-        return self.name.replace("_", " ").title()
+        # this is a bit hacky, but feasible distance steps are called _dist internally,
+        # convert this to distance in the UI
+        return re.sub(r"(?<=\b)dist$", "distance", self.name.replace("_", " ")).title()
     
     def get_cutoff(self) -> float:
         raise NotImplementedError("Please implement this function")
