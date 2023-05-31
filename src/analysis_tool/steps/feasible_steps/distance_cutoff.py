@@ -68,7 +68,7 @@ class BikeDistanceStep(ContinuousStep):
         conclusion = super().get_text()
         res = []
         # intro
-        res.append("Bike trips are generally on the shorter side.  Here we consider the trip length distribution of walking trips, and set a maximum allowable distance to be considered feasible to walk (as before, this can be specified in the parameter section). By default, the maximum allowable distance is the 95th percentile of distances of the observed biking trips. ")
+        res.append("Bike trips are generally on the shorter side.  Here we consider the trip length distribution of biking trips, and set a maximum allowable distance to be considered feasible to bike (as before, this can be specified in the parameter section). By default, the maximum allowable distance is the 95th percentile of distances of the observed biking trips. ")
         
         # summary figure
         res.append("""In this figure, we can see a comparison between the distributions of biking distance for observed biking trips versus biking distance if observed car trips were to shift to biking. The car distance distribution is more right-skewed, which is reasonable as cars generally go longer distances. The line here represents the specified percentile of each distribution, and all trips of the orange distribution to the left of the blue line can feasibly switch to biking, as their biking distance is reasonable compared to observed biking distances.""")
