@@ -52,7 +52,7 @@ def transit_cleanup(transit):
     # project to US equidistant projection to calculate lengths of paths (in meters)
     # https://spatialreference.org/ref/esri/usa-contiguous-equidistant-conic/
     transit.crs = "EPSG:4326"
-    transit = transit.to_crs("ESRI:102005")
+    transit = transit.to_crs("EPSG:32615")
     
     transit["length"] = transit.length
     transit["access_length"] = transit["length"]
