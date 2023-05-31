@@ -144,7 +144,7 @@ def show_step():
     if curr.is_continuous():
         value = st.sidebar.slider("Select a value:", 0.0, 1.0, 0.95, 0.01)
         curr.set_cutoff(value)
-        st.sidebar.markdown(f"Cutoff: {curr.get_cutoff_numerical()}")
+        st.sidebar.markdown(f"Cutoff: {curr.get_cutoff_numerical():.2f}")
     
     if st.sidebar.button("Disable step"):
         curr.disable()
