@@ -55,8 +55,8 @@ s = ArgParseSettings()
     "--transit-network"
         help = "Network for transit routing. If specified, transit routing will be performed and OSRM will only be used for access/egress routing."
     "--output-driver"
-        help = "GDAL driver to use to write output, default GPKG"
-        default = "GPKG"
+        help = "GDAL driver to use to write output, default Parquet"
+        default = "Parquet"
     "--osrm-pipeline"
         help = "OSRM pipeline (ch or mld), default mld"
         default = "mld"
@@ -70,7 +70,6 @@ s = ArgParseSettings()
         action = :store_arg
     "--bike-lts"
         help = "Consider bicycle LTS in output"
-        action = :store_true
     "--max-rides"
         help = "Maximum number of rides for transit"
         arg_type = Int
@@ -456,7 +455,7 @@ function main(args)
     if transit
         time = @elapsed result = do_transit_route(transit_network, osrm, args["max-rides"], Tables.namedtupleiterator(data), nrow(data))
     else
-        time = @elapsed result = do_street_route(osrm, Tables.namedtupleiterator(data), nrow(data), args["bike-lts"])
+        time = @elapsed result = do_street_route(osrm, Tables.namedtupleiterator(data), nrow(data), !isnothing(args["bike-lts"]))
     end
 
     not_found_count = sum(map(x -> isnothing(x.route), result))
@@ -471,7 +470,7 @@ function main(args)
             if transit
                 create_transit_columns!(layer)
             else
-                create_street_columns!(layer, args["bike-lts"])
+                create_street_columns!(layer, !isnothing(args["bike-lts"]))
             end
 
             for (i, route) in enumerate(result)
@@ -488,8 +487,10 @@ function main(args)
                 end
             end
         end
+    end
 
-        if args["bike-lts"]
+    if !isnothing(args["bike-lts"])
+        ArchGDAL.create(args["bike-lts"], driver=ArchGDAL.getdriver(args["output-driver"])) do ds
             ArchGDAL.createlayer(name="segments",  geom=ArchGDAL.wkbLineString, dataset=ds, spatialref=ArchGDAL.importEPSG(4326)) do layer
                 create_bike_segment_columns!(layer)
                 for (i, route) in enumerate(result)
