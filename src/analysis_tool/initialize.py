@@ -132,8 +132,7 @@ def prepare_csv(df: pd.DataFrame, data_dir: str):
 
     print("reading in rerouting files")
     car = pd.read_parquet(data_dir + "/Data_Processed/geodata/car_congestion_nogeom.parquet")
-    bike = pd.read_parquet(data_dir + "/Data_Processed/geodata/bike_lts.parquet", columns=["trip_id", "distance_meters", "weight", "distance_meters_1", "distance_meters_2", "distance_meters_3", "distance_meters_4"])
-    bike_duration = pd.read_parquet(data_dir + "/Data_Processed/geodata/bike_fixed.parquet", columns=["trip_id", "duration_seconds"]) # currently doesn't have lts/distance
+    bike = pd.read_parquet(data_dir + "/Data_Processed/geodata/bike_no_weight_penalty.parquet", columns=["trip_id", "distance_meters", "weight", "distance_meters_1", "distance_meters_2", "distance_meters_3", "distance_meters_4"])
     transit = gpd.read_parquet(data_dir + "/Data_Processed/geodata/transit_trips.parquet")
     walk = pd.read_parquet(data_dir + "/Data_Processed/geodata/walk_trips_nogeom.parquet")
     
@@ -150,7 +149,6 @@ def prepare_csv(df: pd.DataFrame, data_dir: str):
     car = add_mode_to_column_name(car, 'car')
     walk = add_mode_to_column_name(walk, 'walk')
     bike = add_mode_to_column_name(bike, 'bike')
-    bike_duration = add_mode_to_column_name(bike_duration, 'bike')
     transit = add_mode_to_column_name(transit_grouped, 'transit')
     
     # TODO: loop fusion to improve performance
@@ -184,7 +182,6 @@ def prepare_csv(df: pd.DataFrame, data_dir: str):
     
     df = df.merge(walk, left_on="trip_id", right_on="walk_trip_id", how="left")
     df = df.merge(bike, left_on="trip_id", right_on="bike_trip_id", how="left")
-    df = df.merge(bike_duration, left_on="trip_id", right_on="bike_trip_id", how="left")
     df = df.merge(transit.drop("transit_geometry", axis=1), left_on="trip_id", right_on="transit_trip_id", how="left")
     
     # everything is feasible initially
