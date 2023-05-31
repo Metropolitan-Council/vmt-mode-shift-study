@@ -1,0 +1,183 @@
+---
+title: Transit route analysis
+author: Matt Bhagat-Conway
+---
+
+I put drafts of the new transit routes in the shared folder. There are a few things we'll need to figure out about using the new transit routes 
+
+```{julia}
+using DataFrames, ArchGDAL, Plots, CSV, GeoDataFrames, DataFramesMeta, StatsBase, Dates, Missings, Geodesy, ZipFile, LibSpatialIndex, OSRM
+import LibSpatialIndex: RTree
+
+const TBI_DIR = "/path/to/folder/containing/tbi_cleaned"
+const DATA_DIR = TBI_DIR # if data is in a different directory than the TBI
+
+const REPRESENTATIVE_WEEK = Date(2019, 10, 19)
+select_representative_date(date) = Dates.tonext(x -> dayofweek(x) == dayofweek(date), REPRESENTATIVE_WEEK)
+
+
+const TRANSIT_MODES = ["Public bus", "Rail", "Transit"]
+```
+
+```{julia}
+tbi = CSV.read(joinpath(TBI_DIR, "tbi_cleaned.csv"), DataFrame);
+```
+
+```{julia}
+transit_trips = GeoDataFrames.read(joinpath(DATA_DIR, "transit_flexibility_test.gpkg"));
+```
+
+## How many trips have multiple transit options
+
+```{julia}
+@chain begin
+    groupby(transit_trips, :trip_id)
+    combine(:option_index => length ∘ unique => :n_opts)
+    leftjoin(tbi, _, on=:trip_id)
+    @transform!(:n_opts = coalesce.(:n_opts, 0))
+    @aside println("Proportion of trips with multiple options: $(mean(_.n_opts .> 1))")
+    proportions(_.n_opts, 0:maximum(_.n_opts)) .* 100
+    bar(eachindex(_) .- 1, _, ylab="Precent of trips", xlab="Number of options", legend=false)
+end
+```
+
+About 24% of trips have multiple transit options (i.e. one departing during the requested time, and a better option if we relax constraints.)
+
+## When do trips start/end relative to requested time
+
+```{julia}
+single_trips = @chain begin
+    groupby(transit_trips, [:trip_id, :option_index])
+    combine(:start_time => first => :start_time, :end_time => first => :end_time, :reverse => first => :reverse, :leg_type => (x -> sum(x.=="TransitRouter.transit") - 1) => :transfers)
+    leftjoin(tbi, _, on=:trip_id)
+end;
+```
+
+```{julia}
+# negative values always mean constraint violations - for arrive-by trips, negative
+# is arriving after the requested time; for depart-at, negative is departing before. 
+single_trips.Δtime =
+    ifelse.(
+        coalesce.(single_trips.reverse .== 1, false),
+        DateTime.(select_representative_date.(single_trips.travel_date), single_trips.arrive_time) .- single_trips.end_time,
+        single_trips.start_time .- DateTime.(select_representative_date.(single_trips.travel_date), single_trips.depart_time)
+    )
+
+histogram(Dates.value.(skipmissing(single_trips.Δtime)) ./ (1e3 * 60), xlim=[-6, 60],
+    xlabel="Difference between requested departure/arrival time and actual\n(negative numbers mean before departure time for depart-at trips\n and after arrival time for arrive-by)", legend=false, normalize=:probability)
+```
+
+## Trips where no options meet constraint
+
+```{julia}
+@chain begin
+    groupby(single_trips, :trip_id)
+    combine(:Δtime => (x -> all(x .< Second(0))) => :has_no_option_meeting_constraint)
+    # skipmissing drops trips with no transit option
+    mean(skipmissing(_.has_no_option_meeting_constraint))
+end
+```
+
+0.02% of transit trips had no option meeitng the constraing, but one or more options when the constraint is relaxed. That seems about right to me.
+
+
+
+## Trips that used transit but which we didn't find a transit option for
+
+Ian pointed out that a significant portion of trips that used transit in the TBI did not have a transit option available in the rerouting. This seemed fishy, so I looked into it.
+
+```{julia}
+failed_transit_trips = @chain single_trips begin
+    groupby(:trip_id)
+    combine(:detailed_mode => first => :detailed_mode, :start_time => (x -> all(ismissing.(x))) => :no_trip, :o_lat => first => :o_lat, :o_lon => first => :o_lon, :d_lat => first => :d_lat, :d_lon => first => :d_lon)
+    @subset :detailed_mode .∈ Ref(TRANSIT_MODES) .&& :no_trip
+    @transform! @byrow :geometry = createlinestring([:o_lon, :d_lon], [:o_lat, :d_lat])
+end
+
+#GeoDataFrames.write(joinpath(DATA_DIR, "../2-Re-Routing Analysis/failed_transit_trips.gpkg"), failed_transit_trips)
+```
+
+There are 874 trips that used transit in the TBI but do not have a rerouted transit option. Many of these may
+
+```{julia}
+nrow(failed_transit_trips) / sum(single_trips.detailed_mode .∈ Ref(TRANSIT_MODES))
+```
+
+This is about 5% of all transit trips.
+
+From a visual inspection in QGIS, it looks like most of these have a trip end outside the central part of the region, far from transit. We can compute a distance matrix to see how many of these origin/destinations are far from transit.
+
+```{julia}
+gtfsfile = ZipFile.Reader(joinpath(TBI_DIR, "../2-Re-Routing Analysis/GTFS/metro_transit_2019-10-16.zip"))
+stops = CSV.read(gtfsfile.files[findfirst(x -> x.name == "stops.txt", gtfsfile.files)], DataFrame)
+close(gtfsfile)
+```
+
+
+```{julia}
+osrm = OSRMInstance("/home/mwbc/vmt-networks/walk-lts/walk-lts.osrm", "mld");
+```
+
+```{julia}
+stop_coords = LatLon.(stops.stop_lat, stops.stop_lon)
+trip_origins = LatLon.(failed_transit_trips.o_lat, failed_transit_trips.o_lon)
+trip_dests = LatLon.(failed_transit_trips.d_lat, failed_transit_trips.d_lon)
+
+orig_stop_mtx = distance_matrix(osrm, trip_origins, stop_coords)
+dest_stop_mtx = distance_matrix(osrm, stop_coords, trip_dests)
+```
+
+
+```{julia}
+#| eval: false
+odist_to_closest_stop = dropdims(minimum(orig_stop_mtx.distances, dims=2), dims=2)
+ddist_to_closest_stop = dropdims(minimum(dest_stop_mtx.distances, dims=1), dims=1)
+sum(odist_to_closest_stop .> 1.5 * 1609 .|| ddist_to_closest_stop .> 1.5 * 1609) / nrow(failed_transit_trips)
+```
+
+The vast majority of these trips were far from stops. Must be park-and-ride, etc.
+
+## How much better does relaxing the constraints make things?
+
+There is no "threshold" for relaxing the constraints; we just retain any trip that has an earlier arrival after relaxing the constraint. If you're near a frequent transit corridor, this is not very meaningful; leaving a few minutes earlier will probably get you to your destination a few minutes earlier, but that's true regardless of why you leave. See how much better the "relaxed" trips are vs. the original/meets-constraint trips.
+
+```{julia}
+single_trips.meets_constraint = coalesce.(passmissing(Dates.value).(single_trips.Δtime) .≥ 0, false)
+shifts = @chain single_trips begin
+    @subset .!ismissing.(:start_time)
+    groupby(:trip_id)
+    combine([:start_time, :end_time, :reverse, :transfers, :meets_constraint] => ((s, e, r, t, m) -> 
+        if !any(m) || all(m)
+            [[missing, missing]]
+        elseif first(r) == 1
+            [[maximum(s) - maximum(s[m]), t[m][argmax(s[m])] - t[argmax(s)]]] # how much later the relaxed constraint lets you leave
+        else
+            [[minimum(e[m]) - minimum(e), t[m][argmin(e[m])] - t[argmin(e)]]] # how much earlier the relaxed constraint lets you arrive
+        end) => [:shift, :tdiff])
+    @subset .!ismissing.(:shift)
+    #@subset :shift .< Hour(2)
+    #histogram(Dates.value.(skipmissing(_.shift) ./ 1e3))
+
+end
+
+    histogram(filter(x -> x < 240, Dates.value.(shifts.shift) ./ (1e3 * 60)), xlabel="Shift allowed by alternate option, minutes", legend=false)
+```
+
+```{julia}
+    quantile.(Ref(Dates.value.(shifts.shift)) ./ (1e3 * 60), [0, 0.05, 0.25, 0.5, 0.75, 0.95, 1])
+```
+
+Looks like most trips are not shifted by much by allowing flexibility, but there's a long tail---some trips save up to a day. That's probably because of buses that only come once per day, and leaving earlier lets you catch today's bus instead of tomorrow's. Here, we look at these trips to see where they go.
+
+```{julia}
+one_day_shift = single_trips[single_trips.trip_id .∈ Ref(shifts[shifts.shift .== Day(1), :trip_id]), :]
+transit_trips[transit_trips.trip_id .∈ Ref(one_day_shift.trip_id), [:trip_id, :start_time, :end_time, :route_short_name, :origin_stop_name, :destination_stop_name]]
+```
+
+Confirmed - the 600 runs [once per day](https://www.metrotransit.org/route/600).
+
+## All shifts should arrive earlier or depart later
+
+```{julia}
+@assert !any(shifts.shift .== 0 .&& shifts.tdiff .== 0)
+````

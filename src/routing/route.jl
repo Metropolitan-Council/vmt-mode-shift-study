@@ -1,7 +1,7 @@
 # Perform routing on the street network
 
 using OSRM, DataFrames, CSV, ArchGDAL, ArgParse, Logging, ProgressMeter, Geodesy, ThreadsX,
-    TransitRouter, Dates
+    TransitRouter, Dates, Serialization
 
 # Maximum distance for access, egress, or transfers from transit
 const MAX_LEG_WALK_DIST_METERS = 1.5 * 1609 # 1.5 mile walk allowed
@@ -13,10 +13,10 @@ const DEPARTURE_CONSTRAINED_FLEXIBILITY_SECONDS = 300 # five minutes
 const ARRIVAL_CONSTRAINED_FLEXIBILITY_SECONDS = 300 # five minutes
 
 # Some trips may be flexible at the departure end, and some at the arrival end. Whichever purpose category
-# (imputed version) is earlier in this list will be the end that is constrained. Anything not in the list is assumed
+# is earlier in this list will be the end that is constrained. Anything not in the list is assumed
 # to be after the end of the list
 const CONSTRAINED_PURPOSE_CATEGORY_PECKING_ORDER = [
-    2 # work
+    "Work"
 ]
 
 # Like most transit routing algorithms, RAPTOR and range-RAPTOR guarantee they will find the earliest arrival at the destination,
@@ -64,6 +64,10 @@ s = ArgParseSettings()
         help = "Maximum number of routes to route (useful in testing)"
         arg_type = Int
         default = -1
+    "--trip"
+        help = "Only route this trip ID"
+        nargs = '+'
+        action = :store_arg
     "--bike-lts"
         help = "Consider bicycle LTS in output"
         action = :store_true
@@ -271,15 +275,15 @@ function do_transit_route(net, osrm, max_rides, data_itr, n_rows)
 
         # figure out if we're routing forwards or backwards (which end of trip is constrained)
         # if purpose is not in constrained categories, it is lowest priority (typemax(Int64))
-        origin_priority = coalesce(findfirst(row.o_purpose_category_imputed .== CONSTRAINED_PURPOSE_CATEGORY_PECKING_ORDER), typemax(Int64))
-        destination_priority = coalesce(findfirst(row.o_purpose_category_imputed .== CONSTRAINED_PURPOSE_CATEGORY_PECKING_ORDER), typemax(Int64))
+        origin_priority = something(findfirst(row.o_purpose_category .== CONSTRAINED_PURPOSE_CATEGORY_PECKING_ORDER), typemax(Int64))
+        destination_priority = something(findfirst(row.d_purpose_category .== CONSTRAINED_PURPOSE_CATEGORY_PECKING_ORDER), typemax(Int64))
 
         # we route in reverse iff the destination is higher priority (smaller number) than the origin priority
         # otherwise (if they are equal or origin priority is higher) we route forwards
         reverse_route = destination_priority < origin_priority
 
         paths = if reverse_route
-            res = street_raptor(
+            all_paths = street_raptor(
                 net,
                 osrm,
                 osrm, # same access and egress router
@@ -293,13 +297,16 @@ function do_transit_route(net, osrm, max_rides, data_itr, n_rows)
                 max_access_distance_meters=MAX_LEG_WALK_DIST_METERS,
                 max_egress_distance_meters=MAX_LEG_WALK_DIST_METERS,
                 max_rides=max_rides
-            )
+            )[1]  # just one destination
 
-            all_paths = trace_all_optimal_paths(net, res, 1)
             # sort by arrival time, get all paths that arrive within the grace period
-            filter(p -> p[end].end_time ≤ DateTime(date, row.arrive_time) + Seconds(ARRIVAL_CONSTRAINED_FLEXIBILITY_SECONDS), all_paths)
+            if !isempty(all_paths)
+                filter(p -> p[end].end_time ≤ DateTime(date, row.arrive_time) + Second(ARRIVAL_CONSTRAINED_FLEXIBILITY_SECONDS), all_paths)
+            else
+                Vector{TransitRouter.Leg}[]
+            end
         else
-            street_raptor(
+            all_paths = street_raptor(
                 net,
                 osrm,
                 osrm, # same access and egress router
@@ -307,24 +314,34 @@ function do_transit_route(net, osrm, max_rides, data_itr, n_rows)
                 [LatLon(row.d_lat, row.d_lon)], # single destination
                 DateTime(
                     date,
-                    row.depart_time - Seconds(DEPARTURE_CONSTRAINED_FLEXIBILITY_SECONDS)
+                    row.depart_time - Second(DEPARTURE_CONSTRAINED_FLEXIBILITY_SECONDS)
                 ),
                 # run range-RAPTOR until departure time + burn in period
                 RANGE_RAPTOR_BURN_IN_PERIOD_SECONDS + DEPARTURE_CONSTRAINED_FLEXIBILITY_SECONDS,
                 max_access_distance_meters=MAX_LEG_WALK_DIST_METERS,
                 max_egress_distance_meters=MAX_LEG_WALK_DIST_METERS,
                 max_rides=max_rides
-            )
+            )[1]
 
-            all_paths = trace_all_optimal_paths(net, res, 1)
-
-            # get all paths that depart within the grace period, plus all that depart after the departure time
-            # and result in the earliest arrival time
-            best_arrival_time_given_departure = minimum(map(p -> p[end].end_time, filter(p -> p[begin].start_time ≥ DateTime(date, row.depart_time), all_paths)))
-            filter(p -> p[end].end_time ≤ best_arrival_time_given_departure, all_paths)
+            # get all paths that depart within the grace period, plus one more
+            if !isempty(all_paths)
+                sort!(all_paths, by=p -> p[begin].start_time)
+                lim = findfirst(p -> p[begin].start_time ≥ DateTime(date, row.depart_time), all_paths)
+                if isnothing(lim)
+                    all_paths
+                else
+                    all_paths[begin:lim]
+                end
+            else
+                Vector{TransitRouter.Leg}[]
+            end
         end
 
-        return (id=row.trip_id, route=paths, date=date)
+        if length(paths) > 10
+            @warn "Trip $(row.trip_id) has $(length(paths)) paths"
+        end
+
+        return (id=row.trip_id, route=paths, date=date, reverse=reverse_route)
     end
 end
 
@@ -343,6 +360,8 @@ function create_transit_columns!(layer)
     ArchGDAL.addfielddefn!(layer, "route_long_name", ArchGDAL.OFTString)
     ArchGDAL.addfielddefn!(layer, "route_type", ArchGDAL.OFTInteger)
     ArchGDAL.addfielddefn!(layer, "leg_type", ArchGDAL.OFTString)
+    ArchGDAL.addfielddefn!(layer, "distance_meters", ArchGDAL.OFTReal)
+    ArchGDAL.addfielddefn!(layer, "reverse", ArchGDAL.OFTInteger)
 end
 
 function setfield_with_missing!(feature, field, value)
@@ -388,6 +407,8 @@ function write_transit_feature!(layer, route)
                 end
 
                 ArchGDAL.setfield!(feature, 13, repr(leg.type))
+                setfield_with_missing!(feature, 14, leg.distance_meters)
+                ArchGDAL.setfield!(feature, 15, route.reverse ? 1 : 0)
             end
         end
     end
@@ -397,7 +418,7 @@ human_time(seconds, digits=3) = "$(round(Int64, seconds ÷ 3600))h $(round(Int64
 
 function main(args)
     # check that output data is not being written back into the repository
-    within_git_repo(args["output"]) && error("Output must be stored outside the repository!")
+    within_git_repo(args["output"]) && error("Output must be stored outside the repository, not in $(args["output"])")
 
     if Threads.nthreads() == 1
         @warn "Running with a single thread. Time is money, use julia -t auto when running for parallelization."
@@ -412,6 +433,11 @@ function main(args)
     if args["limit"] != -1
         data = data[1:min(nrow(data), args["limit"]), :]
         @info "Data truncated to first $(nrow(data)) rows"
+    end
+
+    if !isempty(args["trip"])
+        data = data[data.trip_id .∈ Ref(args["trip"]), :]
+        @info "Retained $(nrow(data)) rows"
     end
 
     @info "Loading OSRM"
@@ -479,49 +505,3 @@ function main(args)
 end
 
 main(parse_args(s))
-
-#=
-Round 3, stop 5804, transfer from stop 7355, no transfer in network
-Round 3, stop 5805, transfer from stop 7355, no transfer in network
-Round 3, stop 5806, transfer from stop 1979, no transfer in network
-Round 3, stop 5808, transfer from stop 5902, no transfer in network
-Round 3, stop 5809, transfer from stop 5902, no transfer in network
-Round 3, stop 5810, transfer from stop 304, no transfer in network
-Round 3, stop 5812, transfer from stop 5813, no transfer in network
-Round 3, stop 5815, transfer from stop 5994, no transfer in network
-Round 3, stop 5821, transfer from stop 3187, no transfer in network
-Round 3, stop 5822, transfer from stop 3187, no transfer in network
-Round 3, stop 5823, transfer from stop 3187, no transfer in network
-Round 3, stop 5824, transfer from stop 3187, no transfer in network
-Round 3, stop 5825, transfer from stop 5827, no transfer in network
-Round 3, stop 5826, transfer from stop 5827, no transfer in network
-Round 3, stop 5828, transfer from stop 5827, no transfer in network
-Round 3, stop 5829, transfer from stop 7273, no transfer in network
-Round 3, stop 5832, transfer from stop 7117, no transfer in network
-Round 3, stop 5833, transfer from stop 856, no transfer in network
-Round 3, stop 5834, transfer from stop 6234, no transfer in network
-Round 3, stop 5835, transfer from stop 841, no transfer in network
-Round 3, stop 5836, transfer from stop 841, no transfer in network
-Round 3, stop 5837, transfer from stop 856, no transfer in network
-Round 3, stop 5838, transfer from stop 847, no transfer in network
-Round 3, stop 5839, transfer from stop 856, no transfer in network
-Round 3, stop 5840, transfer from stop 856, no transfer in network
-Round 3, stop 5841, transfer from stop 856, no transfer in network
-Round 3, stop 5842, transfer from stop 856, no transfer in network
-Round 3, stop 5843, transfer from stop 856, no transfer in network
-Round 3, stop 5844, transfer from stop 5845, no transfer in network
-Round 3, stop 5846, transfer from stop 6738, no transfer in network
-Round 3, stop 5847, transfer from stop 841, no transfer in network
-Round 3, stop 5848, transfer from stop 841, no transfer in network
-Round 3, stop 5849, transfer from stop 4350, no transfer in network
-Round 3, stop 5850, transfer from stop 7951, no transfer in network
-Round 3, stop 5851, transfer from stop 5863, no transfer in network
-Round 3, stop 5852, transfer from stop 5861, no transfer in network
-Round 3, stop 5853, transfer from stop 5860, no transfer in network
-Round 3, stop 5865, transfer from stop 5876, no transfer in network
-Round 3, stop 5866, transfer from stop 5876, no transfer in network
-Round 3, stop 5867, transfer from stop 5876, no transfer in network
-Round 3, stop 5868, transfer from stop 5875, no transfer in network
-Round 3, stop 5869, transfer from stop 1218, no transfer in network
-Round 3, stop 5870, transfer from stop 5874, no transfer in network
-=#
