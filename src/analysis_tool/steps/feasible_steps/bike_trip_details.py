@@ -16,7 +16,9 @@ class BikeSnowDepthStep(ContinuousStep):
         return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.cutoff)
     
     def get_summary_figure(self):
-        fig, ax = plot_mode_density(self.df, [(x, "snow_depth") for x in [Mode.BIKE, Mode.CAR, Mode.TRANSIT, Mode.WALK]], percentile=self.cutoff) 
+        fig, ax = plt.subplots(figsize=(12, 6))
+        #plot_mode_density(self.df, [(x, "snow_depth") for x in [Mode.BIKE, Mode.CAR, Mode.TRANSIT, Mode.WALK]], percentile=self.cutoff) 
+        sns.boxplot(data=self.df, x="snow_depth", y="mode", ax=ax)
         plt.title("Snow depth during travel day for all modes")
         return fig, ax
     
