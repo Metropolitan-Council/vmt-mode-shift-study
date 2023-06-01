@@ -10,59 +10,64 @@ import sys
 sys.path.append("...")
 from settings import handler
 
-fixed_purposes = handler["fixed_purposes"]
+fixed_purposes = set(handler["fixed_purposes"])
 
-def convert_to_minutes(str):
-    hours, minutes, seconds = [int(x) for x in str.split(":")]
-    return hours * 60 + minutes + seconds / 60
+def is_in_set(a, b):
+    return np.array([x in b for x in a])
+
+def over_cutoff(x, cutoff):
+    sum = 0
+    for ele in x:
+        sum += ele
+        if sum > cutoff:
+            return True
+        
+    return False
+
+def convert_to_minutes(temp: str) -> float:
+    return int(temp[0:2]) * 60 + int(temp[3:5]) + int(temp[6:8]) / 60
 
 def evaluate_timing(df, alt_mode_times):
-    with st.spinner("Running the timing logic..."):
-        return df.groupby(["wave", "person_id", "travel_date"]).apply(lambda x: evaluate_feasible_timing(x, alt_mode_times))
+    return df.groupby(["wave", "person_id", "travel_date"]).apply(lambda x: evaluate_feasible_timing(len(x), list[str](x["depart_time"]), x["duration"].values, list(x["d_purpose_category"]), list(x["o_purpose_category"]), x[alt_mode_times].values))
 
-def evaluate_feasible_timing(chunk, alt_mode_times: str):
+def evaluate_feasible_timing(chunk_len: int, depart_time: list[str], leg_durations: list[float], d_purpose: list[str], o_purpose: list[str], alt_durations: list[float]):
     # if there is only an inbound and outbound trip, don't need to worry about timing
-    if len(chunk) == 2:
+    if chunk_len == 2:
         return True
-    leg_starts = chunk["depart_time"].apply(lambda x: convert_to_minutes(x)).values
+    leg_starts = [convert_to_minutes(x) for x in depart_time]
     ref = leg_starts[0]
     # start times, starting by 0 and accounting for midnight wraparound with the mod function, for each leg of the complete tour
-    leg_starts = [(x - ref) % 1440 for x in chunk["depart_time"].apply(lambda x: convert_to_minutes(x)).values]
-    leg_durations = chunk["duration"].values
+    leg_starts = [(x - ref) % 1440 for x in leg_starts]
     # calculate end times relative to the start times using the duration category
     leg_ends = [(x + y) for (x, y) in zip(leg_starts, leg_durations)]
     # these are arrays indicating whether each leg of the complete tour is a fixed arrival/departure
-    fixed_arrivals = chunk["d_purpose_category"].isin(fixed_purposes).values
-    fixed_departures = chunk["o_purpose_category"].isin(fixed_purposes).values
+    fixed_arrivals = is_in_set(d_purpose, fixed_purposes)
+    fixed_departures = is_in_set(o_purpose, fixed_purposes)
     
     # sanity check; if the atlernative time for any of the legs can't be found, return False (means can't route it feasibly, usually for transit)
     # do this as preprocessing
     # if ~(chunk["trip_id"].isin(alt_mode_times.index).any()):
     #     return False
     # alternative durations for each of the legs
-    alt_durations = chunk[alt_mode_times].values # make it a col in the dataframe to simplify things
     # if any invalid durations, means routing wasn't possible (generally only for transit)
     # return true since this isn't due to timing issues
-    if -1 in alt_durations:
+    if alt_durations[0] == -1:
         return True
-    
     # return true if there aren't any fixed things to work around
     # also return true if there is only one fixed thing--all trips of these kind can be boiled down to traveling to the fixed thing and traveling back if all non-fixed, discretionary trips are omitted; which can be scheduled around feasibly
-    if fixed_arrivals.sum() <= 1:
+    if not over_cutoff(fixed_arrivals, 1):
         return True
-    
     # keeps track of a previous fixed arrival trip to compare against a current one (see whether they overlap)
     prev_fixed_arrival = -1
-    for i in range(len(chunk)):
+    for i in range(chunk_len):
         if fixed_arrivals[i]: # if current trip is fixed arrival
             if prev_fixed_arrival != -1: # if there exists some previous fixed arrival trip
                 if leg_ends[i] - alt_durations[i] < leg_ends[prev_fixed_arrival]: # if there is an overlap between this trip and the pregvious fixed arrival trip, not feasible
                     return False
             prev_fixed_arrival = i # update previous fixed arrival trip
-            
     # basically the same as the above, except work backwards since we want to consider whether the next trip would overlap
     next_fixed_departure = -1
-    for i in range(len(chunk)-1, -1, -1):
+    for i in range(chunk_len - 1, -1, -1):
         if fixed_departures[i]:
             if next_fixed_departure != -1:
                 if leg_starts[i] + alt_durations[i] > leg_starts[next_fixed_departure]:
