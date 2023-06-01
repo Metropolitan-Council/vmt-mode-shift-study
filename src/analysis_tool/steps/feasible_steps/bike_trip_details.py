@@ -70,7 +70,7 @@ class BikeHighLTSDistStep(ContinuousStep):
         conclusion = super().get_text()
         res = []
         # intro
-        res.append("""The level of traffic stress (lts) quantifies how stressful/difficult it is to bike in a location, ranging from places with dedicated bike lanes at lts 1 to main streets without any developed biking infrasturcture at lts 4. LTS 1 streets are considered safe and comfortable by almost all riders, LTS 2 for most adults, whereas LTS 3 and 4 are more stressful.
+        res.append("""The level of traffic stress (lts) quantifies how stressful/difficult it is to bike in a location, ranging from places with dedicated bike lanes at lts 1 to main streets without any developed biking infrastructure at lts 4. LTS 1 streets are considered safe and comfortable by almost all riders, LTS 2 for most adults, whereas LTS 3 and 4 are more stressful.
 
         The distance through high traffic stress locations an individual would have to bike through to reach a destination is thus likely strong indicator for the feasibility that a trip could switch to biking. Here, we consider the percent distance traveled during a trip on the higher lts categories, 3 and 4. 
 
