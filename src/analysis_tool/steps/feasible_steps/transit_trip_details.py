@@ -114,8 +114,8 @@ class TransitReroutedStep(CategoricalStep):
         fig, ax = plt.subplots(1, 2, figsize=(10, 5))
         sns.countplot(x=self.name, data=self.df[self.df["mode"] == self.mode], ax=ax[0])
         sns.countplot(x=self.name, data=self.df[self.df["mode"] == Mode.CAR], ax=ax[1])
-        ax[0].set_title("Whether a trip had a valid rerouted trip for canonical transit trips")
-        ax[1].set_title("Whether a trip had a valid rerouted trip for canonical car trips")
+        ax[0].set_title("Whether a trip had a valid rerouted\ntrip for canonical transit trips")
+        ax[1].set_title("Whether a trip had a valid rerouted\ntrip for canonical car trips")
         
         return fig, ax
     

@@ -2,6 +2,7 @@ import pandas as pd
 import geopandas as gpd
 import plotly.express as px
 import streamlit as st
+import re
 
 from matplotlib.colors import LinearSegmentedColormap
 
@@ -74,13 +75,15 @@ class BaseStep:
         total_vmt = self.df[(self.df["mode"] == Mode.CAR)]["vmt"].sum()
         return [
             f"Here, the map of the % of car trips in each community area that meet this mode's specified criteria for shifting to {self.mode} can be seen. There are a few transparent/white areas; these are the areas with no people to report.",
-            f"""Before this step, **{stats[0][0]}%** of trips could shift to {self.mode} feasibly/with likelihood, and after this step, **{stats[0][1]}%** of trips could shift to {self.mode} feasibly/with likelihood.
+            f"""Before this step, **{stats[0][0]:.2f}%** of trips could shift to {self.mode} feasibly/with likelihood, and after this step, **{stats[0][1]:.2f}%** of trips could shift to {self.mode} feasibly/with likelihood.
             
-            Additionally, before this step, **{stats[1][0] / total_vmt * 100}%** of VMT could be mitigated with shifts to {self.mode}, and after this step, **{stats[1][1] / total_vmt * 100}%** of VMT could be mitigated with shifts to {self.mode}."""
+            Additionally, before this step, **{stats[1][0] / total_vmt * 100:.2f}%** of VMT could be mitigated with shifts to {self.mode}, and after this step, **{stats[1][1] / total_vmt * 100:.2f}%** of VMT could be mitigated with shifts to {self.mode}."""
         ]
         
     def get_name(self) -> str:
-        return self.name.replace("_", " ").title()
+        # this is a bit hacky, but feasible distance steps are called _dist internally,
+        # convert this to distance in the UI
+        return re.sub(r"(?<=\b)dist$", "distance", self.name.replace("_", " ")).title()
     
     def get_cutoff(self) -> float:
         raise NotImplementedError("Please implement this function")

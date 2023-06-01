@@ -47,7 +47,7 @@ def final_summary():
         df["feasible_bike_shift"]
     )
     
-    st.markdown(f"Percent of car trips that can feasibly/with likelihood shift to a non-car mode: **{df[df['mode'] == Mode.CAR]['feasible_shift'].sum() / len(df[df['mode'] == Mode.CAR])}**")
+    st.markdown(f"Percent of car trips that can feasibly/with likelihood shift to a non-car mode: **{df[df['mode'] == Mode.CAR]['feasible_shift'].sum() / len(df[df['mode'] == Mode.CAR]) * 100:.2f}**")
     
     values = (df.groupby("community")["feasible_shift"].mean()).fillna(0)
     communities = get_communities()
@@ -63,24 +63,24 @@ def final_summary():
     st.plotly_chart(fig)
     
     st.markdown(inspect.cleandoc(
-        f"""- Total number of person trips on car before applying mode shifts: **{len(df[df['mode'] == Mode.CAR])}**
-            - Total number of person trips on car after applying mode shifts: **{len(df[(df['mode'] == Mode.CAR) & (~df['feasible_shift'])])}**"""
+        f"""- Total number of person trips on car before applying mode shifts: **{len(df[df['mode'] == Mode.CAR]):,}**
+            - Total number of person trips on car after applying mode shifts: **{len(df[(df['mode'] == Mode.CAR) & (~df['feasible_shift'])]):,}**"""
         )
     )
     
     st.text("")
     
     st.markdown(inspect.cleandoc(
-        f"""- Total number of person trips on car before applying mode shifts: **{df[df['mode'] == Mode.CAR]['vehicle_trips'].sum()}**
-            - Total number of person trips on car after applying mode shifts: **{df[(df['mode'] == Mode.CAR) & (~df['feasible_shift'])]['vehicle_trips'].sum()}**"""
+        f"""- Total number of person trips on car before applying mode shifts: **{round(df[df['mode'] == Mode.CAR]['vehicle_trips'].sum()):,}**
+            - Total number of person trips on car after applying mode shifts: **{round(df[(df['mode'] == Mode.CAR) & (~df['feasible_shift'])]['vehicle_trips'].sum()):,}**"""
         )
     )
     
     st.text("")
     
     st.markdown(inspect.cleandoc(
-        f"""- Total VMT before applying feasible mode shift: **{df[df['mode'] == Mode.CAR]['vmt'].sum()}**
-        - Total VMT after applying feasible mode shift: **{df[(df['mode'] == Mode.CAR) & (~df['feasible_shift'])]['vmt'].sum()}**"""
+        f"""- Total VMT before applying feasible mode shift: **{round(df[df['mode'] == Mode.CAR]['vmt'].sum()):,}**
+        - Total VMT after applying feasible mode shift: **{round(df[(df['mode'] == Mode.CAR) & (~df['feasible_shift'])]['vmt'].sum()):,}**"""
         )
     )
     
@@ -94,8 +94,8 @@ def final_summary():
         
     
     st.markdown(inspect.cleandoc(
-        f"""- Number of cold starts before applying feasible mode shifts: **{before_cold_starts}**
-            - Number of cold starts after applying feasible mode shifts: **{after_cold_starts}**"""
+        f"""- Number of cold starts before applying feasible mode shifts: **{before_cold_starts:,}**
+            - Number of cold starts after applying feasible mode shifts: **{after_cold_starts:,}**"""
         )
     )
     
@@ -144,7 +144,7 @@ def show_step():
     if curr.is_continuous():
         value = st.sidebar.slider("Select a value:", 0.0, 1.0, 0.95, 0.01)
         curr.set_cutoff(value)
-        st.sidebar.markdown(f"Cutoff: {curr.get_cutoff_numerical()}")
+        st.sidebar.markdown(f"Cutoff: {curr.get_cutoff_numerical():.2f}")
     
     if st.sidebar.button("Disable step"):
         curr.disable()
