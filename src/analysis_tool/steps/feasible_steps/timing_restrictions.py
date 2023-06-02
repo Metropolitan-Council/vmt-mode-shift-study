@@ -185,7 +185,7 @@ class BikeTimingStep(CategoricalStep):
     def __init__(self, df: pd.DataFrame):
         super().__init__(df, "feasible_bike_timing", Mode.BIKE)
         
-        self.df.loc[:, "bike_duration"] = self.df["bike_weight"] / 60
+        self.df.loc[:, "bike_duration"] = self.df["bike_duration_seconds"] / 60
         feasible_biking = evaluate_timing(df, "bike_duration")
         feasible_biking = feasible_biking.reset_index().rename(columns={0: self.name})
         

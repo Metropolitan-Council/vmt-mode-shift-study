@@ -3,7 +3,7 @@
 fixed_purposes: ["Work", "Work-related", "Escort", "School", "School-related"]
 unlikely_purposes: ["Escort", "Shop"]
 
-force_reinitialize: False
+force_reinitialize: True
 save_result: False
 
 # assumed to be in data
@@ -13,6 +13,31 @@ weather_file_name: "USW00014922.csv"
 
 # just put whatever path you have in your keyring 
 drive_data_dir: 'D:/University of Kentucky/VMT Reduction Mode Shift - General'
+
+keep_columns:
+    - mode
+    - o_purpose_category
+    - d_purpose_category
+    - gender
+    - age
+    - student_status
+    - job_type
+    - num_kids
+    - travel_date
+    - home_lon
+    - home_lat
+    - income_broad
+    - duration
+    - distance
+    - person_id
+    - trip_id
+    - wave
+    - depart_time
+    - arrive_time
+    - travel_dow
+    - vmt
+    - vehicle_trips
+
 
 
 cold_start_threshold: 15

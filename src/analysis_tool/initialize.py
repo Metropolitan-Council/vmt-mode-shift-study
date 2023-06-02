@@ -83,7 +83,7 @@ def transit_cleanup(transit):
     transit_grouped = transit.dissolve(by="trip_id", aggfunc=agg_fns) # merges geometries in addition to aggregating the rest of the columns
     transit_grouped["duration"] = (transit_grouped["end_time_dt"] - transit_grouped["start_time_dt"]).apply(lambda x: x.seconds / 60)
 
-    return transit_grouped 
+    return transit_grouped[["trip_id", "duration", "access_length", "num_transfers", "non_transit_duration", "length"]]
 
 def merge_transit_trip_details(df: pd.DataFrame, data_dir: str):
     print("merging in transit details from raw tbi data")
@@ -128,8 +128,35 @@ def add_community(df: pd.DataFrame):
     df["community"] = -1
     for i, row in communities.iterrows():
         df["community"] = np.where(gdf["geometry"].within(row["geometry"]), row.name, df["community"])
+        
+def final_field_cleanup(df: pd.DataFrame):
+    df["purpose_cleaned"] = df["d_purpose_category"]
+    df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["School", "School-related"]), "School", df["purpose_cleaned"])
+    df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Work", "Work-related"]), "Work", df["purpose_cleaned"])
+    df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Errand/Other", "Errand"]), "Errand", df["purpose_cleaned"])
+    df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Shop", "Shopping"]), "Shop", df["purpose_cleaned"])
+    df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Missing: Non-response", "Missing: Skip logic", "Not imputable"]), "Missing", df["purpose_cleaned"])
+    
+    df["child"] = df["age"].isin(["5-15", "5 to 15", "16-17", "16 to 17", "Under 5"])
+    df["senior"] = df["age"].isin(["65-74", "65 to 74", "75 or older", "75 to 84", "85 or older"])
+    df["student"] = ~df["student_status"].str.contains("No")
+    df["unemployed"] = df["job_type"].str.contains("Missing")
+    df["parent"] = df["num_kids"] != 0
+        
+    df["person_type"] = "na"
+    df["person_type"] = np.where(df["child"], "child", df["person_type"])
+    df["person_type"] = np.where(~df["unemployed"] & df["parent"], "working adult with kids", df["person_type"])
+    df["person_type"] = np.where(df["unemployed"] & df["parent"], "non-working adult with kids", df["person_type"])
+    df["person_type"] = np.where(~df["unemployed"] & ~df["parent"], "working adult without kids", df["person_type"])
+    df["person_type"] = np.where(df["unemployed"] & ~df["parent"], "non-working adult without kids", df["person_type"])
+    df["person_type"] = np.where(df["senior"] & df["unemployed"], "retired", df["person_type"])
+    df["person_type"] = np.where((~df["child"]) & (df["student"]), "college student", df["person_type"]) # if placed above, everything else overwrites it
+    
+    df["gender_cleaned"] = df["gender"]
+    df["gender_cleaned"] = np.where(df["gender_cleaned"] == "Other/prefer to self-describe", "Other/Prefer to self-describe", df["gender_cleaned"])
+    
 
-def prepare_csv(df: pd.DataFrame, data_dir: str):
+def prepare_data(df: pd.DataFrame, data_dir: str):
     merge_weather(df)
 
     print("reading in rerouting files")
@@ -183,13 +210,7 @@ def prepare_csv(df: pd.DataFrame, data_dir: str):
     
     df = df.merge(walk, left_on="trip_id", right_on="walk_trip_id", how="left")
     df = df.merge(bike, left_on="trip_id", right_on="bike_trip_id", how="left")
-    df = df.merge(transit.drop("transit_geometry", axis=1), left_on="trip_id", right_on="transit_trip_id", how="left")
-    
-    # everything is feasible initially
-    df[f'feasible_{Mode.WALK}_shift'] = True
-    df[f'feasible_{Mode.BIKE}_shift'] = True
-    df[f'feasible_{Mode.TRANSIT}_shift'] = True
-    df['feasible_shift'] = True
+    df = df.merge(transit, left_on="trip_id", right_on="transit_trip_id", how="left")
     
     merge_transit_trip_details(df, data_dir)
     
@@ -197,6 +218,9 @@ def prepare_csv(df: pd.DataFrame, data_dir: str):
     
     clean_mode_names(df)
     
+    final_field_cleanup(df)
+    
+    print("exporting to csv")
     # possibly change to provided name
     df.to_csv("data/tbi_full.csv")
     

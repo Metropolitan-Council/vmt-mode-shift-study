@@ -9,7 +9,8 @@ class Mode(str, Enum):
     def __str__(self) -> str:
         return self.value
     
-    def get_all(self) -> list:
+    @staticmethod
+    def get_all() -> list:
         return (Mode.CAR, Mode.WALK, Mode.BIKE, Mode.TRANSIT)
     
 class CutoffMode(str, Enum):

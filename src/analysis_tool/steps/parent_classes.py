@@ -91,6 +91,23 @@ class BaseStep:
     
     def is_continuous(self):
         raise NotImplementedError("Please implement this function")
+    
+    def show_step_streamlit(self):
+        text = self.get_text()
+    
+        st.markdown(text[0])
+        st.text("")
+        
+        slots = []
+        
+        for section in text[1:]:
+            st.markdown(section)
+            temp = st.empty()
+            slots.append(temp)
+            
+        slots[0].pyplot(self.get_summary_figure()[0])
+        slots[1].dataframe(self.get_summary_statistics())
+        slots[2].plotly_chart(self.get_map())
 
 class ContinuousStep(BaseStep):
     

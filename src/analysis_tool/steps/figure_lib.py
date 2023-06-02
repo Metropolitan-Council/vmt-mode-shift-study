@@ -4,7 +4,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 
-from enums import Mode
+from steps.enums import Mode
 
 def show_summaries(df: pd.DataFrame, modes, percentile=[0.95]): # show normal summaries for each mode side by side
     res = []

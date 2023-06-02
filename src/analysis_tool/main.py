@@ -6,33 +6,39 @@ import inspect
 import matplotlib.pyplot as plt
 
 import steps
-from initialize import prepare_csv
+from initialize import prepare_data
 from settings import handler, get_communities
 from steps.enums import Mode, CutoffMode
 from util import get_num_cold_starts, add_value_labels, rvb
 
-if "df" not in st.session_state:
+@st.cache_resource
+def setup_inputs():
     if handler["force_reinitialize"]:
-        with st.spinner(text="Building the input data"):
-            raw = pd.read_csv(handler["drive_data_dir"] + "/data_processed/tbi_cleaned.csv")
+        raw = pd.read_csv(handler["drive_data_dir"] + "/data_processed/tbi_cleaned.csv", usecols=handler["keep_columns"])
 
-            df = prepare_csv(raw, handler["drive_data_dir"])
+        df = prepare_data(raw, handler["drive_data_dir"])
     else:
         try:
             df = pd.read_csv("data/" + handler["tbi_file_name"])
             
         except Exception as e:
-            with st.spinner(text="Building the input data"):
-                
-                raw = pd.read_csv(handler["drive_data_dir"] + "/data_processed/tbi_cleaned.csv")
+            raw = pd.read_csv(handler["drive_data_dir"] + "/data_processed/tbi_cleaned.csv", usecols=handler["keep_columns"])
 
-                df = prepare_csv(raw, handler["drive_data_dir"])
+            df = prepare_data(raw, handler["drive_data_dir"])
+            
+    # everything is feasible initially
+    df[f'feasible_{Mode.WALK}_shift'] = True
+    df[f'feasible_{Mode.BIKE}_shift'] = True
+    df[f'feasible_{Mode.TRANSIT}_shift'] = True
+    df['feasible_shift'] = True
     
     st.session_state["df"] = df
     st.session_state["step"] = "WalkDistanceStep"
     st.session_state["overall_step"] = steps.feasible_steps
     st.session_state["step_class"] = steps.feasible_steps.WalkDistanceStep(df)
     st.session_state["percentiles"] = dict()
+    
+    st.experimental_rerun()
     
 def final_summary():
     st.title("Summary")
@@ -106,33 +112,10 @@ def final_summary():
     st.plotly_chart(fig1)
     
     st.markdown(r"Below, the % of trips that can shift when segmented by trip purpose are shown.")
-    
-    # merging some closely related categories
-    df["purpose_cleaned"] = df["d_purpose_category"]
-    df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["School", "School-related"]), "School", df["purpose_cleaned"])
-    df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Work", "Work-related"]), "Work", df["purpose_cleaned"])
-    df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Errand/Other", "Errand"]), "Errand", df["purpose_cleaned"])
-    df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Shop", "Shopping"]), "Shop", df["purpose_cleaned"])
-    df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Missing: Non-response", "Missing: Skip logic", "Not imputable"]), "Missing", df["purpose_cleaned"])
               
     purpose_pct = df[df["purpose_cleaned"] != "Missing"].groupby("purpose_cleaned")["feasible_shift"].mean()
     fig2 = px.bar(x=purpose_pct.index, y=purpose_pct.values)
     st.plotly_chart(fig2)
-    
-    df["child"] = df["age"].isin(["5-15", "5 to 15", "16-17", "16 to 17", "Under 5"])
-    df["senior"] = df["age"].isin(["65-74", "65 to 74", "75 or older", "75 to 84", "85 or older"])
-    df["student"] = ~df["student_status"].str.contains("No")
-    df["unemployed"] = df["job_type"].str.contains("Missing")
-    df["parent"] = df["num_kids"] != 0
-        
-    df["person_type"] = "na"
-    df["person_type"] = np.where(df["child"], "child", df["person_type"])
-    df["person_type"] = np.where(~df["unemployed"] & df["parent"], "working adult with kids", df["person_type"])
-    df["person_type"] = np.where(df["unemployed"] & df["parent"], "non-working adult with kids", df["person_type"])
-    df["person_type"] = np.where(~df["unemployed"] & ~df["parent"], "working adult without kids", df["person_type"])
-    df["person_type"] = np.where(df["unemployed"] & ~df["parent"], "non-working adult without kids", df["person_type"])
-    df["person_type"] = np.where(df["senior"] & df["unemployed"], "retired", df["person_type"])
-    df["person_type"] = np.where((~df["child"]) & (df["student"]), "college student", df["person_type"]) # if placed above, everything else overwrites it
     
     st.markdown(r"Below, the % of trips that can shift when segmented by person type are shown.")
                 
@@ -141,9 +124,6 @@ def final_summary():
     st.plotly_chart(fig3)
     
     st.markdown(r"Below, the % of trips that can shift when segmented by gender are shown.")
-    
-    df["gender_cleaned"] = df["gender"]
-    df["gender_cleaned"] = np.where(df["gender_cleaned"] == "Other/prefer to self-describe", "Other/Prefer to self-describe", df["gender_cleaned"])
     
     gender_pct = df[df["gender_cleaned"] != "Prefer not to answer"]
     fig4 = px.bar(x=gender_pct.index, y=gender_pct.values)
@@ -178,21 +158,23 @@ def show_step():
     else:
         curr.apply_step()
         
-    text = curr.get_text()
-    
-    st.markdown(text[0])
-    st.text("")
-    
-    slots = []
-    
-    for section in text[1:]:
-        st.markdown(section)
-        temp = st.empty()
-        slots.append(temp)
+    curr.show_step_streamlit()
         
-    slots[0].pyplot(curr.get_summary_figure()[0])
-    slots[1].dataframe(curr.get_summary_statistics())
-    slots[2].plotly_chart(curr.get_map())
+    # text = curr.get_text()
+    
+    # st.markdown(text[0])
+    # st.text("")
+    
+    # slots = []
+    
+    # for section in text[1:]:
+    #     st.markdown(section)
+    #     temp = st.empty()
+    #     slots.append(temp)
+        
+    # slots[0].pyplot(curr.get_summary_figure()[0])
+    # slots[1].dataframe(curr.get_summary_statistics())
+    # slots[2].plotly_chart(curr.get_map())
     
 
 def run():
@@ -220,6 +202,9 @@ def run():
     
 
 if __name__ == "__main__":
-    run()
+    if "df" not in st.session_state:
+        setup_inputs()
+    else:
+        run()
 
     
