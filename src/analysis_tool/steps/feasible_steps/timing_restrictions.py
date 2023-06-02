@@ -29,7 +29,7 @@ def convert_to_minutes(temp: str) -> float:
 
 def evaluate_timing(df: pd.DataFrame, alt_mode_times: str):
     with st.spinner("Running timing logic"):
-        return df.groupby(["wave", "person_id", "travel_date"]).apply(lambda x: evaluate_feasible_timing(len(x), list[str](x["depart_time"]), x["duration"].values, list(x["d_purpose_category"]), list(x["o_purpose_category"]), x[alt_mode_times].values))
+        return df.groupby(["wave", "person_id", "travel_date"]).apply(lambda x: evaluate_feasible_timing(len(x), list(x["depart_time"]), x["duration"].values, list(x["d_purpose_category"]), list(x["o_purpose_category"]), x[alt_mode_times].values))
 
 def evaluate_feasible_timing(chunk_len: int, depart_time: list[str], leg_durations: np.ndarray[float], d_purpose: list[str], o_purpose: list[str], alt_durations: list[float]):
     # if there is only an inbound and outbound trip, don't need to worry about timing
@@ -52,18 +52,20 @@ def evaluate_feasible_timing(chunk_len: int, depart_time: list[str], leg_duratio
     # alternative durations for each of the legs
     # if any invalid durations, means routing wasn't possible (generally only for transit)
     # return true since this isn't due to timing issues
-    if alt_durations[0] == -1:
+    if -1 in alt_durations:
         return True
     # return true if there aren't any fixed things to work around
     # also return true if there is only one fixed thing--all trips of these kind can be boiled down to traveling to the fixed thing and traveling back if all non-fixed, discretionary trips are omitted; which can be scheduled around feasibly
     if not over_cutoff(fixed_arrivals, 1):
         return True
+    
+    alt_durations_cumul = np.cumsum(alt_durations)
     # keeps track of a previous fixed arrival trip to compare against a current one (see whether they overlap)
     prev_fixed_arrival = -1
     for i in range(chunk_len):
         if fixed_arrivals[i]: # if current trip is fixed arrival
             if prev_fixed_arrival != -1: # if there exists some previous fixed arrival trip
-                if leg_ends[i] - alt_durations[i] < leg_ends[prev_fixed_arrival]: # if there is an overlap between this trip and the pregvious fixed arrival trip, not feasible
+                if leg_ends[i] - (alt_durations_cumul[i] - alt_durations_cumul[prev_fixed_arrival]) < leg_starts[prev_fixed_arrival + 1]: # if there is an overlap between this trip and the pregvious fixed arrival trip, not feasible
                     return False
             prev_fixed_arrival = i # update previous fixed arrival trip
     # basically the same as the above, except work backwards since we want to consider whether the next trip would overlap
@@ -71,7 +73,7 @@ def evaluate_feasible_timing(chunk_len: int, depart_time: list[str], leg_duratio
     for i in range(chunk_len - 1, -1, -1):
         if fixed_departures[i]:
             if next_fixed_departure != -1:
-                if leg_starts[i] + alt_durations[i] > leg_starts[next_fixed_departure]:
+                if leg_starts[i] + (alt_durations_cumul[next_fixed_departure] - alt_durations_cumul[i]) > leg_ends[next_fixed_departure - 1]:
                     return False
                 next_fixed_departure = i
 
