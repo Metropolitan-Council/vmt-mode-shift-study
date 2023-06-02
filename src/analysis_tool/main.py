@@ -101,13 +101,21 @@ def final_summary():
     
     st.markdown(r"Below, the % of trips that can shift when segmented by income bracket are shown.")
     
-    income_pct = df.groupby("income_broad")["feasible_shift"].mean().reindex(["Prefer not to answer", "Under $25,000", "$25,000-$49,999", "$50,000-$74,999", "$75,000-$99,999", "$100,000 or more", "$100,000-$199,999", "$200,000 or more"])
+    income_pct = df[df["income_broad"] != "Prefer not to answer"].groupby("income_broad")["feasible_shift"].mean().reindex(["Under $25,000", "$25,000-$49,999", "$50,000-$74,999", "$75,000-$99,999", "$100,000 or more", "$100,000-$199,999", "$200,000 or more"])
     fig1 = px.bar(x=income_pct.index, y=income_pct.values)
     st.plotly_chart(fig1)
     
     st.markdown(r"Below, the % of trips that can shift when segmented by trip purpose are shown.")
+    
+    # merging some closely related categories
+    df["purpose_cleaned"] = df["d_purpose_category"]
+    df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["School", "School-related"]), "School", df["purpose_cleaned"])
+    df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Work", "Work-related"]), "Work", df["purpose_cleaned"])
+    df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Errand/Other", "Errand"]), "Errand", df["purpose_cleaned"])
+    df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Shop", "Shopping"]), "Shop", df["purpose_cleaned"])
+    df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Missing: Non-response", "Missing: Skip logic", "Not imputable"]), "Missing", df["purpose_cleaned"])
               
-    purpose_pct = df.groupby("d_purpose_category")["feasible_shift"].mean()
+    purpose_pct = df[df["purpose_cleaned"] != "Missing"].groupby("purpose_cleaned")["feasible_shift"].mean()
     fig2 = px.bar(x=purpose_pct.index, y=purpose_pct.values)
     st.plotly_chart(fig2)
     
@@ -119,18 +127,29 @@ def final_summary():
         
     df["person_type"] = "na"
     df["person_type"] = np.where(df["child"], "child", df["person_type"])
-    df["person_type"] = np.where((~df["child"]) & (df["student"]), "college student", df["person_type"])
     df["person_type"] = np.where(~df["unemployed"] & df["parent"], "working adult with kids", df["person_type"])
     df["person_type"] = np.where(df["unemployed"] & df["parent"], "non-working adult with kids", df["person_type"])
     df["person_type"] = np.where(~df["unemployed"] & ~df["parent"], "working adult without kids", df["person_type"])
     df["person_type"] = np.where(df["unemployed"] & ~df["parent"], "non-working adult without kids", df["person_type"])
     df["person_type"] = np.where(df["senior"] & df["unemployed"], "retired", df["person_type"])
+    df["person_type"] = np.where((~df["child"]) & (df["student"]), "college student", df["person_type"]) # if placed above, everything else overwrites it
     
     st.markdown(r"Below, the % of trips that can shift when segmented by person type are shown.")
                 
     person_pct = df[df["person_type"] != "na"].groupby("person_type")["feasible_shift"].mean()
     fig3 = px.bar(x=person_pct.index, y=person_pct.values)
     st.plotly_chart(fig3)
+    
+    st.markdown(r"Below, the % of trips that can shift when segmented by gender are shown.")
+    
+    df["gender_cleaned"] = df["gender"]
+    df["gender_cleaned"] = np.where(df["gender_cleaned"] == "Other/prefer to self-describe", "Other/Prefer to self-describe", df["gender_cleaned"])
+    
+    gender_pct = df[df["gender_cleaned"] != "Prefer not to answer"]
+    fig4 = px.bar(x=gender_pct.index, y=gender_pct.values)
+    st.plotly_chart(fig4)
+    
+    
     
     if handler["save_result"]:
         with st.spinner("Exporting to csv"):
