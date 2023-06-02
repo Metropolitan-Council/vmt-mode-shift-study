@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 
-from steps.mode_enum import Mode
+from steps.enums import Mode
 from settings import handler
 
 def convert_to_minutes(temp: str) -> float:

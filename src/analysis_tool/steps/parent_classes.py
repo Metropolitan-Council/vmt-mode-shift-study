@@ -3,13 +3,14 @@ import geopandas as gpd
 import plotly.express as px
 import streamlit as st
 import re
+from scipy import stats
 
 from matplotlib.colors import LinearSegmentedColormap
 
 rg = LinearSegmentedColormap.from_list('rg',["r", "w", "g"], N=256) 
 rg.set_bad(color="grey")
 
-from . mode_enum import Mode
+from .enums import Mode, CutoffMode
 
 import sys
 sys.path.append("..")
@@ -87,16 +88,22 @@ class BaseStep:
     
     def get_cutoff(self) -> float:
         raise NotImplementedError("Please implement this function")
-
+    
+    def is_continuous(self):
+        raise NotImplementedError("Please implement this function")
 
 class ContinuousStep(BaseStep):
     
     def __init__(self, df: pd.DataFrame, name: str, mode: Mode, cutoff: float, column_name: str):
         super().__init__(df, name, mode)
         self.cutoff = cutoff
+        self.cutoff_mode = CutoffMode.PCT
         self.column_name = column_name
         
-    def set_cutoff(self, new_cutoff: float) -> None:
+    def set_cutoff_mode(self, new_mode: CutoffMode) -> None:
+        self.cutoff_mode = new_mode
+        
+    def set_cutoff(self, new_cutoff) -> None:
         self.cutoff = new_cutoff
         
     def is_continuous(self):
@@ -109,8 +116,24 @@ class ContinuousStep(BaseStep):
     def get_cutoff(self) -> float:
         return self.cutoff
     
-    def get_cutoff_numerical(self) -> float:
-        return self.df[self.df["mode"] == self.mode][self.column_name].quantile(self.cutoff)
+    def get_cutoff_equivalent(self):
+        if self.cutoff_mode == CutoffMode.PCT:
+            return self.df[self.df["mode"] == self.mode][self.column_name].quantile(self.cutoff)
+        elif self.cutoff_mode == CutoffMode.RAW:
+            return stats.percentileofscore(self.df[self.df["mode"] == self.mode][self.column_name], self.cutoff) / 100
+        else:
+            raise RuntimeError("something went wrong with the cutoff mode enum")
+        
+    def get_cutoff_pct(self) -> float:
+        if self.cutoff_mode == CutoffMode.PCT:
+            return self.cutoff
+        elif self.cutoff_mode == CutoffMode.RAW:
+            return stats.percentileofscore(self.df[self.df["mode"] == self.mode][self.column_name], self.cutoff) / 100
+        else:
+            raise RuntimeError("something went wrong with the cutfof mode enum")
+        
+    def get_extrema(self) -> tuple:
+        return self.df[self.df["mode"] == self.mode][self.column_name].quantile(0.01), self.df[self.df["mode"] == self.mode][self.column_name].quantile(0.99)
 
 class CategoricalStep(BaseStep):
     

@@ -8,3 +8,10 @@ class Mode(str, Enum):
     
     def __str__(self) -> str:
         return self.value
+    
+class CutoffMode(str, Enum):
+    PCT = "Percentile"
+    RAW = "Raw"
+    
+    def __str__(self) -> str:
+        return self.value

@@ -1,8 +1,9 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from steps.parent_classes import ContinuousStep, CategoricalStep, Mode
+from steps.parent_classes import ContinuousStep, CategoricalStep
 from steps.figure_lib import *
+from steps.enums import CutoffMode, Mode
 
 import inspect
 
@@ -14,16 +15,21 @@ class TransitAccessDistanceStep(ContinuousStep):
         self.df.loc[:, "transit_access_length_miles"] = df["transit_access_length"] * 0.000621371
     
     def get_summary_statistics(self):
-        return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.cutoff)
+        return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct())
     
     def get_summary_figure(self):
-        fig, ax = plot_mode_density(self.df, [(self.mode, self.column_name), (Mode.CAR, self.column_name)], percentile=self.cutoff) 
+        fig, ax = plot_mode_density(self.df, [(self.mode, self.column_name), (Mode.CAR, self.column_name)], percentile=self.get_cutoff_pct()) 
         ax.set_xlim(left=0, right=5)
         plt.title("Rerouted transit access distance for canonical transit and car trips")
         return fig, ax
     
     def apply_step(self):
-        super().apply_step(self.df[self.column_name] > self.df[self.df["mode"] == self.mode][self.column_name].quantile(self.cutoff))
+        if self.cutoff_mode == CutoffMode.PCT:
+            super().apply_step(self.df[self.column_name] > self.df[self.df["mode"] == self.mode][self.column_name].quantile(self.cutoff))
+        elif self.cutoff_mode == CutoffMode.RAW:
+            super().apply_step(self.df[self.column_name] > self.cutoff)
+        else:
+            raise RuntimeError("Something went wrong with the cutoff mode enum")
     
     def __repr__(self):
         return super().__repr__() + ". NOTE: With the current rerouting methodology, this step is superseded by assumptions made during rerouting."
@@ -63,7 +69,7 @@ class TransitTransferCountStep(ContinuousStep):
         super().__init__(df, "feasible_transit_transfer_number", Mode.TRANSIT, cutoff, "transit_num_transfers")
     
     def get_summary_statistics(self):
-        return show_summaries(self.df, [[x, self.column_name] for x in [self.mode, Mode.CAR]], self.cutoff)
+        return show_summaries(self.df, [[x, self.column_name] for x in [self.mode, Mode.CAR]], self.get_cutoff_pct())
     
     def get_summary_figure(self):
         fig, ax = plt.subplots(1, 2, figsize=(10, 5))
@@ -75,7 +81,12 @@ class TransitTransferCountStep(ContinuousStep):
         return fig, ax
     
     def apply_step(self):
-        super().apply_step(self.df[self.column_name] > self.df[self.df["mode"] == self.mode][self.column_name].quantile(self.cutoff))
+        if self.cutoff_mode == CutoffMode.PCT:
+            super().apply_step(self.df[self.column_name] > self.df[self.df["mode"] == self.mode][self.column_name].quantile(self.cutoff))
+        elif self.cutoff_mode == CutoffMode.RAW:
+            super().apply_step(self.df[self.column_name] > self.cutoff)
+        else:
+            raise RuntimeError("Something went wrong with the cutoff mode enum")
         
     def __repr__(self):
         return super().__repr__() + ". NOTE: With the current rerouting methodology, this step is superseded by assumptions made during rerouting."

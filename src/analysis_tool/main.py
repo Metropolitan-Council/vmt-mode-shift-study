@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import steps
 from initialize import prepare_csv
 from settings import handler, get_communities
-from steps.mode_enum import Mode
+from steps.enums import Mode, CutoffMode
 from util import get_num_cold_starts, add_value_labels, rvb
 
 if "df" not in st.session_state:
@@ -40,7 +40,7 @@ def final_summary():
     st.markdown("Below are the set percentiles for each step (if it is -1, it is not applicable--either disabled/not set or categorical).")
     st.write(st.session_state.percentiles)
     
-    df = st.session_state.df
+    df: pd.DataFrame = st.session_state.df
     df.loc[:, "feasible_shift"] = (
         df["feasible_transit_shift"] | 
         df["feasible_walk_shift"] | 
@@ -157,13 +157,21 @@ def final_summary():
         
     
 def show_step():
-    curr = st.session_state["step_class"]
+    curr: steps.parent_classes.BaseStep = st.session_state["step_class"]
     st.title(curr.get_name())
     
     if curr.is_continuous():
-        value = st.sidebar.slider("Select a value:", 0.0, 1.0, 0.95, 0.01)
+        continuous_opt = st.sidebar.radio("Choose how to set the cutoff", (CutoffMode.PCT, CutoffMode.RAW))
+        curr.set_cutoff_mode(continuous_opt)
+        if continuous_opt == CutoffMode.PCT:
+            value = st.sidebar.slider("Select a value:", 0.0, 1.0, 0.95, 0.01)
+        elif continuous_opt == CutoffMode.RAW:
+            extrema = curr.get_extrema()
+            value = st.sidebar.slider("Select a value:", float(extrema[0]), float(extrema[1]), float(extrema[1]), float((extrema[1] - extrema[0]) / 100))
+        else:
+            raise RuntimeError("something went wrong")
         curr.set_cutoff(value)
-        st.sidebar.markdown(f"Cutoff: {curr.get_cutoff_numerical():.2f}")
+        st.sidebar.markdown(f"Cutoff equivalent: {curr.get_cutoff_equivalent():.2f}")
     
     if st.sidebar.button("Disable step"):
         curr.disable()

@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from steps.parent_classes import ContinuousStep
-from steps.mode_enum import Mode
+from steps.enums import Mode, CutoffMode
 from steps.figure_lib import *
 
 import inspect
@@ -13,17 +13,22 @@ class BikeSnowDepthStep(ContinuousStep):
         super().__init__(df, "feasible_bike_snow_depth", Mode.BIKE, cutoff, "snow_depth")
     
     def get_summary_statistics(self):
-        return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.cutoff)
+        return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct())
     
     def get_summary_figure(self):
         fig, ax = plt.subplots(figsize=(12, 6))
-        #plot_mode_density(self.df, [(x, "snow_depth") for x in [Mode.BIKE, Mode.CAR, Mode.TRANSIT, Mode.WALK]], percentile=self.cutoff) 
+        #plot_mode_density(self.df, [(x, "snow_depth") for x in [Mode.BIKE, Mode.CAR, Mode.TRANSIT, Mode.WALK]], percentile=self.get_cutoff_pct()) 
         sns.boxplot(data=self.df, x="snow_depth", y="mode", ax=ax)
         plt.title("Snow depth during travel day for all modes")
         return fig, ax
     
     def apply_step(self):
-        super().apply_step(self.df[self.column_name] > self.df[self.df["mode"] == self.mode][self.column_name].quantile(self.cutoff))
+        if self.cutoff_mode == CutoffMode.PCT:
+            super().apply_step(self.df[self.column_name] > self.df[self.df["mode"] == self.mode][self.column_name].quantile(self.cutoff))
+        elif self.cutoff_mode == CutoffMode.RAW:
+            super().apply_step(self.df[self.column_name] > self.cutoff)
+        else:
+            raise RuntimeError("Something went wrong with the cutoff mode enum")
         
     def get_text(self) -> list[str]:
         conclusion = super().get_text()
@@ -55,16 +60,21 @@ class BikeHighLTSDistStep(ContinuousStep):
         df.loc[:, "high_lts_biking_pct"] = df["high_lts_dist"] / df["bike_distance_meters"]
         
     def get_summary_statistics(self):
-        return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.cutoff)
+        return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct())
     
     def get_summary_figure(self):
-        fig, ax = plot_mode_density(self.df, [(self.mode, self.column_name), (Mode.CAR, self.column_name)], percentile=self.cutoff) 
+        fig, ax = plot_mode_density(self.df, [(self.mode, self.column_name), (Mode.CAR, self.column_name)], percentile=self.get_cutoff_pct()) 
         ax.set_xlim(left=0, right=1)
         plt.title(r"% of bike trip on high LTS routes for canonical bike and car trips")
         return fig, ax
     
     def apply_step(self):
-        super().apply_step(self.df[self.column_name] > self.df[self.df["mode"] == self.mode][self.column_name].quantile(self.cutoff))
+        if self.cutoff_mode == CutoffMode.PCT:
+            super().apply_step(self.df[self.column_name] > self.df[self.df["mode"] == self.mode][self.column_name].quantile(self.cutoff))
+        elif self.cutoff_mode == CutoffMode.RAW:
+            super().apply_step(self.df[self.column_name] > self.cutoff)
+        else:
+            raise RuntimeError("Something went wrong with the cutoff mode enum")
         
     def get_text(self) -> list[str]:
         conclusion = super().get_text()

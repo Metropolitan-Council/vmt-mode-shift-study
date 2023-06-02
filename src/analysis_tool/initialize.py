@@ -4,7 +4,7 @@ import geopandas as gpd
 from ast import literal_eval
 import streamlit as st
 
-from steps.mode_enum import Mode
+from steps.enums import Mode
 
 from settings import handler
 
