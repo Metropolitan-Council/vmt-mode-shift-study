@@ -23,7 +23,7 @@ def get_num_cold_starts(depart_time: list[str], leg_durations: np.ndarray[float]
     # iterate over all trips in a complete tour
     for i in range(len(leg_starts)):
         # if the current leg mode i car
-        if modes[i] == "Car":
+        if modes[i] == Mode.CAR:
             # if there wasn't a previous or the difference between the end of the last car trip and the beginning of this car trip is more than 15 minutes, it is a cold start
             if prev_end == -1 or leg_starts[i] - leg_ends[i] > 15:
                 cold_starts += 1

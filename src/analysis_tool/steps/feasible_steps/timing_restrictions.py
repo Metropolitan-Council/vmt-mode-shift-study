@@ -28,7 +28,8 @@ def convert_to_minutes(temp: str) -> float:
     return int(temp[0:2]) * 60 + int(temp[3:5]) + int(temp[6:8]) / 60
 
 def evaluate_timing(df: pd.DataFrame, alt_mode_times: str):
-    return df.groupby(["wave", "person_id", "travel_date"]).apply(lambda x: evaluate_feasible_timing(len(x), list[str](x["depart_time"]), x["duration"].values, list(x["d_purpose_category"]), list(x["o_purpose_category"]), x[alt_mode_times].values))
+    with st.spinner("Running timing logic"):
+        return df.groupby(["wave", "person_id", "travel_date"]).apply(lambda x: evaluate_feasible_timing(len(x), list[str](x["depart_time"]), x["duration"].values, list(x["d_purpose_category"]), list(x["o_purpose_category"]), x[alt_mode_times].values))
 
 def evaluate_feasible_timing(chunk_len: int, depart_time: list[str], leg_durations: np.ndarray[float], d_purpose: list[str], o_purpose: list[str], alt_durations: list[float]):
     # if there is only an inbound and outbound trip, don't need to worry about timing
