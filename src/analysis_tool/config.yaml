@@ -1,6 +1,7 @@
 ﻿feasible_steps: ["WalkDistanceStep", "BikeDistanceStep", "TransitReroutedStep", "BikeSnowDepthStep", "BikeHighLTSDistStep", "WalkTimingStep", "TransitTimingStep", "BikeTimingStep"]
 
 fixed_purposes: ["Work", "Work-related", "Escort", "School", "School-related"]
+unlikely_purposes: ["Escort", "Shop"]
 
 force_reinitialize: False
 save_result: False

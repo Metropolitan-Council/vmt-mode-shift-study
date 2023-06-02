@@ -4,6 +4,8 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 
+from enums import Mode
+
 def show_summaries(df: pd.DataFrame, modes, percentile=[0.95]): # show normal summaries for each mode side by side
     res = []
     labels = []
@@ -51,5 +53,21 @@ def plot_mode_density(df: pd.DataFrame, modes, percentile=0.95, size=(12, 6), bi
         val = function(group[column]).quantile(q=percentile) # calculate the value of the given percentile (default 0.95)
         plt.axvline(x=val, color=c) # plot line representing that value on the plot        
         plt.legend()
+    return fig, ax
+
+def plot_multi_barplot(df: pd.DataFrame, x: str, y: str, figsize=(7, 5), order=None):
+    # plot normalized bar plot of the values in each mode side by side
+    fig, ax = plt.subplots(figsize=figsize)
+    if y == "mode": 
+        df = df[df["mode"].isin([x[0] for x in Mode.get_all()])]
+    (df
+     .groupby(y)[x]
+     .value_counts(normalize=True)
+     .mul(100)
+     .rename("percent")
+     .reset_index()
+     .pipe((sns.barplot, "data"), x=x, y="percent", hue=y, ax=ax, order=order)
+    )
+    
     return fig, ax
 
