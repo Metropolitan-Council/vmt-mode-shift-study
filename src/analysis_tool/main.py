@@ -125,7 +125,7 @@ def final_summary():
     
     st.markdown(r"Below, the % of trips that can shift when segmented by gender are shown.")
     
-    gender_pct = df[df["gender_cleaned"] != "Prefer not to answer"]
+    gender_pct = df[df["gender_cleaned"] != "Prefer not to answer"].groupby("gender_cleaned")["feasible_shift"].mean()
     fig4 = px.bar(x=gender_pct.index, y=gender_pct.values)
     st.plotly_chart(fig4)
     
@@ -159,22 +159,6 @@ def show_step():
         curr.apply_step()
         
     curr.show_step_streamlit()
-        
-    # text = curr.get_text()
-    
-    # st.markdown(text[0])
-    # st.text("")
-    
-    # slots = []
-    
-    # for section in text[1:]:
-    #     st.markdown(section)
-    #     temp = st.empty()
-    #     slots.append(temp)
-        
-    # slots[0].pyplot(curr.get_summary_figure()[0])
-    # slots[1].dataframe(curr.get_summary_statistics())
-    # slots[2].plotly_chart(curr.get_map())
     
 
 def run():
