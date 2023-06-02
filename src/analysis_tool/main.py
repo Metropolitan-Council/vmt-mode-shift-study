@@ -87,8 +87,8 @@ def final_summary():
     st.text("")
     
     with st.spinner("Running cold start logic"):
-        before_cold_starts = df[df["mode"] == Mode.CAR].groupby(["wave", "person_id", "travel_date"]).apply(lambda x: get_num_cold_starts(x)).sum()
-        after_cold_starts = df[(df['mode'] == Mode.CAR) & (~df['feasible_shift'])].groupby(['wave', 'person_id', 'travel_date']).apply(lambda x: get_num_cold_starts(x)).sum()
+        before_cold_starts = df[df["mode"] == Mode.CAR].groupby(["wave", "person_id", "travel_date"]).apply(lambda x: get_num_cold_starts(list(x["depart_time"]), x["duration"].values, list(x["mode"]))).sum()
+        after_cold_starts = df[(df['mode'] == Mode.CAR) & (~df['feasible_shift'])].groupby(['wave', 'person_id', 'travel_date']).apply(lambda x: get_num_cold_starts(list(x["depart_time"]), x["duration"].values, list(x["mode"]))).sum()
         if (~df["feasible_shift"]).sum() == 0:
             after_cold_starts = 0
         

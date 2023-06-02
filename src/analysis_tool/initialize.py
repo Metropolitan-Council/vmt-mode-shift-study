@@ -44,10 +44,10 @@ def transit_cleanup(transit):
     transit["start_time_dt"] = pd.to_datetime(transit["start_time"])
     transit["end_time_dt"] = pd.to_datetime(transit["end_time"])
 
-    transit["duration"] = (transit["end_time_dt"] - transit["start_time_dt"]).apply(lambda x: x.seconds / 60)
+    # transit["duration"] = (transit["end_time_dt"] - transit["start_time_dt"]).apply(lambda x: x.seconds / 60)
     
     transit["num_transfers"] = (transit["leg_type"] == "TransitRouter.transfer") # temporary field to calculate number of transfers
-    transit["non_transit_duration"] = (transit["leg_type"].isin(["TransitRouter.access", "TransitRouter.egress"])) * (transit["duration"]) # non-transit time (access and egress)
+    transit["non_transit_duration"] = (transit["leg_type"].isin(["TransitRouter.access", "TransitRouter.egress"])) * (transit["end_time_dt"] - transit["start_time_dt"]).apply(lambda x: x.seconds / 60) # non-transit time (access and egress)
     
     # project to US equidistant projection to calculate lengths of paths (in meters)
     # https://spatialreference.org/ref/esri/usa-contiguous-equidistant-conic/
@@ -74,14 +74,16 @@ def transit_cleanup(transit):
         "leg_type": "first", # end throw away
         "start_time_dt": "first",
         "end_time_dt": "last",
-        "duration": "sum",
         "length": "sum",
         "access_length": "first",
         "num_transfers": "sum",
         "non_transit_duration": "sum"
     }
+    
+    transit_grouped = transit.dissolve(by="trip_id", aggfunc=agg_fns) # merges geometries in addition to aggregating the rest of the columns
+    transit_grouped["duration"] = (transit_grouped["end_time_dt"] - transit_grouped["start_time_dt"]).apply(lambda x: x.seconds / 60)
 
-    return transit.dissolve(by="trip_id", aggfunc=agg_fns) # merges geometries in addition to aggregating the rest of the columns
+    return transit_grouped 
 
 def merge_transit_trip_details(df: pd.DataFrame, data_dir: str):
     print("merging in transit details from raw tbi data")
@@ -132,7 +134,7 @@ def prepare_csv(df: pd.DataFrame, data_dir: str):
 
     print("reading in rerouting files")
     car = pd.read_parquet(data_dir + "/Data_Processed/geodata/car_congestion_nogeom.parquet")
-    bike = pd.read_parquet(data_dir + "/Data_Processed/geodata/bike_no_weight_penalty.parquet", columns=["trip_id", "distance_meters", "weight", "distance_meters_1", "distance_meters_2", "distance_meters_3", "distance_meters_4"])
+    bike = pd.read_parquet(data_dir + "/Data_Processed/geodata/bike_no_weight_penalty.parquet").drop("geometry", axis=1)
     transit = gpd.read_parquet(data_dir + "/Data_Processed/geodata/transit_trips.parquet")
     walk = pd.read_parquet(data_dir + "/Data_Processed/geodata/walk_trips_nogeom.parquet")
     
@@ -151,7 +153,6 @@ def prepare_csv(df: pd.DataFrame, data_dir: str):
     bike = add_mode_to_column_name(bike, 'bike')
     transit = add_mode_to_column_name(transit_grouped, 'transit')
     
-    # TODO: loop fusion to improve performance
     def get_car_data(row, field):
         hour = int(row["arrive_time"][0:2])
         sunday = row["travel_dow"] == "Sunday"

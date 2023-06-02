@@ -13,9 +13,9 @@ from settings import handler
 fixed_purposes = set(handler["fixed_purposes"])
 
 def is_in_set(a, b):
-    return np.array([x in b for x in a])
+    return [x in b for x in a]
 
-def over_cutoff(x, cutoff):
+def over_cutoff(x, cutoff: int):
     sum = 0
     for ele in x:
         sum += ele
@@ -27,19 +27,19 @@ def over_cutoff(x, cutoff):
 def convert_to_minutes(temp: str) -> float:
     return int(temp[0:2]) * 60 + int(temp[3:5]) + int(temp[6:8]) / 60
 
-def evaluate_timing(df, alt_mode_times):
+def evaluate_timing(df: pd.DataFrame, alt_mode_times: str):
     return df.groupby(["wave", "person_id", "travel_date"]).apply(lambda x: evaluate_feasible_timing(len(x), list[str](x["depart_time"]), x["duration"].values, list(x["d_purpose_category"]), list(x["o_purpose_category"]), x[alt_mode_times].values))
 
-def evaluate_feasible_timing(chunk_len: int, depart_time: list[str], leg_durations: list[float], d_purpose: list[str], o_purpose: list[str], alt_durations: list[float]):
+def evaluate_feasible_timing(chunk_len: int, depart_time: list[str], leg_durations: np.ndarray[float], d_purpose: list[str], o_purpose: list[str], alt_durations: list[float]):
     # if there is only an inbound and outbound trip, don't need to worry about timing
     if chunk_len == 2:
         return True
-    leg_starts = [convert_to_minutes(x) for x in depart_time]
+    leg_starts = np.fromiter(map(convert_to_minutes, depart_time), dtype=np.float32)
     ref = leg_starts[0]
     # start times, starting by 0 and accounting for midnight wraparound with the mod function, for each leg of the complete tour
-    leg_starts = [(x - ref) % 1440 for x in leg_starts]
+    leg_starts = (leg_starts - ref) % 1440
     # calculate end times relative to the start times using the duration category
-    leg_ends = [(x + y) for (x, y) in zip(leg_starts, leg_durations)]
+    leg_ends = leg_starts + leg_durations
     # these are arrays indicating whether each leg of the complete tour is a fixed arrival/departure
     fixed_arrivals = is_in_set(d_purpose, fixed_purposes)
     fixed_departures = is_in_set(o_purpose, fixed_purposes)
