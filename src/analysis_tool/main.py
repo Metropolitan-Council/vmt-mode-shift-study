@@ -8,8 +8,9 @@ import matplotlib.pyplot as plt
 import steps
 from initialize import prepare_data
 from settings import handler, get_communities
-from steps.enums import Mode, CutoffMode
+from steps.enums import *
 from util import get_num_cold_starts, add_value_labels, rvb
+import json
 
 @st.cache_resource
 def setup_inputs():
@@ -27,39 +28,77 @@ def setup_inputs():
             df = prepare_data(raw, handler["drive_data_dir"])
             
     # everything is feasible initially
-    df[f'feasible_{Mode.WALK}_shift'] = True
-    df[f'feasible_{Mode.BIKE}_shift'] = True
-    df[f'feasible_{Mode.TRANSIT}_shift'] = True
-    df['feasible_shift'] = True
+    df[f'{OverallStep.FEASIBLE}_{Mode.WALK}_shift'] = True
+    df[f'{OverallStep.FEASIBLE}_{Mode.BIKE}_shift'] = True
+    df[f'{OverallStep.FEASIBLE}_{Mode.TRANSIT}_shift'] = True
+    df[f'{OverallStep.FEASIBLE}_shift'] = True
     
     st.session_state["df"] = df
     st.session_state["step"] = "WalkDistanceStep"
+    st.session_state["phase"] = OverallStep.FEASIBLE
     st.session_state["overall_step"] = steps.feasible_steps
-    st.session_state["step_class"] = steps.feasible_steps.WalkDistanceStep(df)
-    st.session_state["percentiles"] = dict()
+    st.session_state["step_class_dict"] = dict()
+    st.session_state["step_class_dict"]["WalkDistanceStep"] = steps.feasible_steps.WalkDistanceStep(df)
+    st.session_state["step_class"] = st.session_state["step_class_dict"]["WalkDistanceStep"]
+    st.session_state["in_summary"] = False
     
-    st.experimental_rerun()
+    return 0
+    
+@st.cache_resource
+def setup_probable():
+    # st.session_state["df_feasible"] = st.session_state.df.copy()
+    st.session_state["df"] = st.session_state.df.loc[st.session_state.df["feasible_shift"], :].copy()
+    
+    df: pd.DataFrame = st.session_state.df
+    df[f'{OverallStep.PROBABLE}_{Mode.WALK}_shift'] = True
+    df[f'{OverallStep.PROBABLE}_{Mode.BIKE}_shift'] = True
+    df[f'{OverallStep.PROBABLE}_{Mode.TRANSIT}_shift'] = True
+    df[f'{OverallStep.PROBABLE}_shift'] = True
+    
+    st.session_state["phase"] = OverallStep.PROBABLE
+    st.session_state["step"] = "WalkDurationDifferenceStep"
+    st.session_state["overall_step"] = steps.probable_steps
+    st.session_state["step_class"] = steps.probable_steps.WalkDurationDifferenceStep(df)
+    st.session_state["step_class_dict"] = dict()
+    st.session_state["in_summary"] = False
+    
+    print("probable setup")
+    
+    return 0
     
 def final_summary():
+    if st.session_state.overall_step == steps.feasible_steps:
+        if st.sidebar.button("Move to probable step"):
+            setup_probable()
+            st.experimental_rerun()
+    
+    df: pd.DataFrame = st.session_state.df
+    
+    if st.sidebar.button("Save current result to csv"):
+        with st.spinner("Exporting dataframe and percentiles"):
+            df.to_csv(f"output/{st.session_state.phase}_trips.csv")
+            f = open(f"output/{st.session_state.phase}_percentiles.json", "w")
+            f.write({step_name: step_class.get_cutoff() for step_name, step_class in st.session_state.step_class_dict.items()})
+            f.close()
+    
     st.title("Summary")
     
     st.markdown("Below are the set percentiles for each step (if it is -1, it is not applicable--either disabled/not set or categorical).")
-    st.write(st.session_state.percentiles)
+    st.write({step_name: step_class.get_cutoff() for step_name, step_class in st.session_state.step_class_dict.items()})
     
-    df: pd.DataFrame = st.session_state.df
-    df.loc[:, "feasible_shift"] = (
-        df["feasible_transit_shift"] | 
-        df["feasible_walk_shift"] | 
-        df["feasible_bike_shift"]
+    df.loc[:, f"{st.session_state.phase}_shift"] = (
+        df[f"{st.session_state.phase}_transit_shift"] | 
+        df[f"{st.session_state.phase}_walk_shift"] | 
+        df[f"{st.session_state.phase}_bike_shift"]
     )
     
-    st.markdown(f"Percent of car trips that can feasibly/with likelihood shift to a non-car mode: **{df[df['mode'] == Mode.CAR]['feasible_shift'].sum() / len(df[df['mode'] == Mode.CAR]) * 100:.2f}**")
+    st.markdown(f"Percent of car trips that can  {'feasibly' if st.session_state.phase == OverallStep.FEASIBLE else 'with likelihood'} shift to a non-car mode: **{df[df['mode'] == Mode.CAR][f'{st.session_state.phase}_shift'].sum() / len(df[df['mode'] == Mode.CAR]) * 100:.2f}**")
     
-    values = (df.groupby("community")["feasible_shift"].mean()).fillna(0)
+    values = (df.groupby("community")[f"{st.session_state.phase}_shift"].mean()).fillna(0)
     communities = get_communities()
     communities["val"] = values
     
-    st.markdown(r"This map shows the % of trips in each community region that can feasibly shift to any alternative non-car mode.")
+    st.markdown(r"This map shows the % of trips in each community region that can {'feasibly' if st.session_state.phase == OverallStep.FEASIBLE else 'with likelihood'} shift to any alternative non-car mode.")
     fig = px.choropleth(communities, geojson=communities.geometry, locations=communities.index, color="val", color_continuous_scale=["red", "yellow", "green"], range_color=(0, 1), projection="albers usa")
     fig.update_layout(margin=dict(l=0, r=0, b=0, t=0),
                 width=900, 
@@ -70,7 +109,7 @@ def final_summary():
     
     st.markdown(inspect.cleandoc(
         f"""- Total number of person trips on car before applying mode shifts: **{len(df[df['mode'] == Mode.CAR]):,}**
-            - Total number of person trips on car after applying mode shifts: **{len(df[(df['mode'] == Mode.CAR) & (~df['feasible_shift'])]):,}**"""
+            - Total number of person trips on car after applying mode shifts: **{len(df[(df['mode'] == Mode.CAR) & (~df[f'{st.session_state.phase}_shift'])]):,}**"""
         )
     )
     
@@ -78,15 +117,15 @@ def final_summary():
     
     st.markdown(inspect.cleandoc(
         f"""- Total number of person trips on car before applying mode shifts: **{round(df[df['mode'] == Mode.CAR]['vehicle_trips'].sum()):,}**
-            - Total number of person trips on car after applying mode shifts: **{round(df[(df['mode'] == Mode.CAR) & (~df['feasible_shift'])]['vehicle_trips'].sum()):,}**"""
+            - Total number of person trips on car after applying mode shifts: **{round(df[(df['mode'] == Mode.CAR) & (~df[f'{st.session_state.phase}_shift'])]['vehicle_trips'].sum()):,}**"""
         )
     )
     
     st.text("")
     
     st.markdown(inspect.cleandoc(
-        f"""- Total VMT before applying feasible mode shift: **{round(df[df['mode'] == Mode.CAR]['vmt'].sum()):,}**
-        - Total VMT after applying feasible mode shift: **{round(df[(df['mode'] == Mode.CAR) & (~df['feasible_shift'])]['vmt'].sum()):,}**"""
+        f"""- Total VMT before applying {st.session_state.phase} mode shift: **{round(df[df['mode'] == Mode.CAR]['vmt'].sum()):,}**
+        - Total VMT after applying {st.session_state.phase} mode shift: **{round(df[(df['mode'] == Mode.CAR) & (~df[f'{st.session_state.phase}_shift'])]['vmt'].sum()):,}**"""
         )
     )
     
@@ -94,46 +133,44 @@ def final_summary():
     
     with st.spinner("Running cold start logic"):
         before_cold_starts = df[df["mode"] == Mode.CAR].groupby(["wave", "person_id", "travel_date"]).apply(lambda x: get_num_cold_starts(list(x["depart_time"]), x["duration"].values, list(x["mode"]))).sum()
-        after_cold_starts = df[(df['mode'] == Mode.CAR) & (~df['feasible_shift'])].groupby(['wave', 'person_id', 'travel_date']).apply(lambda x: get_num_cold_starts(list(x["depart_time"]), x["duration"].values, list(x["mode"]))).sum()
-        if (~df["feasible_shift"]).sum() == 0:
+        after_cold_starts = df[(df['mode'] == Mode.CAR) & (~df[f'{st.session_state.phase}_shift'])].groupby(['wave', 'person_id', 'travel_date']).apply(lambda x: get_num_cold_starts(list(x["depart_time"]), x["duration"].values, list(x["mode"]))).sum()
+        if (~df[f"{st.session_state.phase}_shift"]).sum() == 0:
             after_cold_starts = 0
         
     
     st.markdown(inspect.cleandoc(
-        f"""- Number of cold starts before applying feasible mode shifts: **{before_cold_starts:,}**
-            - Number of cold starts after applying feasible mode shifts: **{after_cold_starts:,}**"""
+        f"""- Number of cold starts before applying {st.session_state.phase} mode shifts: **{before_cold_starts:,}**
+            - Number of cold starts after applying {st.session_state.phase} mode shifts: **{after_cold_starts:,}**"""
         )
     )
     
     st.markdown(r"Below, the % of trips that can shift when segmented by income bracket are shown.")
     
-    income_pct = df[df["income_broad"] != "Prefer not to answer"].groupby("income_broad")["feasible_shift"].mean().reindex(["Under $25,000", "$25,000-$49,999", "$50,000-$74,999", "$75,000-$99,999", "$100,000 or more", "$100,000-$199,999", "$200,000 or more"])
+    income_pct = df[df["income_broad"] != "Prefer not to answer"].groupby("income_broad")[f"{st.session_state.phase}_shift"].mean().reindex(["Under $25,000", "$25,000-$49,999", "$50,000-$74,999", "$75,000-$99,999", "$100,000 or more", "$100,000-$199,999", "$200,000 or more"])
     fig1 = px.bar(x=income_pct.index, y=income_pct.values)
     st.plotly_chart(fig1)
     
     st.markdown(r"Below, the % of trips that can shift when segmented by trip purpose are shown.")
               
-    purpose_pct = df[df["purpose_cleaned"] != "Missing"].groupby("purpose_cleaned")["feasible_shift"].mean()
+    purpose_pct = df[df["purpose_cleaned"] != "Missing"].groupby("purpose_cleaned")[f"{st.session_state.phase}_shift"].mean()
     fig2 = px.bar(x=purpose_pct.index, y=purpose_pct.values)
     st.plotly_chart(fig2)
     
     st.markdown(r"Below, the % of trips that can shift when segmented by person type are shown.")
                 
-    person_pct = df[df["person_type"] != "na"].groupby("person_type")["feasible_shift"].mean()
+    person_pct = df[df["person_type"] != "na"].groupby("person_type")[f"{st.session_state.phase}_shift"].mean()
     fig3 = px.bar(x=person_pct.index, y=person_pct.values)
     st.plotly_chart(fig3)
     
     st.markdown(r"Below, the % of trips that can shift when segmented by gender are shown.")
     
-    gender_pct = df[df["gender_cleaned"] != "Prefer not to answer"].groupby("gender_cleaned")["feasible_shift"].mean()
+    gender_pct = df[df["gender_cleaned"] != "Prefer not to answer"].groupby("gender_cleaned")[f"{st.session_state.phase}_shift"].mean()
     fig4 = px.bar(x=gender_pct.index, y=gender_pct.values)
     st.plotly_chart(fig4)
     
-    
-    
-    if handler["save_result"]:
-        with st.spinner("Exporting to csv"):
-            df.to_csv("data/feasible_trips.csv")
+    # if handler["save_result"]:
+    #     with st.spinner("Exporting to csv"):
+    #         df.to_csv("data/feasible_trips.csv")
         
     
 def show_step():
@@ -141,13 +178,13 @@ def show_step():
     st.title(curr.get_name())
     
     if curr.is_continuous():
-        continuous_opt = st.sidebar.radio("Choose how to set the cutoff", (CutoffMode.PCT, CutoffMode.RAW))
+        continuous_opt = st.sidebar.radio("Choose how to set the cutoff", (CutoffMode.PCT, CutoffMode.RAW), key=st.session_state.step + st.session_state.phase + "radio")
         curr.set_cutoff_mode(continuous_opt)
         if continuous_opt == CutoffMode.PCT:
-            value = st.sidebar.slider("Select a value:", 0.0, 1.0, 0.95, 0.01)
+            value = st.sidebar.slider("Select a value:", 0.0, 1.0, float(curr.get_cutoff()), 0.01, key=st.session_state.step + st.session_state.phase + "pct_slider")
         elif continuous_opt == CutoffMode.RAW:
             extrema = curr.get_extrema()
-            value = st.sidebar.slider("Select a value:", float(extrema[0]), float(extrema[1]), float(extrema[1]), float((extrema[1] - extrema[0]) / 100))
+            value = st.sidebar.slider("Select a value:", float(extrema[0]), float(extrema[1]), float(extrema[1]), float((extrema[1] - extrema[0]) / 100), key=st.session_state.step + st.session_state.phase + "raw_slider")
         else:
             raise RuntimeError("something went wrong")
         curr.set_cutoff(value)
@@ -162,23 +199,31 @@ def show_step():
     
 
 def run():
-    st.session_state.percentiles[st.session_state.step_class.get_name()] = st.session_state.step_class.get_cutoff()
-    
     st.sidebar.header("Actions")
     option_slot = st.sidebar.empty()
+
     if st.sidebar.button("Finish and move to summary"):
-        
-        final_summary()
-        return
+        st.session_state.in_summary = True
+        st.experimental_rerun()
     
-    option = option_slot.selectbox("Choose the step you want to run.", handler["feasible_steps"])
+    if st.session_state.phase == OverallStep.FEASIBLE:
+        option = option_slot.selectbox("Choose the step you want to run.", handler["feasible_steps"])
+    elif st.session_state.phase == OverallStep.PROBABLE:
+        option = option_slot.selectbox("Choose the step you want to run.", handler["probable_steps"])
+    else:
+        print(st.session_state.phase)
+        raise RuntimeError("Something went wrong with the overall step session state variable")
     
     if st.sidebar.button("Refresh"):
         st.experimental_rerun()
         
     if st.session_state.step != option:
         st.session_state.step = option
-        st.session_state.step_class = getattr(st.session_state.overall_step, option)(st.session_state.df)
+        if option in st.session_state.step_class_dict:
+            st.session_state.step_class = st.session_state.step_class_dict[option]
+        else:
+            st.session_state.step_class_dict[option] = getattr(st.session_state.overall_step, option)(st.session_state.df)
+            st.session_state.step_class = st.session_state.step_class_dict[option]
         
     show_step()
     
@@ -188,6 +233,9 @@ def run():
 if __name__ == "__main__":
     if "df" not in st.session_state:
         setup_inputs()
+        st.experimental_rerun()
+    elif st.session_state.in_summary:
+        final_summary()
     else:
         run()
 

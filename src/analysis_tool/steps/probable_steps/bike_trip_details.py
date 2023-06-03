@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from steps.parent_classes import ContinuousStep
-from steps.enums import Mode, CutoffMode
+from steps.enums import *
 from steps.figure_lib import *
 
 import inspect
@@ -10,7 +10,7 @@ import inspect
 class BikeHighLTSDistStep(ContinuousStep):
     
     def __init__(self, df: pd.DataFrame, cutoff=0.01):
-        super().__init__(df, "probable_bike_high_lts_dist", Mode.BIKE, cutoff, "high_lts_dist")
+        super().__init__(df, "probable_bike_high_lts_dist", Mode.BIKE, cutoff, "high_lts_dist", OverallStep.PROBABLE)
         
         df.loc[:, "high_lts_dist"] = df["bike_distance_meters_3"] + df["bike_distance_meters_4"]
         df.loc[:, "high_lts_biking_pct"] = df["high_lts_dist"] / df["bike_distance_meters"]

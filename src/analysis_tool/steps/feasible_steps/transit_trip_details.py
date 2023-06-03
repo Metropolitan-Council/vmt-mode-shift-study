@@ -3,14 +3,14 @@ import matplotlib.pyplot as plt
 
 from steps.parent_classes import ContinuousStep, CategoricalStep
 from steps.figure_lib import *
-from steps.enums import CutoffMode, Mode
+from steps.enums import *
 
 import inspect
 
 class TransitAccessDistanceStep(ContinuousStep):
     
     def __init__(self, df: pd.DataFrame, cutoff=0.95):
-        super().__init__(df, "feasible_transit_access_distance", Mode.TRANSIT, cutoff, "transit_access_length_miles")
+        super().__init__(df, "feasible_transit_access_distance", Mode.TRANSIT, cutoff, "transit_access_length_miles", OverallStep.FEASIBLE)
         
         self.df.loc[:, "transit_access_length_miles"] = df["transit_access_length"] * 0.000621371
     
@@ -66,7 +66,7 @@ class TransitAccessDistanceStep(ContinuousStep):
 class TransitTransferCountStep(ContinuousStep):
     
     def __init__(self, df: pd.DataFrame, cutoff=0.95):
-        super().__init__(df, "feasible_transit_transfer_number", Mode.TRANSIT, cutoff, "transit_num_transfers")
+        super().__init__(df, "feasible_transit_transfer_number", Mode.TRANSIT, cutoff, "transit_num_transfers", OverallStep.FEASIBLE)
     
     def get_summary_statistics(self):
         return show_summaries(self.df, [[x, self.column_name] for x in [self.mode, Mode.CAR]], self.get_cutoff_pct())
@@ -114,7 +114,7 @@ class TransitTransferCountStep(ContinuousStep):
 class TransitReroutedStep(CategoricalStep):
     
     def __init__(self, df: pd.DataFrame):
-        super().__init__(df, "feasible_transit_route_found", Mode.TRANSIT)
+        super().__init__(df, "feasible_transit_route_found", Mode.TRANSIT, OverallStep.FEASIBLE)
         
         self.df.loc[:, self.name] = ~self.df["transit_trip_id"].isna()
         

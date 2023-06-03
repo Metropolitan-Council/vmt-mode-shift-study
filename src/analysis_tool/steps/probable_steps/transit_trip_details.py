@@ -3,14 +3,14 @@ import matplotlib.pyplot as plt
 
 from steps.parent_classes import ContinuousStep, CategoricalStep
 from steps.figure_lib import *
-from steps.enums import CutoffMode, Mode
+from steps.enums import *
 
 import inspect
 
 class TransitTransferCountStep(ContinuousStep):
     
     def __init__(self, df: pd.DataFrame, cutoff=0.01):
-        super().__init__(df, "likely_transit_transfer_number", Mode.TRANSIT, cutoff, "transit_num_transfers")
+        super().__init__(df, "likely_transit_transfer_number", Mode.TRANSIT, cutoff, "transit_num_transfers", OverallStep.PROBABLE)
     
     def get_summary_statistics(self):
         return show_summaries(self.df, [[x, self.column_name] for x in [self.mode, Mode.CAR]], self.get_cutoff_pct())

@@ -1,12 +1,37 @@
-﻿feasible_steps: ["WalkDistanceStep", "BikeDistanceStep", "TransitReroutedStep", "BikeSnowDepthStep", "BikeHighLTSDistStep", "WalkTimingStep", "TransitTimingStep", "BikeTimingStep"]
+﻿feasible_steps: 
+    - WalkDistanceStep
+    - BikeDistanceStep
+    - TransitReroutedStep
+    - BikeSnowDepthStep
+    - BikeHighLTSDistStep
+    - WalkTimingStep
+    - TransitTimingStep
+    - BikeTimingStep
+
+probable_steps: 
+    - WalkDurationDifferenceStep
+    - BikeDurationDifferenceStep
+    - TransitDurationDifferenceStep
+    - WalkTimingStep
+    - BikeTimingStep
+    - TransitTimingStep
+    - BikeHighLTSDistStep
+    - WalkPurposeStep
+    - BikePurposeStep
+    - TransitPurposeStep
+    - TransitTransferCountStep
+    - WalkPrecipitationStep
+    - BikePrecipitationStep
+    - WalkTemperatureStep
+    - BikeTemperatureStep
 
 fixed_purposes: ["Work", "Work-related", "Escort", "School", "School-related"]
 unlikely_purposes: ["Escort", "Shop"]
 
-force_reinitialize: True
-save_result: False
+force_reinitialize: False
+# save_result: False
 
-# assumed to be in data
+# assumed to be in data/ directory
 community_shape_file_name: "shp_society_thrive_msp2040_com_des"
 tbi_file_name: "tbi_full.csv" # recommended to keep it this
 weather_file_name: "USW00014922.csv"

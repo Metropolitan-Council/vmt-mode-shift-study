@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from scipy import stats
 
 from steps.parent_classes import ContinuousStep
-from steps.enums import Mode, CutoffMode
+from steps.enums import *
 from steps.figure_lib import *
 
 import inspect
@@ -11,9 +11,9 @@ import inspect
 class WalkDurationDifferenceStep(ContinuousStep):
     
     def __init__(self, df: pd.DataFrame, cutoff=0.95):
-        super().__init__(df, "likely_walking_car_duration_difference", Mode.WALK, cutoff, "car_minus_walk_minutes")
+        super().__init__(df, "likely_walking_car_duration_difference", Mode.WALK, cutoff, "car_minus_walk_minutes", OverallStep.PROBABLE)
         self.df.loc[:, "car_minus_walk_minutes"] = df["car_duration_seconds"] / 60 - df["walk_duration_seconds"] / 60
-        self.cutoff = stats.percentileofscore(self.df[self.df["mode"] == self.mode]["car_minus_walk_minutes"], 15) / 100
+        self.cutoff = stats.percentileofscore(self.df[self.df["mode"] == self.mode]["car_minus_walk_minutes"], -15) / 100
     
     def get_summary_statistics(self):
         return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct())
@@ -26,9 +26,9 @@ class WalkDurationDifferenceStep(ContinuousStep):
     
     def apply_step(self) -> None:
         if self.cutoff_mode == CutoffMode.PCT:
-            super().apply_step(self.df[self.column_name] > self.df[self.df["mode"] == self.mode][self.column_name].quantile(self.cutoff))
+            super().apply_step(self.df[self.column_name] < self.df[self.df["mode"] == self.mode][self.column_name].quantile(self.cutoff))
         elif self.cutoff_mode == CutoffMode.RAW:
-            super().apply_step(self.df[self.column_name] > self.cutoff)
+            super().apply_step(self.df[self.column_name] < self.cutoff)
         else:
             raise RuntimeError("Something went wrong with the cutoff mode enum")
         
@@ -55,9 +55,9 @@ class WalkDurationDifferenceStep(ContinuousStep):
 class BikeDurationDifferenceStep(ContinuousStep):
     
     def __init__(self, df: pd.DataFrame, cutoff=0.95):
-        super().__init__(df, "likely_biking_car_duration_difference", Mode.BIKE, cutoff, "car_minus_bike_minutes")
+        super().__init__(df, "likely_biking_car_duration_difference", Mode.BIKE, cutoff, "car_minus_bike_minutes", OverallStep.PROBABLE)
         self.df.loc[:, "car_minus_bike_minutes"] = df["car_duration_seconds"] / 60 - df["bike_duration_seconds"] / 60
-        self.cutoff = stats.percentileofscore(self.df[self.df["mode"] == self.mode]["car_minus_bike_minutes"], 15) / 100
+        self.cutoff = stats.percentileofscore(self.df[self.df["mode"] == self.mode]["car_minus_bike_minutes"], -15) / 100
     
     def get_summary_statistics(self):
         return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct())
@@ -70,9 +70,9 @@ class BikeDurationDifferenceStep(ContinuousStep):
     
     def apply_step(self) -> None:
         if self.cutoff_mode == CutoffMode.PCT:
-            super().apply_step(self.df[self.column_name] > self.df[self.df["mode"] == self.mode][self.column_name].quantile(self.cutoff))
+            super().apply_step(self.df[self.column_name] < self.df[self.df["mode"] == self.mode][self.column_name].quantile(self.cutoff))
         elif self.cutoff_mode == CutoffMode.RAW:
-            super().apply_step(self.df[self.column_name] > self.cutoff)
+            super().apply_step(self.df[self.column_name] < self.cutoff)
         else:
             raise RuntimeError("Something went wrong with the cutoff mode enum")
         
@@ -100,24 +100,25 @@ class BikeDurationDifferenceStep(ContinuousStep):
 class TransitDurationDifferenceStep(ContinuousStep):
     
     def __init__(self, df: pd.DataFrame, cutoff=0.95):
-        super().__init__(df, "likely_tranist_car_duration_difference", Mode.TRANSIT, cutoff, "car_minus_transit_minutes")
-        self.df.loc[:, "car_minus_transit_minutes"] = df["car_duration_seconds"] / 60 - df["transit_duration_seconds"] / 60
-        self.cutoff = stats.percentileofscore(self.df[self.df["mode"] == self.mode]["car_minus_transit_minutes"], 15) / 100
+        super().__init__(df, "likely_transit_car_duration_difference", Mode.TRANSIT, cutoff, "car_minus_transit_minutes", OverallStep.PROBABLE)
+        self.df.loc[:, "car_minus_transit_minutes"] = df["car_duration_seconds"] / 60 - df["transit_duration"]
+
+        self.cutoff = stats.percentileofscore(self.df[(self.df["mode"] == self.mode) & ~self.df["car_minus_transit_minutes"].isna()]["car_minus_transit_minutes"], -15) / 100
     
     def get_summary_statistics(self):
-        return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct())
+        return show_summaries(self.df[~self.df["transit_duration"].isna()], modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct())
     
     def get_summary_figure(self):
-        fig, ax = plot_mode_density(self.df, [(self.mode, self.column_name), (Mode.CAR, self.column_name)], percentile=self.get_cutoff_pct()) 
+        fig, ax = plot_mode_density(self.df[~self.df["transit_duration"].isna()], [(self.mode, self.column_name), (Mode.CAR, self.column_name)], percentile=self.get_cutoff_pct()) 
         ax.set_xlim(-250, 100)
         plt.title("Difference between car and transit rerouted durations")
         return fig, ax
     
     def apply_step(self) -> None:
         if self.cutoff_mode == CutoffMode.PCT:
-            super().apply_step(self.df[self.column_name] > self.df[self.df["mode"] == self.mode][self.column_name].quantile(self.cutoff))
+            super().apply_step(self.df[self.column_name] < self.df[(self.df["mode"] == self.mode) & ~self.df["car_minus_transit_minutes"].isna()][self.column_name].quantile(self.cutoff))
         elif self.cutoff_mode == CutoffMode.RAW:
-            super().apply_step(self.df[self.column_name] > self.cutoff)
+            super().apply_step(self.df[self.column_name] < self.cutoff)
         else:
             raise RuntimeError("Something went wrong with the cutoff mode enum")
         

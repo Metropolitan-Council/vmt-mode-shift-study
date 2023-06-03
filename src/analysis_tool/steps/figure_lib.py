@@ -59,7 +59,7 @@ def plot_multi_barplot(df: pd.DataFrame, x: str, y: str, figsize=(7, 5), order=N
     # plot normalized bar plot of the values in each mode side by side
     fig, ax = plt.subplots(figsize=figsize)
     if y == "mode": 
-        df = df[df["mode"].isin([x[0] for x in Mode.get_all()])]
+        df = df[df["mode"].isin(Mode.get_all())]
     (df
      .groupby(y)[x]
      .value_counts(normalize=True)

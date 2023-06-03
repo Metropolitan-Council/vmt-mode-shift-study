@@ -3,7 +3,8 @@ import matplotlib.pyplot as plt
 import streamlit as st
 import inspect
 
-from steps.parent_classes import CategoricalStep, Mode
+from steps.parent_classes import CategoricalStep
+from steps.enums import *
 from steps.figure_lib import *
 
 import sys
@@ -31,7 +32,7 @@ def evaluate_timing(df: pd.DataFrame, alt_mode_times: str):
     with st.spinner("Running timing logic"):
         return df.groupby(["wave", "person_id", "travel_date"]).apply(lambda x: evaluate_likely_timing(len(x), list(x["depart_time"]), x["duration"].values, x[alt_mode_times].values))
 
-def evaluate_likely_timing(chunk_len: int, depart_time: list[str], leg_durations: np.ndarray[float], alt_durations: list[float]):
+def evaluate_likely_timing(chunk_len: int, depart_time: list[str], leg_durations: np.ndarray[float], alt_durations: np.ndarray[float]):
     # if there is only an inbound and outbound trip, don't need to worry about timing
     if chunk_len == 2:
         return True
@@ -63,14 +64,14 @@ def evaluate_likely_timing(chunk_len: int, depart_time: list[str], leg_durations
 class WalkTimingStep(CategoricalStep):
     
     def __init__(self, df: pd.DataFrame):
-        super().__init__(df, "likely_walk_timing", Mode.WALK)
+        super().__init__(df, "likely_walk_timing", Mode.WALK, OverallStep.PROBABLE)
         
         self.df.loc[:, "walk_duration"] = self.df["walk_duration_seconds"] / 60
-        feasible_walking = evaluate_timing(df, "walk_duration")
-        feasible_walking = feasible_walking.reset_index().rename(columns={0: self.name})
+        probable_walking = evaluate_timing(df, "walk_duration")
+        probable_walking = probable_walking.reset_index().rename(columns={0: self.name})
         
         temp = df[["wave", "person_id", "travel_date"]].copy()
-        temp = temp.merge(feasible_walking, on=["wave", "person_id", "travel_date"], how="left")
+        temp = temp.reset_index().merge(probable_walking, on=["wave", "person_id", "travel_date"], how="left").set_index("index")
         
         df[self.name] = temp[self.name]
         
@@ -115,14 +116,14 @@ class WalkTimingStep(CategoricalStep):
 class BikeTimingStep(CategoricalStep):
     
     def __init__(self, df: pd.DataFrame):
-        super().__init__(df, "likely_bike_timing", Mode.BIKE)
+        super().__init__(df, "likely_bike_timing", Mode.BIKE, OverallStep.PROBABLE)
         
         self.df.loc[:, "bike_duration"] = self.df["bike_duration_seconds"] / 60
-        feasible_biking = evaluate_timing(df, "bike_duration")
-        feasible_biking = feasible_biking.reset_index().rename(columns={0: self.name})
+        probable_biking = evaluate_timing(df, "bike_duration")
+        probable_biking = probable_biking.reset_index().rename(columns={0: self.name})
         
         temp = df[["wave", "person_id", "travel_date"]].copy()
-        temp = temp.merge(feasible_biking, on=["wave", "person_id", "travel_date"], how="left")
+        temp = temp.reset_index().merge(probable_biking, on=["wave", "person_id", "travel_date"], how="left").set_index("index")
         
         df[self.name] = temp[self.name]
         
@@ -167,14 +168,13 @@ class BikeTimingStep(CategoricalStep):
 class TransitTimingStep(CategoricalStep):
     
     def __init__(self, df: pd.DataFrame):
-        super().__init__(df, "likely_transit_timing", Mode.TRANSIT)
+        super().__init__(df, "likely_transit_timing", Mode.TRANSIT, OverallStep.PROBABLE)
         
-        self.df.loc[:, "transit_duration"] = self.df["transit_duration_seconds"] / 60
-        feasible_transit = evaluate_timing(df, "transit_duration")
-        feasible_transit = feasible_transit.reset_index().rename(columns={0: self.name})
+        probable_transit = evaluate_timing(df, "transit_duration")
+        probable_transit = probable_transit.reset_index().rename(columns={0: self.name})
         
         temp = df[["wave", "person_id", "travel_date"]].copy()
-        temp = temp.merge(feasible_transit, on=["wave", "person_id", "travel_date"], how="left")
+        temp = temp.reset_index().merge(probable_transit, on=["wave", "person_id", "travel_date"], how="left").set_index("index")
         
         df[self.name] = temp[self.name]
         

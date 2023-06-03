@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import streamlit as st
 import inspect
 
-from steps.parent_classes import CategoricalStep, Mode
+from steps.parent_classes import *
 from steps.figure_lib import *
 
 import sys
@@ -83,14 +83,14 @@ def evaluate_feasible_timing(chunk_len: int, depart_time: list[str], leg_duratio
 class WalkTimingStep(CategoricalStep):
     
     def __init__(self, df: pd.DataFrame):
-        super().__init__(df, "feasible_walk_timing", Mode.WALK)
+        super().__init__(df, "feasible_walk_timing", Mode.WALK, OverallStep.FEASIBLE)
         
         self.df.loc[:, "walk_duration"] = self.df["walk_duration_seconds"] / 60
         feasible_walking = evaluate_timing(df, "walk_duration")
         feasible_walking = feasible_walking.reset_index().rename(columns={0: self.name})
         
         temp = df[["wave", "person_id", "travel_date"]].copy()
-        temp = temp.merge(feasible_walking, on=["wave", "person_id", "travel_date"], how="left")
+        temp = temp.reset_index().merge(feasible_walking, on=["wave", "person_id", "travel_date"], how="left").set_index("index")
         
         df[self.name] = temp[self.name]
         
@@ -133,14 +133,14 @@ class WalkTimingStep(CategoricalStep):
 class TransitTimingStep(CategoricalStep):
     
     def __init__(self, df: pd.DataFrame):
-        super().__init__(df, "feasible_transit_timing", Mode.TRANSIT)
+        super().__init__(df, "feasible_transit_timing", Mode.TRANSIT, OverallStep.FEASIBLE)
         
         self.df.loc[:, "transit_duration"] = self.df["transit_duration"].fillna(-1)
         feasible_transit = evaluate_timing(df, "transit_duration")
         feasible_transit = feasible_transit.reset_index().rename(columns={0: self.name})
         
         temp = df[["wave", "person_id", "travel_date"]].copy()
-        temp = temp.merge(feasible_transit, on=["wave", "person_id", "travel_date"], how="left")
+        temp = temp.reset_index().merge(feasible_transit, on=["wave", "person_id", "travel_date"], how="left").set_index("index")
         
         df[self.name] = temp[self.name]
         
@@ -183,14 +183,14 @@ class TransitTimingStep(CategoricalStep):
 class BikeTimingStep(CategoricalStep):
     
     def __init__(self, df: pd.DataFrame):
-        super().__init__(df, "feasible_bike_timing", Mode.BIKE)
+        super().__init__(df, "feasible_bike_timing", Mode.BIKE, OverallStep.FEASIBLE)
         
         self.df.loc[:, "bike_duration"] = self.df["bike_duration_seconds"] / 60
         feasible_biking = evaluate_timing(df, "bike_duration")
         feasible_biking = feasible_biking.reset_index().rename(columns={0: self.name})
         
         temp = df[["wave", "person_id", "travel_date"]].copy()
-        temp = temp.merge(feasible_biking, on=["wave", "person_id", "travel_date"], how="left")
+        temp = temp.reset_index().merge(feasible_biking, on=["wave", "person_id", "travel_date"], how="left").set_index("index")
         
         df[self.name] = temp[self.name]
         

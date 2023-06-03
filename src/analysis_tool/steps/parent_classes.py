@@ -10,7 +10,7 @@ from matplotlib.colors import LinearSegmentedColormap
 rg = LinearSegmentedColormap.from_list('rg',["r", "w", "g"], N=256) 
 rg.set_bad(color="grey")
 
-from .enums import Mode, CutoffMode
+from .enums import *
 
 import sys
 sys.path.append("..")
@@ -18,11 +18,12 @@ from settings import get_communities
     
 class BaseStep:
     
-    def __init__(self, df: pd.DataFrame, name: str, mode: Mode):
+    def __init__(self, df: pd.DataFrame, name: str, mode: Mode, overall_step: OverallStep):
         self.df = df
         self.name = name
         self.mode = mode
-        self.prev = pd.to_numeric(self.df[f"feasible_{mode}_shift"]).copy()
+        self.overall_step = overall_step
+        self.prev = pd.to_numeric(self.df[f"{self.overall_step}_{mode}_shift"]).copy()
         
     def get_summary_statistics(self):
         raise NotImplementedError("Please implement this function")
@@ -31,18 +32,18 @@ class BaseStep:
         raise NotImplementedError("Please implement this function")
     
     def apply_step(self, expression: pd.Series) -> None:
-        self.df.loc[:, f"feasible_{self.mode}_shift"] = self.prev
+        self.df.loc[:, f"{self.overall_step}_{self.mode}_shift"] = self.prev
         
         self.df.loc[:, self.name] = True
         self.df.loc[expression, self.name] = False
-        self.df.loc[expression, f"feasible_{self.mode}_shift"] = False
+        self.df.loc[expression, f"{self.overall_step}_{self.mode}_shift"] = False
     
     def get_step_statistics(self):
         percent_shifts_before = len(self.df[(self.df['mode']==Mode.CAR) & (self.prev)]) / len(self.df[self.df['mode']==Mode.CAR]) * 100
-        percent_shifts_after = len(self.df[(self.df['mode']==Mode.CAR) & (self.df[f'feasible_{self.mode}_shift'])]) / len(self.df[self.df['mode']==Mode.CAR]) * 100
+        percent_shifts_after = len(self.df[(self.df['mode']==Mode.CAR) & (self.df[f'{self.overall_step}_{self.mode}_shift'])]) / len(self.df[self.df['mode']==Mode.CAR]) * 100
         
         prev_vmt = self.df[(self.df["mode"] == Mode.CAR) & (self.prev)]["vmt"].sum()
-        after_vmt = self.df[(self.df["mode"] == Mode.CAR) & self.df[f"feasible_{self.mode}_shift"]]["vmt"].sum()
+        after_vmt = self.df[(self.df["mode"] == Mode.CAR) & self.df[f"{self.overall_step}_{self.mode}_shift"]]["vmt"].sum()
         
         return ((percent_shifts_before, percent_shifts_after), (prev_vmt, after_vmt))
     
@@ -62,7 +63,7 @@ class BaseStep:
         return fig
     
     def disable(self) -> None:
-        self.df.loc[:, f"feasible_{self.mode}_shift"] = self.prev
+        self.df.loc[:, f"{self.overall_step}_{self.mode}_shift"] = self.prev
         self.df.loc[:, self.name] = True
     
     def __repr__(self) -> str:
@@ -76,7 +77,7 @@ class BaseStep:
         total_vmt = self.df[(self.df["mode"] == Mode.CAR)]["vmt"].sum()
         return [
             f"Here, the map of the % of car trips in each community area that meet this mode's specified criteria for shifting to {self.mode} can be seen. There are a few transparent/white areas; these are the areas with no people to report.",
-            f"""Before this step, **{stats[0][0]:.2f}%** of trips could shift to {self.mode} feasibly/with likelihood, and after this step, **{stats[0][1]:.2f}%** of trips could shift to {self.mode} feasibly/with likelihood.
+            f"""Before this step, **{stats[0][0]:.2f}%** of trips could shift to {self.mode} {'feasibly' if self.overall_step == OverallStep.FEASIBLE else 'with likelihood'}, and after this step, **{stats[0][1]:.2f}%** of trips could shift to {self.mode} {'feasibly' if self.overall_step == OverallStep.FEASIBLE else 'with likelihood'}.
             
             Additionally, before this step, **{stats[1][0] / total_vmt * 100:.2f}%** of VMT could be mitigated with shifts to {self.mode}, and after this step, **{stats[1][1] / total_vmt * 100:.2f}%** of VMT could be mitigated with shifts to {self.mode}."""
         ]
@@ -111,8 +112,8 @@ class BaseStep:
 
 class ContinuousStep(BaseStep):
     
-    def __init__(self, df: pd.DataFrame, name: str, mode: Mode, cutoff: float, column_name: str):
-        super().__init__(df, name, mode)
+    def __init__(self, df: pd.DataFrame, name: str, mode: Mode, cutoff: float, column_name: str, overall_step: OverallStep):
+        super().__init__(df, name, mode, overall_step)
         self.cutoff = cutoff
         self.cutoff_mode = CutoffMode.PCT
         self.column_name = column_name
@@ -142,6 +143,8 @@ class ContinuousStep(BaseStep):
             raise RuntimeError("something went wrong with the cutoff mode enum")
         
     def get_cutoff_pct(self) -> float:
+        if self.cutoff == -1:
+            return 1
         if self.cutoff_mode == CutoffMode.PCT:
             return self.cutoff
         elif self.cutoff_mode == CutoffMode.RAW:
@@ -155,8 +158,8 @@ class ContinuousStep(BaseStep):
 class CategoricalStep(BaseStep):
     
     def apply_step(self, expression: pd.Series) -> None:
-        self.df.loc[:, f"feasible_{self.mode}_shift"] = self.prev
-        self.df.loc[expression, f"feasible_{self.mode}_shift"] = False
+        self.df.loc[:, f"{self.overall_step}_{self.mode}_shift"] = self.prev
+        self.df.loc[expression, f"{self.overall_step}_{self.mode}_shift"] = False
         
     def is_continuous(self):
         return False
