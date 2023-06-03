@@ -98,7 +98,7 @@ def final_summary():
     communities = get_communities()
     communities["val"] = values
     
-    st.markdown(r"This map shows the % of trips in each community region that can {'feasibly' if st.session_state.phase == OverallStep.FEASIBLE else 'with likelihood'} shift to any alternative non-car mode.")
+    st.markdown(f"This map shows the % of trips in each community region that can {'feasibly' if st.session_state.phase == OverallStep.FEASIBLE else 'with likelihood'} shift to any alternative non-car mode.")
     fig = px.choropleth(communities, geojson=communities.geometry, locations=communities.index, color="val", color_continuous_scale=["red", "yellow", "green"], range_color=(0, 1), projection="albers usa")
     fig.update_layout(margin=dict(l=0, r=0, b=0, t=0),
                 width=900, 
