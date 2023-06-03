@@ -54,7 +54,7 @@ class BikeSnowDepthStep(ContinuousStep):
 class BikeHighLTSDistStep(ContinuousStep):
     
     def __init__(self, df: pd.DataFrame, cutoff=0.95):
-        super().__init__(df, "feasible_bike_high_lts_dist", Mode.BIKE, cutoff, "high_lts_biking_pct")
+        super().__init__(df, "feasible_bike_high_lts_dist", Mode.BIKE, cutoff, "high_lts_biking_pct", OverallStep.FEASIBLE)
         
         df.loc[:, "high_lts_dist"] = df["bike_distance_meters_3"] + df["bike_distance_meters_4"]
         df.loc[:, "high_lts_biking_pct"] = df["high_lts_dist"] / df["bike_distance_meters"]
