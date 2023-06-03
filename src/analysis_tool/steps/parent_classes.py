@@ -75,12 +75,26 @@ class BaseStep:
         # this builds the conclusion and the generic map snippet
         stats = self.get_step_statistics()
         total_vmt = self.df[(self.df["mode"] == Mode.CAR)]["vmt"].sum()
-        return [
-            f"Here, the map of the % of car trips in each community area that meet this mode's specified criteria for shifting to {self.mode} can be seen. There are a few transparent/white areas; these are the areas with no people to report.",
-            f"""Before this step, **{stats[0][0]:.2f}%** of trips could shift to {self.mode} {'feasibly' if self.overall_step == OverallStep.FEASIBLE else 'with likelihood'}, and after this step, **{stats[0][1]:.2f}%** of trips could shift to {self.mode} {'feasibly' if self.overall_step == OverallStep.FEASIBLE else 'with likelihood'}.
-            
-            Additionally, before this step, **{stats[1][0] / total_vmt * 100:.2f}%** of VMT could be mitigated with shifts to {self.mode}, and after this step, **{stats[1][1] / total_vmt * 100:.2f}%** of VMT could be mitigated with shifts to {self.mode}."""
-        ]
+        if self.overall_step == OverallStep.FEASIBLE:
+            return [
+                f"Here, the map of the % of car trips in each community area that meet this mode's specified criteria for shifting to {self.mode} can be seen. There are a few transparent/white areas; these are the areas with no people to report.",
+                f"""Before this step, **{stats[0][0]:.2f}%** of trips could shift to {self.mode} {'feasibly' if self.overall_step == OverallStep.FEASIBLE else 'with likelihood'}, and after this step, **{stats[0][1]:.2f}%** of trips could shift to {self.mode} {'feasibly' if self.overall_step == OverallStep.FEASIBLE else 'with likelihood'}.
+                
+                Additionally, before this step, **{stats[1][0] / total_vmt * 100:.2f}%** of VMT could be mitigated with shifts to {self.mode}, and after this step, **{stats[1][1] / total_vmt * 100:.2f}%** of VMT could be mitigated with shifts to {self.mode}."""
+            ]
+        elif self.overall_step == OverallStep.PROBABLE:
+            return [
+                f"Here, the map of the % of car trips in each community area that meet this mode's specified criteria for shifting to {self.mode} can be seen. There are a few transparent/white areas; these are the areas with no people to report.",
+                f"""Before this step, **{stats[0][0]:.2f}%** of feasible trips could shift to {self.mode} {'feasibly' if self.overall_step == OverallStep.FEASIBLE else 'with likelihood'}, and after this step, **{stats[0][1]:.2f}%** of feasible trips could shift to {self.mode} {'feasibly' if self.overall_step == OverallStep.FEASIBLE else 'with likelihood'}.
+                
+                Additionally, before this step, **{stats[1][0] / total_vmt * 100:.2f}%** of feasible trip VMT could be mitigated with shifts to {self.mode}, and after this step, **{stats[1][1] / total_vmt * 100:.2f}%** of feasible trip VMT VMT could be mitigated with shifts to {self.mode}.
+                
+                For absolute statistics, before this step, **{stats[0][0] * st.session_state.feasible_pct:.2f}%** of all trips could shift to {self.mode} {'feasibly' if self.overall_step == OverallStep.FEASIBLE else 'with likelihood'}, and after this step, **{stats[0][1] * st.session_state.feasible_pct:.2f}%** of all trips could shift to {self.mode} {'feasibly' if self.overall_step == OverallStep.FEASIBLE else 'with likelihood'}. 
+                
+                Furthermore, before this step, **{stats[1][0] / total_vmt * 100 * st.session_state.feasible_pct:.2f}%** of feasible trip VMT could be mitigated with shifts to {self.mode}, and after this step, **{stats[1][1] / total_vmt * 100 * st.session_state.feasible_pct:.2f}%** of feasible trip VMT VMT could be mitigated with shifts to {self.mode}"""
+            ]
+        else:
+            raise RuntimeError("Something went wrong with the overall step enum")
         
     def get_name(self) -> str:
         # this is a bit hacky, but feasible distance steps are called _dist internally,

@@ -67,7 +67,7 @@ def setup_probable():
     return 0
     
 def final_summary():
-    if st.session_state.overall_step == steps.feasible_steps:
+    if st.session_state.phase == OverallStep.FEASIBLE:
         if st.sidebar.button("Move to probable step"):
             setup_probable()
             st.experimental_rerun()
@@ -92,7 +92,10 @@ def final_summary():
         df[f"{st.session_state.phase}_bike_shift"]
     )
     
-    st.markdown(f"Percent of car trips that can  {'feasibly' if st.session_state.phase == OverallStep.FEASIBLE else 'with likelihood'} shift to a non-car mode: **{df[df['mode'] == Mode.CAR][f'{st.session_state.phase}_shift'].sum() / len(df[df['mode'] == Mode.CAR]) * 100:.2f}**")
+    st.markdown(f"Percent of car trips that can  {'feasibly' if st.session_state.phase == OverallStep.FEASIBLE else 'with likelihood'} shift to a non-car mode: **{df[df['mode'] == Mode.CAR][f'{st.session_state.phase}_shift'].sum() / len(df[df['mode'] == Mode.CAR]) * 100:.2f}%**")
+    
+    if st.session_state.phase == OverallStep.FEASIBLE:
+        st.session_state["feasible_pct"] = df[df['mode'] == Mode.CAR][f'{st.session_state.phase}_shift'].sum() / len(df[df['mode'] == Mode.CAR])
     
     values = (df.groupby("community")[f"{st.session_state.phase}_shift"].mean()).fillna(0)
     communities = get_communities()
