@@ -1,9 +1,14 @@
 /*-- scss:rules --*/
 .vmtprogress {
-    position: fixed;
+    position: absolute;
     top: 0px;
     right: 0px;
     background-color: #eee;
     border: 1px solid black;
     font-size: 20pt;
+}
+
+.metcouncil-logos img {
+    height: 80px;
+    padding: 30px
 }
