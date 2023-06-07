@@ -10,7 +10,7 @@ import inspect
 class WalkPrecipitationStep(ContinuousStep):
     
     def __init__(self, df: pd.DataFrame, cutoff=0):
-        super().__init__(df, "likely_walk_precipitation", Mode.WALK, cutoff, "precipitation", OverallStep.PROBABLE)
+        super().__init__(df, "likely_walk_precipitation", Mode.WALK, cutoff, "precipitation", Phase.PROBABLE)
     
     def get_summary_statistics(self):
         return show_summaries(self.df, modes=[[x, self.column_name] for x in Mode.get_all()], percentile=self.get_cutoff_pct())
@@ -51,7 +51,7 @@ class WalkPrecipitationStep(ContinuousStep):
 class BikePrecipitationStep(ContinuousStep):
     
     def __init__(self, df: pd.DataFrame, cutoff=0):
-        super().__init__(df, "likely_bike_precipitation", Mode.BIKE, cutoff, "precipitation", OverallStep.PROBABLE)
+        super().__init__(df, "likely_bike_precipitation", Mode.BIKE, cutoff, "precipitation", Phase.PROBABLE)
     
     def get_summary_statistics(self):
         return show_summaries(self.df, modes=[[x, self.column_name] for x in Mode.get_all()], percentile=self.get_cutoff_pct())
@@ -92,7 +92,7 @@ class BikePrecipitationStep(ContinuousStep):
 class WalkTemperatureStep(ContinuousStep):
     
     def __init__(self, df: pd.DataFrame, cutoff=0):
-        super().__init__(df, "likely_walk_temperature", Mode.WALK, cutoff, "temperature", OverallStep.PROBABLE)
+        super().__init__(df, "likely_walk_temperature", Mode.WALK, cutoff, "temperature", Phase.PROBABLE)
     
     def get_summary_statistics(self):
         return show_summaries(self.df, modes=[[x, self.column_name] for x in Mode.get_all()], percentile=self.get_cutoff_pct())
@@ -135,7 +135,7 @@ class WalkTemperatureStep(ContinuousStep):
 class BikeTemperatureStep(ContinuousStep):
     
     def __init__(self, df: pd.DataFrame, cutoff=0):
-        super().__init__(df, "likely_bike_temperature", Mode.BIKE, cutoff, "temperature", OverallStep.PROBABLE)
+        super().__init__(df, "likely_bike_temperature", Mode.BIKE, cutoff, "temperature", Phase.PROBABLE)
     
     def get_summary_statistics(self):
         return show_summaries(self.df, modes=[[x, self.column_name] for x in Mode.get_all()], percentile=self.get_cutoff_pct())

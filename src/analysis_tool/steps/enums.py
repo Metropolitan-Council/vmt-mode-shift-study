@@ -20,7 +20,7 @@ class CutoffMode(str, Enum):
     def __str__(self) -> str:
         return self.value
     
-class OverallStep(str, Enum):
+class Phase(str, Enum):
     FEASIBLE = "feasible"
     PROBABLE = "probable"
     

@@ -155,6 +155,9 @@ def final_field_cleanup(df: pd.DataFrame):
     df["gender_cleaned"] = df["gender"]
     df["gender_cleaned"] = np.where(df["gender_cleaned"] == "Other/prefer to self-describe", "Other/Prefer to self-describe", df["gender_cleaned"])
     
+    df["income_detailed"] = np.where(df["income_detailed"].isin(set(["Less than $15,000", "Under $15,000"])), "Under $15,000", df["income_detailed"])
+    df["income_detailed"] = np.where(df["income_detailed"] == "Prefer not to answer", "na", df["income_detailed"])
+    
 
 def prepare_data(df: pd.DataFrame, data_dir: str):
     merge_weather(df)

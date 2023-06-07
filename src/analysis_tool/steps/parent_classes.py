@@ -18,7 +18,7 @@ from settings import get_communities
     
 class BaseStep:
     
-    def __init__(self, df: pd.DataFrame, name: str, mode: Mode, overall_step: OverallStep):
+    def __init__(self, df: pd.DataFrame, name: str, mode: Mode, overall_step: Phase):
         self.df = df
         self.name = name
         self.mode = mode
@@ -75,21 +75,21 @@ class BaseStep:
         # this builds the conclusion and the generic map snippet
         stats = self.get_step_statistics()
         total_vmt = self.df[(self.df["mode"] == Mode.CAR)]["vmt"].sum()
-        if self.overall_step == OverallStep.FEASIBLE:
+        if self.overall_step == Phase.FEASIBLE:
             return [
                 f"Here, the map of the % of car trips in each community area that meet this mode's specified criteria for shifting to {self.mode} can be seen. There are a few transparent/white areas; these are the areas with no people to report.",
-                f"""Before this step, **{stats[0][0]:.2f}%** of trips could shift to {self.mode} {'feasibly' if self.overall_step == OverallStep.FEASIBLE else 'with likelihood'}, and after this step, **{stats[0][1]:.2f}%** of trips could shift to {self.mode} {'feasibly' if self.overall_step == OverallStep.FEASIBLE else 'with likelihood'}.
+                f"""Before this step, **{stats[0][0]:.2f}%** of trips could shift to {self.mode} {'feasibly' if self.overall_step == Phase.FEASIBLE else 'with likelihood'}, and after this step, **{stats[0][1]:.2f}%** of trips could shift to {self.mode} {'feasibly' if self.overall_step == Phase.FEASIBLE else 'with likelihood'}.
                 
                 Additionally, before this step, **{stats[1][0] / total_vmt * 100:.2f}%** of VMT could be mitigated with shifts to {self.mode}, and after this step, **{stats[1][1] / total_vmt * 100:.2f}%** of VMT could be mitigated with shifts to {self.mode}."""
             ]
-        elif self.overall_step == OverallStep.PROBABLE:
+        elif self.overall_step == Phase.PROBABLE:
             return [
                 f"Here, the map of the % of car trips in each community area that meet this mode's specified criteria for shifting to {self.mode} can be seen. There are a few transparent/white areas; these are the areas with no people to report.",
-                f"""Before this step, **{stats[0][0]:.2f}%** of feasible trips could shift to {self.mode} {'feasibly' if self.overall_step == OverallStep.FEASIBLE else 'with likelihood'}, and after this step, **{stats[0][1]:.2f}%** of feasible trips could shift to {self.mode} {'feasibly' if self.overall_step == OverallStep.FEASIBLE else 'with likelihood'}.
+                f"""Before this step, **{stats[0][0]:.2f}%** of feasible trips could shift to {self.mode} {'feasibly' if self.overall_step == Phase.FEASIBLE else 'with likelihood'}, and after this step, **{stats[0][1]:.2f}%** of feasible trips could shift to {self.mode} {'feasibly' if self.overall_step == Phase.FEASIBLE else 'with likelihood'}.
                 
                 Additionally, before this step, **{stats[1][0] / total_vmt * 100:.2f}%** of feasible trip VMT could be mitigated with shifts to {self.mode}, and after this step, **{stats[1][1] / total_vmt * 100:.2f}%** of feasible trip VMT VMT could be mitigated with shifts to {self.mode}.
                 
-                For absolute statistics, before this step, **{stats[0][0] * st.session_state.feasible_pct:.2f}%** of all trips could shift to {self.mode} {'feasibly' if self.overall_step == OverallStep.FEASIBLE else 'with likelihood'}, and after this step, **{stats[0][1] * st.session_state.feasible_pct:.2f}%** of all trips could shift to {self.mode} {'feasibly' if self.overall_step == OverallStep.FEASIBLE else 'with likelihood'}. 
+                For absolute statistics, before this step, **{stats[0][0] * st.session_state.feasible_pct:.2f}%** of all trips could shift to {self.mode} {'feasibly' if self.overall_step == Phase.FEASIBLE else 'with likelihood'}, and after this step, **{stats[0][1] * st.session_state.feasible_pct:.2f}%** of all trips could shift to {self.mode} {'feasibly' if self.overall_step == Phase.FEASIBLE else 'with likelihood'}. 
                 
                 Furthermore, before this step, **{stats[1][0] / total_vmt * 100 * st.session_state.feasible_pct:.2f}%** of feasible trip VMT could be mitigated with shifts to {self.mode}, and after this step, **{stats[1][1] / total_vmt * 100 * st.session_state.feasible_pct:.2f}%** of feasible trip VMT VMT could be mitigated with shifts to {self.mode}"""
             ]
@@ -126,7 +126,7 @@ class BaseStep:
 
 class ContinuousStep(BaseStep):
     
-    def __init__(self, df: pd.DataFrame, name: str, mode: Mode, cutoff: float, column_name: str, overall_step: OverallStep):
+    def __init__(self, df: pd.DataFrame, name: str, mode: Mode, cutoff: float, column_name: str, overall_step: Phase):
         super().__init__(df, name, mode, overall_step)
         self.cutoff = cutoff
         self.cutoff_mode = CutoffMode.PCT

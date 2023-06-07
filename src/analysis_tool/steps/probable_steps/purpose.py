@@ -15,7 +15,7 @@ from settings import handler
 class WalkPurposeStep(CategoricalStep):
     
     def __init__(self, df: pd.DataFrame):
-        super().__init__(df, "likely_walk_purpose", Mode.WALK, OverallStep.PROBABLE)
+        super().__init__(df, "likely_walk_purpose", Mode.WALK, Phase.PROBABLE)
         
         df["purpose_cleaned"] = df["d_purpose_category"]
         df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["School", "School-related"]), "School", df["purpose_cleaned"])
@@ -87,7 +87,7 @@ class WalkPurposeStep(CategoricalStep):
 class BikePurposeStep(CategoricalStep):
     
     def __init__(self, df: pd.DataFrame):
-        super().__init__(df, "likely_bike_purpose", Mode.BIKE, OverallStep.PROBABLE)
+        super().__init__(df, "likely_bike_purpose", Mode.BIKE, Phase.PROBABLE)
         
         df["purpose_cleaned"] = df["d_purpose_category"]
         df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["School", "School-related"]), "School", df["purpose_cleaned"])
@@ -159,7 +159,7 @@ class BikePurposeStep(CategoricalStep):
 class TransitPurposeStep(CategoricalStep):
     
     def __init__(self, df: pd.DataFrame):
-        super().__init__(df, "likely_transit_purpose", Mode.TRANSIT, OverallStep.PROBABLE)
+        super().__init__(df, "likely_transit_purpose", Mode.TRANSIT, Phase.PROBABLE)
         
         df["purpose_cleaned"] = df["d_purpose_category"]
         df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["School", "School-related"]), "School", df["purpose_cleaned"])

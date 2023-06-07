@@ -28,14 +28,14 @@ def setup_inputs():
             df = prepare_data(raw, handler["drive_data_dir"])
             
     # everything is feasible initially
-    df[f'{OverallStep.FEASIBLE}_{Mode.WALK}_shift'] = True
-    df[f'{OverallStep.FEASIBLE}_{Mode.BIKE}_shift'] = True
-    df[f'{OverallStep.FEASIBLE}_{Mode.TRANSIT}_shift'] = True
-    df[f'{OverallStep.FEASIBLE}_shift'] = True
+    df[f'{Phase.FEASIBLE}_{Mode.WALK}_shift'] = True
+    df[f'{Phase.FEASIBLE}_{Mode.BIKE}_shift'] = True
+    df[f'{Phase.FEASIBLE}_{Mode.TRANSIT}_shift'] = True
+    df[f'{Phase.FEASIBLE}_shift'] = True
     
     st.session_state["df"] = df
     st.session_state["step"] = "WalkDistanceStep"
-    st.session_state["phase"] = OverallStep.FEASIBLE
+    st.session_state["phase"] = Phase.FEASIBLE
     st.session_state["overall_step"] = steps.feasible_steps
     st.session_state["step_class_dict"] = dict()
     st.session_state["step_class_dict"]["WalkDistanceStep"] = steps.feasible_steps.WalkDistanceStep(df)
@@ -50,12 +50,12 @@ def setup_probable():
     st.session_state["df"] = st.session_state.df.loc[st.session_state.df["feasible_shift"], :].copy()
     
     df: pd.DataFrame = st.session_state.df
-    df[f'{OverallStep.PROBABLE}_{Mode.WALK}_shift'] = True
-    df[f'{OverallStep.PROBABLE}_{Mode.BIKE}_shift'] = True
-    df[f'{OverallStep.PROBABLE}_{Mode.TRANSIT}_shift'] = True
-    df[f'{OverallStep.PROBABLE}_shift'] = True
+    df[f'{Phase.PROBABLE}_{Mode.WALK}_shift'] = True
+    df[f'{Phase.PROBABLE}_{Mode.BIKE}_shift'] = True
+    df[f'{Phase.PROBABLE}_{Mode.TRANSIT}_shift'] = True
+    df[f'{Phase.PROBABLE}_shift'] = True
     
-    st.session_state["phase"] = OverallStep.PROBABLE
+    st.session_state["phase"] = Phase.PROBABLE
     st.session_state["step"] = "WalkDurationDifferenceStep"
     st.session_state["overall_step"] = steps.probable_steps
     st.session_state["step_class"] = steps.probable_steps.WalkDurationDifferenceStep(df)
@@ -67,7 +67,7 @@ def setup_probable():
     return 0
     
 def final_summary():
-    if st.session_state.phase == OverallStep.FEASIBLE:
+    if st.session_state.phase == Phase.FEASIBLE:
         if st.sidebar.button("Move to probable step"):
             setup_probable()
             st.experimental_rerun()
@@ -92,16 +92,16 @@ def final_summary():
         df[f"{st.session_state.phase}_bike_shift"]
     )
     
-    st.markdown(f"Percent of car trips that can  {'feasibly' if st.session_state.phase == OverallStep.FEASIBLE else 'with likelihood'} shift to a non-car mode: **{df[df['mode'] == Mode.CAR][f'{st.session_state.phase}_shift'].sum() / len(df[df['mode'] == Mode.CAR]) * 100:.2f}%**")
+    st.markdown(f"Percent of car trips that can  {'feasibly' if st.session_state.phase == Phase.FEASIBLE else 'with likelihood'} shift to a non-car mode: **{df[df['mode'] == Mode.CAR][f'{st.session_state.phase}_shift'].sum() / len(df[df['mode'] == Mode.CAR]) * 100:.2f}%**")
     
-    if st.session_state.phase == OverallStep.FEASIBLE:
+    if st.session_state.phase == Phase.FEASIBLE:
         st.session_state["feasible_pct"] = df[df['mode'] == Mode.CAR][f'{st.session_state.phase}_shift'].sum() / len(df[df['mode'] == Mode.CAR])
     
     values = (df.groupby("community")[f"{st.session_state.phase}_shift"].mean()).fillna(0)
     communities = get_communities()
     communities["val"] = values
     
-    st.markdown(r"This map shows the % of trips in each community region that can {'feasibly' if st.session_state.phase == OverallStep.FEASIBLE else 'with likelihood'} shift to any alternative non-car mode.")
+    st.markdown(r"This map shows the % of trips in each community region that can {'feasibly' if st.session_state.phase == Phase.FEASIBLE else 'with likelihood'} shift to any alternative non-car mode.")
     fig = px.choropleth(communities, geojson=communities.geometry, locations=communities.index, color="val", color_continuous_scale=["red", "yellow", "green"], range_color=(0, 1), projection="albers usa")
     fig.update_layout(margin=dict(l=0, r=0, b=0, t=0),
                 width=900, 
@@ -149,7 +149,7 @@ def final_summary():
     
     st.markdown(r"Below, the % of trips that can shift when segmented by income bracket are shown.")
     
-    income_pct = df[df["income_broad"] != "Prefer not to answer"].groupby("income_broad")[f"{st.session_state.phase}_shift"].mean().reindex(["Under $25,000", "$25,000-$49,999", "$50,000-$74,999", "$75,000-$99,999", "$100,000 or more", "$100,000-$199,999", "$200,000 or more"])
+    income_pct = df[df["income_detailed"] != "na"].groupby("income_detailed")[f"{st.session_state.phase}_shift"].mean().reindex(["Under 15,000", "$15,000-$24,999", "$25,000-$34,999", "$35,000-$49,999", "$50,000-$74,999", "$75,000-$99,999", "$100,000-$149,999", "$150,000-$199,999", "$200,000-$249,999", "$250,000 or more"])
     fig1 = px.bar(x=income_pct.index, y=income_pct.values)
     st.plotly_chart(fig1)
     
@@ -209,9 +209,9 @@ def run():
         st.session_state.in_summary = True
         st.experimental_rerun()
     
-    if st.session_state.phase == OverallStep.FEASIBLE:
+    if st.session_state.phase == Phase.FEASIBLE:
         option = option_slot.selectbox("Choose the step you want to run.", handler["feasible_steps"])
-    elif st.session_state.phase == OverallStep.PROBABLE:
+    elif st.session_state.phase == Phase.PROBABLE:
         option = option_slot.selectbox("Choose the step you want to run.", handler["probable_steps"])
     else:
         print(st.session_state.phase)

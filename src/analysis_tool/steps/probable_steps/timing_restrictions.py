@@ -64,7 +64,7 @@ def evaluate_likely_timing(chunk_len: int, depart_time: list[str], leg_durations
 class WalkTimingStep(CategoricalStep):
     
     def __init__(self, df: pd.DataFrame):
-        super().__init__(df, "likely_walk_timing", Mode.WALK, OverallStep.PROBABLE)
+        super().__init__(df, "likely_walk_timing", Mode.WALK, Phase.PROBABLE)
         
         self.df.loc[:, "walk_duration"] = self.df["walk_duration_seconds"] / 60
         probable_walking = evaluate_timing(df, "walk_duration")
@@ -116,7 +116,7 @@ class WalkTimingStep(CategoricalStep):
 class BikeTimingStep(CategoricalStep):
     
     def __init__(self, df: pd.DataFrame):
-        super().__init__(df, "likely_bike_timing", Mode.BIKE, OverallStep.PROBABLE)
+        super().__init__(df, "likely_bike_timing", Mode.BIKE, Phase.PROBABLE)
         
         self.df.loc[:, "bike_duration"] = self.df["bike_duration_seconds"] / 60
         probable_biking = evaluate_timing(df, "bike_duration")
@@ -168,7 +168,7 @@ class BikeTimingStep(CategoricalStep):
 class TransitTimingStep(CategoricalStep):
     
     def __init__(self, df: pd.DataFrame):
-        super().__init__(df, "likely_transit_timing", Mode.TRANSIT, OverallStep.PROBABLE)
+        super().__init__(df, "likely_transit_timing", Mode.TRANSIT, Phase.PROBABLE)
         
         probable_transit = evaluate_timing(df, "transit_duration")
         probable_transit = probable_transit.reset_index().rename(columns={0: self.name})

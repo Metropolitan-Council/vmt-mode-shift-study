@@ -51,7 +51,7 @@ keep_columns:
     - travel_date
     - home_lon
     - home_lat
-    - income_broad
+    - income_detailed
     - duration
     - distance
     - person_id

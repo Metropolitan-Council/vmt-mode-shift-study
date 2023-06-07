@@ -10,7 +10,7 @@ import inspect
 class TransitTransferCountStep(ContinuousStep):
     
     def __init__(self, df: pd.DataFrame, cutoff=0.01):
-        super().__init__(df, "likely_transit_transfer_number", Mode.TRANSIT, cutoff, "transit_num_transfers", OverallStep.PROBABLE)
+        super().__init__(df, "likely_transit_transfer_number", Mode.TRANSIT, cutoff, "transit_num_transfers", Phase.PROBABLE)
     
     def get_summary_statistics(self):
         return show_summaries(self.df, [[x, self.column_name] for x in [self.mode, Mode.CAR]], self.get_cutoff_pct())
