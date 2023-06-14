@@ -7,7 +7,7 @@ author:
     - Liz Roten
     - Ian Zhang
     - Brandon Whited
-    - Greg Ehrlich
+    - Greg Erhardt
 
 format:
     revealjs:
