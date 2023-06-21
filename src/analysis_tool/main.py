@@ -4,6 +4,7 @@ import plotly.express as px
 import numpy as np
 import inspect
 import matplotlib.pyplot as plt
+import keyring
 
 import steps
 from initialize import prepare_data
@@ -14,18 +15,20 @@ import json
 
 @st.cache_resource
 def setup_inputs():
+    drive_data_dir = keyring.get_password('msp', 'vmt_reduction_dir')
+        
     if handler["force_reinitialize"]:
-        raw = pd.read_csv(handler["drive_data_dir"] + "/data_processed/tbi_cleaned.csv", usecols=handler["keep_columns"])
+        raw = pd.read_csv(drive_data_dir + "/data_processed/tbi_cleaned.csv", usecols=handler["keep_columns"])
 
-        df = prepare_data(raw, handler["drive_data_dir"])
+        df = prepare_data(raw, drive_data_dir)
     else:
         try:
-            df = pd.read_csv("data/" + handler["tbi_file_name"])
+            df = pd.read_csv("data/" + drive_data_dir)
             
         except Exception as e:
-            raw = pd.read_csv(handler["drive_data_dir"] + "/data_processed/tbi_cleaned.csv", usecols=handler["keep_columns"])
+            raw = pd.read_csv(drive_data_dir + "/data_processed/tbi_cleaned.csv", usecols=handler["keep_columns"])
 
-            df = prepare_data(raw, handler["drive_data_dir"])
+            df = prepare_data(raw, drive_data_dir)
             
     # everything is feasible initially
     df[f'{Phase.FEASIBLE}_{Mode.WALK}_shift'] = True

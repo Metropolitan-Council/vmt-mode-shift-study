@@ -1,1 +1,1 @@
-To run this tool locally, setup the python environment locally using the top-level environement.yml file, configure the config.yaml drive_data_dir value, cd to this directory, and then run ```streamlit run main.py``` in the command line.
+To run this tool locally, setup the python environment locally using the top-level environement.yml file, set the main data directory in keyring, cd to this directory, and then run ```streamlit run main.py``` in the command line.

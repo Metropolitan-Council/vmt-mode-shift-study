@@ -36,9 +36,6 @@ community_shape_file_name: "shp_society_thrive_msp2040_com_des"
 tbi_file_name: "tbi_full.csv" # recommended to keep it this
 weather_file_name: "USW00014922.csv"
 
-# just put whatever path you have in your keyring 
-drive_data_dir: 'D:/University of Kentucky/VMT Reduction Mode Shift - General'
-
 keep_columns:
     - mode
     - o_purpose_category

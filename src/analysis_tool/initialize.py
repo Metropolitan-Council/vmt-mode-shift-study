@@ -3,6 +3,7 @@ import pandas as pd
 import geopandas as gpd
 from ast import literal_eval
 import streamlit as st
+import keyring
 
 from steps.enums import Mode
 
@@ -87,9 +88,11 @@ def transit_cleanup(transit):
 
 def merge_transit_trip_details(df: pd.DataFrame, data_dir: str):
     print("merging in transit details from raw tbi data")
+    drive_data_dir = keyring.get_password('msp', 'vmt_reduction_dir')
+    
     # read in raw tbi data
-    wave1_trips = pd.read_csv(handler["drive_data_dir"] + "/Data/TBI Wave 1 Dataset 20200630/trip.csv")
-    wave2_trips = pd.read_csv(handler["drive_data_dir"] + "/Data/Wave 2 Data Deliverable/trip.csv")
+    wave1_trips = pd.read_csv(drive_data_dir + "/Data/TBI Wave 1 Dataset 20200630/trip.csv")
+    wave2_trips = pd.read_csv(drive_data_dir + "/Data/Wave 2 Data Deliverable/trip.csv")
     raw_trips = pd.concat([wave1_trips, wave2_trips]).set_index("trip_id")
     
     def get_dist_to_stop(trips, wave): # calculate distance to get to stop to start transit trip
