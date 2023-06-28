@@ -28,7 +28,7 @@ probable_steps:
 fixed_purposes: ["Work", "Work-related", "Escort", "School", "School-related"]
 unlikely_purposes: ["Escort", "Shop"]
 
-force_reinitialize: True
+force_reinitialize: False
 # save_result: False
 
 # assumed to be in data/ directory
