@@ -6,11 +6,11 @@ using OSRM, DataFrames, CSV, ArchGDAL, ArgParse, Logging, ProgressMeter, Geodesy
 # Maximum distance for access, egress, or transfers from transit
 const MAX_LEG_WALK_DIST_METERS = 1.5 * 1609 # 1.5 mile walk allowed
 
-# How much earlier than the observed departure we allow departure-constrained trips to depart
-const DEPARTURE_CONSTRAINED_FLEXIBILITY_SECONDS = 300 # five minutes
+const SECONDS_PER_HOUR = 3600
 
-# How much later than the observed arrival we allow arrival-constrained trips to arrive
-const ARRIVAL_CONSTRAINED_FLEXIBILITY_SECONDS = 300 # five minutes
+# How far on each side of the requested time we allow departures/arrivals
+# (used in timing analysis - we need trips at different times)
+const TIME_WINDOW_LENGTH_EACH_SIDE = 3 * SECONDS_PER_HOUR
 
 # Some trips may be flexible at the departure end, and some at the arrival end. Whichever purpose category
 # is earlier in this list will be the end that is constrained. Anything not in the list is assumed
@@ -25,10 +25,10 @@ const CONSTRAINED_PURPOSE_CATEGORY_PECKING_ORDER = [
 # departure time. Reverse routing does not suffer from this issue, as the burn in period extends until the desired arrival time,
 # so the shortest path is guaranteed to be found.
 # We allow compressing up to 1 hour of extra wait time off the start of the trip.
-const RANGE_RAPTOR_BURN_IN_PERIOD_SECONDS = 3600
+const RANGE_RAPTOR_BURN_IN_PERIOD_SECONDS = SECONDS_PER_HOUR
 
 # When routing in reverse, how far back in time to go to find a trip?
-const RANGE_RAPTOR_MAX_REVERSE_TIME = 24 * 3600
+const RANGE_RAPTOR_MAX_REVERSE_TIME = 24 * SECONDS_PER_HOUR
 
 # how much to move a point to make geometries valid when the geometry
 # is two identical points. Generally caused by transfers between stops coded as coincident
@@ -288,19 +288,24 @@ function do_transit_route(net, osrm, max_rides, data_itr, n_rows)
                 osrm, # same access and egress router
                 LatLon(row.o_lat, row.o_lon),
                 [LatLon(row.d_lat, row.d_lon)], # single destination
+
+                # No burn-in period required for a reverse search as latest-departure given earliest arrival is guaranteed
+                # even without a burn in period; see https://projects.indicatrix.org/range-raptor-transfer-compression
                 DateTime(
                     date,
-                    row.arrive_time
+                    row.arrive_time - Second(TIME_WINDOW_LENGTH_EACH_SIDE)
                 ),
-                -RANGE_RAPTOR_MAX_REVERSE_TIME, # search up to this amount of time before the requested arrival
+                2 * TIME_WINDOW_LENGTH_EACH_SIDE,
                 max_access_distance_meters=MAX_LEG_WALK_DIST_METERS,
                 max_egress_distance_meters=MAX_LEG_WALK_DIST_METERS,
-                max_rides=max_rides
+                max_rides=max_rides,
+                reverse_search=true,
+                max_reverse_search_duration=RANGE_RAPTOR_MAX_REVERSE_TIME
             )[1]  # just one destination
 
-            # sort by arrival time, get all paths that arrive within the grace period
+            # get all paths that arrive before the end of the time window
             if !isempty(all_paths)
-                filter(p -> p[end].end_time ≤ DateTime(date, row.arrive_time) + Second(ARRIVAL_CONSTRAINED_FLEXIBILITY_SECONDS), all_paths)
+                filter(p -> p[end].end_time ≤ DateTime(date, row.arrive_time) + Second(TIME_WINDOW_LENGTH_EACH_SIDE), all_paths)
             else
                 Vector{TransitRouter.Leg}[]
             end
@@ -313,19 +318,19 @@ function do_transit_route(net, osrm, max_rides, data_itr, n_rows)
                 [LatLon(row.d_lat, row.d_lon)], # single destination
                 DateTime(
                     date,
-                    row.depart_time - Second(DEPARTURE_CONSTRAINED_FLEXIBILITY_SECONDS)
+                    row.depart_time - Second(TIME_WINDOW_LENGTH_EACH_SIDE)
                 ),
-                # run range-RAPTOR until departure time + burn in period
-                RANGE_RAPTOR_BURN_IN_PERIOD_SECONDS + DEPARTURE_CONSTRAINED_FLEXIBILITY_SECONDS,
+                # run range-RAPTOR until departure time + burn in period + time window length
+                RANGE_RAPTOR_BURN_IN_PERIOD_SECONDS + TIME_WINDOW_LENGTH_EACH_SIDE * 2,
                 max_access_distance_meters=MAX_LEG_WALK_DIST_METERS,
                 max_egress_distance_meters=MAX_LEG_WALK_DIST_METERS,
                 max_rides=max_rides
             )[1]
 
-            # get all paths that depart within the grace period, plus one more
+            # get all paths that depart within the requested period, plus one more
             if !isempty(all_paths)
                 sort!(all_paths, by=p -> p[begin].start_time)
-                lim = findfirst(p -> p[begin].start_time ≥ DateTime(date, row.depart_time), all_paths)
+                lim = findfirst(p -> p[begin].start_time ≥ DateTime(date, row.depart_time + Second(TIME_WINDOW_LENGTH_EACH_SIDE)), all_paths)
                 if isnothing(lim)
                     all_paths
                 else
@@ -334,10 +339,6 @@ function do_transit_route(net, osrm, max_rides, data_itr, n_rows)
             else
                 Vector{TransitRouter.Leg}[]
             end
-        end
-
-        if length(paths) > 10
-            @warn "Trip $(row.trip_id) has $(length(paths)) paths"
         end
 
         return (id=row.trip_id, route=paths, date=date, reverse=reverse_route)
