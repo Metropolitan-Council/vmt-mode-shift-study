@@ -28,13 +28,14 @@ probable_steps:
 fixed_purposes: ["Work", "Work-related", "Escort", "School", "School-related"]
 unlikely_purposes: ["Escort", "Shop"]
 
-force_reinitialize: False
+force_reinitialize: True
 # save_result: False
 
 # assumed to be in data/ directory
 community_shape_file_name: "shp_society_thrive_msp2040_com_des"
 tbi_file_name: "tbi_full.csv" # recommended to keep it this
 weather_file_name: "USW00014922.csv"
+taz_terminal_time_file_name: "taz_terminal_times/TAZ3030_Terminal_times.shp"
 
 keep_columns:
     - mode
@@ -59,6 +60,10 @@ keep_columns:
     - travel_dow
     - vmt
     - vehicle_trips
+    - o_lat
+    - o_lon
+    - d_lat
+    - d_lon
 
 
 
