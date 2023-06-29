@@ -485,7 +485,7 @@ function write_transit_feature!(layer, route)
     end
 end
 
-human_time(seconds, digits=3) = "$(round(Int64, seconds ÷ 3600))h $(round(Int64, seconds ÷ 60))m $(round(seconds % 60, digits=digits))s"
+human_time(seconds, digits=3) = "$(round(Int64, seconds ÷ 3600))h $(round(Int64, (seconds % 3600) ÷ 60))m $(round(seconds % 60, digits=digits))s"
 
 function main(args)
     # check that output data is not being written back into the repository
