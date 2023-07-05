@@ -161,6 +161,23 @@ def final_field_cleanup(df: pd.DataFrame):
     df["income_detailed"] = np.where(df["income_detailed"].isin(set(["Less than $15,000", "Under $15,000"])), "Under $15,000", df["income_detailed"])
     df["income_detailed"] = np.where(df["income_detailed"] == "Prefer not to answer", "na", df["income_detailed"])
     
+def add_terminal_times(df: pd.DataFrame):
+    print("adding terminal times for tazs")
+    tazs = gpd.read_file("data/" + handler["taz_terminal_time_file_name"]).to_crs("EPSG:4326")
+    
+    o_gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df["o_lon"], df["o_lat"]), crs="EPSG:4326")
+    d_gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df["d_lon"], df["d_lat"]), crs="EPSG:4326")
+    
+    df["o_car_terminal_time"] = 0
+    df["d_car_terminal_time"] = 0
+    
+    for _, row in tazs[~tazs["TAZ"].isna()].iterrows():
+        df["o_car_terminal_time"] = np.where(o_gdf["geometry"].within(row["geometry"]), row["TERM_TIME"], df["o_car_terminal_time"])
+        df["d_car_terminal_time"] = np.where(d_gdf["geometry"].within(row["geometry"]), row["TERM_TIME"], df["d_car_terminal_time"])
+        
+    df["car_duration_seconds_adj"] = df["car_duration_seconds"] + 60 * df["o_car_terminal_time"] + 60 * df["d_car_terminal_time"]
+    df["bike_duration_seconds_adj"] = df["bike_duration_seconds"] + 120
+    
 
 def prepare_data(df: pd.DataFrame, data_dir: str):
     merge_weather(df)
@@ -225,6 +242,8 @@ def prepare_data(df: pd.DataFrame, data_dir: str):
     clean_mode_names(df)
     
     final_field_cleanup(df)
+    
+    add_terminal_times(df)
     
     print("exporting to csv")
     # possibly change to provided name

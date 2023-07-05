@@ -4,6 +4,7 @@ import plotly.express as px
 import numpy as np
 import inspect
 import matplotlib.pyplot as plt
+import seaborn as sns
 import keyring
 
 import steps
@@ -23,7 +24,7 @@ def setup_inputs():
         df = prepare_data(raw, drive_data_dir)
     else:
         try:
-            df = pd.read_csv("data/" + drive_data_dir)
+            df = pd.read_csv("data/" + handler["tbi_file_name"])
             
         except Exception as e:
             raw = pd.read_csv(drive_data_dir + "/data_processed/tbi_cleaned.csv", usecols=handler["keep_columns"])
@@ -173,6 +174,14 @@ def final_summary():
     gender_pct = df[df["gender_cleaned"] != "Prefer not to answer"].groupby("gender_cleaned")[f"{st.session_state.phase}_shift"].mean()
     fig4 = px.bar(x=gender_pct.index, y=gender_pct.values)
     st.plotly_chart(fig4)
+    
+    st.markdown(r"Below, the distribution of the duration difference between the best non-car mode and car for shifted trips is shown")
+    df["transit_duration_seconds_na"] = df["transit_duration"].fillna(9999999) * 60
+    df["min_alt_mode_duration"] = df[["transit_duration_seconds_na", "bike_duration_seconds_adj", "walk_duration_seconds"]].min(axis=1)
+    df["car_minus_min_alt_mode_duration"] = (df["car_duration_seconds_adj"] - df["min_alt_mode_duration"]) / 60
+    
+    fig5 = px.histogram(df, x="car_minus_min_alt_mode_duration")
+    st.plotly_chart(fig5)
     
     # if handler["save_result"]:
     #     with st.spinner("Exporting to csv"):
