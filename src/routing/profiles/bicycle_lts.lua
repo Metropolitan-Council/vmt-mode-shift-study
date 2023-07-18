@@ -13,6 +13,7 @@ Measure = require("lualib/measure")
 walk_profile = require("foot_lts")
 car_profile = require("car_traffic")
 LTS = require("lts")
+elevation = require("elevation")
 
 function setup()
   local default_speed = 12 * 1.609
@@ -209,7 +210,7 @@ function setup()
     classes = Sequence {
         -- store LTS levels as classes. These will be used in direction output
         -- and also used in calculating turn costs (i.e. crossing costs)
-        'ferry', 'tunnel', 'lts1', 'lts2', 'lts3', 'lts4'
+        'ferry', 'tunnel', 'lts1', 'lts2', 'lts3', 'lts4', 'flat'
     },
 
     -- Which classes should be excludable
@@ -230,7 +231,13 @@ function setup()
     },
 
     walk_profile = walk_profile.setup(),
-    car_profile = car_profile.setup()
+    car_profile = car_profile.setup(),
+
+    -- TODO loading elevation twice in bike and walk profiles
+    elevation = load_elevation(),
+
+    -- make sure elevation is calculated in both directions
+    force_split_edges = true
   }
 end
 
@@ -322,8 +329,6 @@ function handle_bicycle_tags(profile,way,result,data)
     result.backward_mode = mode.inaccessible
   end
 end
-
-
 
 function speed_handler(profile,way,result,data)
 
@@ -792,8 +797,9 @@ function process_way(profile, way, result)
       -- don't overwrite LTS values
       --WayHandlers.classification,
 
-      -- handle allowed start/end modes
-      WayHandlers.startpoint,
+      -- -- handle allowed start/end modes
+      -- startpoint now idnicates bridge/tunnel
+      -- WayHandlers.startpoint,
 
       -- handle roundabouts
       WayHandlers.roundabouts,
@@ -807,7 +813,9 @@ function process_way(profile, way, result)
       -- set weight properties of the way
       WayHandlers.weights,
 
-      lts_weighter
+      lts_weighter,
+
+      mark_bridges_and_tunnels
     }
 
     WayHandlers.run(profile, way, result, data, handlers)
@@ -914,9 +922,23 @@ function process_turn(profile, turn)
   assert(turn.duration > 0 and turn.weight > 0, "Turn does not have duration/weight")
 end
 
+function process_segment(profile, segment)
+  -- ignore if it's not a startpoint (i.e. it's a bridge or tunnel)
+  if segment.flags.startpoint then
+    local elevation_gain_mm = get_elevation_gain_mm(profile.elevation, segment.source, segment.target, segment.distance)
+    --print("Elevation gain " .. elevation_gain_mm .. "mm")
+    --print("Weight was " .. segment.weight)
+    -- calculate the weight factor. Each meter of elevation gain is equivalent to an additional 59 meters flat.
+    local weight_per_meter = segment.weight / segment.distance
+    segment.weight = segment.weight + weight_per_meter * 59 * math.max(0, elevation_gain_mm) / 1000
+    --print("Weight is " .. segment.weight)
+  end
+end
+
 return {
   setup = setup,
   process_way = process_way,
   process_node = process_node,
-  process_turn = process_turn
+  process_turn = process_turn,
+  process_segment = process_segment
 }
