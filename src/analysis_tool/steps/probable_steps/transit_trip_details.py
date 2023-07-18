@@ -19,8 +19,8 @@ class TransitTransferCountStep(ContinuousStep):
         fig, ax = plt.subplots(1, 2, figsize=(10, 5))
         sns.countplot(x=self.column_name, data=self.df[self.df["mode"] == self.mode], ax=ax[0])
         sns.countplot(x=self.column_name, data=self.df[self.df["mode"] == Mode.CAR], ax=ax[1])
-        ax[0].set_title("Re-routed transfer counts for canonical transit trips")
-        ax[1].set_title("Re-routed transfer counts for canonical car trips")
+        ax[0].set_title("Re-routed transfer counts for observed transit trips")
+        ax[1].set_title("Re-routed transfer counts for observed car trips")
         
         return fig, ax
     

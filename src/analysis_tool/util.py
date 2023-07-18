@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+import streamlit as st
 
 from steps.enums import Mode
 from settings import handler
@@ -74,3 +75,30 @@ def add_value_labels(ax, spacing=5):
             ha='center',                # Horizontally center label
             va=va)                      # Vertically align label differently for
                                         # positive and negative values.
+                                        
+def stateful_button(*args, key=None, **kwargs):
+    """
+    Works just like a normal streamlit button, but it remembers its state, so that
+    it works as a toggle button. If you click it, it will be pressed, and if you click
+    it again, it will be unpressed.
+
+    args:
+        Same as st.button
+    kwargs:
+        Same as st.button except key is required
+    """
+
+    if key is None:
+        raise ValueError("Must pass key")
+
+    if key not in st.session_state:
+        st.session_state[key] = False
+
+    if "type" not in kwargs:
+        kwargs["type"] = "primary" if st.session_state[key] else "secondary"
+
+    if st.sidebar.button(*args, **kwargs):
+        st.session_state[key] = not st.session_state[key]
+        st.experimental_rerun()
+
+    return st.session_state[key]

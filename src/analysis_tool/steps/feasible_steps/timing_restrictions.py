@@ -101,8 +101,8 @@ class WalkTimingStep(CategoricalStep):
         fig, ax = plt.subplots(1, 2, figsize=(10, 5))
         sns.countplot(x=self.name, data=self.df[self.df["mode"] == self.mode], ax=ax[0])
         sns.countplot(x=self.name, data=self.df[self.df["mode"] == Mode.CAR], ax=ax[1])
-        ax[0].set_title("Whether a trip had a feasible walk timing\nfor canonical walk trips")
-        ax[1].set_title("Whether a trip had a feasible walk timing\nfor canonical car trips")
+        ax[0].set_title("Whether a trip had a feasible walk timing\nfor observed walk trips")
+        ax[1].set_title("Whether a trip had a feasible walk timing\nfor observed car trips")
         
         return fig, ax
     
@@ -151,8 +151,8 @@ class TransitTimingStep(CategoricalStep):
         fig, ax = plt.subplots(1, 2, figsize=(10, 5))
         sns.countplot(x=self.name, data=self.df[self.df["mode"] == self.mode], ax=ax[0])
         sns.countplot(x=self.name, data=self.df[self.df["mode"] == Mode.CAR], ax=ax[1])
-        ax[0].set_title("Whether a trip had a feasible transit timing\nfor canonical transit trips")
-        ax[1].set_title("Whether a trip had a feasible transit timing\nfor canonical car trips")
+        ax[0].set_title("Whether a trip had a feasible transit timing\nfor observed transit trips")
+        ax[1].set_title("Whether a trip had a feasible transit timing\nfor observed car trips")
         
         return fig, ax
     
@@ -201,8 +201,8 @@ class BikeTimingStep(CategoricalStep):
         fig, ax = plt.subplots(1, 2, figsize=(10, 5))
         sns.countplot(x=self.name, data=self.df[self.df["mode"] == self.mode], ax=ax[0])
         sns.countplot(x=self.name, data=self.df[self.df["mode"] == Mode.CAR], ax=ax[1])
-        ax[0].set_title("Whether a trip had a feasible bike timing\nfor canonical walk trips")
-        ax[1].set_title("Whether a trip had a feasible bike timing\nfor canonical car trips")
+        ax[0].set_title("Whether a trip had a feasible bike timing\nfor observed walk trips")
+        ax[1].set_title("Whether a trip had a feasible bike timing\nfor observed car trips")
         
         return fig, ax
     

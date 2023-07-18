@@ -19,7 +19,7 @@ class WalkDistanceStep(ContinuousStep):
     def get_summary_figure(self):
         fig, ax = plot_mode_density(self.df, [(self.mode, self.column_name), (Mode.CAR, self.column_name)], percentile=self.get_cutoff_pct()) 
         ax.set_xlim(left=0, right=10)
-        plt.title("Rerouted walk distance distributions for canonical walk and car trips")
+        plt.title("Rerouted walk distance distributions for observed walk and car trips")
         return fig, ax
     
     def apply_step(self) -> None:
@@ -63,7 +63,7 @@ class BikeDistanceStep(ContinuousStep):
     def get_summary_figure(self):
         fig, ax = plot_mode_density(self.df, [(self.mode, self.column_name), (Mode.CAR, self.column_name)], percentile=self.get_cutoff_pct()) 
         ax.set_xlim(left=0, right=25)
-        plt.title("Rerouted bike distance distributions for canonical bike and car trips")
+        plt.title("Rerouted bike distance distributions for observed bike and car trips")
         return fig, ax
     
     def apply_step(self) -> None:

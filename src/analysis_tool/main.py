@@ -11,8 +11,54 @@ import steps
 from initialize import prepare_data
 from settings import handler, get_communities
 from steps.enums import *
-from util import get_num_cold_starts, add_value_labels, rvb
+from util import get_num_cold_starts, add_value_labels, rvb, stateful_button
 import json
+
+def start_screen():
+    st.title("Select the steps that you would like to run")
+    
+    st.session_state["feasible_steps"] = []
+    st.session_state["probable_steps"] = []
+    st.session_state["feasible_disabled"] = False
+    st.session_state["probable_disabled"] = False
+    
+    st.sidebar.header("Options")
+    
+    if stateful_button("Disable feasible phase", key="feasible_button"):
+        st.session_state["feasible_disabled"] = True
+    if stateful_button("Disable probable phase", key="probable_button"):
+        st.session_state["probable_disabled"] = True
+        
+    if st.sidebar.button("Begin"):
+        st.session_state["finish_start"] = True
+        st.experimental_rerun()
+    if st.sidebar.button("Begin with all steps selected"):
+        st.session_state["feasible_steps"] = handler["feasible_steps"]
+        st.session_state["probable_steps"] = handler["probable_steps"]
+        st.session_state["finish_start"] = True
+        st.experimental_rerun()
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.header("Feasible")
+        
+        for step in handler["feasible_steps"]:
+            if st.checkbox(f"Feasible - {step}", disabled=st.session_state["feasible_disabled"]):
+                st.session_state["feasible_steps"].append(step)
+            else:
+                if step in st.session_state["feasible_steps"]:
+                    st.session_state["feasible_steps"].remove(step)
+                    
+    with col2: 
+        st.header("Probable")
+        
+        for step in handler["probable_steps"]:
+            if st.checkbox(f"Probable - {step}", disabled=st.session_state["probable_disabled"]):
+                st.session_state["probable_steps"].append(step)
+            else:
+                if step in st.session_state["probable_steps"]:
+                    st.session_state["probable_steps"].remove(step)
 
 @st.cache_resource
 def setup_inputs():
@@ -37,13 +83,25 @@ def setup_inputs():
     df[f'{Phase.FEASIBLE}_{Mode.TRANSIT}_shift'] = True
     df[f'{Phase.FEASIBLE}_shift'] = True
     
+    try:
+        if not st.session_state["feasible_disabled"]:
+            st.session_state["step"] = st.session_state["feasible_steps"][0]
+            st.session_state["phase"] = Phase.FEASIBLE
+            st.session_state["overall_step"] = steps.feasible_steps
+        elif not st.session_state["probable_disabled"]:
+            st.session_state["step"] = st.session_state["probable_steps"][0]
+            st.session_state["phase"] = Phase.PROBABLE
+            st.session_state["overall_step"] = steps.probable_steps
+        else:
+            raise RuntimeError("No steps selected")
+    except IndexError as e:
+        print("No steps selected")
+        raise e
+        
     st.session_state["df"] = df
-    st.session_state["step"] = "WalkDistanceStep"
-    st.session_state["phase"] = Phase.FEASIBLE
-    st.session_state["overall_step"] = steps.feasible_steps
     st.session_state["step_class_dict"] = dict()
-    st.session_state["step_class_dict"]["WalkDistanceStep"] = steps.feasible_steps.WalkDistanceStep(df)
-    st.session_state["step_class"] = st.session_state["step_class_dict"]["WalkDistanceStep"]
+    st.session_state["step_class_dict"][st.session_state.step] =  getattr(st.session_state.overall_step, st.session_state.step)(st.session_state.df)
+    st.session_state["step_class"] = st.session_state["step_class_dict"][st.session_state.step]
     st.session_state["in_summary"] = False
     
     return 0
@@ -71,7 +129,7 @@ def setup_probable():
     return 0
     
 def final_summary():
-    if st.session_state.phase == Phase.FEASIBLE:
+    if st.session_state.phase == Phase.FEASIBLE and not st.session_state["probable_disabled"]:
         if st.sidebar.button("Move to probable step"):
             setup_probable()
             st.experimental_rerun()
@@ -222,9 +280,9 @@ def run():
         st.experimental_rerun()
     
     if st.session_state.phase == Phase.FEASIBLE:
-        option = option_slot.selectbox("Choose the step you want to run.", handler["feasible_steps"])
+        option = option_slot.selectbox("Choose the step you want to run.", st.session_state["feasible_steps"])
     elif st.session_state.phase == Phase.PROBABLE:
-        option = option_slot.selectbox("Choose the step you want to run.", handler["probable_steps"])
+        option = option_slot.selectbox("Choose the step you want to run.", st.session_state["probable_steps"])
     else:
         print(st.session_state.phase)
         raise RuntimeError("Something went wrong with the overall step session state variable")
@@ -246,7 +304,9 @@ def run():
     
 
 if __name__ == "__main__":
-    if "df" not in st.session_state:
+    if "finish_start" not in st.session_state:
+        start_screen()
+    elif "df" not in st.session_state:
         setup_inputs()
         st.experimental_rerun()
     elif st.session_state.in_summary:

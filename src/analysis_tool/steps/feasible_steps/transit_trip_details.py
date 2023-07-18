@@ -20,7 +20,7 @@ class TransitAccessDistanceStep(ContinuousStep):
     def get_summary_figure(self):
         fig, ax = plot_mode_density(self.df, [(self.mode, self.column_name), (Mode.CAR, self.column_name)], percentile=self.get_cutoff_pct()) 
         ax.set_xlim(left=0, right=5)
-        plt.title("Rerouted transit access distance for canonical transit and car trips")
+        plt.title("Rerouted transit access distance for observed transit and car trips")
         return fig, ax
     
     def apply_step(self):
@@ -75,8 +75,8 @@ class TransitTransferCountStep(ContinuousStep):
         fig, ax = plt.subplots(1, 2, figsize=(10, 5))
         sns.countplot(x=self.column_name, data=self.df[self.df["mode"] == self.mode], ax=ax[0])
         sns.countplot(x=self.column_name, data=self.df[self.df["mode"] == Mode.CAR], ax=ax[1])
-        ax[0].set_title("Re-routed transfer counts for canonical transit trips")
-        ax[1].set_title("Re-routed transfer counts for canonical car trips")
+        ax[0].set_title("Re-routed transfer counts for observed transit trips")
+        ax[1].set_title("Re-routed transfer counts for observed car trips")
         
         return fig, ax
     
@@ -125,8 +125,8 @@ class TransitReroutedStep(CategoricalStep):
         fig, ax = plt.subplots(1, 2, figsize=(10, 5))
         sns.countplot(x=self.name, data=self.df[self.df["mode"] == self.mode], ax=ax[0])
         sns.countplot(x=self.name, data=self.df[self.df["mode"] == Mode.CAR], ax=ax[1])
-        ax[0].set_title("Whether a trip had a valid rerouted\ntrip for canonical transit trips")
-        ax[1].set_title("Whether a trip had a valid rerouted\ntrip for canonical car trips")
+        ax[0].set_title("Whether a trip had a valid rerouted\ntrip for observed transit trips")
+        ax[1].set_title("Whether a trip had a valid rerouted\ntrip for observed car trips")
         
         return fig, ax
     
