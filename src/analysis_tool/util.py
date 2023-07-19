@@ -86,7 +86,8 @@ def stacked_shift_histogram(df: pd.DataFrame, mode: Mode, mode_duration: str, mo
     df.loc[:, "curr_group"] = np.where((df["mode"] == Mode.CAR) & (~df[mode_feasible_field]), "Drive Trips - Not Feasible to Switch", df["curr_group"])
     view = df[df["curr_group"] != "na"]
     
-    fig = px.histogram(view, x="curr", color="curr_group", barmode="stack", labels={"curr": "Travel Time Difference (Alternative Time - Drive Time)"})
+    fig = px.histogram(view, x="curr", color="curr_group", barmode="stack", range_x=[-30,120],
+                       labels={"curr": "Travel Time Difference (Alternative Time - Drive Time)"})
     
     return fig
 
