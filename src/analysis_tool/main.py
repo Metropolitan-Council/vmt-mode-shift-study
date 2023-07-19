@@ -11,7 +11,7 @@ import steps
 from initialize import prepare_data
 from settings import handler, get_communities
 from steps.enums import *
-from util import get_num_cold_starts, add_value_labels, rvb, stateful_button
+from util import get_num_cold_starts, add_value_labels, rvb, stateful_button, stacked_shift_histogram, get_summary_df, get_duration_diff_df
 import json
 
 def start_screen():
@@ -22,7 +22,7 @@ def start_screen():
     st.session_state["feasible_disabled"] = False
     st.session_state["probable_disabled"] = False
     
-    st.sidebar.header("Options")
+    st.sidebar.header("Actions")
     
     # NOTE: disabling the feasible phase is untested and may fail if commented back in--the code was written under the assumption that the feasible phase is always ran first before the probable section
     # if stateful_button("Disable feasible phase", key="feasible_button"):
@@ -104,7 +104,7 @@ def setup_inputs():
     st.session_state["step_class_dict"][st.session_state.step] =  getattr(st.session_state.overall_step, st.session_state.step)(st.session_state.df)
     st.session_state["step_class"] = st.session_state["step_class_dict"][st.session_state.step]
     st.session_state["in_summary"] = False
-    st.session_state["cache"] = dict()
+    # st.session_state["cache"] = dict()
     
     return 0
     
@@ -125,48 +125,135 @@ def setup_probable():
     st.session_state["step_class"] = steps.probable_steps.WalkDurationDifferenceStep(df)
     st.session_state["step_class_dict"] = dict()
     st.session_state["in_summary"] = False
-    st.session_state["cache"] = dict()
+    # st.session_state["cache"] = dict()
     
     print("probable setup")
     
     return 0
     
 def final_summary():
+    # button to allow shift to feasible step; only possible if currently in feasible and probable not disabled
     if st.session_state.phase == Phase.FEASIBLE and not st.session_state["probable_disabled"]:
         if st.sidebar.button("Move to probable step"):
             setup_probable()
             st.experimental_rerun()
     
+    # save reference to underlying df for ease of typing
     df: pd.DataFrame = st.session_state.df
     
+    # button to save df to csv on disk
     if st.sidebar.button("Save current result to csv"):
         with st.spinner("Exporting dataframe and percentiles"):
             df.to_csv(f"output/{st.session_state.phase}_trips.csv")
             f = open(f"output/{st.session_state.phase}_percentiles.json", "w")
             f.write({step_name: step_class.get_cutoff() for step_name, step_class in st.session_state.step_class_dict.items()})
             f.close()
-    
-    st.title("Summary")
-    
-    st.markdown("Below are the percentiles that were run (1 for categoricals indicates that it was run).")
-    st.write({key: val[0] for key, val in st.session_state.cache.items()})
-    
+            
+    # calculate overall shift ability -- can shift to at least one mode
     df.loc[:, f"{st.session_state.phase}_shift"] = (
         df[f"{st.session_state.phase}_transit_shift"] | 
         df[f"{st.session_state.phase}_walk_shift"] | 
         df[f"{st.session_state.phase}_bike_shift"]
     )
     
-    st.markdown(f"Percent of car trips that can  {'feasibly' if st.session_state.phase == Phase.FEASIBLE else 'with likelihood'} shift to a non-car mode: **{df[df['mode'] == Mode.CAR][f'{st.session_state.phase}_shift'].sum() / len(df[df['mode'] == Mode.CAR]) * 100:.2f}%**")
-    
+    # save the feasible pct for later use in probable step
     if st.session_state.phase == Phase.FEASIBLE:
         st.session_state["feasible_pct"] = df[df['mode'] == Mode.CAR][f'{st.session_state.phase}_shift'].sum() / len(df[df['mode'] == Mode.CAR])
     
+    # summary just has some overall statistics
+    st.title("Summary")
+    
+    # record of settings for all steps that were run
+    st.markdown("Below are the steps that were run and their settings (1 for categoricals indicates that it was run).")
+    settings = {}
+    # iterate over saved step class objects
+    for name, step_class in st.session_state.step_class_dict.items():
+        # last run
+        prev = step_class.get_previous_run()
+        # don't show if it was disabled/never run
+        if prev == None:
+            continue
+        # logic to format things correctly
+        if step_class.is_continuous():
+            if prev[1] == CutoffMode.PCT:
+                settings[name] = f"{prev[0] * 100:.0f}th pct"
+            elif prev[1] == CutoffMode.RAW:
+                settings[name] = f"{prev[0]:.2f} units"
+            else:
+                raise RuntimeError("Something went wrong with the cutoff mode enum")
+        else:
+            settings[name] = "1 (categorical)"
+    st.write(settings)
+    
+    # overall % of trips/vmt that can shift given the run constraints
+    # NOTE: this will be 100% if some mode had no applicable steps run (since there was no restriction on shifting to that)
+    st.markdown(f"Percent of car trips that can {'feasibly' if st.session_state.phase == Phase.FEASIBLE else 'with likelihood'} shift to a non-car mode: **{df[df['mode'] == Mode.CAR][f'{st.session_state.phase}_shift'].sum() / len(df[df['mode'] == Mode.CAR]) * 100:.2f}%**")
+    st.markdown(f"Percent of VMT that can {'feasibly' if st.session_state.phase == Phase.FEASIBLE else 'with likelihood'} shift to a non-car mode: **{df[(df['mode'] == Mode.CAR) & df[f'{st.session_state.phase}_shift']]['vmt'].sum() / df[df['mode'] == Mode.CAR]['vmt'].sum() * 100:.2f}%**")
+    
+    # details about walking shifts
+    st.header("Shifts to walking")
+    
+    # calculate minutes for future reference
+    df["walk_duration_minutes"] = df["walk_duration_seconds"] / 60
+    
+    # get % trips and vmt for each walk step and for overall shifts to walking
+    st.markdown(r"Below, a table detailing processed steps and the % of car trips and VMT that meet those constraints can be seen.")
+    st.table(get_summary_df(df, st.session_state.step_class_dict.values(), Mode.WALK, f"{st.session_state.phase}_walk_shift"))
+        
+    # stacked histogram of duration difference for feasible drive, non-feasible drive, and walk trips
+    st.markdown("Below, a stacked histogram detailing the travel time difference distributions for drive trips that can feasibly shift to walk, drive trips that can't shift, and observed walk trips can be seen.")
+    
+    st.plotly_chart(stacked_shift_histogram(df, Mode.WALK, "walk_duration_minutes", f"{st.session_state.phase}_walk_shift"))
+    
+    # get df of the % of trips/vmt that are within x minutes of walking
+    st.markdown(r"The % of car trips and VMT that are within x minutes from walking can be seen in the below table.")
+    st.table(get_duration_diff_df(df, Mode.WALK, "walk_duration_minutes"))
+    
+    # details about biking shifts
+    st.header("Shifts to biking")
+    
+    # get minutes for future reference
+    df["bike_duration_minutes_adj"] = df["bike_duration_seconds_adj"] / 60
+    
+    # get % trips and vmt for each walk step and for overall shifts to biking
+    st.markdown(r"Below, a table detailing processed steps and the % of car trips and VMT that meet those constraints can be seen.")
+    st.table(get_summary_df(df, st.session_state.step_class_dict.values(), Mode.BIKE, f"{st.session_state.phase}_bike_shift"))
+        
+    # stacked histogram of duration difference for feasible drive, non-feasible drive, and bike trips
+    st.markdown("Below, a stacked histogram detailing the travel time difference distributions for drive trips that can feasibly shift to biking, drive trips that can't shift, and observed biking trips can be seen.")
+    
+    st.plotly_chart(stacked_shift_histogram(df, Mode.BIKE, "bike_duration_minutes_adj", f"{st.session_state.phase}_bike_shift"))
+    
+    # get df of the % of trips/vmt that are within x minutes of biking
+    st.markdown(r"The % of car trips and VMT that are within x minutes from walking can be seen in the below table.")
+    st.table(get_duration_diff_df(df, Mode.BIKE, "bike_duration_minutes_adj"))
+    
+    # details about biking shifts
+    st.header("Shifts to transit")
+    
+    # get % trips and vmt for each transit step and for overall shifts to transit
+    st.markdown(r"Below, a table detailing processed steps and the % of car trips and VMT that meet those constraints can be seen.")
+    st.table(get_summary_df(df, st.session_state.step_class_dict.values(), Mode.TRANSIT, f"{st.session_state.phase}_transit_shift"))
+        
+    # stacked histogram of duration difference for feasible drive, non-feasible drive, and transit trips
+    st.markdown("Below, a stacked histogram detailing the travel time difference distributions for drive trips that can feasibly shift to transit, drive trips that can't shift, and observed transit trips can be seen. NOTE: due to the need to filter out trips with no valid transit trip (and thus no appliacble transit duration), there are no infeasible drive trips within this histogram.")
+    
+    st.plotly_chart(stacked_shift_histogram(df[~df["transit_duration"].isna()], Mode.TRANSIT, "transit_duration", f"{st.session_state.phase}_transit_shift"))
+    
+    # get df of the % of trips/vmt that are within x minutes of biking
+    st.markdown(r"The % of car trips and VMT that are within x minutes from walking can be seen in the below table.")
+    st.table(get_duration_diff_df(df[~df["transit_duration"].isna()], Mode.TRANSIT, "transit_duration"))
+    
+    st.header("Shifts to any mode")
+    
+    st.header("Geography")
+    
+    # map of the % of trips in each community regino that can shift given the restrictions
     values = (df.groupby("community")[f"{st.session_state.phase}_shift"].mean()).fillna(0)
     communities = get_communities()
     communities["val"] = values
     
-    st.markdown(r"This map shows the % of trips in each community region that can {'feasibly' if st.session_state.phase == Phase.FEASIBLE else 'with likelihood'} shift to any alternative non-car mode.")
+    st.markdown(f"This map shows the % of trips in each community region that can {'feasibly' if st.session_state.phase == Phase.FEASIBLE else 'with likelihood'} shift to any alternative non-car mode.")
     fig = px.choropleth(communities, geojson=communities.geometry, locations=communities.index, color="val", color_continuous_scale=["red", "yellow", "green"], range_color=(0, 1), projection="albers usa")
     fig.update_layout(margin=dict(l=0, r=0, b=0, t=0),
                 width=900, 
@@ -174,6 +261,8 @@ def final_summary():
     )
     fig.update_geos(fitbounds="locations", visible=False)
     st.plotly_chart(fig)
+    
+    st.header("Shifts by categories")
     
     st.markdown(inspect.cleandoc(
         f"""- Total number of person trips on car before applying mode shifts: **{len(df[df['mode'] == Mode.CAR]):,}**
@@ -264,21 +353,14 @@ def show_step():
             raise RuntimeError("something went wrong")
         st.sidebar.markdown(f"Cutoff equivalent: {curr.get_cutoff_equivalent():.2f}")
     
-    if st.sidebar.button("Disable step"):
-        if curr.get_name() in st.session_state.cache:
-            del st.session_state.cache[curr.get_name()]
+    if st.sidebar.button("Disable step", use_container_width=True):
         curr.disable()
-    else:
-        curr.apply_step()
         
-    if st.sidebar.button("Run step", use_container_width=True):
-        if curr.is_continuous():
-            st.session_state.cache[st.session_state.step] = curr.get_cutoff(), curr.get_cutoff_mode()
-        else:
-            st.session_state.cache[st.session_state.step] = (curr.get_cutoff(), )
+    if st.sidebar.button("Apply step", use_container_width=True):
+        curr.apply_step()
         curr.show_step_streamlit()
     else:
-        st.header("Click the run step button once the desired settings have been set.")
+        st.header("Click the apply step button once the desired settings have been set or click disable to disable the step.")
     
 
 def run():
@@ -288,30 +370,18 @@ def run():
     if st.sidebar.button("Finish and move to summary"):
         st.session_state.in_summary = True
         st.experimental_rerun()
-        
-    def add_cache(s):
-        if s in st.session_state.cache:
-            temp = st.session_state.cache[s]
-            if len(temp) == 2:
-                if temp[1] == CutoffMode.PCT:
-                    return f"{s} - {temp[0] * 100:.0f}th pct"
-                return f"{s} - {temp[0]:.2f}"
-            else:
-                return f"{s} - {1}"
-            
-        return s
     
     if st.session_state.phase == Phase.FEASIBLE:
-        option = option_slot.selectbox("Choose the step you want to run.", st.session_state["feasible_steps"], format_func=add_cache)
+        option = option_slot.selectbox("Choose the step you want to run.", st.session_state["feasible_steps"])
     elif st.session_state.phase == Phase.PROBABLE:
-        option = option_slot.selectbox("Choose the step you want to run.", st.session_state["probable_steps"], format_func=add_cache)
+        option = option_slot.selectbox("Choose the step you want to run.", st.session_state["probable_steps"])
     else:
         print(st.session_state.phase)
         raise RuntimeError("Something went wrong with the overall step session state variable")
     
     if st.sidebar.button("Refresh"):
         st.experimental_rerun()
-        
+
     if st.session_state.step != option:
         st.session_state.step = option
         if option in st.session_state.step_class_dict:
@@ -319,8 +389,24 @@ def run():
         else:
             st.session_state.step_class_dict[option] = getattr(st.session_state.overall_step, option)(st.session_state.df)
             st.session_state.step_class = st.session_state.step_class_dict[option]
-        
     show_step()
+    
+    d = {}
+    for name, step in st.session_state.step_class_dict.items():
+        if step.get_previous_run() != None:
+            prev = step.get_previous_run()
+            if step.is_continuous():
+                if prev[1] == CutoffMode.PCT:
+                    d[name] = f"{prev[0] * 100:.0f}th pct"
+                elif prev[1] == CutoffMode.RAW:
+                    d[name] = f"{prev[0]:.2f} units"
+                else:
+                    raise RuntimeError("Something went wrong with the cutoff mode enum")
+            else:
+                d[name] = "1"
+    
+    with st.sidebar.expander("See previously run steps"):
+        st.write(d)
     
     st.sidebar.markdown("To export this page to PDF, click the x button above to dismiss the sidebar, and then manually print to PDF")
     

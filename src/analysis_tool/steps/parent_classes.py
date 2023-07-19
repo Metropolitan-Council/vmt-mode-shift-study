@@ -25,6 +25,8 @@ class BaseStep:
         self.overall_step = overall_step
         self.prev = pd.to_numeric(self.df[f"{self.overall_step}_{mode}_shift"]).copy()
         
+        self.previous_run = None
+        
     def get_summary_statistics(self):
         raise NotImplementedError("Please implement this function")
     
@@ -39,7 +41,8 @@ class BaseStep:
         self.df.loc[expression, f"{self.overall_step}_{self.mode}_shift"] = False
     
     def get_step_statistics(self):
-        abs_percent = len(self.df[(self.df['mode']==Mode.CAR) & (self.df[self.name])]) / len(self.df[self.df['mode']==Mode.CAR])
+        abs_car_percent = len(self.df[(self.df['mode']==Mode.CAR) & (self.df[self.name])]) / len(self.df[self.df['mode']==Mode.CAR])
+        abs_vmt_percent = self.df[(self.df['mode']==Mode.CAR) & (self.df[self.name])]["vmt"].sum() / self.df[self.df['mode']==Mode.CAR]["vmt"].sum()
         
         percent_shifts_before = len(self.df[(self.df['mode']==Mode.CAR) & (self.prev)]) / len(self.df[self.df['mode']==Mode.CAR]) * 100
         percent_shifts_after = len(self.df[(self.df['mode']==Mode.CAR) & (self.df[f'{self.overall_step}_{self.mode}_shift'])]) / len(self.df[self.df['mode']==Mode.CAR]) * 100
@@ -47,7 +50,7 @@ class BaseStep:
         prev_vmt = self.df[(self.df["mode"] == Mode.CAR) & (self.prev)]["vmt"].sum()
         after_vmt = self.df[(self.df["mode"] == Mode.CAR) & self.df[f"{self.overall_step}_{self.mode}_shift"]]["vmt"].sum()
         
-        return ((percent_shifts_before, percent_shifts_after), (prev_vmt, after_vmt), abs_percent)
+        return ((percent_shifts_before, percent_shifts_after), (prev_vmt, after_vmt), (abs_car_percent, abs_vmt_percent))
     
     def get_map(self):
         temp = self.df[(self.df["community"] != -1) & (self.df["mode"]==Mode.CAR)][["community", self.name]]
@@ -67,6 +70,7 @@ class BaseStep:
     def disable(self) -> None:
         self.df.loc[:, f"{self.overall_step}_{self.mode}_shift"] = self.prev
         self.df.loc[:, self.name] = True
+        self.previous_run = None
     
     def __repr__(self) -> str:
         return "Running the step with " + self.name + " as a criteria for shifts to " + self.mode
@@ -84,7 +88,7 @@ class BaseStep:
                 
                 Additionally, before this step, **{stats[1][0] / total_vmt * 100:.2f}%** of VMT could be mitigated with shifts to {self.mode}, and after this step, **{stats[1][1] / total_vmt * 100:.2f}%** of VMT could be mitigated with shifts to {self.mode}.
                 
-                Overall, independent of other steps, **{stats[2] * 100:.2f}**% of all car trips satisfy this constraint."""
+                Overall, independent of other steps, **{stats[2][0] * 100:.2f}**% of all car trips and **{stats[2][1] * 100:.2f}**% of VMT can satisfy this constraint."""
             ]
         elif self.overall_step == Phase.PROBABLE:
             return [
@@ -97,7 +101,7 @@ class BaseStep:
                 
                 Furthermore, before this step, **{stats[1][0] / total_vmt * 100 * st.session_state.feasible_pct:.2f}%** of feasible trip VMT could be mitigated with shifts to {self.mode}, and after this step, **{stats[1][1] / total_vmt * 100 * st.session_state.feasible_pct:.2f}%** of feasible trip VMT VMT could be mitigated with shifts to {self.mode}.
                 
-                Overall, independent of other steps, **{stats[2] * 100:.2f}**% of all car trips satisfy this constraint."""
+                Overall, independent of other steps, **{stats[2][0] * 100:.2f}**% of all car trips and **{stats[2][1] * 100:.2f}**% of VMT can satisfy this constraint."""
             ]
         else:
             raise RuntimeError("Something went wrong with the overall step enum")
@@ -129,6 +133,12 @@ class BaseStep:
         slots[0].pyplot(self.get_summary_figure()[0])
         slots[1].dataframe(self.get_summary_statistics())
         slots[2].plotly_chart(self.get_map())
+        
+    def get_previous_run(self):
+        return self.previous_run
+    
+    def get_mode(self) -> Mode:
+        return self.mode
 
 class ContinuousStep(BaseStep):
     
@@ -137,6 +147,10 @@ class ContinuousStep(BaseStep):
         self.cutoff = cutoff
         self.cutoff_mode = CutoffMode.PCT
         self.column_name = column_name
+        
+    def apply_step(self, expression: pd.Series) -> None:
+        self.previous_run = (self.cutoff, self.cutoff_mode)
+        super().apply_step(expression)
         
     def get_cutoff_mode(self) -> CutoffMode:
         return self.cutoff_mode
@@ -181,6 +195,7 @@ class ContinuousStep(BaseStep):
 class CategoricalStep(BaseStep):
     
     def apply_step(self, expression: pd.Series) -> None:
+        self.previous_run = 1
         self.df.loc[:, f"{self.overall_step}_{self.mode}_shift"] = self.prev
         self.df.loc[expression, f"{self.overall_step}_{self.mode}_shift"] = False
         
