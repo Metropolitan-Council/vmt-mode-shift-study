@@ -24,8 +24,9 @@ def start_screen():
     
     st.sidebar.header("Options")
     
-    if stateful_button("Disable feasible phase", key="feasible_button"):
-        st.session_state["feasible_disabled"] = True
+    # NOTE: disabling the feasible phase is untested and may fail if commented back in--the code was written under the assumption that the feasible phase is always ran first before the probable section
+    # if stateful_button("Disable feasible phase", key="feasible_button"):
+    #     st.session_state["feasible_disabled"] = True
     if stateful_button("Disable probable phase", key="probable_button"):
         st.session_state["probable_disabled"] = True
         

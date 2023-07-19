@@ -39,16 +39,18 @@ class BaseStep:
         self.df.loc[expression, f"{self.overall_step}_{self.mode}_shift"] = False
     
     def get_step_statistics(self):
+        abs_percent = len(self.df[(self.df['mode']==Mode.CAR) & (self.df[self.name])]) / len(self.df[self.df['mode']==Mode.CAR])
+        
         percent_shifts_before = len(self.df[(self.df['mode']==Mode.CAR) & (self.prev)]) / len(self.df[self.df['mode']==Mode.CAR]) * 100
         percent_shifts_after = len(self.df[(self.df['mode']==Mode.CAR) & (self.df[f'{self.overall_step}_{self.mode}_shift'])]) / len(self.df[self.df['mode']==Mode.CAR]) * 100
         
         prev_vmt = self.df[(self.df["mode"] == Mode.CAR) & (self.prev)]["vmt"].sum()
         after_vmt = self.df[(self.df["mode"] == Mode.CAR) & self.df[f"{self.overall_step}_{self.mode}_shift"]]["vmt"].sum()
         
-        return ((percent_shifts_before, percent_shifts_after), (prev_vmt, after_vmt))
+        return ((percent_shifts_before, percent_shifts_after), (prev_vmt, after_vmt), abs_percent)
     
     def get_map(self):
-        temp = self.df[self.df["community"] != -1][["community", self.name]]
+        temp = self.df[(self.df["community"] != -1) & (self.df["mode"]==Mode.CAR)][["community", self.name]]
         
         values = (temp.groupby("community")[self.name].mean()).fillna(0)
         communities = get_communities()
@@ -80,7 +82,9 @@ class BaseStep:
                 f"Here, the map of the % of car trips in each community area that meet this mode's specified criteria for shifting to {self.mode} can be seen. There are a few transparent/white areas; these are the areas with no people to report.",
                 f"""Before this step, **{stats[0][0]:.2f}%** of trips could shift to {self.mode} {'feasibly' if self.overall_step == Phase.FEASIBLE else 'with likelihood'}, and after this step, **{stats[0][1]:.2f}%** of trips could shift to {self.mode} {'feasibly' if self.overall_step == Phase.FEASIBLE else 'with likelihood'}.
                 
-                Additionally, before this step, **{stats[1][0] / total_vmt * 100:.2f}%** of VMT could be mitigated with shifts to {self.mode}, and after this step, **{stats[1][1] / total_vmt * 100:.2f}%** of VMT could be mitigated with shifts to {self.mode}."""
+                Additionally, before this step, **{stats[1][0] / total_vmt * 100:.2f}%** of VMT could be mitigated with shifts to {self.mode}, and after this step, **{stats[1][1] / total_vmt * 100:.2f}%** of VMT could be mitigated with shifts to {self.mode}.
+                
+                Overall, independent of other steps, **{stats[2] * 100:.2f}**% of all car trips satisfy this constraint."""
             ]
         elif self.overall_step == Phase.PROBABLE:
             return [
@@ -91,7 +95,9 @@ class BaseStep:
                 
                 For absolute statistics, before this step, **{stats[0][0] * st.session_state.feasible_pct:.2f}%** of all trips could shift to {self.mode} {'feasibly' if self.overall_step == Phase.FEASIBLE else 'with likelihood'}, and after this step, **{stats[0][1] * st.session_state.feasible_pct:.2f}%** of all trips could shift to {self.mode} {'feasibly' if self.overall_step == Phase.FEASIBLE else 'with likelihood'}. 
                 
-                Furthermore, before this step, **{stats[1][0] / total_vmt * 100 * st.session_state.feasible_pct:.2f}%** of feasible trip VMT could be mitigated with shifts to {self.mode}, and after this step, **{stats[1][1] / total_vmt * 100 * st.session_state.feasible_pct:.2f}%** of feasible trip VMT VMT could be mitigated with shifts to {self.mode}"""
+                Furthermore, before this step, **{stats[1][0] / total_vmt * 100 * st.session_state.feasible_pct:.2f}%** of feasible trip VMT could be mitigated with shifts to {self.mode}, and after this step, **{stats[1][1] / total_vmt * 100 * st.session_state.feasible_pct:.2f}%** of feasible trip VMT VMT could be mitigated with shifts to {self.mode}.
+                
+                Overall, independent of other steps, **{stats[2] * 100:.2f}**% of all car trips satisfy this constraint."""
             ]
         else:
             raise RuntimeError("Something went wrong with the overall step enum")
