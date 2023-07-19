@@ -134,6 +134,7 @@ def add_community(df: pd.DataFrame):
         
 def final_field_cleanup(df: pd.DataFrame):
     df["purpose_cleaned"] = df["d_purpose_category"]
+    df["purpose_cleaned"] = np.where(df["purpose_cleaned"] == "Home", df["o_purpose_category"], df["purpose_cleaned"])
     df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["School", "School-related"]), "School", df["purpose_cleaned"])
     df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Work", "Work-related"]), "Work", df["purpose_cleaned"])
     df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Errand/Other", "Errand"]), "Errand", df["purpose_cleaned"])
