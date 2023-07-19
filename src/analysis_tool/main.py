@@ -234,10 +234,10 @@ def final_summary():
     # stacked histogram of duration difference for feasible drive, non-feasible drive, and transit trips
     st.markdown("Below, a stacked histogram detailing the travel time difference distributions for drive trips that can feasibly shift to transit, drive trips that can't shift, and observed transit trips can be seen. NOTE: due to the need to filter out trips with no valid transit trip (and thus no appliacble transit duration), there are no infeasible drive trips within this histogram.")
     
-    st.plotly_chart(stacked_shift_histogram(df[~df["transit_duration"].isna()], Mode.TRANSIT, "transit_duration", f"{st.session_state.phase}_transit_shift"))
+    st.plotly_chart(stacked_shift_histogram(df[(~df["transit_duration"].isna())&(df["transit_duration"]>0)&(df["transit_duration"]<1440)], Mode.TRANSIT, "transit_duration", f"{st.session_state.phase}_transit_shift"))
     
-    # get df of the % of trips/vmt that are within x minutes of biking
-    st.markdown(r"The % of car trips and VMT that are within x minutes from walking can be seen in the below table.")
+    # get df of the % of trips/vmt that are within x minutes of transit
+    st.markdown(r"The % of car trips and VMT that are within x minutes from transit can be seen in the below table.")
     st.table(get_duration_diff_df(df[~df["transit_duration"].isna()], Mode.TRANSIT, "transit_duration"))
     
     st.header("Shifts to any mode")

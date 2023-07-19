@@ -44,6 +44,10 @@ def evaluate_feasible_timing(chunk_len: int, depart_time: list[str], leg_duratio
     # these are arrays indicating whether each leg of the complete tour is a fixed arrival/departure
     fixed_arrivals = is_in_set(d_purpose, fixed_purposes)
     fixed_departures = is_in_set(o_purpose, fixed_purposes)
+            
+    # if the trip takes longer than 24 hours (usually because transit is not available), the timing is not feasible
+    if alt_durations.any() > 1440:
+        return False
     
     # sanity check; if the atlernative time for any of the legs can't be found, return False (means can't route it feasibly, usually for transit)
     # do this as preprocessing
@@ -58,8 +62,9 @@ def evaluate_feasible_timing(chunk_len: int, depart_time: list[str], leg_duratio
     # also return true if there is only one fixed thing--all trips of these kind can be boiled down to traveling to the fixed thing and traveling back if all non-fixed, discretionary trips are omitted; which can be scheduled around feasibly
     if not over_cutoff(fixed_arrivals, 1):
         return True
-    
+
     alt_durations_cumul = np.cumsum(alt_durations)
+    
     # keeps track of a previous fixed arrival trip to compare against a current one (see whether they overlap)
     prev_fixed_arrival = -1
     for i in range(chunk_len):
@@ -135,7 +140,7 @@ class TransitTimingStep(CategoricalStep):
     def __init__(self, df: pd.DataFrame):
         super().__init__(df, "feasible_transit_timing", Mode.TRANSIT, Phase.FEASIBLE)
         
-        self.df.loc[:, "transit_duration"] = self.df["transit_duration"].fillna(-1)
+        self.df.loc[:, "transit_duration"] = self.df["transit_duration"].fillna(9999999)  # if there is no path, it's not feasible
         feasible_transit = evaluate_timing(df, "transit_duration")
         feasible_transit = feasible_transit.reset_index().rename(columns={0: self.name})
         
