@@ -79,11 +79,11 @@ def add_value_labels(ax, spacing=5):
                                         # positive and negative values.
                                         
 def stacked_shift_histogram(df: pd.DataFrame, mode: Mode, mode_duration: str, mode_feasible_field: str):
-    df.loc["curr"] = (df[mode_duration] - df["car_duration_seconds_adj"] / 60)
-    df.loc["curr_group"] = "na"
-    df.loc["curr_group"] = np.where(df["mode"] == mode, f"{mode.capitalize()} Trips", df["curr_group"])
-    df.loc["curr_group"] = np.where((df["mode"] == Mode.CAR) & (df[mode_feasible_field]), "Drive Trips - Feasible to Switch", df["curr_group"])
-    df.loc["curr_group"] = np.where((df["mode"] == Mode.CAR) & (~df[mode_feasible_field]), "Drive Trips - Not Feasible to Switch", df["curr_group"])
+    df.loc[:, "curr"] = (df[mode_duration] - df["car_duration_seconds_adj"] / 60)
+    df.loc[:, "curr_group"] = "na"
+    df.loc[:, "curr_group"] = np.where(df["mode"] == mode, f"{mode.capitalize()} Trips", df["curr_group"])
+    df.loc[:, "curr_group"] = np.where((df["mode"] == Mode.CAR) & (df[mode_feasible_field]), "Drive Trips - Feasible to Switch", df["curr_group"])
+    df.loc[:, "curr_group"] = np.where((df["mode"] == Mode.CAR) & (~df[mode_feasible_field]), "Drive Trips - Not Feasible to Switch", df["curr_group"])
     view = df[df["curr_group"] != "na"]
     
     fig = px.histogram(view, x="curr", color="curr_group", barmode="stack", labels={"curr": "Travel Time Difference (Alternative Time - Drive Time)"})
@@ -105,18 +105,18 @@ def get_summary_df(df: pd.DataFrame, steps: list, mode: Mode, mode_feasible_col:
 
 def get_duration_diff_df(df: pd.DataFrame, mode: Mode, mode_duration: str) -> pd.DataFrame:
     res = pd.DataFrame(index=[r"% of Car Trips", r"% of VMT"])
-    df.loc["curr"] = (df[mode_duration] - df["car_duration_seconds_adj"] / 60).abs()
+    df.loc[:, "curr"] = (df[mode_duration] - df["car_duration_seconds_adj"] / 60).abs()
     res[f"{mode.capitalize()} is within 5 minutes of driving"] = [
-        f'{len(df[(df["mode"] == Mode.CAR) & (df["curr"] <= 5)]) / len(df[(df["mode"] == Mode.CAR)]): .2f}%',
-        f'{df[(df["mode"] == Mode.CAR) & (df["curr"] <= 5)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum():.2f}%'
+        f'{len(df[(df["mode"] == Mode.CAR) & (df["curr"] <= 5)]) / len(df[(df["mode"] == Mode.CAR)]) * 100: .2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df["curr"] <= 5)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%'
     ]
     res[f"{mode.capitalize()} is within 15 minutes of driving"] = [
-        f'{len(df[(df["mode"] == Mode.CAR) & (df["curr"] <= 15)]) / len(df[(df["mode"] == Mode.CAR)]): .2f}%',
-        f'{df[(df["mode"] == Mode.CAR) & (df["curr"] <= 15)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum():.2f}%'
+        f'{len(df[(df["mode"] == Mode.CAR) & (df["curr"] <= 15)]) / len(df[(df["mode"] == Mode.CAR)]) * 100: .2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df["curr"] <= 15)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%'
     ]
     res[f"{mode.capitalize()} is within 30 minutes of driving"] = [
-        f'{len(df[(df["mode"] == Mode.CAR) & (df["curr"] <= 30)]) / len(df[(df["mode"] == Mode.CAR)]): .2f}%',
-        f'{df[(df["mode"] == Mode.CAR) & (df["curr"] <= 30)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum():.2f}%'
+        f'{len(df[(df["mode"] == Mode.CAR) & (df["curr"] <= 30)]) / len(df[(df["mode"] == Mode.CAR)]) * 100: .2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df["curr"] <= 30)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%'
     ]
     return res
                                         

@@ -185,11 +185,6 @@ def final_summary():
             settings[name] = "1 (categorical)"
     st.write(settings)
     
-    # overall % of trips/vmt that can shift given the run constraints
-    # NOTE: this will be 100% if some mode had no applicable steps run (since there was no restriction on shifting to that)
-    st.markdown(f"Percent of car trips that can {'feasibly' if st.session_state.phase == Phase.FEASIBLE else 'with likelihood'} shift to a non-car mode: **{df[df['mode'] == Mode.CAR][f'{st.session_state.phase}_shift'].sum() / len(df[df['mode'] == Mode.CAR]) * 100:.2f}%**")
-    st.markdown(f"Percent of VMT that can {'feasibly' if st.session_state.phase == Phase.FEASIBLE else 'with likelihood'} shift to a non-car mode: **{df[(df['mode'] == Mode.CAR) & df[f'{st.session_state.phase}_shift']]['vmt'].sum() / df[df['mode'] == Mode.CAR]['vmt'].sum() * 100:.2f}%**")
-    
     # details about walking shifts
     st.header("Shifts to walking")
     
@@ -222,6 +217,7 @@ def final_summary():
     # stacked histogram of duration difference for feasible drive, non-feasible drive, and bike trips
     st.markdown("Below, a stacked histogram detailing the travel time difference distributions for drive trips that can feasibly shift to biking, drive trips that can't shift, and observed biking trips can be seen.")
     
+    print(df[f"{st.session_state.phase}_bike_shift"])
     st.plotly_chart(stacked_shift_histogram(df, Mode.BIKE, "bike_duration_minutes_adj", f"{st.session_state.phase}_bike_shift"))
     
     # get df of the % of trips/vmt that are within x minutes of biking
@@ -246,6 +242,79 @@ def final_summary():
     
     st.header("Shifts to any mode")
     
+    # overall % of trips/vmt that can shift given the run constraints
+    # NOTE: the overall %s will be 100% if some mode had no applicable steps run (since there was no restriction on shifting to that)
+    st.markdown(r"Below, the % of car trips/VMT that can shift to the 3 modes/any non-car mode can be seen in table form.")
+    overall_shifts = pd.DataFrame(index=[r"% of Car Trips", r"% of VMT"])
+    overall_shifts["Feasible to switch to walk"] = [
+        f'{len(df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_walk_shift"])]) / len(df[(df["mode"] == Mode.CAR)]) * 100: .2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_walk_shift"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100: .2f}%'
+    ]
+    overall_shifts["Feasible to switch to bike"] = [
+        f'{len(df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_bike_shift"])]) / len(df[(df["mode"] == Mode.CAR)]) * 100: .2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_bike_shift"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%'
+    ]
+    overall_shifts["Feasible to switch to transit"] = [
+        f'{len(df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_transit_shift"])]) / len(df[(df["mode"] == Mode.CAR)]) * 100:.2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_transit_shift"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%'
+    ]
+    overall_shifts["Feasible to switch to any non-car mode"] = [
+        f'{len(df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"])]) / len(df[(df["mode"] == Mode.CAR)]) * 100:.2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%'
+    ]
+    st.table(overall_shifts)
+    
+    # fastest alternative by mode comparisons
+    st.markdown(r"Below, the distribution of the duration difference between the best non-car mode and car for shifted trips is shown")
+    df["transit_duration_seconds_na"] = df["transit_duration"].fillna(9999999) * 60 # if no transit trip found, make it very slow to allow other modes to beat it
+    df["min_alt_mode_duration"] = df[["transit_duration_seconds_na", "bike_duration_seconds_adj", "walk_duration_seconds"]].min(axis=1)
+    df["fastest_mode"] = Mode.WALK
+    df["fastest_mode"] = np.where(df["bike_duration_seconds_adj"] == df["min_alt_mode_duration"], Mode.BIKE, df["fastest_mode"]) # is fastest if it is the previously calculated minimum
+    df["fastest_mode"] = np.where(df["transit_duration_seconds_na"] == df["min_alt_mode_duration"], Mode.TRANSIT, df["fastest_mode"]) # is fastest if it is the previously calculated minimum
+    
+    overall_shift_comparison = pd.DataFrame(index=[r"% of Car Trips", r"% of VMT"])
+    overall_shift_comparison["Walk is the fastest alternative"] = [
+        len(df[(df["mode"] == Mode.CAR) & (df["fastest_mode"] == Mode.WALK)]) / len(df[df["mode"] == Mode.CAR]),
+        df[(df["mode"] == Mode.CAR) & (df["fastest_mode"] == Mode.WALK)]["vmt"].sum() / df[df["mode"] == Mode.CAR]["vmt"].sum()
+    ]
+    overall_shift_comparison["Bike is the fastest alternative"] = [
+        len(df[(df["mode"] == Mode.CAR) & (df["fastest_mode"] == Mode.BIKE)]) / len(df[df["mode"] == Mode.CAR]),
+        df[(df["mode"] == Mode.CAR) & (df["fastest_mode"] == Mode.BIKE)]["vmt"].sum() / df[df["mode"] == Mode.CAR]["vmt"].sum()
+    ]
+    overall_shift_comparison["Transit is the fastest alternative"] = [
+        len(df[(df["mode"] == Mode.CAR) & (df["fastest_mode"] == Mode.TRANSIT)]) / len(df[df["mode"] == Mode.CAR]),
+        df[(df["mode"] == Mode.CAR) & (df["fastest_mode"] == Mode.TRANSIT)]["vmt"].sum() / df[df["mode"] == Mode.CAR]["vmt"].sum()
+    ]
+    overall_shift_comparison["Feasible to switch to any non-car mode"] = [
+        len(df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"])]) / len(df[(df["mode"] == Mode.CAR)]),
+        df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum()
+    ]
+    st.table(overall_shift_comparison)
+    
+    # histogram for min travel time difference for all modes
+    # not sure how to do the tradiational stacked histogram with everything in it
+    st.markdown(r"Below, the distribution of the duration difference between the best non-car mode and car for shifted trips is shown")
+    df["car_minus_min_alt_mode_duration"] = (df["min_alt_mode_duration"] - df["car_duration_seconds_adj"]) / 60
+    fig5 = px.histogram(df, x="car_minus_min_alt_mode_duration")
+    st.plotly_chart(fig5)
+    
+    # table for fastest alternative mode being within x minutes of driving
+    st.markdown(r"The % of car trips and VMT that are within x minutes from the fastest alternative mode can be seen in the below table.")
+    duration_diff_df = pd.DataFrame(index=[r"% of Car Trips", r"% of VMT"])
+    duration_diff_df["Fastest mode is within 5 minutes of driving"] = [
+        f'{len(df[(df["mode"] == Mode.CAR) & (df["car_minus_min_alt_mode_duration"].abs() <= 5)]) / len(df[(df["mode"] == Mode.CAR)]): .2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df["car_minus_min_alt_mode_duration"].abs() <= 5)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum():.2f}%'
+    ]
+    duration_diff_df["Fastest mode is within 15 minutes of driving"] = [
+        f'{len(df[(df["mode"] == Mode.CAR) & (df["car_minus_min_alt_mode_duration"].abs() <= 15)]) / len(df[(df["mode"] == Mode.CAR)]): .2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df["car_minus_min_alt_mode_duration"].abs() <= 15)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum():.2f}%'
+    ]
+    duration_diff_df["Fastest mode is within 30 minutes of driving"] = [
+        f'{len(df[(df["mode"] == Mode.CAR) & (df["car_minus_min_alt_mode_duration"].abs() <= 30)]) / len(df[(df["mode"] == Mode.CAR)]): .2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df["car_minus_min_alt_mode_duration"].abs() <= 30)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum():.2f}%'
+    ]
+    st.table(duration_diff_df)
+    
     st.header("Geography")
     
     # map of the % of trips in each community regino that can shift given the restrictions
@@ -254,15 +323,29 @@ def final_summary():
     communities["val"] = values
     
     st.markdown(f"This map shows the % of trips in each community region that can {'feasibly' if st.session_state.phase == Phase.FEASIBLE else 'with likelihood'} shift to any alternative non-car mode.")
-    fig = px.choropleth(communities, geojson=communities.geometry, locations=communities.index, color="val", color_continuous_scale=["red", "yellow", "green"], range_color=(0, 1), projection="albers usa")
-    fig.update_layout(margin=dict(l=0, r=0, b=0, t=0),
+    fig0 = px.choropleth(communities, geojson=communities.geometry, locations=communities.index, color="val", color_continuous_scale=["red", "yellow", "green"], range_color=(0, 1), projection="albers usa")
+    fig0.update_layout(margin=dict(l=0, r=0, b=0, t=0),
                 width=900, 
                 height=500,
     )
-    fig.update_geos(fitbounds="locations", visible=False)
-    st.plotly_chart(fig)
+    fig0.update_geos(fitbounds="locations", visible=False)
+    st.plotly_chart(fig0)
     
-    st.header("Shifts by categories")
+    # map of % of trips in each community regino that can shift competitively when considering the fastest alternative mode
+    df["competitive_timing"] = df["car_minus_min_alt_mode_duration"].abs() <= 15
+    values_competitive = (df.groupby("community")["competitive_timing"].mean()).fillna(0)
+    communities["val_comp"] = values_competitive
+    
+    st.markdown(f"This map shows the % of trips in each community region that can competitively shift (maximum bidirectional difference of 15 minutes) to the fastest alternative non-car mode.")
+    fig1 = px.choropleth(communities, geojson=communities.geometry, locations=communities.index, color="val_comp", color_continuous_scale=["red", "yellow", "green"], range_color=(0, 1), projection="albers usa")
+    fig1.update_layout(margin=dict(l=0, r=0, b=0, t=0),
+                width=900, 
+                height=500,
+    )
+    fig1.update_geos(fitbounds="locations", visible=False)
+    st.plotly_chart(fig1)
+    
+    st.header("Raw metrics")
     
     st.markdown(inspect.cleandoc(
         f"""- Total number of person trips on car before applying mode shifts: **{len(df[df['mode'] == Mode.CAR]):,}**
@@ -301,6 +384,8 @@ def final_summary():
         )
     )
     
+    st.header("Shifts by categories")
+    
     st.markdown(r"Below, the % of trips that can shift when segmented by income bracket are shown.")
     
     income_pct = df[df["income_detailed"] != "na"].groupby("income_detailed")[f"{st.session_state.phase}_shift"].mean().reindex(["Under 15,000", "$15,000-$24,999", "$25,000-$34,999", "$35,000-$49,999", "$50,000-$74,999", "$75,000-$99,999", "$100,000-$149,999", "$150,000-$199,999", "$200,000-$249,999", "$250,000 or more"])
@@ -324,14 +409,6 @@ def final_summary():
     gender_pct = df[df["gender_cleaned"] != "Prefer not to answer"].groupby("gender_cleaned")[f"{st.session_state.phase}_shift"].mean()
     fig4 = px.bar(x=gender_pct.index, y=gender_pct.values)
     st.plotly_chart(fig4)
-    
-    st.markdown(r"Below, the distribution of the duration difference between the best non-car mode and car for shifted trips is shown")
-    df["transit_duration_seconds_na"] = df["transit_duration"].fillna(9999999) * 60
-    df["min_alt_mode_duration"] = df[["transit_duration_seconds_na", "bike_duration_seconds_adj", "walk_duration_seconds"]].min(axis=1)
-    df["car_minus_min_alt_mode_duration"] = (df["car_duration_seconds_adj"] - df["min_alt_mode_duration"]) / 60
-    
-    fig5 = px.histogram(df, x="car_minus_min_alt_mode_duration")
-    st.plotly_chart(fig5)
     
     # if handler["save_result"]:
     #     with st.spinner("Exporting to csv"):
