@@ -12,9 +12,9 @@ probable_steps:
     - WalkDurationDifferenceStep
     - BikeDurationDifferenceStep
     - TransitDurationDifferenceStep
-    - WalkTimingStep
-    - BikeTimingStep
-    - TransitTimingStep
+    # - WalkTimingStep
+    # - BikeTimingStep
+    # - TransitTimingStep
     - BikeHighLTSDistStep
     - WalkPurposeStep
     - BikePurposeStep

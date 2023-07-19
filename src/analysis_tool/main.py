@@ -148,8 +148,8 @@ def final_summary():
     
     st.title("Summary")
     
-    st.markdown("Below are the set percentiles for each step (if it is -1, it is not applicable--either disabled/not set or categorical).")
-    st.write({step_name: step_class.get_cutoff() for step_name, step_class in st.session_state.step_class_dict.items()})
+    st.markdown("Below are the percentiles that were run (1 for categoricals indicates that it was run).")
+    st.write({key: val[0] for key, val in st.session_state.cache.items()})
     
     df.loc[:, f"{st.session_state.phase}_shift"] = (
         df[f"{st.session_state.phase}_transit_shift"] | 
@@ -275,7 +275,7 @@ def show_step():
         if curr.is_continuous():
             st.session_state.cache[st.session_state.step] = curr.get_cutoff(), curr.get_cutoff_mode()
         else:
-            st.session_state.cache[st.session_state.step] = curr.get_cutoff()
+            st.session_state.cache[st.session_state.step] = (curr.get_cutoff(), )
         curr.show_step_streamlit()
     else:
         st.header("Click the run step button once the desired settings have been set.")
