@@ -104,6 +104,7 @@ def setup_inputs():
     st.session_state["step_class_dict"][st.session_state.step] =  getattr(st.session_state.overall_step, st.session_state.step)(st.session_state.df)
     st.session_state["step_class"] = st.session_state["step_class_dict"][st.session_state.step]
     st.session_state["in_summary"] = False
+    st.session_state["cache"] = dict()
     
     return 0
     
@@ -124,6 +125,7 @@ def setup_probable():
     st.session_state["step_class"] = steps.probable_steps.WalkDurationDifferenceStep(df)
     st.session_state["step_class_dict"] = dict()
     st.session_state["in_summary"] = False
+    st.session_state["cache"] = dict()
     
     print("probable setup")
     
@@ -252,24 +254,31 @@ def show_step():
     st.title(curr.get_name())
     
     if curr.is_continuous():
-        continuous_opt = st.sidebar.radio("Choose how to set the cutoff", (CutoffMode.PCT, CutoffMode.RAW), key=st.session_state.step + st.session_state.phase + "radio")
-        curr.set_cutoff_mode(continuous_opt)
-        if continuous_opt == CutoffMode.PCT:
-            value = st.sidebar.slider("Select a value:", 0.0, 1.0, float(curr.get_cutoff()), 0.01, key=st.session_state.step + st.session_state.phase + "pct_slider")
-        elif continuous_opt == CutoffMode.RAW:
+        curr.set_cutoff_mode(st.sidebar.radio("Choose how to set the cutoff", (CutoffMode.PCT, CutoffMode.RAW)))
+        if curr.get_cutoff_mode() == CutoffMode.PCT:
+            curr.set_cutoff(st.sidebar.slider("Select a value:", 0.0, 1.0, 0.95, 0.01))
+        elif curr.get_cutoff_mode() == CutoffMode.RAW:
             extrema = curr.get_extrema()
-            value = st.sidebar.slider("Select a value:", float(extrema[0]), float(extrema[1]), float(extrema[1]), float((extrema[1] - extrema[0]) / 100), key=st.session_state.step + st.session_state.phase + "raw_slider")
+            curr.set_cutoff(st.sidebar.slider("Select a value:", float(extrema[0]), float(extrema[1]), float(extrema[1]), float((extrema[1] - extrema[0]) / 100)))
         else:
             raise RuntimeError("something went wrong")
-        curr.set_cutoff(value)
         st.sidebar.markdown(f"Cutoff equivalent: {curr.get_cutoff_equivalent():.2f}")
     
     if st.sidebar.button("Disable step"):
+        if curr.get_name() in st.session_state.cache:
+            del st.session_state.cache[curr.get_name()]
         curr.disable()
     else:
         curr.apply_step()
         
-    curr.show_step_streamlit()
+    if st.sidebar.button("Run step", use_container_width=True):
+        if curr.is_continuous():
+            st.session_state.cache[st.session_state.step] = curr.get_cutoff(), curr.get_cutoff_mode()
+        else:
+            st.session_state.cache[st.session_state.step] = curr.get_cutoff()
+        curr.show_step_streamlit()
+    else:
+        st.header("Click the run step button once the desired settings have been set.")
     
 
 def run():
@@ -279,11 +288,23 @@ def run():
     if st.sidebar.button("Finish and move to summary"):
         st.session_state.in_summary = True
         st.experimental_rerun()
+        
+    def add_cache(s):
+        if s in st.session_state.cache:
+            temp = st.session_state.cache[s]
+            if len(temp) == 2:
+                if temp[1] == CutoffMode.PCT:
+                    return f"{s} - {temp[0] * 100:.0f}th pct"
+                return f"{s} - {temp[0]:.2f}"
+            else:
+                return f"{s} - {1}"
+            
+        return s
     
     if st.session_state.phase == Phase.FEASIBLE:
-        option = option_slot.selectbox("Choose the step you want to run.", st.session_state["feasible_steps"])
+        option = option_slot.selectbox("Choose the step you want to run.", st.session_state["feasible_steps"], format_func=add_cache)
     elif st.session_state.phase == Phase.PROBABLE:
-        option = option_slot.selectbox("Choose the step you want to run.", st.session_state["probable_steps"])
+        option = option_slot.selectbox("Choose the step you want to run.", st.session_state["probable_steps"], format_func=add_cache)
     else:
         print(st.session_state.phase)
         raise RuntimeError("Something went wrong with the overall step session state variable")

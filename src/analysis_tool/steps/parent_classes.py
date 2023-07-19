@@ -138,6 +138,9 @@ class ContinuousStep(BaseStep):
         self.cutoff_mode = CutoffMode.PCT
         self.column_name = column_name
         
+    def get_cutoff_mode(self) -> CutoffMode:
+        return self.cutoff_mode
+        
     def set_cutoff_mode(self, new_mode: CutoffMode) -> None:
         self.cutoff_mode = new_mode
         
