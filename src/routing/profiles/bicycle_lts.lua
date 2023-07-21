@@ -832,20 +832,16 @@ function process_way(profile, way, result)
     -- and apply a 25% speed and weight penalty to account for walking the bike
     if result.forward_speed > 0 then
       assert(result.forward_rate > 0)
-<<<<<<< HEAD
-      result.forward_speed = result.forward_speed
-=======
       -- TODO no penalty
-      result.forward_speed = result.forward_speed / 1.25
->>>>>>> 186af74 (elevation logging)
-      result.forward_rate = result.forward_rate / 1.25
+      result.forward_speed = result.forward_speed
+      result.forward_rate = result.forward_rate
       result.forward_mode = mode.pushing_bike
     end
 
     if result.backward_speed > 0 then
       assert(result.backward_rate > 0)
       result.backward_speed = result.backward_speed
-      result.backward_rate = result.backward_rate / 1.25
+      result.backward_rate = result.backward_rate
       result.backward_mode = mode.pushing_bike
     end
   end
