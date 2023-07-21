@@ -37,7 +37,7 @@ function LTS.lts_for_way(profile, way)
   -- crossings are LTS 1
   if highway == "crossing" then return 1 end
 
-  -- footpaths are LTS 1 (TODO only if they explicitly allow bikes - does OSRM allow routing on ones that don't?)
+  -- footpaths are LTS 1
   if highway == "footway" or highway == "pedestrian" then return 1 end
 
   -- restricted access facilities that allow bikes (allow bikes taken care of by OSRM)
@@ -55,18 +55,18 @@ function LTS.lts_for_way(profile, way)
   local cycleway_left = way:get_value_by_key("cycleway:left")
   local cycleway_right = way:get_value_by_key("cycleway:right")
   if highway == "cycleway" or cycleway == "track" or cycleway_left == "track" or
-    cycleway_right == "track" or cycleway == "opposite_track" then
+    cycleway_right == "track" or cycleway == "opposite_track" or cycleway_left == "opposite_track" or cycleway_right == "opposite_track" then
       -- TODO cycleway:left=opposite_track etc
       return 1
   end
 
   -- shared busways
-  -- TODO cycleway_left etc
-  if cycleway == "share_busway" or cycleway == "opposite_share_busway" then return 2 end
+  if cycleway == "share_busway" or cycleway == "opposite_share_busway" or 
+    cycleway_left == "share_busway" or cycleway_left == "opposite_share_busway"
+    cycleway_right == "share_busway" or cycleway_right == "opposite_share_busway" then return 2 end
 
   -- low speed shared lanes
-  -- TODO share_busway vs shared_lane - correct?
-  if cycleway == "shared_lane" and maxspeed and maxspeed_mph <= 25 then return 2 end
+  if (cycleway == "shared_lane" or cycleway_right == "shared_lane" or cycleway_left == "shared_lane") and maxspeed and maxspeed_mph <= 25 then return 2 end
 
   -- higher speed, non-residential shared lanes
   -- TODO what about residential high-speed shared lanes? seems to not be covered in the LTS methodology
