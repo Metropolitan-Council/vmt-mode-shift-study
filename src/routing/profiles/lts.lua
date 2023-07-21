@@ -59,7 +59,7 @@ function LTS.lts_for_way(profile, way)
 
   -- shared busways
   if cycleway == "share_busway" or cycleway == "opposite_share_busway" or 
-    cycleway_left == "share_busway" or cycleway_left == "opposite_share_busway"
+    cycleway_left == "share_busway" or cycleway_left == "opposite_share_busway" or
     cycleway_right == "share_busway" or cycleway_right == "opposite_share_busway" then return 2 end
 
   -- low speed shared lanes
