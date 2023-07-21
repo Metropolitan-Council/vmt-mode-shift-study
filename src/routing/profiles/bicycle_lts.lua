@@ -128,7 +128,7 @@ function setup()
     },
 
     service_penalties = {
-      alley             = 0.5,
+      alley             = 0.0,
     },
 
     bicycle_speeds = {
@@ -144,14 +144,14 @@ function setup()
       living_street = default_speed,
       road = default_speed,
       service = default_speed,
-      track = 12,
-      path = 13
+      track = default_speed,
+      path = default_speed
     },
 
     pedestrian_speeds = {
       footway = walking_speed,
       pedestrian = walking_speed,
-      steps = 2
+      steps = walking_speed
     },
 
     railway_speeds = {
@@ -168,8 +168,8 @@ function setup()
     },
 
     amenity_speeds = {
-      parking = 10,
-      parking_entrance = 10
+      parking = default_speed,
+      parking_entrance = default_speed
     },
 
     man_made_speeds = {
@@ -181,7 +181,7 @@ function setup()
     },
 
     bridge_speeds = {
-      movable = 5
+      movable = default_speed
     },
 
     surface_speeds = {
@@ -189,25 +189,25 @@ function setup()
       chipseal = default_speed,
       concrete = default_speed,
       concrete_lanes = default_speed,
-      wood = 10,
-      metal = 10,
-      ["cobblestone:flattened"] = 10,
-      paving_stones = 10,
-      compacted = 10,
-      cobblestone = 7,
-      unpaved = 6,
-      fine_gravel = 10,
-      gravel = 6,
-      pebblestone = 6,
-      grass_paver = 6,
-      ground = 10,
-      dirt = 8,
-      earth = 6,
-      grass = 6,
-      mud = 3,
-      sand = 3,
-      woodchips = 3,
-      sett = 9
+      wood = default_speed,
+      metal = default_speed,
+      ["cobblestone:flattened"] = default_speed,
+      paving_stones = default_speed,
+      compacted = default_speed,
+      cobblestone = default_speed,
+      unpaved = default_speed,
+      fine_gravel = default_speed,
+      gravel = default_speed,
+      pebblestone = default_speed,
+      grass_paver = default_speed,
+      ground = default_speed,
+      dirt = default_speed,
+      earth = default_speed,
+      grass = default_speed,
+      mud = default_speed,
+      sand = default_speed,
+      woodchips = default_speed,
+      sett = default_speed
     },
 
     classes = Sequence {
