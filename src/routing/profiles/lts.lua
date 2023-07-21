@@ -28,9 +28,6 @@ function LTS.lts_for_way(profile, way)
 
   local lanes_total = ((lanes_fwd and lanes_bwd) and lanes_fwd + lanes_bwd) or nil
   
-  -- TODO a bunch of stuff disallowed by the methodology - OSRM should handle most of this already
-  -- audit.
-
   -- generic paths that don't disallow bicycles
   if highway == "path" then return 1 end
 
