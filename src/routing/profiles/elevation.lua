@@ -32,47 +32,6 @@ function mark_bridges_and_tunnels(profile, way, result, data)
     end
 end
 
-function get_slopes (rasterData, source, target, distance)
-    -- lua inexplicably has no round function: https://stackoverflow.com/questions/18313171
-    local n_segments = math.max(math.floor(distance / SEGMENT_TARGET_LENGTH_METERS + 0.5), 1)
-    local seg_frac = 1 / n_segments
-    local seg_length = distance * seg_frac
-
-    print("Invalid data value " .. invalid)
-    local slopes = {}
-    for i = 1,n_segments,1 do
-        local seg_start_frac = (i - 1) * seg_frac
-        local seg_end_frac = i * seg_frac
-        
-        assert(seg_start_frac >= 0)
-        assert(seg_start_frac < 1)
-        assert(seg_end_frac > 0)
-        assert(seg_end_frac <= 1)
-
-        local origin_lon = source.lon + seg_start_frac * (target.lon - source.lon)
-        local origin_lat = source.lat + seg_start_frac * (target.lat - source.lat)
-
-        local dest_lon = source.lon + seg_end_frac * (target.lon - source.lon)
-        local dest_lat = source.lat + seg_end_frac * (target.lat - source.lat)
-
-        local origin_val = raster:interpolate(rasterData, origin_lon, origin_lat)
-        local destination_val = raster:interpolate(rasterData, dest_lon, dest_lat)
-        
-        if origin_val.datum ~= origin_val.invalid_data() and destination_val.datum ~= destination_val.invalid_data() then
-            local slope_pct = (destination_val.datum - origin_val.datum) / seg_length * 100
-
-            if (slope_pct > 35 or slope_pct < -35) then
-                print("Warning: street segment is steeper than 35%. The steepest streets are Baldwin St in Dunedin, NZ and Canton St in Pittsburgh, PA. Assuming bad data.")
-                slope_pct = 0
-            end
-
-            slopes[i] = slope_pct
-        end
-    end
-
-    return slopes
-end
-
 function get_elevation_gain_mm (rasterData, source, target, distance)
      -- lua inexplicably has no round function: https://stackoverflow.com/questions/18313171
     local n_segments = math.max(math.floor(distance / SEGMENT_TARGET_LENGTH_METERS + 0.5), 1)
@@ -125,3 +84,55 @@ function get_elevation_gain_mm (rasterData, source, target, distance)
 
     return elevation_gain_mm
 end
+
+function get_proportion_sloped_more_than (rasterData, source, target, distance, max_slope_pct)
+    -- lua inexplicably has no round function: https://stackoverflow.com/questions/18313171
+   local n_segments = math.max(math.floor(distance / SEGMENT_TARGET_LENGTH_METERS + 0.5), 1)
+   local seg_frac = 1 / n_segments
+   local seg_length = distance * seg_frac
+
+   local elevation_gain_mm = 0
+
+   local steep_segments = 0
+   local total_segments = 0
+
+   for i = 1,n_segments,1 do
+       local seg_start_frac = (i - 1) * seg_frac
+       local seg_end_frac = i * seg_frac
+       
+       assert(seg_start_frac >= 0)
+       assert(seg_start_frac < 1)
+       assert(seg_end_frac > 0)
+       assert(seg_end_frac <= 1)
+
+       local origin_lon = source.lon + seg_start_frac * (target.lon - source.lon)
+       local origin_lat = source.lat + seg_start_frac * (target.lat - source.lat)
+
+       local dest_lon = source.lon + seg_end_frac * (target.lon - source.lon)
+       local dest_lat = source.lat + seg_end_frac * (target.lat - source.lat)
+
+       local origin_val = raster:interpolate(rasterData, origin_lon, origin_lat)
+       local destination_val = raster:interpolate(rasterData, dest_lon, dest_lat)
+       
+       assert(origin_val.datum ~= origin_val.invalid_data() and destination_val.datum ~= destination_val.invalid_data())
+
+        -- print("origin elevation " .. origin_val.datum .. " meters, destination elevation " .. destination_val.datum .. "mm")
+
+        -- * 1000 because seg_length is meters and elevations are millimeters
+        local seg_elevation_mm = destination_val.datum - origin_val.datum
+        local slope_pct = seg_elevation_mm / (seg_length * 1000) * 100
+
+        if (slope_pct > 35 or slope_pct < -35) then
+            print("Warning: street segment is steeper than Baldwin St in Dunedin, NZ (35%). Assuming bad data/no slope, at " .. origin_lat .. ", " .. origin_lon)
+        elseif (slope_pct > 10) then
+            steep_segments = steep_segments + 1
+        end
+
+        total_segments = total_segments + 1
+   end
+
+   assert(total_segments == n_segments)
+
+   return steep_segments / total_segments
+end
+

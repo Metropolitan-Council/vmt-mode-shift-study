@@ -9,6 +9,7 @@ Tags = require("lualib/tags")
 find_access_tag = require("lualib/access").find_access_tag
 drive_profile = require("car_traffic")
 LTS = require("lts")
+elevation = require("elevation")
 
 local miles_to_kilometers = 1.609
 
@@ -177,7 +178,9 @@ function setup()
     },
 
     -- the car profile is used in determining maxspeeds for perceived safety
-    car_profile = drive_profile.setup()
+    car_profile = drive_profile.setup(),
+
+    elevation = load_elevation()
   }
 end
 
@@ -389,13 +392,16 @@ function process_way(profile, way, result)
 
     -- handle various other flags
     WayHandlers.roundabouts,
-    WayHandlers.startpoint,
+    --WayHandlers.startpoint, disabled - startpoint used to identify bridges/tunnels below
 
     -- set name, ref and pronunciation
     WayHandlers.names,
 
     -- set weight properties of the way
-    WayHandlers.weights
+    WayHandlers.weights,
+
+    -- mark bridges and tunnels as non-startpoints so they are treated as flat
+    mark_bridges_and_tunnels
   }
 
   WayHandlers.run(profile, way, result, data, handlers)
@@ -445,9 +451,29 @@ function process_turn (profile, turn)
   end
 end
 
+function process_segment(profile, segment)
+  -- ignore if it's not a startpoint (i.e. it's a bridge or tunnel)
+  if segment.flags.startpoint then
+    local proportion_sloped = get_proportion_sloped_more_than(profile.elevation, segment.source, segment.target, segment.distance, 10)
+    -- this conditional is unnecessary since it's otherwise multiplied by zero, but it
+    -- does supress a lot of spurious logs
+    --if proportion_sloped > 0 then
+      --print("Proportion sloped " .. proportion_sloped)
+      --print("Weight was " .. segment.weight)
+      -- calculate the weight factor. Segments over 10% get double weight
+      segment.weight = segment.weight + segment.weight * proportion_sloped
+      --print("Weight is " .. segment.weight)
+    --end
+  else
+    print("Skipping elevation on non-startpoint (bridge/tunnel)")
+  end
+end
+
+
 return {
   setup = setup,
   process_way =  process_way,
   process_node = process_node,
-  process_turn = process_turn
+  process_turn = process_turn,
+  process_segment = process_segment
 }
