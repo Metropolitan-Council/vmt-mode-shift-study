@@ -15,5 +15,8 @@ gdal_calc.py --calc "A*1000" -A "$DIR/combined.tif" --outfile "$DIR/millimeters.
 # use bilinear, since most targets will be very close to the original
 gdalwarp -t_srs "+init=EPSG:4326" -r bilinear -of AAIGRID -ot Int32 "$DIR/millimeters.tif" "$DIR/final_esri.asc"
 
-head -n 6 final_esri.asc > final_header.asc
-tail -n +7 final_esri.asc > final.asc
+rm "$DIR/millimeters.tif"
+
+head -n 6 "$DIR/final_esri.asc" > "$DIR/final_header.asc"
+tail -n +7 "$DIR/final_esri.asc" > "$DIR/final.asc"
+rm "$DIR/final_esri.asc"
