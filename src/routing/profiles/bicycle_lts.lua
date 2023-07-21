@@ -1,5 +1,8 @@
 -- Bicycle profile
 
+-- originally 59, from the San Francisco paper, but reduced as that seemed excessive
+FLAT_DISTANCE_PER_VERTICAL_METER = 25
+
 -- TODO version incompatibilities with api version 2
 api_version = 4
 
@@ -931,7 +934,7 @@ function process_segment(profile, segment)
     --print("Weight was " .. segment.weight)
     -- calculate the weight factor. Each meter of elevation gain is equivalent to an additional 59 meters flat.
     local weight_per_meter = segment.weight / segment.distance
-    segment.weight = segment.weight + weight_per_meter * 59 * math.max(0, elevation_gain_mm) / 1000
+    segment.weight = segment.weight + weight_per_meter * FLAT_DISTANCE_PER_VERTICAL_METER * math.max(0, elevation_gain_mm) / 1000
     --print("Weight is " .. segment.weight)
   else
     print("Skipping elevation on non-startpoint (bridge/tunnel)")
