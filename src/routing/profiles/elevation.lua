@@ -3,9 +3,9 @@ SEGMENT_TARGET_LENGTH_METERS = 10
 
 function load_elevation ()
     local ELEVATION_FILE = assert(os.getenv("ELEVATION_FILE"), "ELEVATION_FILE environment variable not specified!")
-    local min_lon = -94.000558499214
-    local min_lat = 41.999443919979
-    local cell_size = 0.000092592677
+    local min_lon = -95.000555555994
+    local min_lat = 41.999444440680
+    local cell_size = 0.000092592593
     local ncols = 32412
     local nrows = 43212
 
@@ -108,7 +108,7 @@ function get_elevation_gain_mm (rasterData, source, target, distance)
             local slope_pct = seg_elevation_mm / (seg_length * 1000) * 100
 
             if (slope_pct > 35 or slope_pct < -35) then
-                print("Warning: street segment is steeper than 35%. The steepest streets are Baldwin St in Dunedin, NZ and Canton St in Pittsburgh, PA, with a slope of about 35%. Assuming bad data/no slope.")
+                print("Warning: street segment is steeper than Baldwin St in Dunedin, NZ (35%). Assuming bad data/no slope, at " .. origin_lat .. ", " .. origin_lon)
             else
                 elevation_gain_mm = elevation_gain_mm + seg_elevation_mm
             end
