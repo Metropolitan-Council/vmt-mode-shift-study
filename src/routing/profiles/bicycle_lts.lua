@@ -33,6 +33,8 @@ function setup()
       use_turn_restrictions         = false,
       continue_straight_at_waypoint = false,
       mode_change_penalty           = 30,
+      -- make sure elevation is calculated in both directions
+      force_split_edges = true
     },
 
     -- Penalties for unsignalized intersections of different LTS values, in "weighted seconds"
@@ -236,10 +238,7 @@ function setup()
     car_profile = car_profile.setup(),
 
     -- TODO loading elevation twice in bike and walk profiles
-    elevation = load_elevation(),
-
-    -- make sure elevation is calculated in both directions
-    force_split_edges = true
+    elevation = load_elevation()
   }
 end
 

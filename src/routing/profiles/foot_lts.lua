@@ -33,6 +33,7 @@ function setup()
       u_turn_penalty                = 2,
       continue_straight_at_waypoint = false,
       use_turn_restrictions         = false,
+      force_split_edges             = true
     },
 
     -- map OSM highway tags 
