@@ -124,7 +124,8 @@ function get_proportion_sloped_more_than (rasterData, source, target, distance, 
 
         if (slope_pct > 35 or slope_pct < -35) then
             print("Warning: street segment is steeper than Baldwin St in Dunedin, NZ (35%). Assuming bad data/no slope, at " .. origin_lat .. ", " .. origin_lon)
-        elseif (slope_pct > 10) then
+        elseif (slope_pct > max_slope_pct) then
+            --print("origin elevation " .. origin_val.datum .. " mm, destination elevation " .. destination_val.datum .. "mm, segment length " .. seg_length .. "m, calculated slope " .. slope_pct .. " at " .. origin_lat .. ", " .. origin_lon)
             steep_segments = steep_segments + 1
         end
 
