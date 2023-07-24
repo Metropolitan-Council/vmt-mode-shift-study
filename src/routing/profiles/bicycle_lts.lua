@@ -20,7 +20,7 @@ elevation = require("elevation")
 
 function setup()
   local default_speed = 12 * 1.609
-  local walking_speed = 4
+  local walking_speed = 4.86
 
   return {
     properties = {
@@ -32,7 +32,7 @@ function setup()
       max_speed_for_map_matching    = 110/3.6, -- kmph -> m/s
       use_turn_restrictions         = false,
       continue_straight_at_waypoint = false,
-      mode_change_penalty           = 30,
+      mode_change_penalty           = 0,
       -- make sure elevation is calculated in both directions
       force_split_edges = true
     },
@@ -690,7 +690,7 @@ function process_way(profile, way, result)
   if lts > 2 or result.forward_mode == mode.inaccessible or result.backward_mode == mode.inaccessible or
     result.forward_speed == -1 or result.backward_speed == -1 or data.bicycle == "dismount" then
     -- process as a walk-bike segment
-    walk_profile.process_way(profile.walk_profile, way, result)
+    profile.walk_profile.process_way(profile.walk_profile, way, result)
 
     -- and apply a 25% speed and weight penalty to account for walking the bike
     if result.forward_speed > 0 then
@@ -715,72 +715,75 @@ function process_way(profile, way, result)
 end
 
 function process_turn(profile, turn)
-  -- TODO: on an LTS 3-4 turn, should we use the pedestrian turn weighting?
-
-  turn.duration = 0
-  turn.weight = 0
-
-  if turn.has_traffic_light then
-    -- minimum of all LTS at intersection
-    lts = math.min(turn.source_priority_class, turn.target_priority_class)
-
-    for i,road in ipairs(turn.roads_on_the_right) do
-      if road.priority_class < lts then lts = road.priority_class end
-    end
-
-    for i,road in ipairs(turn.roads_on_the_left) do
-      if road.priority_class < lts then lts = road.priority_class end
-    end
-
-    -- LTS 5 is used for service roads, a special LTS 4 derivative that does not bleed
-    -- onto crossing roads.
-    -- Will only happen at intersections between all service roads, as otherwise there would be a lower min LTS
-    if lts == 5 then lts = 4 end
-
-    local weight = profile.signalized_intersection_penalties[lts]
-
-    if weight == nil then
-      print("WARN: weight was nil for lts " .. lts)
-      weight = 1
-    end
-
-    turn.duration = weight
-    turn.weight = weight
-
-    assert(turn.duration > 0 and turn.weight > 0, "Signalized LTS " .. lts .. " turn does not have duration/weight")
-
+  if turn.source_mode == mode.pushing_bike and turn.target_mode == mode.pushing_bike then
+    print("Processing as pedestrian turn")
+    profile.walk_profile.process_turn(profile.walk_profile, turn)
   else
-    -- We want to ignore LTS 5 (service) 
-    lts = 1
-    if turn.source_priority_class > lts and turn.source_priority_class ~= 5 then
-      lts = turn.source_priority_class
-    end
+    turn.duration = 0
+    turn.weight = 0
 
-    if turn.target_priority_class > lts and turn.target_priority_class ~= 5 then
-      lts = turn.target_priority_class
-    end
+    if turn.has_traffic_light then
+      -- minimum of all LTS at intersection
+      lts = math.min(turn.source_priority_class, turn.target_priority_class)
+
+      for i,road in ipairs(turn.roads_on_the_right) do
+        if road.priority_class < lts then lts = road.priority_class end
+      end
+
+      for i,road in ipairs(turn.roads_on_the_left) do
+        if road.priority_class < lts then lts = road.priority_class end
+      end
+
+      -- LTS 5 is used for service roads, a special LTS 4 derivative that does not bleed
+      -- onto crossing roads.
+      -- Will only happen at intersections between all service roads, as otherwise there would be a lower min LTS
+      if lts == 5 then lts = 4 end
+
+      local weight = profile.signalized_intersection_penalties[lts]
+
+      if weight == nil then
+        print("WARN: weight was nil for lts " .. lts)
+        weight = 1
+      end
+
+      turn.duration = weight
+      turn.weight = weight
+
+      assert(turn.duration > 0 and turn.weight > 0, "Signalized LTS " .. lts .. " turn does not have duration/weight")
+
+    else
+      -- We want to ignore LTS 5 (service) 
+      lts = 1
+      if turn.source_priority_class > lts and turn.source_priority_class ~= 5 then
+        lts = turn.source_priority_class
+      end
+
+      if turn.target_priority_class > lts and turn.target_priority_class ~= 5 then
+        lts = turn.target_priority_class
+      end
 
 
-    -- maximum of all LTS at intersection
-    -- priority class 5 is a special class that's treated like class 4 for node weights, but does
-    -- not bleed over to streets. See the Beaudry Meadows Park test for an example of why this is
-    -- needed
-    for i,road in ipairs(turn.roads_on_the_right) do
-      if road.priority_class > lts and road.priority_class ~= 5 then lts = road.priority_class end
-    end
+      -- maximum of all LTS at intersection
+      -- priority class 5 is a special class that's treated like class 4 for node weights, but does
+      -- not bleed over to streets. See the Beaudry Meadows Park test for an example of why this is
+      -- needed
+      for i,road in ipairs(turn.roads_on_the_right) do
+        if road.priority_class > lts and road.priority_class ~= 5 then lts = road.priority_class end
+      end
 
-    for i,road in ipairs(turn.roads_on_the_left) do
-      if road.priority_class > lts and road.priority_class ~= 5 then lts = road.priority_class end
-    end
+      for i,road in ipairs(turn.roads_on_the_left) do
+        if road.priority_class > lts and road.priority_class ~= 5 then lts = road.priority_class end
+      end
 
-    local weight = profile.unsignalized_intersection_penalties[lts]
-    if weight == nil then
-      print("WARN: weight was nil for lts " .. lts)
-      weight = 1
+      local weight = profile.unsignalized_intersection_penalties[lts]
+      if weight == nil then
+        print("WARN: weight was nil for lts " .. lts)
+        weight = 1
+      end
+      turn.duration = weight
+      turn.weight = weight
+      assert(turn.duration > 0 and turn.weight > 0, "Unsignalized LTS " .. lts .. " turn does not have duration/weight")
     end
-    turn.duration = weight
-    turn.weight = weight
-    assert(turn.duration > 0 and turn.weight > 0, "Unsignalized LTS " .. lts .. " turn does not have duration/weight")
   end
 
   assert(turn.duration > 0 and turn.weight > 0, "Turn does not have duration/weight")
