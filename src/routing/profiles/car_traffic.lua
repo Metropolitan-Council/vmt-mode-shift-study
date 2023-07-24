@@ -84,6 +84,7 @@ function setup()
       use_turn_restrictions          = true,
       left_hand_driving              = false,
       traffic_light_penalty          = 2,
+      force_split_edges              = true
     },
 
     default_mode              = mode.driving,
@@ -379,8 +380,8 @@ function setup()
     },
 
     speed_db = speed_db,
-    speed_query = speed_query,
-    force_split_edges = true -- ensure splits at every node
+    speed_query = speed_query
+
   }
 end
 
