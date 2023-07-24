@@ -4,7 +4,8 @@ using OSRM, DataFrames, CSV, ArchGDAL, ArgParse, Logging, ProgressMeter, Geodesy
     TransitRouter, Dates, Serialization
 
 # Maximum distance for access, egress, or transfers from transit
-const MAX_LEG_WALK_DIST_METERS = 1.5 * 1609 # 1.5 mile walk allowed
+const DEFAULT_MAX_ACCESS_DIST_METERS = 1.5 * 1609 # 1.5 mile walk allowed
+const DEFAULT_MAX_EGRESS_DIST_METERS = 1.5 * 1609 # 1.5 mile walk allowed
 
 const SECONDS_PER_MINUTE = 60
 const SECONDS_PER_HOUR = SECONDS_PER_MINUTE * 60
@@ -77,10 +78,21 @@ s = ArgParseSettings()
         action = :store_arg
     "--bike-lts"
         help = "Include bicycle LTS in output"
+    "--no-geometry"
+        help = "don't include geometry in transit output"
+        action = :store_true
     "--max-rides"
         help = "Maximum number of rides for transit"
         arg_type = Int
         default = DEFAULT_MAX_RIDES
+    "--max-access-distance-meters"
+        help = "Maximum access distance to transit (meters)"
+        arg_type = Float64
+        default = DEFAULT_MAX_ACCESS_DIST_METERS
+    "--max-egress-distance-meters"
+        help = "Maximum egress distance to transit (meters)"
+        arg_type = Float64
+        default = DEFAULT_MAX_EGRESS_DIST_METERS
 end
 
 # Try to check that the path is not inside the git repository. Won't work if you've
@@ -269,7 +281,7 @@ end
 #TODO automated test
 select_representative_date(date) = Dates.tonext(x -> dayofweek(x) == dayofweek(date), REPRESENTATIVE_WEEK)
 
-function do_transit_route(net, osrm, max_rides, data_itr, n_rows)
+function do_transit_route(net, osrm, max_rides, max_access_dist_meters, max_egress_dist_meters, include_geometry, data_itr, n_rows)
     # uncomment for single-thread debugging
     #map(enumerate(data_itr)) do (i, row)
     ThreadsX.mapi(enumerate(data_itr)) do (i, row)
@@ -311,8 +323,8 @@ function do_transit_route(net, osrm, max_rides, data_itr, n_rows)
                 # even without a burn in period; see https://projects.indicatrix.org/range-raptor-transfer-compression
                 arrive_datetime,
                 HOW_MUCH_A_TRIP_CAN_VIOLATE_REQUESTED_DEPARTURE_ARRIVAL_TIME_WHEN_ALTERNATE_TRIP_ARRIVES_EARLIER_SECONDS,
-                max_access_distance_meters=MAX_LEG_WALK_DIST_METERS,
-                max_egress_distance_meters=MAX_LEG_WALK_DIST_METERS,
+                max_access_distance_meters=max_access_dist_meters,
+                max_egress_distance_meters=max_egress_dist_meters,
                 max_rides=max_rides,
                 reverse_search=true,
                 max_reverse_search_duration=RANGE_RAPTOR_MAX_REVERSE_TIME
@@ -362,8 +374,8 @@ function do_transit_route(net, osrm, max_rides, data_itr, n_rows)
                 depart_datetime - Second(HOW_MUCH_A_TRIP_CAN_VIOLATE_REQUESTED_DEPARTURE_ARRIVAL_TIME_WHEN_ALTERNATE_TRIP_ARRIVES_EARLIER_SECONDS),
                 # run range-RAPTOR until departure time + burn in period + time window length
                 RANGE_RAPTOR_BURN_IN_PERIOD_SECONDS + HOW_MUCH_A_TRIP_CAN_VIOLATE_REQUESTED_DEPARTURE_ARRIVAL_TIME_WHEN_ALTERNATE_TRIP_ARRIVES_EARLIER_SECONDS,
-                max_access_distance_meters=MAX_LEG_WALK_DIST_METERS,
-                max_egress_distance_meters=MAX_LEG_WALK_DIST_METERS,
+                max_access_distance_meters=max_access_dist_meters,
+                max_egress_distance_meters=max_egress_dist_meters,
                 max_rides=max_rides
             )[1]
 
@@ -525,7 +537,8 @@ function main(args)
     end 
 
     if transit
-        time = @elapsed result = do_transit_route(transit_network, osrm, args["max-rides"], Tables.namedtupleiterator(data), nrow(data))
+        time = @elapsed result = do_transit_route(transit_network, osrm, args["max-rides"], args["max-access-distance-meters"], args["max-egress-distance-meters"],
+            !args["no-geometry"], Tables.namedtupleiterator(data), nrow(data))
     else
         time = @elapsed result = do_street_route(osrm, Tables.namedtupleiterator(data), nrow(data), !isnothing(args["bike-lts"]))
     end
