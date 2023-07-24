@@ -690,7 +690,7 @@ function process_way(profile, way, result)
   if lts > 2 or result.forward_mode == mode.inaccessible or result.backward_mode == mode.inaccessible or
     result.forward_speed == -1 or result.backward_speed == -1 or data.bicycle == "dismount" then
     -- process as a walk-bike segment
-    profile.walk_profile.process_way(profile.walk_profile, way, result)
+    walk_profile.process_way(profile.walk_profile, way, result)
 
     -- and apply a 25% speed and weight penalty to account for walking the bike
     if result.forward_speed > 0 then
@@ -716,8 +716,7 @@ end
 
 function process_turn(profile, turn)
   if turn.source_mode == mode.pushing_bike and turn.target_mode == mode.pushing_bike then
-    print("Processing as pedestrian turn")
-    profile.walk_profile.process_turn(profile.walk_profile, turn)
+    walk_profile.process_turn(profile.walk_profile, turn)
   else
     turn.duration = 0
     turn.weight = 0
@@ -784,9 +783,9 @@ function process_turn(profile, turn)
       turn.weight = weight
       assert(turn.duration > 0 and turn.weight > 0, "Unsignalized LTS " .. lts .. " turn does not have duration/weight")
     end
-  end
 
-  assert(turn.duration > 0 and turn.weight > 0, "Turn does not have duration/weight")
+    assert(turn.duration > 0 and turn.weight > 0, "Turn does not have duration/weight")
+  end
 end
 
 function process_segment(profile, segment)
