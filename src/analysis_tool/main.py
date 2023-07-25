@@ -232,7 +232,7 @@ def final_summary():
     st.table(get_summary_df(df, st.session_state.step_class_dict.values(), Mode.TRANSIT, f"{st.session_state.phase}_transit_shift"))
         
     # stacked histogram of duration difference for feasible drive, non-feasible drive, and transit trips
-    st.markdown("Below, a stacked histogram detailing the travel time difference distributions for drive trips that can feasibly shift to transit, drive trips that can't shift, and observed transit trips can be seen. NOTE: due to the need to filter out trips with no valid transit trip (and thus no appliacble transit duration), there are no infeasible drive trips within this histogram.")
+    st.markdown("Below, a stacked histogram detailing the travel time difference distributions for drive trips that can feasibly shift to transit, drive trips that can't shift, and observed transit trips can be seen. NOTE: due to the need to filter out trips with no valid transit trip (and thus no applicable transit duration), there are no infeasible drive trips within this histogram.")
     
     st.plotly_chart(stacked_shift_histogram(df[(~df["transit_duration"].isna())&(df["transit_duration"]>0)&(df["transit_duration"]<1440)], Mode.TRANSIT, "transit_duration", f"{st.session_state.phase}_transit_shift"))
     
@@ -420,11 +420,6 @@ def final_summary():
     st.header("Tour-level shifts")
     
     # a tour can shift to a mode if and only if all component trips can shift to that mode
-    valid_tour = df.groupby(["wave", "person_id", "travel_date"]).agg({
-        f"{st.session_state.phase}_walk_shift": "all",
-        f"{st.session_state.phase}_bike_shift": "all",
-        f"{st.session_state.phase}_transit_shift": "all"
-    })
     temp = pd.merge(
         left=df[["wave", "person_id", "travel_date"]],
         right=df.groupby(["wave", "person_id", "travel_date"]).agg({
