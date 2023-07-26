@@ -124,12 +124,12 @@ def merge_transit_trip_details(df: pd.DataFrame, data_dir: str):
     
 def add_community(df: pd.DataFrame):
     print("adding communities")
-    communities = gpd.read_file("data/" + handler["community_shape_file_name"]).to_crs("EPSG:4326")
+    communities = gpd.read_file("data/" + handler["community_shape_file_name"]).to_crs("EPSG:4326").set_index("CTU_NAME")
     
     gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df["home_lon"], df["home_lat"]), crs="EPSG:4326")
     
-    df["community"] = -1
-    for i, row in communities.iterrows():
+    df["community"] = "na"
+    for _, row in communities.iterrows():
         df["community"] = np.where(gdf["geometry"].within(row["geometry"]), row.name, df["community"])
         
 def final_field_cleanup(df: pd.DataFrame):

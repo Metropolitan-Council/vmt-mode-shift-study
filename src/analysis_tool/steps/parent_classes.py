@@ -53,7 +53,7 @@ class BaseStep:
         return ((percent_shifts_before, percent_shifts_after), (prev_vmt, after_vmt), (abs_car_percent, abs_vmt_percent))
     
     def get_map(self):
-        temp = self.df[(self.df["community"] != -1) & (self.df["mode"]==Mode.CAR)][["community", self.name]]
+        temp = self.df[(self.df["community"] != "na") & (self.df["mode"]==Mode.CAR)][["community", self.name]]
         
         values = (temp.groupby("community")[self.name].mean()).fillna(0)
         communities = get_communities()

@@ -32,7 +32,7 @@ force_reinitialize: False
 # save_result: False
 
 # assumed to be in data/ directory
-community_shape_file_name: "shp_society_thrive_msp2040_com_des"
+community_shape_file_name: "shp_bdry_census2020counties_ctus/Census2020CTUs.shp"
 tbi_file_name: "tbi_full.csv" # recommended to keep it this
 weather_file_name: "USW00014922.csv"
 taz_terminal_time_file_name: "taz_terminal_times/TAZ3030_Terminal_times.shp"

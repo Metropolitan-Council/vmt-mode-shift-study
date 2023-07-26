@@ -14,4 +14,4 @@ def get_communities():
     communities["geometry"] = (
         communities.to_crs(communities.estimate_utm_crs()).simplify(50).to_crs(communities.crs)
     )
-    return communities
+    return communities.set_index("CTU_NAME")
