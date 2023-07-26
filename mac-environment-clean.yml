@@ -19,4 +19,6 @@ dependencies:
   - seaborn=0.12.2
   - importlib-metadata=4.11.3
   - pytz=2022.7
+  - jupyter_client
+  - jupyter_core
 prefix: /usr/local/Caskroom/miniconda/base/envs/vmtmodeenv
