@@ -328,7 +328,7 @@ def final_summary():
     communities["val"] = values
     
     st.markdown(f"This map shows the % of trips in each community region that can {'feasibly' if st.session_state.phase == Phase.FEASIBLE else 'with likelihood'} shift to any alternative non-car mode.")
-    fig0 = px.choropleth(communities, geojson=communities.geometry, locations=communities.index, color="val", color_continuous_scale=["red", "yellow", "green"], range_color=(0, 1), projection="albers usa")
+    fig0 = px.choropleth(communities, geojson=communities.geometry, locations=communities.index, color="val", range_color=(0, 1), color_continuous_scale="viridis_r", projection="albers usa")
     fig0.update_layout(margin=dict(l=0, r=0, b=0, t=0),
                 width=900, 
                 height=500,
@@ -342,7 +342,7 @@ def final_summary():
     communities["val_comp"] = values_competitive
     
     st.markdown(f"This map shows the % of trips in each community region that can competitively shift (maximum bidirectional difference of 15 minutes) to the fastest alternative non-car mode.")
-    fig1 = px.choropleth(communities, geojson=communities.geometry, locations=communities.index, color="val_comp", color_continuous_scale=["red", "yellow", "green"], range_color=(0, 1), projection="albers usa")
+    fig1 = px.choropleth(communities, geojson=communities.geometry, locations=communities.index, color="val_comp", color_continuous_scale="viridis_r", range_color=(0, 1), projection="albers usa")
     fig1.update_layout(margin=dict(l=0, r=0, b=0, t=0),
                 width=900, 
                 height=500,

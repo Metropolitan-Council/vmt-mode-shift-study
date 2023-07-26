@@ -19,10 +19,19 @@ class WalkDurationDifferenceStep(ContinuousStep):
         return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct())
     
     def get_summary_figure(self):
-        fig, ax = plot_mode_density(self.df, [(self.mode, self.column_name), (Mode.CAR, self.column_name)], percentile=self.get_cutoff_pct()) 
-        ax.set_xlim(-250, 100)
-        plt.title("Difference between car and walk rerouted durations")
-        return fig, ax
+        fig = plot_density_plotly(self.df, self.mode, self.column_name, self.get_cutoff_pct())
+        fig.update_layout(
+            title={
+                'text': r"Difference between car and walk rerouted durations",
+                'x': 0.5,
+                'xanchor': 'center',
+                'yanchor': 'top'
+            },
+            xaxis_title="Probability Density",
+            yaxis_title="Duration Difference (minutes)",
+            legend_title="Legend"
+        )
+        return fig
     
     def apply_step(self) -> None:
         if self.cutoff_mode == CutoffMode.PCT:
@@ -63,10 +72,19 @@ class BikeDurationDifferenceStep(ContinuousStep):
         return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct())
     
     def get_summary_figure(self):
-        fig, ax = plot_mode_density(self.df, [(self.mode, self.column_name), (Mode.CAR, self.column_name)], percentile=self.get_cutoff_pct()) 
-        ax.set_xlim(-250, 100)
-        plt.title("Difference between car and bike rerouted durations")
-        return fig, ax
+        fig = plot_density_plotly(self.df, self.mode, self.column_name, self.get_cutoff_pct())
+        fig.update_layout(
+            title={
+                'text': r"Difference between car and bike rerouted durations",
+                'x': 0.5,
+                'xanchor': 'center',
+                'yanchor': 'top'
+            },
+            xaxis_title="Probability Density",
+            yaxis_title="Duration Difference (minutes)",
+            legend_title="Legend"
+        )
+        return fig
     
     def apply_step(self) -> None:
         if self.cutoff_mode == CutoffMode.PCT:
@@ -109,10 +127,19 @@ class TransitDurationDifferenceStep(ContinuousStep):
         return show_summaries(self.df[~self.df["transit_duration"].isna()], modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct())
     
     def get_summary_figure(self):
-        fig, ax = plot_mode_density(self.df[~self.df["transit_duration"].isna()], [(self.mode, self.column_name), (Mode.CAR, self.column_name)], percentile=self.get_cutoff_pct()) 
-        ax.set_xlim(-250, 100)
-        plt.title("Difference between car and transit rerouted durations")
-        return fig, ax
+        fig = plot_density_plotly(self.df[~self.df["transit-duration"].isna()], self.mode, self.column_name, self.get_cutoff_pct())
+        fig.update_layout(
+            title={
+                'text': r"Difference between car and transit rerouted durations",
+                'x': 0.5,
+                'xanchor': 'center',
+                'yanchor': 'top'
+            },
+            xaxis_title="Probability Density",
+            yaxis_title="Duration Difference (minutes)",
+            legend_title="Legend"
+        )
+        return fig
     
     def apply_step(self) -> None:
         if self.cutoff_mode == CutoffMode.PCT:

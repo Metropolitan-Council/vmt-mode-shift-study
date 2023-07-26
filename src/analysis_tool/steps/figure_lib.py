@@ -3,6 +3,7 @@ import itertools
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
+import plotly.express as px
 
 from steps.enums import Mode
 
@@ -54,6 +55,43 @@ def plot_mode_density(df: pd.DataFrame, modes, percentile=0.95, size=(12, 6), bi
         plt.axvline(x=val, color=c) # plot line representing that value on the plot        
         plt.legend()
     return fig, ax
+
+def plot_density_plotly(df: pd.DataFrame, alt_mode: str, column: str, cutoff: float):
+    fig = px.histogram(
+        df[df["mode"].isin([alt_mode, Mode.CAR])], 
+        x=column, 
+        color="mode", 
+        barmode="overlay",
+        color_discrete_sequence=["orange", "blue"],
+        histnorm="probability density"
+    )
+    
+    fig.add_vline(
+        x=df[df["mode"] == Mode.CAR][column].quantile(q=cutoff), 
+        line_color="orange", 
+        line_dash="dash"
+    )
+    fig.add_vline(
+        x=df[df["mode"] == alt_mode][column].quantile(q=cutoff), 
+        line_color="blue", 
+        line_dash="dash"
+    )
+    
+    # make space for explanation / annotation
+    # fig.update_layout(margin=dict(b=100))
+
+    # add annotation
+    fig.add_annotation(dict(font=dict(color='black',size=15),
+                                            x=0,
+                                            y=-0.25,
+                                            showarrow=False,
+                                            text="To select a subset of the histogram, drag and drop. To zoom back to default, double click.",
+                                            textangle=0,
+                                            xanchor='left',
+                                            xref="paper",
+                                            yref="paper"))
+    
+    return fig
 
 def plot_multi_barplot(df: pd.DataFrame, x: str, y: str, figsize=(7, 5), order=None):
     # plot normalized bar plot of the values in each mode side by side

@@ -19,10 +19,19 @@ class BikeHighLTSDistStep(ContinuousStep):
         return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct())
     
     def get_summary_figure(self):
-        fig, ax = plot_mode_density(self.df, [(self.mode, self.column_name), (Mode.CAR, self.column_name)], percentile=self.get_cutoff_pct()) 
-        ax.set_xlim(left=0, right=500)
-        plt.title(r"High LTS (3/4) distance for observed bike and car trips")
-        return fig, ax
+        fig = plot_density_plotly(self.df, self.mode, self.column_name, self.get_cutoff_pct())
+        fig.update_layout(
+            title={
+                'text': r"High LTS (3/4) distance for observed bike and car trips",
+                'x': 0.5,
+                'xanchor': 'center',
+                'yanchor': 'top'
+            },
+            xaxis_title="Probability Density",
+            yaxis_title="High LTS Distance (meters)",
+            legend_title="Legend"
+        )
+        return fig
     
     def apply_step(self):
         if self.cutoff_mode == CutoffMode.PCT:

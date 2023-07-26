@@ -59,7 +59,7 @@ class BaseStep:
         communities = get_communities()
         communities["val"] = values
         # UTM 15-n, crs 26915
-        fig = px.choropleth(communities, geojson=communities.geometry, locations=communities.index, color="val", color_continuous_scale=["red", "yellow", "green"], range_color=(0, 1), projection="albers usa")
+        fig = px.choropleth(communities, geojson=communities.geometry, locations=communities.index, color="val", color_continuous_scale="viridis_r", range_color=(0, 1), projection="albers usa")
         fig.update_layout(margin=dict(l=0, r=0, b=0, t=0),
                   width=900, 
                   height=500,
@@ -129,8 +129,13 @@ class BaseStep:
             st.markdown(section)
             temp = st.empty()
             slots.append(temp)
+        
+        fig = self.get_summary_figure()
+        if type(fig) == tuple:  # normal matplotlib fig, ax
+            slots[0].pyplot(fig[0])
+        else:  # plotly chart
+            slots[0].plotly_chart(fig)
             
-        slots[0].pyplot(self.get_summary_figure()[0])
         slots[1].dataframe(self.get_summary_statistics())
         slots[2].plotly_chart(self.get_map())
         
