@@ -411,32 +411,33 @@ def final_summary():
     
     st.markdown(r"Below, the % of trips that can shift when segmented by income bracket is shown.")
     
-    income_pct = df[df["income_detailed"] != "na"].groupby("income_detailed")[f"{st.session_state.phase}_shift"].mean().reindex(["Under 15,000", "$15,000-$24,999", "$25,000-$34,999", "$35,000-$49,999", "$50,000-$74,999", "$75,000-$99,999", "$100,000-$149,999", "$150,000-$199,999", "$200,000-$249,999", "$250,000 or more"])
-    fig1 = px.bar(x=income_pct.index, y=income_pct.values)
+    print(df[df["income_detailed"] != "na"]["income_detailed"].value_counts())
+    income_pct = df[df["income_detailed"] != "na"].groupby("income_detailed")[f"{st.session_state.phase}_shift"].mean().reindex(["Under $15,000", "$15,000-$24,999", "$25,000-$34,999", "$35,000-$49,999", "$50,000-$74,999", "$75,000-$99,999", "$100,000-$149,999", "$150,000-$199,999", "$200,000-$249,999", "$250,000 or more"])
+    fig1 = px.bar(x=income_pct.index, y=income_pct.values, color=income_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
     st.plotly_chart(fig1)
     
     st.markdown(r"Below, the % of trips that can shift when segmented by trip purpose are shown.")
               
     purpose_pct = df[df["purpose_cleaned"] != "Missing"].groupby("purpose_cleaned")[f"{st.session_state.phase}_shift"].mean()
-    fig2 = px.bar(x=purpose_pct.index, y=purpose_pct.values)
+    fig2 = px.bar(x=purpose_pct.index, y=purpose_pct.values, color=purpose_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
     st.plotly_chart(fig2)
     
     st.markdown(r"Below, the % of trips that can shift when segmented by person type are shown.")
                 
     person_pct = df[df["person_type"] != "na"].groupby("person_type")[f"{st.session_state.phase}_shift"].mean()
-    fig3 = px.bar(x=person_pct.index, y=person_pct.values)
+    fig3 = px.bar(x=person_pct.index, y=person_pct.values, color=person_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
     st.plotly_chart(fig3)
     
     st.markdown(r"Below, the % of trips that can shift when segmented by gender are shown.")
     
     gender_pct = df[df["gender_cleaned"] != "Prefer not to answer"].groupby("gender_cleaned")[f"{st.session_state.phase}_shift"].mean()
-    fig4 = px.bar(x=gender_pct.index, y=gender_pct.values)
+    fig4 = px.bar(x=gender_pct.index, y=gender_pct.values, color=gender_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
     st.plotly_chart(fig4)
     
     st.markdown(r"Below, the % of trips that can shift when segmented by TBI wave is shown.")
     
     wave_pct = df.groupby("wave")[f"{st.session_state.phase}_shift"].mean()
-    fig6 = px.bar(x=wave_pct.index, y=wave_pct.values)
+    fig6 = px.bar(x=wave_pct.index, y=wave_pct.values, color=wave_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
     st.plotly_chart(fig6)
     
     st.header("Tour-level shifts")
