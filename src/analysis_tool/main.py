@@ -13,55 +13,79 @@ from settings import handler, get_communities
 from steps.enums import *
 from util import get_num_cold_starts, add_value_labels, rvb, stateful_button, stacked_shift_histogram, get_summary_df, get_duration_diff_df
 import json
-
-def start_screen():
-    st.title("Select the steps that you would like to run")
     
-    st.session_state["feasible_steps"] = []
-    st.session_state["probable_steps"] = []
-    st.session_state["feasible_disabled"] = False
-    st.session_state["probable_disabled"] = False
+def run_all(phase: Phase):
+    if "df" not in st.session_state:
+        setup_df()
+        
+    setup_vars(phase)
+
+    if phase == Phase.FEASIBLE:
+        for step in st.session_state.feasible_steps:
+            curr: steps.parent_classes.BaseStep = getattr(st.session_state.overall_step, step)(st.session_state.df)
+            curr.apply_step()
+            st.session_state.step_class_dict[step] = curr
+    elif phase == Phase.PROBABLE:
+        for step in st.session_state.probable_steps:
+            curr: steps.parent_classes.BaseStep = getattr(st.session_state.overall_step, step)(st.session_state.df)
+            curr.apply_step()
+            st.session_state.step_class_dict[step] = curr
+            
+    st.session_state["summary_screen"] = True
+    st.experimental_rerun()
+        
+def start_screen_feasible():
+    st.title("Configure the feasible phase")
+    
+    if "feasible_steps" not in st.session_state:
+        st.session_state["feasible_steps"] = []
     
     st.sidebar.header("Actions")
-    
-    # NOTE: disabling the feasible phase is untested and may fail if commented back in--the code was written under the assumption that the feasible phase is always ran first before the probable section
-    # if stateful_button("Disable feasible phase", key="feasible_button"):
-    #     st.session_state["feasible_disabled"] = True
-    if stateful_button("Disable probable phase", key="probable_button"):
-        st.session_state["probable_disabled"] = True
         
     if st.sidebar.button("Begin"):
-        st.session_state["finish_start"] = True
+        if "phase" not in st.session_state or st.session_state.phase != Phase.FEASIBLE:
+            setup_vars(Phase.FEASIBLE)
+        st.session_state.start_screen_feasible = False
         st.experimental_rerun()
     if st.sidebar.button("Begin with all steps selected"):
         st.session_state["feasible_steps"] = handler["feasible_steps"]
-        st.session_state["probable_steps"] = handler["probable_steps"]
-        st.session_state["finish_start"] = True
+        if "phase" not in st.session_state or st.session_state.phase != Phase.FEASIBLE:
+            setup_vars(Phase.FEASIBLE)
+        st.session_state.start_screen_feasible = False
         st.experimental_rerun()
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.header("Feasible")
         
-        for step in handler["feasible_steps"]:
-            if st.checkbox(f"Feasible - {step}", disabled=st.session_state["feasible_disabled"]):
-                st.session_state["feasible_steps"].append(step)
-            else:
-                if step in st.session_state["feasible_steps"]:
-                    st.session_state["feasible_steps"].remove(step)
-                    
-    with col2: 
-        st.header("Probable")
+    if st.sidebar.button("Run all selected steps"):
+        st.session_state.start_screen_feasible = False
+        run_all(Phase.FEASIBLE)
         
-        for step in handler["probable_steps"]:
-            if st.checkbox(f"Probable - {step}", disabled=st.session_state["probable_disabled"]):
-                st.session_state["probable_steps"].append(step)
-            else:
-                if step in st.session_state["probable_steps"]:
-                    st.session_state["probable_steps"].remove(step)
+    st.session_state["feasible_steps"] = st.multiselect("Choose the feasible steps to run", handler["feasible_steps"])
+    
+def start_screen_probable():
+    st.title("Configure the probable steps")
+    
+    if "probable_steps" not in st.session_state:
+        st.session_state["probable_steps"] = []
+    
+    st.sidebar.header("Actions")
+        
+    if st.sidebar.button("Begin"):
+        if "phase" not in st.session_state or st.session_state.phase != Phase.PROBABLE:
+            setup_vars(Phase.PROBABLE)
+        st.session_state.start_screen_probable = False
+        st.experimental_rerun()
+    if st.sidebar.button("Begin with all steps selected"):
+        st.session_state["feasible_steps"] = handler["feasible_steps"]
+        if "phase" not in st.session_state or st.session_state.phase != Phase.PROBABLE:
+            setup_vars(Phase.PROBABLE)
+        st.session_state.start_screen_probable = False
+        st.experimental_rerun()
+        
+    if st.sidebar.button("Run all selected steps"):
+        st.session_state.start_screen_probable = False
+        run_all(Phase.PROBABLE)
+        
+    st.session_state["probable_steps"] = st.multiselect("Choose the probable steps to run", handler["probable_steps"])
 
-@st.cache_resource
 def setup_df():
     drive_data_dir = keyring.get_password('msp', 'vmt_reduction_dir')
         
@@ -82,74 +106,65 @@ def setup_df():
     
     return 0
 
-def setup_feasible():
+def setup_vars(phase: Phase):
+    if phase == Phase.PROBABLE:
+        st.session_state["df"] = st.session_state.df.loc[st.session_state.df["feasible_shift"], :].copy()
+
     df: pd.DataFrame = st.session_state.df
     
     # everything is feasible initially
-    df[f'{Phase.FEASIBLE}_{Mode.WALK}_shift'] = True
-    df[f'{Phase.FEASIBLE}_{Mode.BIKE}_shift'] = True
-    df[f'{Phase.FEASIBLE}_{Mode.TRANSIT}_shift'] = True
-    df[f'{Phase.FEASIBLE}_shift'] = True
+    df[f'{phase}_{Mode.WALK}_shift'] = True
+    df[f'{phase}_{Mode.BIKE}_shift'] = True
+    df[f'{phase}_{Mode.TRANSIT}_shift'] = True
+    df[f'{phase}_shift'] = True
     
+    st.session_state["phase"] = phase
+
     try:
-        if not st.session_state["feasible_disabled"]:
+        if phase == Phase.FEASIBLE:
             st.session_state["step"] = st.session_state["feasible_steps"][0]
-            st.session_state["phase"] = Phase.FEASIBLE
             st.session_state["overall_step"] = steps.feasible_steps
-        elif not st.session_state["probable_disabled"]:
+        elif phase == Phase.PROBABLE:
             st.session_state["step"] = st.session_state["probable_steps"][0]
-            st.session_state["phase"] = Phase.PROBABLE
             st.session_state["overall_step"] = steps.probable_steps
         else:
-            raise RuntimeError("No steps selected")
+            raise RuntimeError("Something went wrong with the phase enum")
     except IndexError as e:
         print("No steps selected")
         raise e
     
     st.session_state["step_class_dict"] = dict()
-    st.session_state["step_class_dict"][st.session_state.step] =  getattr(st.session_state.overall_step, st.session_state.step)(st.session_state.df)
+    st.session_state["step_class_dict"][st.session_state.step] = getattr(st.session_state.overall_step, st.session_state.step)(st.session_state.df)
     st.session_state["step_class"] = st.session_state["step_class_dict"][st.session_state.step]
-    st.session_state["in_summary"] = False
-    
-def setup_probable():
-    # st.session_state["df_feasible"] = st.session_state.df.copy()
-    st.session_state["df"] = st.session_state.df.loc[st.session_state.df["feasible_shift"], :].copy()
-    
-    df: pd.DataFrame = st.session_state.df
-    df[f'{Phase.PROBABLE}_{Mode.WALK}_shift'] = True
-    df[f'{Phase.PROBABLE}_{Mode.BIKE}_shift'] = True
-    df[f'{Phase.PROBABLE}_{Mode.TRANSIT}_shift'] = True
-    df[f'{Phase.PROBABLE}_shift'] = True
-    
-    st.session_state["phase"] = Phase.PROBABLE
-    st.session_state["step"] = "WalkDurationDifferenceStep"
-    st.session_state["overall_step"] = steps.probable_steps
-    st.session_state["step_class"] = steps.probable_steps.WalkDurationDifferenceStep(df)
-    st.session_state["step_class_dict"] = dict()
-    st.session_state["in_summary"] = False
-    # st.session_state["cache"] = dict()
-    
-    print("probable setup")
+    st.session_state["summary_screen"] = False
     
 def final_summary():
+    st.sidebar.header("Actions")
     # button to allow shift to feasible step; only possible if currently in feasible and probable not disabled
-    if st.session_state.phase == Phase.FEASIBLE and not st.session_state["probable_disabled"]:
+    if st.session_state.phase == Phase.FEASIBLE:
         if st.sidebar.button("Move to probable step"):
-            setup_probable()
+            st.session_state.summary_screen = False
+            st.session_state.start_screen_probable = True
             st.experimental_rerun()
     
     # save reference to underlying df for ease of typing
     df: pd.DataFrame = st.session_state.df
     
-    if st.sidebar.button("Restart visualization tool"):
-        del st.session_state.finish_start
-        setup_feasible()
+    if st.sidebar.button("Rerun visualization tool phase"):
+        st.session_state.summary_screen = False
+        if st.session_state.phase == Phase.FEASIBLE:
+            st.session_state.start_screen_feasible = True
+        elif st.session_state.phase == Phase.PROBABLE:
+            st.session_state.start_screen_probable = True
         st.experimental_rerun()
+        
+    if st.sidebar.button("Start visualization tool from beginning", disabled=True):
+        pass
     
     # button to save df to csv on disk
     if st.sidebar.button("Save current result to csv"):
         with st.spinner("Exporting dataframe and percentiles"):
-            df.to_csv(f"output/{st.session_state.phase}_trips.csv")
+            df.to_csv(f"output/{st.session_state.phase}_trips.csv", index=False)
             f = open(f"output/{st.session_state.phase}_percentiles.json", "w")
             f.write({step_name: step_class.get_cutoff() for step_name, step_class in st.session_state.step_class_dict.items()})
             f.close()
@@ -183,7 +198,7 @@ def final_summary():
             if prev[1] == CutoffMode.PCT:
                 settings[name] = f"{prev[0] * 100:.0f}th pct"
             elif prev[1] == CutoffMode.RAW:
-                settings[name] = f"{prev[0]:.1f} units"
+                settings[name] = f"{prev[0]:.2f} units"
             else:
                 raise RuntimeError("Something went wrong with the cutoff mode enum")
         else:
@@ -251,20 +266,20 @@ def final_summary():
     st.markdown(r"Below, the % of car trips/VMT that can shift to the 3 modes/any non-car mode can be seen in table form.")
     overall_shifts = pd.DataFrame(index=[r"% of Car Trips", r"% of VMT"])
     overall_shifts["Feasible to switch to walk"] = [
-        f'{len(df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_walk_shift"])]) / len(df[(df["mode"] == Mode.CAR)]) * 100: .1f}%',
-        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_walk_shift"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100: .1f}%'
+        f'{len(df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_walk_shift"])]) / len(df[(df["mode"] == Mode.CAR)]) * 100: .2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_walk_shift"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100: .2f}%'
     ]
     overall_shifts["Feasible to switch to bike"] = [
-        f'{len(df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_bike_shift"])]) / len(df[(df["mode"] == Mode.CAR)]) * 100: .1f}%',
-        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_bike_shift"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.1f}%'
+        f'{len(df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_bike_shift"])]) / len(df[(df["mode"] == Mode.CAR)]) * 100: .2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_bike_shift"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%'
     ]
     overall_shifts["Feasible to switch to transit"] = [
-        f'{len(df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_transit_shift"])]) / len(df[(df["mode"] == Mode.CAR)]) * 100:.1f}%',
-        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_transit_shift"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.1f}%'
+        f'{len(df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_transit_shift"])]) / len(df[(df["mode"] == Mode.CAR)]) * 100:.2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_transit_shift"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%'
     ]
     overall_shifts["Feasible to switch to any non-car mode"] = [
-        f'{len(df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"])]) / len(df[(df["mode"] == Mode.CAR)]) * 100:.1f}%',
-        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.1f}%'
+        f'{len(df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"])]) / len(df[(df["mode"] == Mode.CAR)]) * 100:.2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%'
     ]
     st.table(overall_shifts)
     
@@ -279,20 +294,20 @@ def final_summary():
     
     overall_shift_comparison = pd.DataFrame(index=[r"% of Car Trips", r"% of VMT"])
     overall_shift_comparison["Walk is the fastest alternative"] = [
-        f'{len(df[(df["mode"] == Mode.CAR) & (df["fastest_mode"] == Mode.WALK)]) / len(df[df["mode"] == Mode.CAR]) * 100:.1f}%',
-        f'{df[(df["mode"] == Mode.CAR) & (df["fastest_mode"] == Mode.WALK)]["vmt"].sum() / df[df["mode"] == Mode.CAR]["vmt"].sum() * 100:.1f}%'
+        f'{len(df[(df["mode"] == Mode.CAR) & (df["fastest_mode"] == Mode.WALK)]) / len(df[df["mode"] == Mode.CAR]) * 100:.2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df["fastest_mode"] == Mode.WALK)]["vmt"].sum() / df[df["mode"] == Mode.CAR]["vmt"].sum() * 100:.2f}%'
     ]
     overall_shift_comparison["Bike is the fastest alternative"] = [
-        f'{len(df[(df["mode"] == Mode.CAR) & (df["fastest_mode"] == Mode.BIKE)]) / len(df[df["mode"] == Mode.CAR]) * 100:.1f}%',
-        f'{df[(df["mode"] == Mode.CAR) & (df["fastest_mode"] == Mode.BIKE)]["vmt"].sum() / df[df["mode"] == Mode.CAR]["vmt"].sum() * 100:.1f}%'
+        f'{len(df[(df["mode"] == Mode.CAR) & (df["fastest_mode"] == Mode.BIKE)]) / len(df[df["mode"] == Mode.CAR]) * 100:.2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df["fastest_mode"] == Mode.BIKE)]["vmt"].sum() / df[df["mode"] == Mode.CAR]["vmt"].sum() * 100:.2f}%'
     ]
     overall_shift_comparison["Transit is the fastest alternative"] = [
-        f'{len(df[(df["mode"] == Mode.CAR) & (df["fastest_mode"] == Mode.TRANSIT)]) / len(df[df["mode"] == Mode.CAR]) * 100:.1f}%',
-        f'{df[(df["mode"] == Mode.CAR) & (df["fastest_mode"] == Mode.TRANSIT)]["vmt"].sum() / df[df["mode"] == Mode.CAR]["vmt"].sum() * 100:.1f}%'
+        f'{len(df[(df["mode"] == Mode.CAR) & (df["fastest_mode"] == Mode.TRANSIT)]) / len(df[df["mode"] == Mode.CAR]) * 100:.2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df["fastest_mode"] == Mode.TRANSIT)]["vmt"].sum() / df[df["mode"] == Mode.CAR]["vmt"].sum() * 100:.2f}%'
     ]
     overall_shift_comparison["Feasible to switch to any non-car mode"] = [
-        f'{len(df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"])]) / len(df[(df["mode"] == Mode.CAR)]) * 100:.1f}%',
-        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.1f}%'
+        f'{len(df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"])]) / len(df[(df["mode"] == Mode.CAR)]) * 100:.2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%'
     ]
     st.table(overall_shift_comparison)
     
@@ -301,22 +316,25 @@ def final_summary():
     st.markdown(r"Below, the distribution of the duration difference between the best non-car mode and car for shifted trips is shown")
     df["car_minus_min_alt_mode_duration"] = (df["min_alt_mode_duration"] - df["car_duration_seconds_adj"]) / 60
     fig5 = px.histogram(df, x="car_minus_min_alt_mode_duration", range_x=[-30,120])
+    fig5.update_layout(
+        xaxis_title="Car minus best alternative mode duration (minutes)"
+    )
     st.plotly_chart(fig5)
     
     # table for fastest alternative mode being within x minutes of driving
     st.markdown(r"The % of car trips and VMT that are within x minutes from the fastest alternative mode can be seen in the below table.")
     duration_diff_df = pd.DataFrame(index=[r"% of Car Trips", r"% of VMT"])
     duration_diff_df["Fastest mode is within 5 minutes of driving"] = [
-        f'{len(df[(df["mode"] == Mode.CAR) & (df["car_minus_min_alt_mode_duration"].abs() <= 5)]) / len(df[(df["mode"] == Mode.CAR)]) * 100: .1f}%',
-        f'{df[(df["mode"] == Mode.CAR) & (df["car_minus_min_alt_mode_duration"].abs() <= 5)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.1f}%'
+        f'{len(df[(df["mode"] == Mode.CAR) & (df["car_minus_min_alt_mode_duration"].abs() <= 5)]) / len(df[(df["mode"] == Mode.CAR)]) * 100: .2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df["car_minus_min_alt_mode_duration"].abs() <= 5)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%'
     ]
     duration_diff_df["Fastest mode is within 15 minutes of driving"] = [
-        f'{len(df[(df["mode"] == Mode.CAR) & (df["car_minus_min_alt_mode_duration"].abs() <= 15)]) / len(df[(df["mode"] == Mode.CAR)]) * 100: .1f}%',
-        f'{df[(df["mode"] == Mode.CAR) & (df["car_minus_min_alt_mode_duration"].abs() <= 15)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.1f}%'
+        f'{len(df[(df["mode"] == Mode.CAR) & (df["car_minus_min_alt_mode_duration"].abs() <= 15)]) / len(df[(df["mode"] == Mode.CAR)]) * 100: .2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df["car_minus_min_alt_mode_duration"].abs() <= 15)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%'
     ]
     duration_diff_df["Fastest mode is within 30 minutes of driving"] = [
-        f'{len(df[(df["mode"] == Mode.CAR) & (df["car_minus_min_alt_mode_duration"].abs() <= 30)]) / len(df[(df["mode"] == Mode.CAR)]) * 100: .1f}%',
-        f'{df[(df["mode"] == Mode.CAR) & (df["car_minus_min_alt_mode_duration"].abs() <= 30)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.1f}%'
+        f'{len(df[(df["mode"] == Mode.CAR) & (df["car_minus_min_alt_mode_duration"].abs() <= 30)]) / len(df[(df["mode"] == Mode.CAR)]) * 100: .2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df["car_minus_min_alt_mode_duration"].abs() <= 30)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%'
     ]
     st.table(duration_diff_df)
     
@@ -446,20 +464,20 @@ def final_summary():
     
     tour_df = pd.DataFrame(index=[r"% of Car Trips", r"% of VMT"])
     tour_df["Feasible to switch to walk"] = [
-        f'{len(df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_walk_shift_tour"])]) / len(df[(df["mode"] == Mode.CAR)]) * 100:.1f}%',
-        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_walk_shift_tour"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.1f}%',
+        f'{len(df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_walk_shift_tour"])]) / len(df[(df["mode"] == Mode.CAR)]) * 100:.2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_walk_shift_tour"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%',
     ]
     tour_df["Feasible to switch to bike"] = [
-        f'{len(df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_bike_shift_tour"])]) / len(df[(df["mode"] == Mode.CAR)]) * 100:.1f}%',
-        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_bike_shift_tour"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.1f}%',
+        f'{len(df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_bike_shift_tour"])]) / len(df[(df["mode"] == Mode.CAR)]) * 100:.2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_bike_shift_tour"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%',
     ]
     tour_df["Feasible to switch to transit"] = [
-        f'{len(df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_transit_shift_tour"])]) / len(df[(df["mode"] == Mode.CAR)]) * 100:.1f}%',
-        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_transit_shift_tour"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.1f}%',
+        f'{len(df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_transit_shift_tour"])]) / len(df[(df["mode"] == Mode.CAR)]) * 100:.2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_transit_shift_tour"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%',
     ]
     tour_df["Feasible to switch to any non-car mode"] = [
-        f'{len(df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift_tour"])]) / len(df[(df["mode"] == Mode.CAR)]) * 100:.1f}%',
-        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift_tour"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.1f}%',
+        f'{len(df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift_tour"])]) / len(df[(df["mode"] == Mode.CAR)]) * 100:.2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift_tour"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%',
     ]
     
     st.markdown(f"We consider a tour-level shift possible if every component trip can also shift {'feasibly' if st.session_state==Phase.FEASIBLE else 'with likelihood'}.")
@@ -484,7 +502,7 @@ def show_step():
             curr.set_cutoff(st.sidebar.slider("Select a value:", float(extrema[0]), float(extrema[1]), float(extrema[1]), float((extrema[1] - extrema[0]) / 100)))
         else:
             raise RuntimeError("something went wrong")
-        st.sidebar.markdown(f"Cutoff equivalent: {curr.get_cutoff_equivalent():.1f}")
+        st.sidebar.markdown(f"Cutoff equivalent: {curr.get_cutoff_equivalent():.2f}")
     
     if st.sidebar.button("Disable step", use_container_width=True):
         curr.disable()
@@ -501,7 +519,7 @@ def run():
     option_slot = st.sidebar.empty()
 
     if st.sidebar.button("Finish and move to summary"):
-        st.session_state.in_summary = True
+        st.session_state.summary_screen = True
         st.experimental_rerun()
     
     if st.session_state.phase == Phase.FEASIBLE:
@@ -532,7 +550,7 @@ def run():
                 if prev[1] == CutoffMode.PCT:
                     d[name] = f"{prev[0] * 100:.0f}th pct"
                 elif prev[1] == CutoffMode.RAW:
-                    d[name] = f"{prev[0]:.1f} units"
+                    d[name] = f"{prev[0]:.2f} units"
                 else:
                     raise RuntimeError("Something went wrong with the cutoff mode enum")
             else:
@@ -545,13 +563,18 @@ def run():
     
 
 if __name__ == "__main__":
-    if "finish_start" not in st.session_state:
-        start_screen()
-    elif "df" not in st.session_state:
+    if "start_screen_feasible" not in st.session_state:
+        st.session_state["start_screen_feasible"] = True
+        st.session_state["start_screen_probable"] = False
+    
+    if "df" not in st.session_state:
         setup_df()
-        setup_feasible()
         st.experimental_rerun()
-    elif st.session_state.in_summary:
+    elif st.session_state.start_screen_feasible:
+        start_screen_feasible()
+    elif st.session_state.start_screen_probable:
+        start_screen_probable()
+    elif st.session_state.summary_screen:
         final_summary()
     else:
         run()

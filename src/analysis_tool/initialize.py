@@ -179,6 +179,26 @@ def add_terminal_times(df: pd.DataFrame):
     df["car_duration_seconds_adj"] = df["car_duration_seconds"] + 60 * df["o_car_terminal_time"] + 60 * df["d_car_terminal_time"]
     df["bike_duration_seconds_adj"] = df["bike_duration_seconds"] + 120
     
+def round_off_columns(df: pd.DataFrame):
+    print("rounding off columns")
+    
+    df["car_duration_seconds"] = df["car_duration_seconds"].round()
+    df["car_distance_meters"] = df["car_distance_meters"].round()
+    
+    df["walk_duration_seconds"] = df["walk_duration_seconds"].round()
+    df["walk_distance_meters"] = df["walk_distance_meters"].round()
+    
+    df["bike_duration_seconds"] = df["bike_duration_seconds"].round()
+    df["bike_distance_meters"] = df["bike_distance_meters"].round()
+    df["bike_distance_meters_1"] = df["bike_distance_meters_1"].round()
+    df["bike_distance_meters_2"] = df["bike_distance_meters_2"].round()
+    df["bike_distance_meters_3"] = df["bike_distance_meters_3"].round()
+    df["bike_distance_meters_4"] = df["bike_distance_meters_4"].round()
+    
+    df["transit_duration"] = df["transit_duration"].round()
+    df["transit_length"] = df["transit_length"].round()
+    df["transit_access_length"] = df["transit_access_length"].round()
+    
 
 def prepare_data(df: pd.DataFrame, data_dir: str):
     merge_weather(df)
@@ -246,8 +266,10 @@ def prepare_data(df: pd.DataFrame, data_dir: str):
     
     add_terminal_times(df)
     
+    round_off_columns(df)
+    
     print("exporting to csv")
     # possibly change to provided name
-    df.to_csv("data/tbi_full.csv")
+    df.to_csv("data/tbi_full.csv", index=False)
     
     return df
