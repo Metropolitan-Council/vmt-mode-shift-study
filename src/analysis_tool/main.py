@@ -62,7 +62,7 @@ def start_screen():
                     st.session_state["probable_steps"].remove(step)
 
 @st.cache_resource
-def setup_inputs():
+def setup_df():
     drive_data_dir = keyring.get_password('msp', 'vmt_reduction_dir')
         
     if handler["force_reinitialize"]:
@@ -77,7 +77,14 @@ def setup_inputs():
             raw = pd.read_csv(drive_data_dir + "/data_processed/tbi_cleaned.csv", usecols=handler["keep_columns"])
 
             df = prepare_data(raw, drive_data_dir)
-            
+        
+    st.session_state["df"] = df
+    
+    return 0
+
+def setup_feasible():
+    df: pd.DataFrame = st.session_state.df
+    
     # everything is feasible initially
     df[f'{Phase.FEASIBLE}_{Mode.WALK}_shift'] = True
     df[f'{Phase.FEASIBLE}_{Mode.BIKE}_shift'] = True
@@ -98,17 +105,12 @@ def setup_inputs():
     except IndexError as e:
         print("No steps selected")
         raise e
-        
-    st.session_state["df"] = df
+    
     st.session_state["step_class_dict"] = dict()
     st.session_state["step_class_dict"][st.session_state.step] =  getattr(st.session_state.overall_step, st.session_state.step)(st.session_state.df)
     st.session_state["step_class"] = st.session_state["step_class_dict"][st.session_state.step]
     st.session_state["in_summary"] = False
-    # st.session_state["cache"] = dict()
     
-    return 0
-    
-@st.cache_resource
 def setup_probable():
     # st.session_state["df_feasible"] = st.session_state.df.copy()
     st.session_state["df"] = st.session_state.df.loc[st.session_state.df["feasible_shift"], :].copy()
@@ -129,8 +131,6 @@ def setup_probable():
     
     print("probable setup")
     
-    return 0
-    
 def final_summary():
     # button to allow shift to feasible step; only possible if currently in feasible and probable not disabled
     if st.session_state.phase == Phase.FEASIBLE and not st.session_state["probable_disabled"]:
@@ -140,6 +140,11 @@ def final_summary():
     
     # save reference to underlying df for ease of typing
     df: pd.DataFrame = st.session_state.df
+    
+    if st.sidebar.button("Restart visualization tool"):
+        del st.session_state.finish_start
+        setup_feasible()
+        st.experimental_rerun()
     
     # button to save df to csv on disk
     if st.sidebar.button("Save current result to csv"):
@@ -217,7 +222,6 @@ def final_summary():
     # stacked histogram of duration difference for feasible drive, non-feasible drive, and bike trips
     st.markdown("Below, a stacked histogram detailing the travel time difference distributions for drive trips that can feasibly shift to biking, drive trips that can't shift, and observed biking trips can be seen.")
     
-    print(df[f"{st.session_state.phase}_bike_shift"])
     st.plotly_chart(stacked_shift_histogram(df, Mode.BIKE, "bike_duration_minutes_adj", f"{st.session_state.phase}_bike_shift"))
     
     # get df of the % of trips/vmt that are within x minutes of biking
@@ -544,7 +548,8 @@ if __name__ == "__main__":
     if "finish_start" not in st.session_state:
         start_screen()
     elif "df" not in st.session_state:
-        setup_inputs()
+        setup_df()
+        setup_feasible()
         st.experimental_rerun()
     elif st.session_state.in_summary:
         final_summary()
