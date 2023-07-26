@@ -86,8 +86,17 @@ def stacked_shift_histogram(df: pd.DataFrame, mode: Mode, mode_duration: str, mo
     df.loc[:, "Category"] = np.where((df["mode"] == Mode.CAR) & (~df[mode_feasible_field]), "Drive Trips - Not Feasible to Switch", df["Category"])
     view = df[df["Category"] != "na"]
     
+    colors_dict = {
+        f"{mode.capitalize()} Trips": "#FF2B2B",
+        "Drive Trips - Feasible to Switch": "#83C9FF",
+        "Drive Trips - Not Feasible to Switch": "#0068C9"
+    }
+    
+    plotly_colors = [colors_dict[c] for c in view["Category"].unique()]
+    
     fig = px.histogram(view, x="curr", color="Category", barmode="stack", range_x=[-30,120],
-                       labels={"curr": "Travel Time Difference (Alternative Time - Drive Time, minutes)"})
+                       labels={"curr": "Travel Time Difference (Alternative Time - Drive Time, minutes)"},
+                       color_discrete_sequence=plotly_colors)
     
     return fig
 
