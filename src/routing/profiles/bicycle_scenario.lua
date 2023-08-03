@@ -570,7 +570,7 @@ function process_way(profile, way, result)
 
   -- We first check LTS. If it's over 2, we short-circuit and hand off to the
   -- walk profile as we assume people walk their bikes in these locations
-  local lts = LTS.lts_for_way(profile, way)
+  local lts = 1 --LTS.lts_for_way(profile, way)
   -- special LTS 5 is LTS 4 but does not bleed into intersections
   assert(lts > 0 and lts <= 5, "Found unexpected LTS " .. lts .. " at way " .. way:id())
 
