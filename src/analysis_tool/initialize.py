@@ -135,11 +135,12 @@ def add_community(df: pd.DataFrame):
 def final_field_cleanup(df: pd.DataFrame):
     df["purpose_cleaned"] = df["d_purpose_category"]
     df["purpose_cleaned"] = np.where(df["purpose_cleaned"] == "Home", df["o_purpose_category"], df["purpose_cleaned"])
-    df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["School", "School-related"]), "School", df["purpose_cleaned"])
-    df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Work", "Work-related"]), "Work", df["purpose_cleaned"])
+    df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["School", "School-related", "School related"]), "School", df["purpose_cleaned"])
+    df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Work", "Work-related", "Work related"]), "Work", df["purpose_cleaned"])
     df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Errand/Other", "Errand"]), "Errand", df["purpose_cleaned"])
     df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Shop", "Shopping"]), "Shop", df["purpose_cleaned"])
-    df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Missing: Non-response", "Missing: Skip logic", "Not imputable"]), "Missing", df["purpose_cleaned"])
+    df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Other", "Change mode", "Overnight", "Spent the night at non-home location"]), "Other", df["purpose_cleaned"])
+    df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Missing: Non-response", "Missing: Skip logic", "Not imputable", "Missing", "Missing: Non-imputable"]), "Missing", df["purpose_cleaned"])
     
     df["child"] = df["age"].isin(["5-15", "5 to 15", "16-17", "16 to 17", "Under 5"])
     df["senior"] = df["age"].isin(["65-74", "65 to 74", "75 or older", "75 to 84", "85 or older"])

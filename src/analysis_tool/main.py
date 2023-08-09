@@ -37,6 +37,10 @@ def run_all(phase: Phase):
 def start_screen_feasible():
     st.title("Configure the feasible phase")
     
+    st.markdown(inspect.cleandoc("""The checked steps will be able to be run in the visualization tool. There should be at least one step checked before beginning, but ideally, one step that applies to each mode should be checked for meaningful overall results. 
+                
+    At the left, clicking begin will start the in-depth tool with the selected steps, clicking begin with all steps checked will begin the in-depth tool with all the steps included regardless of the checked steps, and clicking run all will automatically run all the selected steps."""))
+    
     if "feasible_steps" not in st.session_state:
         st.session_state["feasible_steps"] = []
     
@@ -62,6 +66,10 @@ def start_screen_feasible():
     
 def start_screen_probable():
     st.title("Configure the probable steps")
+    
+    st.markdown(inspect.cleandoc("""The checked steps will be able to be run in the visualization tool. There should be at least one step checked before beginning, but ideally, one step that applies to each mode should be checked for meaningful overall results. 
+                
+    At the left, clicking begin will start the in-depth tool with the selected steps, clicking begin with all steps checked will begin the in-depth tool with all the steps included regardless of the checked steps, and clicking run all will automatically run all the selected steps."""))
     
     if "probable_steps" not in st.session_state:
         st.session_state["probable_steps"] = []
@@ -345,7 +353,7 @@ def final_summary():
     communities = get_communities()
     communities["val"] = values
     
-    st.markdown(f"This map shows the % of trips in each community region that can {'feasibly' if st.session_state.phase == Phase.FEASIBLE else 'with likelihood'} shift to any alternative non-car mode.")
+    st.markdown(f"This map shows the proportion of trips in each community region that can {'feasibly' if st.session_state.phase == Phase.FEASIBLE else 'with likelihood'} shift to any alternative non-car mode.")
     fig0 = px.choropleth(communities, geojson=communities.geometry, locations=communities.index, color="val", range_color=(0, 1), color_continuous_scale="viridis_r", projection="albers usa")
     fig0.update_layout(margin=dict(l=0, r=0, b=0, t=0),
                 width=900, 
@@ -359,7 +367,7 @@ def final_summary():
     values_competitive = (df.groupby("community")["competitive_timing"].mean()).fillna(0)
     communities["val_comp"] = values_competitive
     
-    st.markdown(f"This map shows the % of trips in each community region that can competitively shift (maximum bidirectional difference of 15 minutes) to the fastest alternative non-car mode.")
+    st.markdown(f"This map shows the proportion of trips in each community region that can competitively shift (maximum bidirectional difference of 15 minutes) to the fastest alternative non-car mode.")
     fig1 = px.choropleth(communities, geojson=communities.geometry, locations=communities.index, color="val_comp", color_continuous_scale="viridis_r", range_color=(0, 1), projection="albers usa")
     fig1.update_layout(margin=dict(l=0, r=0, b=0, t=0),
                 width=900, 
@@ -417,7 +425,7 @@ def final_summary():
     st.plotly_chart(fig1)
     
     st.markdown(r"Below, the % of trips that can shift when segmented by trip purpose are shown.")
-              
+    
     purpose_pct = df[df["purpose_cleaned"] != "Missing"].groupby("purpose_cleaned")[f"{st.session_state.phase}_shift"].mean()
     fig2 = px.bar(x=purpose_pct.index, y=purpose_pct.values, color=purpose_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
     st.plotly_chart(fig2)
@@ -569,7 +577,8 @@ if __name__ == "__main__":
         st.session_state["start_screen_probable"] = False
     
     if "df" not in st.session_state:
-        setup_df()
+        with st.spinner("Setting up application"):
+            setup_df()
         st.experimental_rerun()
     elif st.session_state.start_screen_feasible:
         start_screen_feasible()
