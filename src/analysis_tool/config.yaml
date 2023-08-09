@@ -28,6 +28,7 @@ probable_steps:
 fixed_purposes: ["Work", "Work-related", "Escort", "School", "School-related"]
 unlikely_purposes: ["Escort", "Shop"]
 
+build: False  # whether we are currently building to docker
 force_reinitialize: False
 # save_result: False
 

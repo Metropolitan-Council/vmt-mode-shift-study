@@ -19,3 +19,4 @@ src/analysis_tool/data/feasible_trips.csv
 src/analysis_tool/data/tbi_full.csv
 src/analysis_tool/output/
 src/analysis_tool/temp.ipynb
+src/analysis_tool/initialize.py

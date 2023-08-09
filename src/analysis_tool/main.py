@@ -8,11 +8,15 @@ import seaborn as sns
 import keyring
 
 import steps
-from initialize import prepare_data
 from settings import handler, get_communities
 from steps.enums import *
 from util import get_num_cold_starts, add_value_labels, rvb, stateful_button, stacked_shift_histogram, get_summary_df, get_duration_diff_df
 import json
+try:
+    from initialize import prepare_data
+except ImportError as e:
+    if not handler["build"]:
+        raise e
     
 def run_all(phase: Phase):
     if "df" not in st.session_state:
@@ -95,9 +99,10 @@ def start_screen_probable():
     st.session_state["probable_steps"] = st.multiselect("Choose the probable steps to run", handler["probable_steps"])
 
 def setup_df():
-    drive_data_dir = keyring.get_password('msp', 'vmt_reduction_dir')
+    if not handler["build"]:
+        drive_data_dir = keyring.get_password('msp', 'vmt_reduction_dir')
         
-    if handler["force_reinitialize"]:
+    if handler["force_reinitialize"] and not handler["build"]:
         raw = pd.read_csv(drive_data_dir + "/data_processed/tbi_cleaned.csv", usecols=handler["keep_columns"])
 
         df = prepare_data(raw, drive_data_dir)
@@ -109,6 +114,8 @@ def setup_df():
                 df = pd.read_csv("data/" + handler["tbi_file_name"])
             
         except Exception as e:
+            if handler["build"]:
+                raise e
             raw = pd.read_csv(drive_data_dir + "/data_processed/tbi_cleaned.csv", usecols=handler["keep_columns"])
 
             df = prepare_data(raw, drive_data_dir)

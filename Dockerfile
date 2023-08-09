@@ -16,7 +16,7 @@ FROM python:3.9-slim AS runtime
     COPY --from=build /venv /venv
 
     WORKDIR /app
-    EXPOSE 8501
+    EXPOSE 8051
 
     COPY /src/analysis_tool /app
     COPY docker_run.bash /app
