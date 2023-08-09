@@ -1,0 +1,16 @@
+name: gis
+channels:
+  - conda-forge
+dependencies:
+  - geopandas=0.13.0
+  - keyring=23.13.1
+  - matplotlib=3.7.1
+  - numpy=1.24.3
+  - pandas=2.0.2
+  - plotly=5.14.1
+  - pyarrow=9.0.0
+  - python=3.9.15
+  - seaborn=0.12.2
+  - streamlit=1.22.0
+  - yaml=0.2.5
+prefix: D:\mambaforge\envs\gis

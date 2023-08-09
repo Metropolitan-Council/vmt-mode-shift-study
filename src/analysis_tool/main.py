@@ -103,7 +103,10 @@ def setup_df():
         df = prepare_data(raw, drive_data_dir)
     else:
         try:
-            df = pd.read_csv("data/" + handler["tbi_file_name"])
+            if handler["tbi_file_name"].split(".")[-1] == "parquet":
+                df = pd.read_parquet("data/" + handler["tbi_file_name"])
+            elif handler["tbi_file_name"].split(".")[-1] == "csv":
+                df = pd.read_csv("data/" + handler["tbi_file_name"])
             
         except Exception as e:
             raw = pd.read_csv(drive_data_dir + "/data_processed/tbi_cleaned.csv", usecols=handler["keep_columns"])
