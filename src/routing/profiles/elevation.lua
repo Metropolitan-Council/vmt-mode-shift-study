@@ -133,6 +133,7 @@ function get_proportion_sloped_more_than (rasterData, source, target, distance, 
    end
 
    assert(total_segments == n_segments)
+   assert(steep_segments <= total_segments)
 
    return steep_segments / total_segments
 end
