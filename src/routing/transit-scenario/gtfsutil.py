@@ -31,7 +31,11 @@ def read_gtfs(filename):
         with z.open("calendar.txt") as c:
             calendar = pd.read_csv(c).set_index("service_id")
         with z.open("calendar_dates.txt") as c:
-            calendar_dates = pd.read_csv(c).set_index(["service_id", "date"])
+            calendar_dates = pd.read_csv(c)
+            if len(calendar_dates) == 0:
+                calendar_dates = pd.DataFrame({"service_id": [], "date": []})
+            
+            calendar_dates = calendar_dates.set_index(["service_id", "date"])
         with z.open("agency.txt") as c:
             agency = pd.read_csv(c)
         with z.open("shapes.txt") as c:
@@ -70,6 +74,9 @@ def write_gtfs(feed, filename):
 
         with z.open("agency.txt", "w") as c:
             feed.agency.to_csv(c, index=False)
+
+        with z.open("shapes.txt", "w") as c:
+            feed.shapes.to_csv(c, index=False)
 
 
 def gtfs_date_to_date(gtfsdate):

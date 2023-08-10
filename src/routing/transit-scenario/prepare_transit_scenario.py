@@ -29,7 +29,7 @@ from functools import partial
 from sys import argv
 from gtfsutil import GtfsFeed, read_gtfs, write_gtfs, gtfs_date_to_date, gtfs_time_to_seconds, seconds_to_gtfs_time, service_running
 
-# Note that this is different than specified in the Julia file, because the Julia
+# Note that this is different than specified in route.jl, because the Julia
 # date finding is exclusive (i.e. does not include the start) while Python is inclusive.
 REFERENCE_WEEK_START = 20191020
 
@@ -100,7 +100,7 @@ def process_feed(feed):
         for _, trip in running_trips.iterrows():
             newtrip = trip.copy()
             # to avoid confusion with overlapping service, etc, we just create a new simple calendar file
-            newtrip["service_id"] = "wednesday"
+            newtrip["service_id"] = day_of_week
             origtripid = newtrip["trip_id"]
             newtrip["trip_id"] = origtripid + "_original_" + day_of_week
             
@@ -114,19 +114,19 @@ def process_feed(feed):
             if not pd.isnull(newtrip.time_at_reference_stop) and newtrip["route_id"] == newtrip["next_route_id"] and newtrip["direction_id"] == newtrip["next_direction_id"]:
                 dupetrip = newtrip.copy()
                 dupetrip["trip_id"] = origtripid + "_duplicate_" + day_of_week
-                new_trips.append(dupetrip)
                 
                 # find the headway at the reference stop
                 headway = newtrip.next_time_at_ref_stop - newtrip.time_at_reference_stop
                 
                 if headway == 0:
-                    print(f"WARN: trip IDs {origtripid} and {newtrip.next_trip_id} arrive at the reference stop {newtrip.most_common_stop} at the same time")
+                    print(f"WARN: trip IDs {origtripid} and {newtrip.next_trip_id} arrive at the reference stop {newtrip.most_common_stop} at the same time, route {newtrip.route_id}")
                 else:
                     dupe_stoptimes = stoptimes.copy()
                     dupe_stoptimes["trip_id"] = dupetrip["trip_id"]
                     dupe_stoptimes["arrival_time"] = (dupe_stoptimes.arrival_time.apply(gtfs_time_to_seconds) + headway / 2).astype("Int64").apply(seconds_to_gtfs_time)
                     dupe_stoptimes["departure_time"] = (dupe_stoptimes.departure_time.apply(gtfs_time_to_seconds) + headway / 2).astype("Int64").apply(seconds_to_gtfs_time)
                     new_stoptimes.append(dupe_stoptimes)
+                    new_trips.append(dupetrip)
 
     # end loop over days
     
