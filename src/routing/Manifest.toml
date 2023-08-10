@@ -1,8 +1,8 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.9.1"
+julia_version = "1.9.2"
 manifest_format = "2.0"
-project_hash = "65a122cbc6e3a693dde5e1596e14e1f100b7eb2b"
+project_hash = "1b268abdac8b1f3ea0f8d0147a23c9d91b04247b"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -186,7 +186,7 @@ weakdeps = ["Dates", "LinearAlgebra"]
 [[deps.CompilerSupportLibraries_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
-version = "1.0.2+0"
+version = "1.0.5+0"
 
 [[deps.CompositionsBase]]
 git-tree-sha1 = "455419f7e328a1a2493cabc6428d79e951349769"
@@ -1041,7 +1041,7 @@ version = "0.40.1+0"
 [[deps.Pkg]]
 deps = ["Artifacts", "Dates", "Downloads", "FileWatching", "LibGit2", "Libdl", "Logging", "Markdown", "Printf", "REPL", "Random", "SHA", "Serialization", "TOML", "Tar", "UUIDs", "p7zip_jll"]
 uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
-version = "1.9.0"
+version = "1.9.2"
 
 [[deps.PlotThemes]]
 deps = ["PlotUtils", "Statistics"]
@@ -1434,9 +1434,9 @@ version = "0.4.75"
 
 [[deps.TransitRouter]]
 deps = ["ArchGDAL", "ArgParse", "CSV", "DataFrames", "Dates", "Geodesy", "LibGEOS", "Logging", "OSRM", "ProgressBars", "Revise", "Serialization", "Tables", "ThreadsX", "ZipFile"]
-path = "/home/mwbc/.julia/dev/TransitRouter"
+git-tree-sha1 = "6aeb04eb0321aba11c813d0d8e07a4cc87f25bff"
 uuid = "f9e57d04-be1f-4339-a529-971801331ddb"
-version = "0.1.0"
+version = "0.2.0"
 
 [[deps.URIs]]
 git-tree-sha1 = "074f993b0ca030848b897beff716d93aca60f06a"
