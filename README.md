@@ -32,7 +32,7 @@ Then to activate the environment:
 
 If you have difficulties solving pacakges on macOS, try using the Mac-specific environment.
 
-	conda env create -n msp-mac --file mac-environment-clean.yml
+	conda env create -n msp-mac --file mac-environment.yml
 	conda activate msp-mac
 
 After installing, if you are on a mac, we need to manually install jupyter notebook:
