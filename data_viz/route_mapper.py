@@ -183,11 +183,11 @@ class RouteMapper(object):
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Mode: ''' + tbi_trip['mode'] + ''' <br>
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;O Purpose: ''' + tbi_trip['o_purpose'] + ''' <br>
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;D Purpose: ''' + tbi_trip['d_purpose'] + ''' <br>
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Num Travelers: ''' + tbi_trip['num_travelers'] + ''' <br>
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Age: ''' + tbi_trip['age'] + ''' <br>
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Day of Week: ''' + tbi_trip['travel_dow'] + ''' <br>
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Departure Time: ''' + tbi_trip['depart_time'] + ''' <br>
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Arrival Time: ''' + tbi_trip['arrive_time'] + ''' <br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Num Travelers: ''' + str(tbi_trip['num_travelers']) + ''' <br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Age: ''' + str(tbi_trip['age']) + ''' <br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Day of Week: ''' + str(tbi_trip['travel_dow']) + ''' <br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Departure Time: ''' + str(tbi_trip['depart_time']) + ''' <br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Arrival Time: ''' + str(tbi_trip['arrive_time']) + ''' <br>
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Distance (mi): ''' + str(round(tbi_trip['distance'],2)) + ''' <br>
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Duration (min): ''' + str(tbi_trip['duration']) + ''' <br>
             '''

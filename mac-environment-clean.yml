@@ -9,7 +9,6 @@ dependencies:
   - json-c=0.16
   - requests=2.28.1
   - geopandas=0.12.2
-  - osmium-tool=1.15.0
   - shapely=2.0.1
   - sqlite=3.40.1
   - folium=0.14.0
