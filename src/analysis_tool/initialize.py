@@ -200,7 +200,7 @@ def round_off_columns(df: pd.DataFrame):
     df["transit_length"] = df["transit_length"].round()
     df["transit_access_length"] = df["transit_access_length"].round()
     
-
+@st.cache_data()
 def prepare_data(df: pd.DataFrame, data_dir: str):
     merge_weather(df)
 

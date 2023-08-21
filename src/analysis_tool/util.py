@@ -12,7 +12,7 @@ from settings import handler
 def convert_to_minutes(temp: str) -> float:
         return int(temp[0:2]) * 60 + int(temp[3:5]) + int(temp[6:8]) / 60
 
-def get_num_cold_starts(depart_time: list[str], leg_durations: np.ndarray[float], modes: list[str]):
+def get_num_cold_starts(depart_time: list[str], leg_durations: 'np.ndarray[float]', modes: list[str]):
 
     leg_starts = np.fromiter((map(convert_to_minutes, depart_time)), dtype=np.float32)
     ref = leg_starts[0]
