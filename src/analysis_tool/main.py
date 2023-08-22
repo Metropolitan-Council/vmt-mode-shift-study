@@ -341,12 +341,28 @@ def final_summary():
     
     # fastest alternative by mode comparisons
     # TODO check that these calculations only count when the mode is feasible. 
-    st.markdown(r"Below, the distribution of the duration difference between the best non-car mode and car for shifted trips is shown")
+    st.markdown(r"Below, the distribution of the duration difference between the best non-car mode and car for shifted trips is shown. Note: a trip can only have a fastest mode if there is a mode that is feasible/likely for it take.")
     df["transit_duration_seconds_na"] = df["transit_duration"].fillna(9999999) * 60 # if no transit trip found, make it very slow to allow other modes to beat it
     df["min_alt_mode_duration"] = df[["transit_duration_seconds_na", "bike_duration_seconds_adj", "walk_duration_seconds"]].min(axis=1)
-    df["fastest_mode"] = Mode.WALK
-    df["fastest_mode"] = np.where(df["bike_duration_seconds_adj"] == df["min_alt_mode_duration"], Mode.BIKE, df["fastest_mode"]) # is fastest if it is the previously calculated minimum
-    df["fastest_mode"] = np.where(df["transit_duration_seconds_na"] == df["min_alt_mode_duration"], Mode.TRANSIT, df["fastest_mode"]) # is fastest if it is the previously calculated minimum
+    df["fastest_mode"] = "na"
+    df["fastest_mode"] = np.where(
+        (df[f"{st.session_state.phase}_walk_shift"]) 
+        & (df["walk_duration_seconds"] == df["min_alt_mode_duration"]),  # is fastest if it is the previously calculated minimum
+        Mode.WALK, 
+        df["fastest_mode"]
+    )
+    df["fastest_mode"] = np.where(
+        (df[f"{st.session_state.phase}_bike_shift"]) 
+        & (df["bike_duration_seconds_adj"] == df["min_alt_mode_duration"]),  # is fastest if it is the previously calculated minimum
+        Mode.BIKE, 
+        df["fastest_mode"]
+    )
+    df["fastest_mode"] = np.where(
+        (df[f"{st.session_state.phase}_transit_shift"]) 
+        & (df["transit_duration_seconds_na"] == df["min_alt_mode_duration"]),  # is fastest if it is the previously calculated minimum
+        Mode.TRANSIT, 
+        df["fastest_mode"]
+    ) 
     
     overall_shift_comparison = pd.DataFrame(index=[r"% of Car Trips", r"% of VMT"])
     overall_shift_comparison["Walk is the fastest alternative"] = [
