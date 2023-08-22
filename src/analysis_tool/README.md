@@ -6,7 +6,15 @@ To get this tool up and running on your machine, there are three main options:
 
 1. Full local installation
 
-To run this tool locally, setup the python environment locally using either condaforge/mambaforge and the top-level environement.yml file, set the main data directory in keyring, cd to this directory (src/analysis_tool), and then run ```streamlit run main.py``` in the command line. The application will then appear in your local web browser. 
+To run this tool locally, first clone the code from git. Then, setup the python environment locally using conda/mambaforge and the top-level environement.yml file using the following command:
+
+```conda/mamba env create -f environment.yml```
+
+Afterwards, set the directory to the VMT Mode Shift OneDrive in keyring in a python notebook/script using the following line:
+
+```keyring.set_password('msp', 'vmt_reduction_dir', {password})```
+
+With this done, cd to this directory (```src/analysis_tool```) and run ```streamlit run main.py``` in the command line. The application will then appear in your local web browser. 
 
 The top-level environment.yml is geared towards windows and may fail for linux/mac machines. In the case that installation fails with environment.yml, a more general and platform-agnostic environemnt can be found in simple_environment.yml, which contains the base packages needed to run the tool (conda/mambaforge should be able to fill in the blanks). 
 
