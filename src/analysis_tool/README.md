@@ -12,7 +12,7 @@ To run this tool locally, first clone the code from git. Then, setup the python 
 
 Afterwards, set the directory to the VMT Mode Shift OneDrive in keyring in a python notebook/script using the following line:
 
-```keyring.set_password('msp', 'vmt_reduction_dir', {password})```
+```keyring.set_password('msp', 'vmt_reduction_dir', {path-to-onedrive})```
 
 With this done, cd to this directory (```src/analysis_tool```) and run ```streamlit run main.py``` in the command line. The application will then appear in your local web browser. 
 
@@ -20,7 +20,9 @@ The top-level environment.yml is geared towards windows and may fail for linux/m
 
 2. Docker
 
-Alternatively, to skip enivornment setup, this tool can be ran/hosted (on an internal network) using docker. First, [download docker](https://www.docker.com/) onto your local machine and open the docker daemon (program). Afterwards, in your command line interface, run ```docker pull yianzhang14/streamlit```. With that done, you can then run ```docker run -it --rm -p 8501:8501 streamlit```, and the streamlit app will automatically boot up within the docker virtual container. With this done, you can go to ```localhost:8501``` on your browser to access the application. It should be noted that while the setup here is much simpler and consistent than in method 1, the docker container will likely be more memory-hungry due to the overhead of running the underlying container. 
+Alternatively, to skip enivornment setup, this tool can be ran/hosted (on an internal network) using docker. First, [download docker](https://www.docker.com/) onto your local machine and open the docker daemon (program). Afterwards, in your command line interface, run ```docker pull yianzhang14/streamlit```. With that done, you can then run ```docker run -it --rm -p 8501:8501 streamlit```, and the streamlit app will automatically boot up within the docker virtual container. 
+
+Now, you should be able to go to ```localhost:8501``` on your browser to access the application. It should be noted that while the setup here is much simpler and consistent than in method 1, the docker container will likely be more memory-hungry due to the overhead of running the underlying container. 
 
 3. Public website endpoint
 
