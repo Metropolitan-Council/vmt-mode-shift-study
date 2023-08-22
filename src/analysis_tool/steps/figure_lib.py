@@ -23,7 +23,9 @@ def show_summaries(df: pd.DataFrame, modes, percentile=[0.95]): # show normal su
         group = df[df["mode"] == mode]
         res.append(group[column].describe(percentiles=p))
     x = pd.concat(res, axis=1)
-    x.columns = labels
+    print(labels)
+    x.columns = [' '.join(col_name.replace(" ", ":_").split("_")).capitalize() for col_name in labels]
+    x.index = x.index.str.capitalize()
     return x
 
 def show_value_counts(df: pd.DataFrame, modes):

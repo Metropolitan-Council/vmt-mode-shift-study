@@ -11,16 +11,21 @@ from settings import handler, get_communities
 from steps.enums import *
 from util import get_num_cold_starts, add_value_labels, rvb, stateful_button, stacked_shift_histogram, get_summary_df, get_duration_diff_df
 import json
+import logging
 
 try:
     from initialize import prepare_data
     import keyring
 except ImportError as e:
+    logging.error("Unable to import keyring/prepare_data; if this is occurring and the program is not in build mode, something is wrong")
     if not handler["build"]:
+        logging.exception("Imports failed and program is not in build mode, something has gone wrong")
         raise e
 except Exception as e:
-    if not handler["build"]:
-        raise e
+    logging.exception(f"Something has gone wrong with the import logic: {e}")
+    raise e
+
+    
     
 def run_all(phase: Phase):
     if "df" not in st.session_state:
@@ -55,6 +60,8 @@ def start_screen_feasible():
     st.sidebar.header("Actions")
         
     if st.sidebar.button("Begin"):
+        if len(st.session_state.feasible_steps) == 0:
+            raise RuntimeError("No steps were selected. Please refresh the page to restart the tool.")
         if "phase" not in st.session_state or st.session_state.phase != Phase.FEASIBLE:
             setup_vars(Phase.FEASIBLE)
         st.session_state.start_screen_feasible = False
@@ -85,11 +92,13 @@ def start_screen_probable():
     st.sidebar.header("Actions")
         
     if st.sidebar.button("Begin"):
+        logging.info("Beginning tool with selected steps")
         if "phase" not in st.session_state or st.session_state.phase != Phase.PROBABLE:
             setup_vars(Phase.PROBABLE)
         st.session_state.start_screen_probable = False
         st.experimental_rerun()
     if st.sidebar.button("Begin with all steps selected"):
+        logging.info("Beginning tool with all steps")
         st.session_state["feasible_steps"] = handler["feasible_steps"]
         if "phase" not in st.session_state or st.session_state.phase != Phase.PROBABLE:
             setup_vars(Phase.PROBABLE)
@@ -97,38 +106,54 @@ def start_screen_probable():
         st.experimental_rerun()
         
     if st.sidebar.button("Run all selected steps"):
+        logging.info("Running through all steps automatically")
         st.session_state.start_screen_probable = False
         run_all(Phase.PROBABLE)
         
     st.session_state["probable_steps"] = st.multiselect("Choose the probable steps to run", handler["probable_steps"])
 
 def setup_df():
+    if handler["build"]:
+        logger = logging.getLogger()
+        logger.disabled = True
+    else:
+        logging.basicConfig(filename="output/streamlit.log", filemode="w", format="%(name)s - %(levelname)s - %(message)s")
+        
     if not handler["build"]:
         drive_data_dir = keyring.get_password('msp', 'vmt_reduction_dir')
         
     if handler["force_reinitialize"] and not handler["build"]:
+        logging.info("Rebuilding data from raw inputs")
         raw = pd.read_csv(drive_data_dir + "/data_processed/tbi_cleaned.csv", usecols=handler["keep_columns"])
 
         df = prepare_data(raw, drive_data_dir)
     else:
+        logging.info("Attempting to read in pre-cleaned data files")
         try:
             if handler["tbi_file_name"].split(".")[-1] == "parquet":
+                logging.info("Reading in the specified parquet file")
                 df = pd.read_parquet("data/" + handler["tbi_file_name"])
             elif handler["tbi_file_name"].split(".")[-1] == "csv":
+                logging.info("Reading in the specified csv file")
                 df = pd.read_csv("data/" + handler["tbi_file_name"])
             
         except Exception as e:
+            logging.info(f"Something has gone wrong reading in the pre-cleaned data files: {e}")
             if handler["build"]:
+                logging.exception("Unable to rebuild data in build mode")
                 raise e
+            logging.info("Attempting to rebuild inputs manually from scratch")
             raw = pd.read_csv(drive_data_dir + "/data_processed/tbi_cleaned.csv", usecols=handler["keep_columns"])
 
             df = prepare_data(raw, drive_data_dir)
         
+    logging.info("Setting up the data inputs has succeeded")
     st.session_state["df"] = df
     
     return 0
 
 def setup_vars(phase: Phase):
+    logging.info("Setting up variables for phase {phase}")
     if phase == Phase.PROBABLE:
         st.session_state["df"] = st.session_state.df.loc[st.session_state.df["feasible_shift"], :].copy()
 
@@ -150,9 +175,10 @@ def setup_vars(phase: Phase):
             st.session_state["step"] = st.session_state["probable_steps"][0]
             st.session_state["overall_step"] = steps.probable_steps
         else:
+            logging.exception(f"Something went wrong with the phase enum: {st.session_state.overall_step}")
             raise RuntimeError("Something went wrong with the phase enum")
     except IndexError as e:
-        print("No steps selected")
+        logging.exception("no steps selected in the initial start page -- need to restart program")
         raise e
     
     st.session_state["step_class_dict"] = dict()
@@ -165,6 +191,7 @@ def final_summary():
     # button to allow shift to feasible step; only possible if currently in feasible and probable not disabled
     if st.session_state.phase == Phase.FEASIBLE:
         if st.sidebar.button("Move to probable step"):
+            logging.info("Moving to probable step")
             st.session_state.summary_screen = False
             st.session_state.start_screen_probable = True
             st.experimental_rerun()
@@ -172,7 +199,9 @@ def final_summary():
     # save reference to underlying df for ease of typing
     df: pd.DataFrame = st.session_state.df
     
+    # rerun current phase from step selection 
     if st.sidebar.button("Rerun visualization tool phase"):
+        logging.info(f"Rerunning current ({st.session_state.phase}) phase of the tool")
         st.session_state.summary_screen = False
         if st.session_state.phase == Phase.FEASIBLE:
             st.session_state.start_screen_feasible = True
@@ -180,10 +209,11 @@ def final_summary():
             st.session_state.start_screen_probable = True
         st.experimental_rerun()
         
+    # currently not supported to go back all the way--can just refresh to do so
     if st.sidebar.button("Start visualization tool from beginning", disabled=True):
         pass
     
-    # button to save df to csv on disk
+    # button to save df to csv on disk; not available if in build mode
     if not handler["build"]:
         if st.sidebar.button("Save current result to csv"):
             with st.spinner("Exporting dataframe and percentiles"):
@@ -202,6 +232,9 @@ def final_summary():
     # save the feasible pct for later use in probable step
     if st.session_state.phase == Phase.FEASIBLE:
         st.session_state["feasible_pct"] = df[df['mode'] == Mode.CAR][f'{st.session_state.phase}_shift'].sum() / len(df[df['mode'] == Mode.CAR])
+    
+    # which adjective to use (depends on phase)
+    adjective = 'feasibly' if st.session_state.phase == Phase.FEASIBLE else 'with likelihood'
     
     # summary just has some overall statistics
     st.title("Summary")
@@ -366,13 +399,20 @@ def final_summary():
     # map of the % of trips in each community regino that can shift given the restrictions
     values = (df.groupby("community")[f"{st.session_state.phase}_shift"].mean()).fillna(0)
     communities = get_communities()
-    communities["val"] = values
+    communities[f"Proportion of people that can shift {adjective}"] = values
     
-    st.markdown(f"This map shows the proportion of trips in each community region that can {'feasibly' if st.session_state.phase == Phase.FEASIBLE else 'with likelihood'} shift to any alternative non-car mode.")
-    fig0 = px.choropleth(communities, geojson=communities.geometry, locations=communities.index, color="val", range_color=(0, 1), color_continuous_scale="viridis_r", projection="albers usa")
+    st.markdown(f"This map shows the proportion of trips in each community region that can {adjective} shift to any alternative non-car mode.")
+    fig0 = px.choropleth(communities, 
+                         geojson=communities.geometry, 
+                         locations=communities.index, 
+                         color=f"Proportion of people that can shift {adjective}", 
+                         range_color=(0, 1), 
+                         color_continuous_scale="viridis_r", 
+                         projection="albers usa",
+    )
     fig0.update_layout(margin=dict(l=0, r=0, b=0, t=0),
                 width=900, 
-                height=500,
+                height=500
     )
     fig0.update_geos(fitbounds="locations", visible=False)
     st.plotly_chart(fig0)
@@ -380,13 +420,20 @@ def final_summary():
     # map of % of trips in each community regino that can shift competitively when considering the fastest alternative mode
     df["competitive_timing"] = df["car_minus_min_alt_mode_duration"].abs() <= 15
     values_competitive = (df.groupby("community")["competitive_timing"].mean()).fillna(0)
-    communities["val_comp"] = values_competitive
+    communities[f"Proportion of people that can shift {adjective}"] = values_competitive
     
     st.markdown(f"This map shows the proportion of trips in each community region that can competitively shift (maximum bidirectional difference of 15 minutes) to the fastest alternative non-car mode.")
-    fig1 = px.choropleth(communities, geojson=communities.geometry, locations=communities.index, color="val_comp", color_continuous_scale="viridis_r", range_color=(0, 1), projection="albers usa")
+    fig1 = px.choropleth(communities, 
+                         geojson=communities.geometry, 
+                         locations=communities.index, 
+                         color=f"Proportion of people that can shift {adjective}",
+                         color_continuous_scale="viridis_r", 
+                         range_color=(0, 1), 
+                         projection="albers usa"
+    )
     fig1.update_layout(margin=dict(l=0, r=0, b=0, t=0),
                 width=900, 
-                height=500,
+                height=500
     )
     fig1.update_geos(fitbounds="locations", visible=False)
     st.plotly_chart(fig1)
@@ -434,9 +481,13 @@ def final_summary():
     
     st.markdown(r"Below, the % of trips that can shift when segmented by income bracket is shown.")
     
-    print(df[df["income_detailed"] != "na"]["income_detailed"].value_counts())
     income_pct = df[df["income_detailed"] != "na"].groupby("income_detailed")[f"{st.session_state.phase}_shift"].mean().reindex(["Under $15,000", "$15,000-$24,999", "$25,000-$34,999", "$35,000-$49,999", "$50,000-$74,999", "$75,000-$99,999", "$100,000-$149,999", "$150,000-$199,999", "$200,000-$249,999", "$250,000 or more"])
     fig1 = px.bar(x=income_pct.index, y=income_pct.values, color=income_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
+    fig1.update_layout(
+        xaxis_title="Income group",
+        yaxis_title=f"Proportion of people in the category that can shift {adjective}",
+        legend_title="Legend"
+    )
     st.plotly_chart(fig1)
     
     st.markdown(r"Below, the % of trips that can shift when segmented by trip purpose are shown.")
@@ -444,24 +495,44 @@ def final_summary():
     purpose_pct = df[df["purpose_cleaned"] != "Missing"].groupby("purpose_cleaned")[f"{st.session_state.phase}_shift"].mean()
     fig2 = px.bar(x=purpose_pct.index, y=purpose_pct.values, color=purpose_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
     st.plotly_chart(fig2)
+    fig2.update_layout(
+        xaxis_title="Purpose category",
+        yaxis_title=f"Proportion of people in the category that can shift {adjective}",
+        show_legend=False
+    )
     
     st.markdown(r"Below, the % of trips that can shift when segmented by person type are shown.")
                 
     person_pct = df[df["person_type"] != "na"].groupby("person_type")[f"{st.session_state.phase}_shift"].mean()
     fig3 = px.bar(x=person_pct.index, y=person_pct.values, color=person_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
     st.plotly_chart(fig3)
+    fig3.update_layout(
+        xaxis_title="Person type",
+        yaxis_title=f"Proportion of people in the category that can shift {adjective}",
+        show_legend=False
+    )
     
     st.markdown(r"Below, the % of trips that can shift when segmented by gender are shown.")
     
     gender_pct = df[df["gender_cleaned"] != "Prefer not to answer"].groupby("gender_cleaned")[f"{st.session_state.phase}_shift"].mean()
     fig4 = px.bar(x=gender_pct.index, y=gender_pct.values, color=gender_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
     st.plotly_chart(fig4)
+    fig4.update_layout(
+        xaxis_title="Gender",
+        yaxis_title=f"Proportion of people in the category that can shift {adjective}",
+        show_legend=False
+    )
     
     st.markdown(r"Below, the % of trips that can shift when segmented by TBI wave is shown.")
     
     wave_pct = df.groupby("wave")[f"{st.session_state.phase}_shift"].mean()
     fig6 = px.bar(x=wave_pct.index, y=wave_pct.values, color=wave_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
     st.plotly_chart(fig6)
+    fig6.update_layout(
+        xaxis_title="Wave",
+        yaxis_title=f"Proportion of people in the category that can shift {adjective}",
+        show_legend=False
+    )
     
     st.header("Tour-level shifts")
     
@@ -504,13 +575,8 @@ def final_summary():
         f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift_tour"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%',
     ]
     
-    st.markdown(f"We consider a tour-level shift possible if every component trip can also shift {'feasibly' if st.session_state==Phase.FEASIBLE else 'with likelihood'}.")
+    st.markdown(f"We consider a tour-level shift possible if every component trip can also shift {adjective}.")
     st.table(tour_df)
-    
-    
-    # if handler["save_result"]:
-    #     with st.spinner("Exporting to csv"):
-    #         df.to_csv("data/feasible_trips.csv")
         
     
 def show_step():
@@ -525,6 +591,7 @@ def show_step():
             extrema = curr.get_extrema()
             curr.set_cutoff(st.sidebar.slider("Select a value:", float(extrema[0]), float(extrema[1]), float(extrema[1]), float((extrema[1] - extrema[0]) / 100)))
         else:
+            logging.exception(f"Something went worng with the cutoff mode enum: {curr.get_cutoff_mode()}")
             raise RuntimeError("something went wrong")
         st.sidebar.markdown(f"Cutoff equivalent: {curr.get_cutoff_equivalent():.2f}")
     
@@ -543,6 +610,7 @@ def run():
     option_slot = st.sidebar.empty()
 
     if st.sidebar.button("Finish and move to summary"):
+        logging.info("Moving to the summary step")
         st.session_state.summary_screen = True
         st.experimental_rerun()
     
@@ -551,17 +619,21 @@ def run():
     elif st.session_state.phase == Phase.PROBABLE:
         option = option_slot.selectbox("Choose the step you want to run.", st.session_state["probable_steps"])
     else:
-        print(st.session_state.phase)
+        logging.exception(f"something went wrong with the overall step session state variable: {st.session_state.phase}")
         raise RuntimeError("Something went wrong with the overall step session state variable")
     
     if st.sidebar.button("Refresh"):
+        logging.info("Refreshing the tool")
         st.experimental_rerun()
 
     if st.session_state.step != option:
+        logging.info(f"Moving to new step {option} from step {st.session_state.step}")
         st.session_state.step = option
         if option in st.session_state.step_class_dict:
+            logging.info("Retrieving existing instantiation of the new step")
             st.session_state.step_class = st.session_state.step_class_dict[option]
         else:
+            logging.info("Creating the new step for the first time")
             st.session_state.step_class_dict[option] = getattr(st.session_state.overall_step, option)(st.session_state.df)
             st.session_state.step_class = st.session_state.step_class_dict[option]
     show_step()
@@ -576,6 +648,7 @@ def run():
                 elif prev[1] == CutoffMode.RAW:
                     d[name] = f"{prev[0]:.2f} units"
                 else:
+                    logging.exception(f"Something went wrong with the cutoff mode enum: {prev[1]}")
                     raise RuntimeError("Something went wrong with the cutoff mode enum")
             else:
                 d[name] = "1"
@@ -588,6 +661,7 @@ def run():
 
 if __name__ == "__main__":
     if "start_screen_feasible" not in st.session_state:
+        logging.info("Doing initial setup")
         st.session_state["start_screen_feasible"] = True
         st.session_state["start_screen_probable"] = False
     

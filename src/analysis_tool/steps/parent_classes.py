@@ -4,6 +4,7 @@ import plotly.express as px
 import streamlit as st
 import re
 from scipy import stats
+import logging
 
 from matplotlib.colors import LinearSegmentedColormap
 
@@ -57,12 +58,18 @@ class BaseStep:
         
         values = (temp.groupby("community")[self.name].mean()).fillna(0)
         communities = get_communities()
-        communities["val"] = values
+        communities[f"Proportion of people that can shift {'feasibly' if self.overall_step == Phase.FEASIBLE else 'with likelihood'}"] = values
         # UTM 15-n, crs 26915
-        fig = px.choropleth(communities, geojson=communities.geometry, locations=communities.index, color="val", color_continuous_scale="viridis_r", range_color=(0, 1), projection="albers usa")
+        fig = px.choropleth(communities, 
+                            geojson=communities.geometry, 
+                            locations=communities.index, 
+                            color=f"Proportion of people that can shift {'feasibly' if st.session_state.phase == Phase.FEASIBLE else 'with likelihood'}", color_continuous_scale="viridis_r", 
+                            range_color=(0, 1), 
+                            projection="albers usa"
+        )
         fig.update_layout(margin=dict(l=0, r=0, b=0, t=0),
                   width=900, 
-                  height=500,
+                  height=500
         )
         fig.update_geos(fitbounds="locations", visible=False)
         return fig
@@ -104,6 +111,7 @@ class BaseStep:
                 Overall, independent of other steps, **{stats[2][0] * 100:.2f}**% of all car trips and **{stats[2][1] * 100:.2f}**% of VMT can satisfy this constraint."""
             ]
         else:
+            logging.exception(f"Something went wrong with the overall step enum: {self.overall_step}")
             raise RuntimeError("Something went wrong with the overall step enum")
         
     def get_name(self) -> str:
@@ -154,6 +162,7 @@ class ContinuousStep(BaseStep):
         self.column_name = column_name
         
     def apply_step(self, expression: pd.Series) -> None:
+        logging.info(f"Running through the logic and visualization of continuous step {self.name}")
         self.previous_run = (self.cutoff, self.cutoff_mode)
         super().apply_step(expression)
         
@@ -200,6 +209,7 @@ class ContinuousStep(BaseStep):
 class CategoricalStep(BaseStep):
     
     def apply_step(self, expression: pd.Series) -> None:
+        logging.info(f"Running through the logic and visualization of categorical step {self.name}")
         self.previous_run = 1
         self.df.loc[:, f"{self.overall_step}_{self.mode}_shift"] = self.prev
         self.df.loc[expression, f"{self.overall_step}_{self.mode}_shift"] = False

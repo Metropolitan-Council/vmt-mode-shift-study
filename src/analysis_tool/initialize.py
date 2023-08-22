@@ -4,20 +4,21 @@ import geopandas as gpd
 from ast import literal_eval
 import streamlit as st
 import keyring
+import logging
 
 from steps.enums import Mode
 
 from settings import handler
 
 def clean_mode_names(df: pd.DataFrame):
-    print("cleaning mode names")
+    logging.info("cleaning mode names")
     df["mode"] = np.where(df["mode"] == "Car", Mode.CAR, df["mode"])
     df["mode"] = np.where(df["mode"] == "Transit", Mode.TRANSIT, df["mode"])
     df["mode"] = np.where(df["mode"] == "Bike/Scooter", Mode.BIKE, df["mode"])
     df["mode"] = np.where(df["mode"] == "Walk", Mode.WALK, df["mode"])
 
 def merge_weather(df: pd.DataFrame):
-    print("merging in weather")
+    logging.info("merging in weather")
     # reading in weather data
     # https://www.ncei.noaa.gov/pub/data/ghcn/daily/
     weather = pd.read_csv("data/" + handler["weather_file_name"])
@@ -40,7 +41,7 @@ def merge_weather(df: pd.DataFrame):
     df["snow_depth"] = (weather.loc[df["travel_date"].values, "SNWD"] / 10).values # snowfall in mm
     
 def transit_cleanup(transit):
-    print("cleanup on transit")
+    logging.info("cleanup on transit")
     # calculate duration from star/tend times
     transit["start_time_dt"] = pd.to_datetime(transit["start_time"])
     transit["end_time_dt"] = pd.to_datetime(transit["end_time"])
@@ -87,7 +88,7 @@ def transit_cleanup(transit):
     return transit_grouped[["trip_id", "duration", "access_length", "num_transfers", "non_transit_duration", "length"]]
 
 def merge_transit_trip_details(df: pd.DataFrame, data_dir: str):
-    print("merging in transit details from raw tbi data")
+    logging.info("merging in transit details from raw tbi data")
     drive_data_dir = keyring.get_password('msp', 'vmt_reduction_dir')
     
     # read in raw tbi data
@@ -123,7 +124,7 @@ def merge_transit_trip_details(df: pd.DataFrame, data_dir: str):
     df.loc[df["mode"] == "Transit", "transfers"] = df[df["mode"] == "Transit"].apply(lambda x: get_num_transfers(literal_eval(x["trip_id"]), x["wave"]), axis=1)
     
 def add_community(df: pd.DataFrame):
-    print("adding communities")
+    logging.info("adding communities")
     communities = gpd.read_file("data/" + handler["community_shape_file_name"]).to_crs("EPSG:4326").set_index("CTU_NAME")
     
     gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df["home_lon"], df["home_lat"]), crs="EPSG:4326")
@@ -164,7 +165,7 @@ def final_field_cleanup(df: pd.DataFrame):
     df["income_detailed"] = np.where(df["income_detailed"] == "Prefer not to answer", "na", df["income_detailed"])
     
 def add_terminal_times(df: pd.DataFrame):
-    print("adding terminal times for tazs")
+    logging.info("adding terminal times for tazs")
     tazs = gpd.read_file("data/" + handler["taz_terminal_time_file_name"]).to_crs("EPSG:4326")
     
     o_gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df["o_lon"], df["o_lat"]), crs="EPSG:4326")
@@ -181,7 +182,7 @@ def add_terminal_times(df: pd.DataFrame):
     df["bike_duration_seconds_adj"] = df["bike_duration_seconds"] + 120
     
 def round_off_columns(df: pd.DataFrame):
-    print("rounding off columns")
+    logging.info("rounding off columns")
     
     df["car_duration_seconds"] = df["car_duration_seconds"].round()
     df["car_distance_meters"] = df["car_distance_meters"].round()
@@ -202,9 +203,10 @@ def round_off_columns(df: pd.DataFrame):
     
 @st.cache_data()
 def prepare_data(df: pd.DataFrame, data_dir: str):
+    logging.info("beginning data intake and cleaning")
     merge_weather(df)
 
-    print("reading in rerouting files")
+    logging.info("reading in rerouting files")
     car = pd.read_parquet(data_dir + "/Data_Processed/geodata/car_congestion_nogeom.parquet")
     bike = pd.read_parquet(data_dir + "/Data_Processed/geodata/bike_no_weight_penalty.parquet").drop("geometry", axis=1)
     transit = gpd.read_parquet(data_dir + "/Data_Processed/geodata/transit_trips.parquet")
@@ -212,7 +214,7 @@ def prepare_data(df: pd.DataFrame, data_dir: str):
     
     transit_grouped = transit_cleanup(transit)
     
-    print("merging rerouting to dataframe")
+    logging.info("merging rerouting to dataframe")
     # rename columns to distinguish by mode
     def add_mode_to_column_name(mode_df, mode_name): 
         renames = {}
@@ -269,7 +271,7 @@ def prepare_data(df: pd.DataFrame, data_dir: str):
     
     round_off_columns(df)
     
-    print("exporting to csv")
+    logging.info("exporting newly created table to csv")
     # possibly change to provided name
     df.to_csv("data/tbi_full.csv", index=False)
     
