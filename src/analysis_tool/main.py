@@ -5,16 +5,20 @@ import numpy as np
 import inspect
 import matplotlib.pyplot as plt
 import seaborn as sns
-import keyring
 
 import steps
 from settings import handler, get_communities
 from steps.enums import *
 from util import get_num_cold_starts, add_value_labels, rvb, stateful_button, stacked_shift_histogram, get_summary_df, get_duration_diff_df
 import json
+
 try:
     from initialize import prepare_data
+    import keyring
 except ImportError as e:
+    if not handler["build"]:
+        raise e
+except Exception as e:
     if not handler["build"]:
         raise e
     
@@ -180,12 +184,13 @@ def final_summary():
         pass
     
     # button to save df to csv on disk
-    if st.sidebar.button("Save current result to csv"):
-        with st.spinner("Exporting dataframe and percentiles"):
-            df.to_csv(f"output/{st.session_state.phase}_trips.csv", index=False)
-            f = open(f"output/{st.session_state.phase}_percentiles.json", "w")
-            f.write({step_name: step_class.get_cutoff() for step_name, step_class in st.session_state.step_class_dict.items()})
-            f.close()
+    if not handler["build"]:
+        if st.sidebar.button("Save current result to csv"):
+            with st.spinner("Exporting dataframe and percentiles"):
+                df.to_csv(f"output/{st.session_state.phase}_trips.csv", index=False)
+                f = open(f"output/{st.session_state.phase}_percentiles.json", "w")
+                f.write({step_name: step_class.get_cutoff() for step_name, step_class in st.session_state.step_class_dict.items()})
+                f.close()
             
     # calculate overall shift ability -- can shift to at least one mode
     df.loc[:, f"{st.session_state.phase}_shift"] = (
