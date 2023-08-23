@@ -175,7 +175,7 @@ def setup_vars(phase: Phase):
             raise RuntimeError("Something went wrong with the phase enum")
     except IndexError as e:
         logging.exception("no steps selected in the initial start page -- need to restart program")
-        raise e
+        raise RuntimeError("No steps selected in initial start page -- refresh to restart the tool")
     
     st.session_state["step_class_dict"] = dict()
     st.session_state["step_class_dict"][st.session_state.step] = getattr(st.session_state.overall_step, st.session_state.step)(st.session_state.df)
@@ -234,6 +234,11 @@ def final_summary():
     
     # summary just has some overall statistics
     st.title("Summary")
+    
+    total_trips: int = len(df[df["mode"] == Mode.CAR])
+    
+    # tell the % of people that can shift to any mode
+    bigger_markdown(f"Overall, <strong>{len(st.session_state.step_class_dict)}</strong> steps were run, and, accounting for these restrictions, <strong>{len(df[(df[f'{st.session_state.phase}_shift']) & (df['mode'] == Mode.CAR)]) / total_trips * 100:.2f}%</strong> of all trips could shift {adjective} from car to some non-car mode. When considering individual mode shifts, <strong>{len(df[(df[f'{st.session_state.phase}_transit_shift']) & (df['mode'] == Mode.CAR)]) / total_trips * 100:.2f}%</strong> of trips could shift {adjective} to transit, <strong>{len(df[(df[f'{st.session_state.phase}_walk_shift']) & (df['mode'] == Mode.CAR)]) / total_trips * 100:.2f}%</strong> to bike, and <strong>{len(df[(df[f'{st.session_state.phase}_bike_shift']) & (df['mode'] == Mode.CAR)]) / total_trips * 100:.2f}%</strong> to bike.")
     
     # record of settings for all steps that were run
     bigger_markdown("Below are the steps that were run and their settings (1 for categoricals indicates that it was run).")
