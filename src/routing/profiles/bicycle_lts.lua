@@ -24,6 +24,9 @@ function setup()
   local walking_speed = 4.86
 
   return {
+    -- scenario controls
+    use_lts = true, -- set to false to treat everything as LTS 1
+
     properties = {
       u_turn_penalty                = 20,
       traffic_light_penalty         = 2,
@@ -571,7 +574,13 @@ function process_way(profile, way, result)
 
   -- We first check LTS. If it's over 2, we short-circuit and hand off to the
   -- walk profile as we assume people walk their bikes in these locations
-  local lts = LTS.lts_for_way(profile, way)
+  local lts
+  if profile.use_lts then
+    lts = LTS.lts_for_way(profile, way)
+  else
+    lts = 1
+  end
+
   -- special LTS 5 is LTS 4 but does not bleed into intersections
   assert(lts > 0 and lts <= 5, "Found unexpected LTS " .. lts .. " at way " .. way:id())
 
