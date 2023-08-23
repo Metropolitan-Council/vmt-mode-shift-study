@@ -1,6 +1,6 @@
 # Routing readme
 
-The scripts `route_street.jl` and `route_transit.jl` perform routing on the TBI data. Getting ready to run them can be a bit tricky, however. First, you need to have OSRM built and installed (see instructions [on the OSRM github](https://github.com/Project-OSRM/osrm-backend#building-from-source)). I  have had no luck installing OSRM on Windows; if you're using Windows, consider using Windows Subsystem for Linux (WSL) for routing.
+The scripts `route_street.jl` and `route_transit.jl` perform routing on the TBI data. Getting ready to run them can be a bit tricky, however. First, you need to have OSRM built and installed (see instructions [on the OSRM github](https://github.com/Project-OSRM/osrm-backend#building-from-source)). I  have had no luck installing OSRM on Windows; if you're using Windows, consider using Windows Subsystem for Linux (WSL) for routing. For now, you should install from the `process-segment-flags` branch of `mattwigway/osrm-backend`, but the changes in that branch currently have a pull request to be incorporated back into the main OSRM repository.
 
 Then, you need to install the C++ shim library to allow Julia to communicate with OSRM. To do that, clone the [OSRM.jl](https://github.com/mattwigway/OSRM.jl) Github repository, and within the `cxx/build` directory, run:
 
@@ -12,15 +12,34 @@ The difficult part is now over; you just need to install the Julia packages need
 
 ## Building the network
 
+### Elevation data
+
+For bicycling and walking, routing accounts for elevation differences. In order to do this properly, we need elevation data. We use 1/3 arc-second (~10m) resolution data from the USGS 3D Elevation Program. OSRM will interpolate between the points in the raster, so the resolution is not quite as bad as it sounds.
+
+First, we need to download the data. The script `download_elevation_data.jl` will download all of the GeoTIFF files for the analysis area (each covers one square degree). The script takes one argument, which is the output directory to save the elevation data in. The data requires about 30-35GB of space for all processing to take place.
+
+    download_elevation_data.jl path
+
+Once the elevation data files are downloaded, several more steps need to happen. They need to be combined into a single file for the analysis area, they need to be reprojected from NAD83 (used by USGS) to WGS84 (used by OSM/OSRM), and they need to be converted to the text-based grid format OSRM requires. OSRM additionally requires that all raster data be integers, so that needs to be done. To minimize rounding errors, we also convert the elevations to millimeters above mean sea level. The shell script `prepare_elevation_data.sh` handles these steps. Since this is a shell script, it will only run on macOS or Linux; if you are using Windows, I recommend installing the Windows Subsystem for Linux. You will need it to run OSRM anyhow. You pass in the path to directory you downloaded the elevation to. This will create three new files: combined.tif, which is a GeoTIFF combining all of the elevation tiles into a single dataset; final.asc, which is the OSRM-format raster grid, and final_header.asc, which contains information about the spatial extent of the file. This spatial extent should match the variables declared at the top of `profiles/elevation.lua`.
+
+    prepare
+
 ### Street network
 
-OSRM requires the original `analysis-area.osm.pbf` to be processed into a network, using a "profile" that assigns weights. Eventually, we will have custom profiles that account for slopes, safety, traffic congestion, and so on, but for now we are using the profiles that ship with OSRM. The `build_network.sh` script will build the network, taking arguments for the path to the network, the path to the profile, and the name of the directory where you want the final network to reside (must not already exist). If you're running under WSL, I recommend keeping you networks within WSL (i.e. not under /mnt/c/...) because symbolic links are used during the network build process. I used these commands, putting my networks in `~/vmt-networks/<network_name>` and using the default installation location for OSRM profiles:
+OSRM requires the original `analysis-area.osm.pbf` to be processed into a network, using a "profile" that assigns weights. Eventually, we will have custom profiles that account for slopes, safety, traffic congestion, and so on, but for now we are using the profiles that ship with OSRM. The `build_network.sh` script will build the network, taking arguments for the path to the network, the path to the profile, and the name of the directory where you want the final network to reside (must not already exist). If you're running under WSL, I recommend keeping you networks within WSL (i.e. not under /mnt/c/...) because symbolic links are used during the network build process.
 
-    bash build_street_network.sh /path/to/analysis-area.osm.pbf /usr/local/share/osrm/profiles/car.lua ~/vmt-networks/car
-    bash build_street_network.sh /path/to/analysis-area.osm.pbf /usr/local/share/osrm/profiles/foot.lua ~/vmt-networks/walk
-    bash build_street_network.sh /path/to/analysis-area.osm.pbf /usr/local/share/osrm/profiles/bicycle.lua ~/vmt-networks/bike
+#### Environment variables
 
-These each took about a minute on my desktop, but _much_ longer on my laptop---likely due to memory requirements. I have 128GB on my desktop.
+The profiles expect three environment variables to be set: `SPEED_DATABASE`, the path to the SQLite speed database (see below), `SPEED_COLUMN`, the column in the database to use for congestion information, and `ELEVATION_FILE`, the path to the `final.asc` file created by the elevation step above.
+
+#### Building the network
+
+I used these commands, putting my networks in `~/vmt-networks/<network_name>` and using the default installation location for OSRM profiles:
+
+    bash build_street_network.sh /path/to/analysis-area.osm.pbf profiles/foot_lts.lua ~/vmt-networks/walk-lts
+    bash build_street_network.sh /path/to/analysis-area.osm.pbf profiles/bicycle_lts.lua ~/vmt-networks/bike-lts
+
+These will take a few minutes to run.
 
 #### Congestion data
 
@@ -36,7 +55,7 @@ OSRM does have functionality to update speeds on the fly, but we do not use this
             sqlite3 "$SPEED_DATABASE" |
             grep REAL |
             sed -E 's/^ +"([^"]+).*$/\1/' | 
-            xargs -n 1 -Icol env SPEED_COLUMN=col bash build_street_network.sh /path/to/analysis-area.osm.pbf /usr/local/share/osrm/profiles/car.lua ~/vmt-networks/car_col
+            xargs -n 1 -Icol env SPEED_COLUMN=col bash build_street_network.sh ~/vmt-networks/analysis-area.osm.pbf profiles/car_traffic.lua ~/vmt-networks/car_col
     )
 
 (The parentheses are optional, but create a subshell to avoid polluting the main environment in your shell. `export` is necessary because we need SPEED_DATABASE to be available in the variable expansion after `sqlite3` - otherwise that variable expansion occurs before the variable is set).
@@ -75,7 +94,7 @@ Car congestion uses a set of many networks. Since routing is so fast, we just ro
         sqlite3 "$SPEED_DATABASE" | 
         grep REAL |
         sed -E 's/^ +"([^"]+).*$/\1/' |
-        xargs -n 1 -Icol env julia -t auto --project route.jl /path/to/tbi_merged.csv ~/vmt-networks/car_col/car_col.osrm /path/to/car_col.gpkg
+        xargs -n 1 -Icol env julia -t auto --project route.jl /path/to/tbi_merged.csv ~/vmt-networks/car_col/car_col.osrm /path/to/car_col.parquet
     )
 
 ### Transit routing
