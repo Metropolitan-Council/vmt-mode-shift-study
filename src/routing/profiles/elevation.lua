@@ -69,7 +69,7 @@ function get_elevation_gain_mm (rasterData, source, target, distance)
             if (slope_pct > 35 or slope_pct < -35) then
                 print("Warning: street segment is steeper than Baldwin St in Dunedin, NZ (35%). Assuming bad data/no slope, at " .. origin_lat .. ", " .. origin_lon)
             else
-                elevation_gain_mm = elevation_gain_mm + seg_elevation_mm
+                elevation_gain_mm = elevation_gain_mm + math.max(seg_elevation_mm, 0)
             end
         else
             if origin_val.datum == origin_val.invalid_data() then
