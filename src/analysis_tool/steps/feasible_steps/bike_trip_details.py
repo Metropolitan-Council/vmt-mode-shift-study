@@ -13,7 +13,7 @@ class BikeSnowDepthStep(ContinuousStep):
         super().__init__(df, "feasible_bike_snow_depth", Mode.BIKE, cutoff, "snow_depth", Phase.FEASIBLE)
     
     def get_summary_statistics(self):
-        return show_summaries(self.df, modes=[[x, self.column_name] for x in Mode.get_all()], percentile=self.get_cutoff_pct())
+        return show_summaries(self.df, modes=[[x, self.column_name] for x in Mode.get_all()], percentile=self.get_cutoff_pct(), column_names=["Snow depth in mm during trip day (observed bike trips)", "Snow depth in mm during trip day (observed car trips)"])
     
     def get_summary_figure(self):
         fig = plot_density_plotly(self.df, self.mode, self.column_name, self.get_cutoff_pct())
@@ -50,7 +50,7 @@ class BikeSnowDepthStep(ContinuousStep):
         res.append("""Below is a comparison of snow depth distributions between all the different modes. It is clear here that bike/scooter is an outlier, with the specified percentile much more to the left than the other mode percentiles. This indicates that snow depth is a strong and unique indicator for determining whether a bike trip is feasible. """)
         
         # summary statistics
-        res.append("Below, the summary statistics for the snow depth (in mm) for observed bike/scooter trips can be seen. It should be noted that at the default 95th percentile parameter, the snow depth for these trips remain at 0. ")
+        res.append("Below, the summary statistics for the snow depth (in mm) that was present during the day of the trip when segmented by observed TBI mode is shown. It should be noted that at the default 95th percentile parameter, the snow depth for observed bike trips is 0 while this is not the case for observed car trips, indicating bike trips are more influenced by deeper snow than car trips are. ")
         
         
         res = res + conclusion
@@ -68,7 +68,7 @@ class BikeHighLTSDistStep(ContinuousStep):
         df.loc[:, "high_lts_biking_pct"] = df["high_lts_dist"] / df["bike_distance_meters"]
         
     def get_summary_statistics(self):
-        return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct())
+        return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct(), column_names=["Proportion of trip taken on high LTS if biking were chosen (observed bike trips)", "Proportion of trip taken on high LTS if biking were chosen (observed car trips)"])
     
     def get_summary_figure(self):
         fig = plot_density_plotly(self.df, self.mode, self.column_name, self.get_cutoff_pct())
@@ -107,7 +107,7 @@ class BikeHighLTSDistStep(ContinuousStep):
         res.append("""It is very clear here from this figure that observed bike trips tend to be far more left-heavy for high stress distance than car trips (if they were to switch to biking), which makes sense as the reason these bike trips are observed is because they are feasible. The lines represent the specified percentiles for each of the two distributions, and any part of the orange distribution to the left of the blue line can feasibly switch to biking, under the high stress biking distance feasibility indicator. """)
         
         # summary statistics
-        res.append("Here, we can see the summary statistics for high stress biking distance between observed biking/observed car trips, if the latter were to switch to biking. This largely reflects what was seen in the distribution comparison figure. ")
+        res.append("Here, we can see the summary statistics for high stress biking proportion for observed bike and car trips (if the latter were to switch to biking). This largely reflects what was seen in the distribution comparison figure. ")
         
         res = res + conclusion
         res = [inspect.cleandoc(x) for x in res]

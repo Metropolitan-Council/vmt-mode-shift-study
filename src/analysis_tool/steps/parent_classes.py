@@ -146,7 +146,7 @@ class BaseStep:
         else:  # plotly chart
             slots[0].plotly_chart(fig)
             
-        slots[1].dataframe(self.get_summary_statistics())
+        slots[1].markdown(self.get_summary_statistics().to_html(escape=False), unsafe_allow_html=True)
         slots[2].plotly_chart(self.get_map())
         
     def get_previous_run(self):

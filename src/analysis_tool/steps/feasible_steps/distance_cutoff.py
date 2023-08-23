@@ -15,7 +15,7 @@ class WalkDistanceStep(ContinuousStep):
         self.df.loc[:, "walk_distance_miles"] = self.df["walk_distance_meters"] * 0.000621371
     
     def get_summary_statistics(self):
-        return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct())
+        return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct(), column_names=["Walk distance in miles if walking chosen (observed walk trips)", "Walk distance in miles if walking chosen (observed car trips)"])
     
     def get_summary_figure(self):
         fig = plot_density_plotly(self.df, self.mode, self.column_name, self.get_cutoff_pct())
@@ -52,7 +52,7 @@ class WalkDistanceStep(ContinuousStep):
         Of note are the two lines present in the graph, which represent the percentiles of the data specified as a parameter. In particular, any part of the orange distribution to the left of the blue line is within the threshold for feasibility (for the given percentile cutoff) and thus constitutes a feasible mode shift.""")
         
         # summary statistics
-        res.append("Here, the summary statistics for walk trip walk distances and car trip car distances can be seen. This largely reflects the distribution seen above, although the percentile given as a parameter is quantified here.")
+        res.append("Here, the summary statistics for trip walk distances when segmented by observed TBI mode (e.g., if an actual car trip shifted to walk, what would be the walk distance of the resultant trip) can be seen. This largely reflects the distribution seen above, although the percentile given as a parameter is quantified here.")
         
         
         res = res + conclusion
@@ -68,7 +68,7 @@ class BikeDistanceStep(ContinuousStep):
         self.df.loc[:, "bike_distance_miles"] = self.df["bike_distance_meters"] * 0.000621371
     
     def get_summary_statistics(self):
-        return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct())
+        return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct(), column_names=["Bike distance in miles if biking chosen (observed bike trips)", "Bike distance in miles if biking chosen (observed car trips)"])
     
     def get_summary_figure(self):
         fig = plot_density_plotly(self.df, self.mode, self.column_name, self.get_cutoff_pct())
@@ -103,7 +103,7 @@ class BikeDistanceStep(ContinuousStep):
         res.append("""In this figure, we can see a comparison between the distributions of biking distance for observed biking trips versus biking distance if observed car trips were to shift to biking. The car distance distribution is more right-skewed, which is reasonable as cars generally go longer distances. The line here represents the specified percentile of each distribution, and all trips of the orange distribution to the left of the blue line can feasibly switch to biking, as their biking distance is reasonable compared to observed biking distances.""")
         
         # summary statistics
-        res.append("Below, we can see summary statistics for biking/car biking distance. This largely reflects what was seen in the above figure, but with more quantifiable values.")
+        res.append("Here, the summary statistics for trip bike distances when segmented by observed TBI mode (e.g., if an actual car trip shifted to bike, what would be the bike distance of the resultant trip) can be seen. This largely reflects the distribution seen above, although the percentile given as a parameter is quantified here.")
         
         
         res = res + conclusion

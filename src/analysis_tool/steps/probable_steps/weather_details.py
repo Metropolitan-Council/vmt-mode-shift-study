@@ -13,7 +13,7 @@ class WalkPrecipitationStep(ContinuousStep):
         super().__init__(df, "likely_walk_precipitation", Mode.WALK, cutoff, "precipitation", Phase.PROBABLE)
     
     def get_summary_statistics(self):
-        return show_summaries(self.df, modes=[[x, self.column_name] for x in Mode.get_all()], percentile=self.get_cutoff_pct())
+        return show_summaries(self.df, modes=[[x, self.column_name] for x in Mode.get_all()], percentile=self.get_cutoff_pct(), column_names=["Precipitation in 1/10 mm on travel day if walking chosen (observed walk trips)", "Precipitation in 1/10 mm on travel day if walking chosen (observed car trips)"])
     
     def get_summary_figure(self):
         fig, ax = plt.subplots(figsize=(12, 6))
@@ -54,7 +54,7 @@ class BikePrecipitationStep(ContinuousStep):
         super().__init__(df, "likely_bike_precipitation", Mode.BIKE, cutoff, "precipitation", Phase.PROBABLE)
     
     def get_summary_statistics(self):
-        return show_summaries(self.df, modes=[[x, self.column_name] for x in Mode.get_all()], percentile=self.get_cutoff_pct())
+        return show_summaries(self.df, modes=[[x, self.column_name] for x in Mode.get_all()], percentile=self.get_cutoff_pct(), column_names=["Precipitation in 1/10 mm on travel day if biking chosen (observed bike trips)", "Precipitation in 1/10 mm on travel day if biking chosen (observed car trips)"])
     
     def get_summary_figure(self):
         fig, ax = plt.subplots(figsize=(12, 6))
@@ -95,7 +95,7 @@ class WalkTemperatureStep(ContinuousStep):
         super().__init__(df, "likely_walk_temperature", Mode.WALK, cutoff, "temperature", Phase.PROBABLE)
     
     def get_summary_statistics(self):
-        return show_summaries(self.df, modes=[[x, self.column_name] for x in Mode.get_all()], percentile=self.get_cutoff_pct())
+        return show_summaries(self.df, modes=[[x, self.column_name] for x in Mode.get_all()], percentile=self.get_cutoff_pct(), column_names=["Temperature in 1/10 C on travel day if walking chosen (observed walk trips)", "Temperature in 1/10 C on travel day if walking chosen (observed car trips)"])
     
     def get_summary_figure(self):
         fig, ax = plt.subplots(figsize=(12, 6))
@@ -138,7 +138,7 @@ class BikeTemperatureStep(ContinuousStep):
         super().__init__(df, "likely_bike_temperature", Mode.BIKE, cutoff, "temperature", Phase.PROBABLE)
     
     def get_summary_statistics(self):
-        return show_summaries(self.df, modes=[[x, self.column_name] for x in Mode.get_all()], percentile=self.get_cutoff_pct())
+        return show_summaries(self.df, modes=[[x, self.column_name] for x in Mode.get_all()], percentile=self.get_cutoff_pct(), column_names=["Temperature in 1/10 C on travel day if biking chosen (observed bike trips)", "Temperature in 1/10 C on travel day if biking chosen (observed car trips)"])
     
     def get_summary_figure(self):
         fig, ax = plt.subplots(figsize=(12, 6))

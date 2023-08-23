@@ -4,10 +4,11 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 import plotly.express as px
+import logging
 
 from steps.enums import Mode
 
-def show_summaries(df: pd.DataFrame, modes, percentile=[0.95]): # show normal summaries for each mode side by side
+def show_summaries(df: pd.DataFrame, modes, percentile=[0.95], column_names=None): # show normal summaries for each mode side by side
     res = []
     labels = []
     if type(percentile) != type([]):
@@ -23,8 +24,13 @@ def show_summaries(df: pd.DataFrame, modes, percentile=[0.95]): # show normal su
         group = df[df["mode"] == mode]
         res.append(group[column].describe(percentiles=p))
     x = pd.concat(res, axis=1)
-    x.columns = [' '.join(col_name.replace(" ", ":_").split("_")).capitalize() for col_name in labels]
-    x.index = x.index.str.capitalize()
+    if column_names != None and len(x.columns) == len(column_names):
+        x.columns = column_names
+    else:
+        if column_names != None:
+            logging.warning("Passed in column names does not match the summary dataframe -- resorting to default naming convention")
+        x.columns = [' '.join(col_name.replace(" ", ":_").split("_")).capitalize() for col_name in labels]
+        x.index = x.index.str.capitalize()
     return x
 
 def show_value_counts(df: pd.DataFrame, modes):

@@ -60,8 +60,6 @@ def start_screen_feasible():
     st.sidebar.header("Actions")
         
     if st.sidebar.button("Begin"):
-        if len(st.session_state.feasible_steps) == 0:
-            raise RuntimeError("No steps were selected. Please refresh the page to restart the tool.")
         if "phase" not in st.session_state or st.session_state.phase != Phase.FEASIBLE:
             setup_vars(Phase.FEASIBLE)
         st.session_state.start_screen_feasible = False

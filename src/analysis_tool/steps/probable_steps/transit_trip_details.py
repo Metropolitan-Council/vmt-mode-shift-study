@@ -13,7 +13,7 @@ class TransitTransferCountStep(ContinuousStep):
         super().__init__(df, "likely_transit_transfer_number", Mode.TRANSIT, cutoff, "transit_num_transfers", Phase.PROBABLE)
     
     def get_summary_statistics(self):
-        return show_summaries(self.df, [[x, self.column_name] for x in [self.mode, Mode.CAR]], self.get_cutoff_pct())
+        return show_summaries(self.df, [[x, self.column_name] for x in [self.mode, Mode.CAR]], self.get_cutoff_pct(), column_names=["Number of transfers if transit chosen (observed transit trips)", "Number of transfers if transit chosen (observed car trips)"])
     
     def get_summary_figure(self):
         fig, ax = plt.subplots(1, 2, figsize=(10, 5))
