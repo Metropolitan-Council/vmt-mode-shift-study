@@ -17,6 +17,7 @@ walk_profile = require("foot_lts")
 car_profile = require("car_traffic")
 LTS = require("lts")
 elevation = require("elevation")
+clear = require("clear_result")
 
 function setup()
   local default_speed = 12 * 1.609
@@ -687,27 +688,43 @@ function process_way(profile, way, result)
   end
 
   -- handle walking bikes by calling out to the walk profile. We walk bikes if LTS > 2 or biking is not allowed.
-  -- TODO audit the walk profile to make sure nothing in there is affected by the bike profile being run first
-  -- in places where biking is not allowed.
   if lts > 2 or result.forward_mode == mode.inaccessible or result.backward_mode == mode.inaccessible or
-    result.forward_speed == -1 or result.backward_speed == -1 or bicycle_tag == "dismount" then
-    -- process as a walk-bike segment
+    result.forward_speed == -1 or result.backward_speed == -1 or
+    result.forward_rate== -1 or result.backward_rate== -1 or
+    bicycle_tag == "dismount" then
+
+    -- Save these as we may need them later if a street is one-way
+    original_forward_speed = result.forward_speed
+    original_forward_rate = result.forward_rate
+    original_forward_mode = result.forward_mode
+    original_backward_speed = result.backward_speed
+    original_backward_rate = result.backward_rate
+    original_backward_mode = result.backward_mode
+
+    -- clear the result, so the walk profile has something fresh to work with
+    clear_result(result)
+
+    -- process as a walk-your-bike segment
     walk_profile.process_way(profile.walk_profile, way, result)
 
-    -- and apply a 25% speed and weight penalty to account for walking the bike
-    if result.forward_speed > 0 then
-      assert(result.forward_rate > 0)
-      -- TODO no penalty
-      result.forward_speed = result.forward_speed
-      result.forward_rate = result.forward_rate
-      result.forward_mode = mode.pushing_bike
-    end
+    result.forward_mode = mode.pushing_bike
+    result.backward_mode = mode.pushing_bike
 
-    if result.backward_speed > 0 then
-      assert(result.backward_rate > 0)
-      result.backward_speed = result.backward_speed
-      result.backward_rate = result.backward_rate
-      result.backward_mode = mode.pushing_bike
+    -- if we don't have to walk the bike in both directions, restore the bicycle results
+    -- (speed and rate are all that affect routing, and reset mode for good measure)
+    if lts <= 2 and bicycle_tag ~= "dismount" then
+      -- we don't have to walk the bike when traversing this way forward
+      if original_forward_mode == mode.cycling and original_forward_speed ~= -1 and original_forward_rate ~= -1 then
+        result.forward_mode = mode.cycling
+        result.forward_speed = original_forward_speed
+        result.forward_rate = original_forward_rate
+      end
+      
+      if original_backward_mode == mode.cycling and original_backward_speed ~= -1 and original_backward_rate ~= -1 then
+        result.backward_mode = mode.cycling
+        result.backward_speed = original_backward_speed
+        result.backward_rate = original_backward_rate
+      end
     end
   end
   
