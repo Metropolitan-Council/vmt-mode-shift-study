@@ -807,6 +807,8 @@ function process_turn(profile, turn)
   end
 end
 
+-- Note that we use the same elevation avoidance function even when walking bikes - which is reasonable,
+-- because it is less pleasant to push a bike up a hill than to walk up a hill without a bike.
 function process_segment(profile, segment)
   -- ignore if it's not a startpoint (i.e. it's a bridge or tunnel)
   if segment.flags.startpoint then
