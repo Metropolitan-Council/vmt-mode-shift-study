@@ -60,12 +60,14 @@ class BaseStep:
         communities = get_communities()
         communities[f"Proportion of people that can shift {'feasibly' if self.overall_step == Phase.FEASIBLE else 'with likelihood'}"] = values
         # UTM 15-n, crs 26915
-        fig = px.choropleth(communities, 
+        fig = px.choropleth_mapbox(communities, 
                             geojson=communities.geometry, 
                             locations=communities.index, 
                             color=f"Proportion of people that can shift {'feasibly' if st.session_state.phase == Phase.FEASIBLE else 'with likelihood'}", color_continuous_scale="viridis_r", 
-                            range_color=(0, 1), 
-                            projection="albers usa"
+                            range_color=(0, 1),
+                            mapbox_style="carto-positron",
+                            center={"lat": 44.9778, "lon": -93.2650},
+                            opacity=0.8
         )
         fig.update_layout(margin=dict(l=0, r=0, b=0, t=0),
                   width=900, 

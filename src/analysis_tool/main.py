@@ -418,13 +418,15 @@ def final_summary():
     communities[f"Proportion of people that can shift {adjective}"] = values
     
     st.markdown(f"This map shows the proportion of trips in each community region that can {adjective} shift to any alternative non-car mode.")
-    fig0 = px.choropleth(communities, 
+    fig0 = px.choropleth_mapbox(communities, 
                          geojson=communities.geometry, 
                          locations=communities.index, 
                          color=f"Proportion of people that can shift {adjective}", 
                          range_color=(0, 1), 
-                         color_continuous_scale="viridis_r", 
-                         projection="albers usa",
+                         color_continuous_scale="viridis_r",
+                         mapbox_style="carto-positron",
+                         center={"lat": 44.9778, "lon": -93.2650},
+                         opacity=0.8
     )
     fig0.update_layout(margin=dict(l=0, r=0, b=0, t=0),
                 width=900, 
@@ -439,13 +441,15 @@ def final_summary():
     communities[f"Proportion of people that can shift {adjective}"] = values_competitive
     
     st.markdown(f"This map shows the proportion of trips in each community region that can competitively shift (maximum bidirectional difference of 15 minutes) to the fastest alternative non-car mode.")
-    fig1 = px.choropleth(communities, 
+    fig1 = px.choropleth_mapbox(communities, 
                          geojson=communities.geometry, 
                          locations=communities.index, 
                          color=f"Proportion of people that can shift {adjective}",
                          color_continuous_scale="viridis_r", 
-                         range_color=(0, 1), 
-                         projection="albers usa"
+                         range_color=(0, 1),
+                         mapbox_style="carto-positron",
+                         center={"lat": 44.9778, "lon": -93.2650},
+                         opacity=0.8
     )
     fig1.update_layout(margin=dict(l=0, r=0, b=0, t=0),
                 width=900, 
