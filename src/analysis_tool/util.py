@@ -96,7 +96,7 @@ def stacked_shift_histogram(df: pd.DataFrame, mode: Mode, mode_duration: str, mo
     
     fig = px.histogram(view, x="curr", color="Category", barmode="stack", range_x=[-30,120],
                        labels={"curr": "Travel Time Difference (Alternative Time - Drive Time, minutes)"},
-                       color_discrete_sequence=plotly_colors)
+                       color_discrete_sequence=plotly_colors, title=f"Stacked histogram of duration difference between equivalent {mode} and driving trips")
     
     return fig
 

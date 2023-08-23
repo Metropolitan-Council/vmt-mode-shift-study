@@ -383,11 +383,17 @@ def final_summary():
     # not sure how to do the tradiational stacked histogram with everything in it
     bigger_markdown(r"Below, the distribution of the duration difference between the best non-car mode and car for shifted trips is shown")
     df["car_minus_min_alt_mode_duration"] = (df["min_alt_mode_duration"] - df["car_duration_seconds_adj"]) / 60
-    fig5 = px.histogram(df, x="car_minus_min_alt_mode_duration", range_x=[-30,120])
-    fig5.update_layout(
+    fig1 = px.histogram(df, x="car_minus_min_alt_mode_duration", range_x=[-30,120])
+    fig1.update_layout(
+        title={
+                'text': "Histogram of duration difference between the best feasible alternative and the equivalent car trip",
+                'x': 0.5,
+                'xanchor': 'center',
+                'yanchor': 'top'
+        },
         xaxis_title="Car minus best alternative mode duration (minutes)"
     )
-    st.plotly_chart(fig5)
+    st.plotly_chart(fig1)
     
     # table for fastest alternative mode being within x minutes of driving
     bigger_markdown(r"The % of car trips and VMT that are within x minutes from the fastest alternative mode can be seen in the below table.")
@@ -414,7 +420,7 @@ def final_summary():
     communities[f"Proportion of people that can shift {adjective}"] = values
     
     bigger_markdown(f"This map shows the proportion of trips in each community region that can {adjective} shift to any alternative non-car mode.")
-    fig0 = px.choropleth_mapbox(communities, 
+    fig2 = px.choropleth_mapbox(communities, 
                          geojson=communities.geometry, 
                          locations=communities.index, 
                          color=f"Proportion of people that can shift {adjective}", 
@@ -422,14 +428,15 @@ def final_summary():
                          color_continuous_scale="viridis_r",
                          mapbox_style="carto-positron",
                          center={"lat": 44.9778, "lon": -93.2650},
-                         opacity=0.8
+                         opacity=0.8,
+                         title=f"Proportion of car trips in CTUs that can shift {adjective} to any non-car mode",  # this doesnt work
     )
-    fig0.update_layout(margin=dict(l=0, r=0, b=0, t=0),
+    fig2.update_layout(margin=dict(l=0, r=0, b=0, t=0),
                 width=900, 
                 height=500
     )
-    fig0.update_geos(fitbounds="locations", visible=False)
-    st.plotly_chart(fig0)
+    fig2.update_geos(fitbounds="locations", visible=False)
+    st.plotly_chart(fig2)
     
     # map of % of trips in each community regino that can shift competitively when considering the fastest alternative mode
     df["competitive_timing"] = df["car_minus_min_alt_mode_duration"].abs() <= 15
@@ -437,7 +444,7 @@ def final_summary():
     communities[f"Proportion of people that can shift {adjective}"] = values_competitive
     
     bigger_markdown(f"This map shows the proportion of trips in each community region that can competitively shift (maximum bidirectional difference of 15 minutes) to the fastest alternative non-car mode.")
-    fig1 = px.choropleth_mapbox(communities, 
+    fig3 = px.choropleth_mapbox(communities, 
                          geojson=communities.geometry, 
                          locations=communities.index, 
                          color=f"Proportion of people that can shift {adjective}",
@@ -445,14 +452,15 @@ def final_summary():
                          range_color=(0, 1),
                          mapbox_style="carto-positron",
                          center={"lat": 44.9778, "lon": -93.2650},
-                         opacity=0.8
+                         opacity=0.8,
+                         title="Proportion of trips in CTUs that can competitively shift to a non-car mode"  # this doesnt work
     )
-    fig1.update_layout(margin=dict(l=0, r=0, b=0, t=0),
+    fig3.update_layout(margin=dict(l=0, r=0, b=0, t=0),
                 width=900, 
                 height=500
     )
-    fig1.update_geos(fitbounds="locations", visible=False)
-    st.plotly_chart(fig1)
+    fig3.update_geos(fitbounds="locations", visible=False)
+    st.plotly_chart(fig3)
     
     st.header("Raw metrics")
     
@@ -498,57 +506,87 @@ def final_summary():
     bigger_markdown(r"Below, the % of trips that can shift when segmented by income bracket is shown.")
     
     income_pct = df[df["income_detailed"] != "na"].groupby("income_detailed")[f"{st.session_state.phase}_shift"].mean().reindex(["Under $15,000", "$15,000-$24,999", "$25,000-$34,999", "$35,000-$49,999", "$50,000-$74,999", "$75,000-$99,999", "$100,000-$149,999", "$150,000-$199,999", "$200,000-$249,999", "$250,000 or more"])
-    fig1 = px.bar(x=income_pct.index, y=income_pct.values, color=income_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
-    fig1.update_layout(
+    fig4 = px.bar(x=income_pct.index, y=income_pct.values, color=income_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
+    fig4.update_layout(
         xaxis_title="Income group",
         yaxis_title=f"Proportion of people in the category that can shift {adjective}",
-        legend_title="Legend"
+        legend_title="Legend",
+        title={
+                'x': 0.5,
+                'xanchor': 'center',
+                'yanchor': 'top',
+                'text': 'Proportion of people that can shift modes by income group'
+        }
     )
-    st.plotly_chart(fig1)
+    st.plotly_chart(fig4)
     
     bigger_markdown(r"Below, the % of trips that can shift when segmented by trip purpose are shown.")
     
     purpose_pct = df[df["purpose_cleaned"] != "Missing"].groupby("purpose_cleaned")[f"{st.session_state.phase}_shift"].mean()
-    fig2 = px.bar(x=purpose_pct.index, y=purpose_pct.values, color=purpose_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
-    st.plotly_chart(fig2)
-    fig2.update_layout(
+    fig5 = px.bar(x=purpose_pct.index, y=purpose_pct.values, color=purpose_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
+    fig5.update_layout(
         xaxis_title="Purpose category",
         yaxis_title=f"Proportion of people in the category that can shift {adjective}",
-        show_legend=False
+        showlegend=False,
+        title={
+                'x': 0.5,
+                'xanchor': 'center',
+                'yanchor': 'top',
+                'text': 'Proportion of people that can shift mode by trip purpose'
+        }
     )
+    st.plotly_chart(fig5)
     
     bigger_markdown(r"Below, the % of trips that can shift when segmented by person type are shown.")
                 
     person_pct = df[df["person_type"] != "na"].groupby("person_type")[f"{st.session_state.phase}_shift"].mean()
-    fig3 = px.bar(x=person_pct.index, y=person_pct.values, color=person_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
-    st.plotly_chart(fig3)
-    fig3.update_layout(
+    fig6 = px.bar(x=person_pct.index, y=person_pct.values, color=person_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
+    fig6.update_layout(
         xaxis_title="Person type",
         yaxis_title=f"Proportion of people in the category that can shift {adjective}",
-        show_legend=False
+        showlegend=False,
+        title={
+                'x': 0.5,
+                'xanchor': 'center',
+                'yanchor': 'top',
+                'text': 'Proportion of people that can shift mode by person type'
+        }
     )
+    st.plotly_chart(fig6)
     
     bigger_markdown(r"Below, the % of trips that can shift when segmented by gender are shown.")
     
     gender_pct = df[df["gender_cleaned"] != "Prefer not to answer"].groupby("gender_cleaned")[f"{st.session_state.phase}_shift"].mean()
-    fig4 = px.bar(x=gender_pct.index, y=gender_pct.values, color=gender_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
-    st.plotly_chart(fig4)
-    fig4.update_layout(
+    fig7 = px.bar(x=gender_pct.index, y=gender_pct.values, color=gender_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
+    fig7.update_layout(
         xaxis_title="Gender",
         yaxis_title=f"Proportion of people in the category that can shift {adjective}",
-        show_legend=False
+        showlegend=False,
+        title={
+                'x': 0.5,
+                'xanchor': 'center',
+                'yanchor': 'top',
+                'text': 'Proportion of people that can shift by gender'
+        }
     )
+    st.plotly_chart(fig7)
     
     bigger_markdown(r"Below, the % of trips that can shift when segmented by TBI wave is shown.")
     
     wave_pct = df.groupby("wave")[f"{st.session_state.phase}_shift"].mean()
-    fig6 = px.bar(x=wave_pct.index, y=wave_pct.values, color=wave_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
-    st.plotly_chart(fig6)
-    fig6.update_layout(
+    fig8 = px.bar(x=wave_pct.index, y=wave_pct.values, color=wave_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
+    fig8.update_layout(
         xaxis_title="Wave",
         yaxis_title=f"Proportion of people in the category that can shift {adjective}",
-        show_legend=False
+        showlegend=False,
+        title={
+                'x': 0.5,
+                'xanchor': 'center',
+                'yanchor': 'top',
+                'text': 'Proportion of people that can shift by TBI wave'
+        }
     )
+    st.plotly_chart(fig8)
     
     st.header("Tour-level shifts")
     

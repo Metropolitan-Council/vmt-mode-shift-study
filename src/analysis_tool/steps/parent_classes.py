@@ -68,7 +68,8 @@ class BaseStep:
                             range_color=(0, 1),
                             mapbox_style="carto-positron",
                             center={"lat": 44.9778, "lon": -93.2650},
-                            opacity=0.8
+                            opacity=0.8,
+                            title="Choropleth of proportion of people that can shift from car for this criteria"  # doesnt work
         )
         fig.update_layout(margin=dict(l=0, r=0, b=0, t=0),
                   width=900, 
@@ -147,7 +148,7 @@ class BaseStep:
         else:  # plotly chart
             slots[0].plotly_chart(fig)
             
-        slots[1].markdown(self.get_summary_statistics().to_html(escape=False) + "\n", unsafe_allow_html=True)
+        slots[1].markdown(self.get_summary_statistics().to_html(escape=False) + "<br>", unsafe_allow_html=True)
         slots[2].plotly_chart(self.get_map())
         
     def get_previous_run(self):
