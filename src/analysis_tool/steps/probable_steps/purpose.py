@@ -5,6 +5,7 @@ import streamlit as st
 from steps.parent_classes import CategoricalStep
 from steps.enums import *
 from steps.figure_lib import *
+from util import bigger_markdown
 
 import inspect
 
@@ -61,10 +62,10 @@ class WalkPurposeStep(CategoricalStep):
     def show_step_streamlit(self):
         text = self.get_text()
     
-        st.markdown(text[0])
+        bigger_markdown(text[0])
         st.text("")
         
-        st.markdown("Below, we can see the distribution of all the cleaned purposes in the TBI data. As can be seen, the most popular trip purposes are the fundamental, primary ones like going to work or returnign home.")
+        bigger_markdown("Below, we can see the distribution of all the cleaned purposes in the TBI data. As can be seen, the most popular trip purposes are the fundamental, primary ones like going to work or returnign home.")
         
         fig, ax = plt.subplots(figsize=(20, 5))
         sns.countplot(x="purpose_cleaned", data=self.df[self.df["purpose_cleaned"] != "Missing"], ax=ax)
@@ -76,7 +77,7 @@ class WalkPurposeStep(CategoricalStep):
         slots = []
         
         for section in text[1:]:
-            st.markdown(section)
+            bigger_markdown(section)
             temp = st.empty()
             slots.append(temp)
             
@@ -133,10 +134,10 @@ class BikePurposeStep(CategoricalStep):
     def show_step_streamlit(self):
         text = self.get_text()
     
-        st.markdown(text[0])
+        bigger_markdown(text[0])
         st.text("")
         
-        st.markdown("Below, we can see the distribution of all the cleaned purposes in the TBI data. As can be seen, the most popular trip purposes are the fundamental, primary ones like going to work or returnign home.")
+        bigger_markdown("Below, we can see the distribution of all the cleaned purposes in the TBI data. As can be seen, the most popular trip purposes are the fundamental, primary ones like going to work or returnign home.")
         
         fig, ax = plt.subplots(figsize=(20, 5))
         sns.countplot(x="purpose_cleaned", data=self.df[self.df["purpose_cleaned"] != "Missing"], ax=ax)
@@ -148,7 +149,7 @@ class BikePurposeStep(CategoricalStep):
         slots = []
         
         for section in text[1:]:
-            st.markdown(section)
+            bigger_markdown(section)
             temp = st.empty()
             slots.append(temp)
             
@@ -205,10 +206,10 @@ class TransitPurposeStep(CategoricalStep):
     def show_step_streamlit(self):
         text = self.get_text()
     
-        st.markdown(text[0])
+        bigger_markdown(text[0])
         st.text("")
         
-        st.markdown("Below, we can see the distribution of all the cleaned purposes in the TBI data. As can be seen, the most popular trip purposes are the fundamental, primary ones like going to work or returnign home.")
+        bigger_markdown("Below, we can see the distribution of all the cleaned purposes in the TBI data. As can be seen, the most popular trip purposes are the fundamental, primary ones like going to work or returnign home.")
         
         fig, ax = plt.subplots(figsize=(20, 5))
         sns.countplot(x="purpose_cleaned", data=self.df[self.df["purpose_cleaned"] != "Missing"], ax=ax)
@@ -220,7 +221,7 @@ class TransitPurposeStep(CategoricalStep):
         slots = []
         
         for section in text[1:]:
-            st.markdown(section)
+            bigger_markdown(section)
             temp = st.empty()
             slots.append(temp)
             

@@ -9,7 +9,7 @@ import seaborn as sns
 import steps
 from settings import handler, get_communities
 from steps.enums import *
-from util import get_num_cold_starts, add_value_labels, rvb, stateful_button, stacked_shift_histogram, get_summary_df, get_duration_diff_df
+from util import get_num_cold_starts, add_value_labels, rvb, stateful_button, stacked_shift_histogram, get_summary_df, get_duration_diff_df, bigger_markdown
 import json
 import logging
 
@@ -24,8 +24,6 @@ except ImportError as e:
 except Exception as e:
     logging.exception(f"Something has gone wrong with the import logic: {e}")
     raise e
-
-    
     
 def run_all(phase: Phase):
     if "df" not in st.session_state:
@@ -50,7 +48,7 @@ def run_all(phase: Phase):
 def start_screen_feasible():
     st.title("Configure the feasible phase")
     
-    st.markdown(inspect.cleandoc("""The checked steps will be able to be run in the visualization tool. There should be at least one step checked before beginning, but ideally, one step that applies to each mode should be checked for meaningful overall results. 
+    bigger_markdown(inspect.cleandoc("""The checked steps will be able to be run in the visualization tool. There should be at least one step checked before beginning, but ideally, one step that applies to each mode should be checked for meaningful overall results. 
                 
     At the left, clicking begin will start the in-depth tool with the selected steps, clicking begin with all steps checked will begin the in-depth tool with all the steps included regardless of the checked steps, and clicking run all will automatically run all the selected steps."""))
     
@@ -80,7 +78,7 @@ def start_screen_feasible():
 def start_screen_probable():
     st.title("Configure the probable steps")
     
-    st.markdown(inspect.cleandoc("""The checked steps will be able to be run in the visualization tool. There should be at least one step checked before beginning, but ideally, one step that applies to each mode should be checked for meaningful overall results. 
+    bigger_markdown(inspect.cleandoc("""The checked steps will be able to be run in the visualization tool. There should be at least one step checked before beginning, but ideally, one step that applies to each mode should be checked for meaningful overall results. 
                 
     At the left, clicking begin will start the in-depth tool with the selected steps, clicking begin with all steps checked will begin the in-depth tool with all the steps included regardless of the checked steps, and clicking run all will automatically run all the selected steps."""))
     
@@ -238,7 +236,7 @@ def final_summary():
     st.title("Summary")
     
     # record of settings for all steps that were run
-    st.markdown("Below are the steps that were run and their settings (1 for categoricals indicates that it was run).")
+    bigger_markdown("Below are the steps that were run and their settings (1 for categoricals indicates that it was run).")
     settings = {}
     # iterate over saved step class objects
     for name, step_class in st.session_state.step_class_dict.items():
@@ -266,16 +264,16 @@ def final_summary():
     df["walk_duration_minutes"] = df["walk_duration_seconds"] / 60
     
     # get % trips and vmt for each walk step and for overall shifts to walking
-    st.markdown(r"Below, a table detailing processed steps and the % of car trips and VMT that meet those constraints can be seen.")
+    bigger_markdown(r"Below, a table detailing processed steps and the % of car trips and VMT that meet those constraints can be seen.")
     st.table(get_summary_df(df, st.session_state.step_class_dict.values(), Mode.WALK, f"{st.session_state.phase}_walk_shift"))
         
     # stacked histogram of duration difference for feasible drive, non-feasible drive, and walk trips
-    st.markdown("Below, a stacked histogram detailing the travel time difference distributions for drive trips that can feasibly shift to walk, drive trips that can't shift, and observed walk trips can be seen.")
+    bigger_markdown("Below, a stacked histogram detailing the travel time difference distributions for drive trips that can feasibly shift to walk, drive trips that can't shift, and observed walk trips can be seen.")
     
     st.plotly_chart(stacked_shift_histogram(df, Mode.WALK, "walk_duration_minutes", f"{st.session_state.phase}_walk_shift"))
     
     # get df of the % of trips/vmt that are within x minutes of walking
-    st.markdown(r"The % of car trips and VMT that are within x minutes from walking can be seen in the below table.")
+    bigger_markdown(r"The % of car trips and VMT that are within x minutes from walking can be seen in the below table.")
     st.table(get_duration_diff_df(df, Mode.WALK, "walk_duration_minutes"))
     
     # details about biking shifts
@@ -285,39 +283,39 @@ def final_summary():
     df["bike_duration_minutes_adj"] = df["bike_duration_seconds_adj"] / 60
     
     # get % trips and vmt for each walk step and for overall shifts to biking
-    st.markdown(r"Below, a table detailing processed steps and the % of car trips and VMT that meet those constraints can be seen.")
+    bigger_markdown(r"Below, a table detailing processed steps and the % of car trips and VMT that meet those constraints can be seen.")
     st.table(get_summary_df(df, st.session_state.step_class_dict.values(), Mode.BIKE, f"{st.session_state.phase}_bike_shift"))
         
     # stacked histogram of duration difference for feasible drive, non-feasible drive, and bike trips
-    st.markdown("Below, a stacked histogram detailing the travel time difference distributions for drive trips that can feasibly shift to biking, drive trips that can't shift, and observed biking trips can be seen.")
+    bigger_markdown("Below, a stacked histogram detailing the travel time difference distributions for drive trips that can feasibly shift to biking, drive trips that can't shift, and observed biking trips can be seen.")
     
     st.plotly_chart(stacked_shift_histogram(df, Mode.BIKE, "bike_duration_minutes_adj", f"{st.session_state.phase}_bike_shift"))
     
     # get df of the % of trips/vmt that are within x minutes of biking
-    st.markdown(r"The % of car trips and VMT that are within x minutes from walking can be seen in the below table.")
+    bigger_markdown(r"The % of car trips and VMT that are within x minutes from walking can be seen in the below table.")
     st.table(get_duration_diff_df(df, Mode.BIKE, "bike_duration_minutes_adj"))
     
     # details about biking shifts
     st.header("Shifts to transit")
     
     # get % trips and vmt for each transit step and for overall shifts to transit
-    st.markdown(r"Below, a table detailing processed steps and the % of car trips and VMT that meet those constraints can be seen.")
+    bigger_markdown(r"Below, a table detailing processed steps and the % of car trips and VMT that meet those constraints can be seen.")
     st.table(get_summary_df(df, st.session_state.step_class_dict.values(), Mode.TRANSIT, f"{st.session_state.phase}_transit_shift"))
         
     # stacked histogram of duration difference for feasible drive, non-feasible drive, and transit trips
-    st.markdown("Below, a stacked histogram detailing the travel time difference distributions for drive trips that can feasibly shift to transit, drive trips that can't shift, and observed transit trips can be seen. NOTE: due to the need to filter out trips with no valid transit trip (and thus no applicable transit duration), there are no infeasible drive trips within this histogram.")
+    bigger_markdown("Below, a stacked histogram detailing the travel time difference distributions for drive trips that can feasibly shift to transit, drive trips that can't shift, and observed transit trips can be seen. NOTE: due to the need to filter out trips with no valid transit trip (and thus no applicable transit duration), there are no infeasible drive trips within this histogram.")
     
     st.plotly_chart(stacked_shift_histogram(df[(~df["transit_duration"].isna())&(df["transit_duration"]>0)&(df["transit_duration"]<1440)], Mode.TRANSIT, "transit_duration", f"{st.session_state.phase}_transit_shift"))
     
     # get df of the % of trips/vmt that are within x minutes of transit
-    st.markdown(r"The % of car trips and VMT that are within x minutes from transit can be seen in the below table.")
+    bigger_markdown(r"The % of car trips and VMT that are within x minutes from transit can be seen in the below table.")
     st.table(get_duration_diff_df(df[~df["transit_duration"].isna()], Mode.TRANSIT, "transit_duration"))
     
     st.header("Shifts to any mode")
     
     # overall % of trips/vmt that can shift given the run constraints
     # NOTE: the overall %s will be 100% if some mode had no applicable steps run (since there was no restriction on shifting to that)
-    st.markdown(r"Below, the % of car trips/VMT that can shift to the 3 modes/any non-car mode can be seen in table form.")
+    bigger_markdown(r"Below, the % of car trips/VMT that can shift to the 3 modes/any non-car mode can be seen in table form.")
     overall_shifts = pd.DataFrame(index=[r"% of Car Trips", r"% of VMT"])
     overall_shifts["Feasible to switch to walk"] = [
         f'{len(df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_walk_shift"])]) / len(df[(df["mode"] == Mode.CAR)]) * 100: .2f}%',
@@ -339,7 +337,7 @@ def final_summary():
     
     # fastest alternative by mode comparisons
     # TODO check that these calculations only count when the mode is feasible. 
-    st.markdown(r"Below, the distribution of the duration difference between the best non-car mode and car for shifted trips is shown. Note: a trip can only have a fastest mode if there is a mode that is feasible/likely for it take.")
+    bigger_markdown(r"Below, the distribution of the duration difference between the best non-car mode and car for shifted trips is shown. Note: a trip can only have a fastest mode if there is a mode that is feasible/likely for it take.")
     df["transit_duration_seconds_na"] = df["transit_duration"].fillna(9999999) * 60 # if no transit trip found, make it very slow to allow other modes to beat it
     df["min_alt_mode_duration"] = df[["transit_duration_seconds_na", "bike_duration_seconds_adj", "walk_duration_seconds"]].min(axis=1)
     df["fastest_mode"] = "na"
@@ -383,7 +381,7 @@ def final_summary():
     
     # histogram for min travel time difference for all modes
     # not sure how to do the tradiational stacked histogram with everything in it
-    st.markdown(r"Below, the distribution of the duration difference between the best non-car mode and car for shifted trips is shown")
+    bigger_markdown(r"Below, the distribution of the duration difference between the best non-car mode and car for shifted trips is shown")
     df["car_minus_min_alt_mode_duration"] = (df["min_alt_mode_duration"] - df["car_duration_seconds_adj"]) / 60
     fig5 = px.histogram(df, x="car_minus_min_alt_mode_duration", range_x=[-30,120])
     fig5.update_layout(
@@ -392,7 +390,7 @@ def final_summary():
     st.plotly_chart(fig5)
     
     # table for fastest alternative mode being within x minutes of driving
-    st.markdown(r"The % of car trips and VMT that are within x minutes from the fastest alternative mode can be seen in the below table.")
+    bigger_markdown(r"The % of car trips and VMT that are within x minutes from the fastest alternative mode can be seen in the below table.")
     duration_diff_df = pd.DataFrame(index=[r"% of Car Trips", r"% of VMT"])
     duration_diff_df["Fastest mode is within 5 minutes of driving"] = [
         f'{len(df[(df["mode"] == Mode.CAR) & (df["car_minus_min_alt_mode_duration"].abs() <= 5)]) / len(df[(df["mode"] == Mode.CAR)]) * 100: .2f}%',
@@ -415,7 +413,7 @@ def final_summary():
     communities = get_communities()
     communities[f"Proportion of people that can shift {adjective}"] = values
     
-    st.markdown(f"This map shows the proportion of trips in each community region that can {adjective} shift to any alternative non-car mode.")
+    bigger_markdown(f"This map shows the proportion of trips in each community region that can {adjective} shift to any alternative non-car mode.")
     fig0 = px.choropleth_mapbox(communities, 
                          geojson=communities.geometry, 
                          locations=communities.index, 
@@ -438,7 +436,7 @@ def final_summary():
     values_competitive = (df.groupby("community")["competitive_timing"].mean()).fillna(0)
     communities[f"Proportion of people that can shift {adjective}"] = values_competitive
     
-    st.markdown(f"This map shows the proportion of trips in each community region that can competitively shift (maximum bidirectional difference of 15 minutes) to the fastest alternative non-car mode.")
+    bigger_markdown(f"This map shows the proportion of trips in each community region that can competitively shift (maximum bidirectional difference of 15 minutes) to the fastest alternative non-car mode.")
     fig1 = px.choropleth_mapbox(communities, 
                          geojson=communities.geometry, 
                          locations=communities.index, 
@@ -458,25 +456,25 @@ def final_summary():
     
     st.header("Raw metrics")
     
-    st.markdown(inspect.cleandoc(
-        f"""- Total number of person trips on car before applying mode shifts: **{len(df[df['mode'] == Mode.CAR]):,}**
-            - Total number of person trips on car after applying mode shifts: **{len(df[(df['mode'] == Mode.CAR) & (~df[f'{st.session_state.phase}_shift'])]):,}**"""
+    bigger_markdown(inspect.cleandoc(
+        f"""- Total number of person trips on car before applying mode shifts: <strong>{len(df[df['mode'] == Mode.CAR]):,}</strong>
+            - Total number of person trips on car after applying mode shifts: <strong>{len(df[(df['mode'] == Mode.CAR) & (~df[f'{st.session_state.phase}_shift'])]):,}</strong>"""
         )
     )
     
     st.text("")
     
-    st.markdown(inspect.cleandoc(
-        f"""- Total number of person trips on car before applying mode shifts: **{round(df[df['mode'] == Mode.CAR]['vehicle_trips'].sum()):,}**
-            - Total number of person trips on car after applying mode shifts: **{round(df[(df['mode'] == Mode.CAR) & (~df[f'{st.session_state.phase}_shift'])]['vehicle_trips'].sum()):,}**"""
+    bigger_markdown(inspect.cleandoc(
+        f"""- Total number of person trips on car before applying mode shifts: <strong>{round(df[df['mode'] == Mode.CAR]['vehicle_trips'].sum()):,}</strong>
+            - Total number of person trips on car after applying mode shifts: <strong>{round(df[(df['mode'] == Mode.CAR) & (~df[f'{st.session_state.phase}_shift'])]['vehicle_trips'].sum()):,}</strong>"""
         )
     )
     
     st.text("")
     
-    st.markdown(inspect.cleandoc(
-        f"""- Total VMT before applying {st.session_state.phase} mode shift: **{round(df[df['mode'] == Mode.CAR]['vmt'].sum()):,}**
-        - Total VMT after applying {st.session_state.phase} mode shift: **{round(df[(df['mode'] == Mode.CAR) & (~df[f'{st.session_state.phase}_shift'])]['vmt'].sum()):,}**"""
+    bigger_markdown(inspect.cleandoc(
+        f"""- Total VMT before applying {st.session_state.phase} mode shift: <strong>{round(df[df['mode'] == Mode.CAR]['vmt'].sum()):,}</strong>
+        - Total VMT after applying {st.session_state.phase} mode shift: <strong>{round(df[(df['mode'] == Mode.CAR) & (~df[f'{st.session_state.phase}_shift'])]['vmt'].sum()):,}</strong>"""
         )
     )
     
@@ -489,15 +487,15 @@ def final_summary():
             after_cold_starts = 0
         
     
-    st.markdown(inspect.cleandoc(
-        f"""- Number of cold starts before applying {st.session_state.phase} mode shifts: **{before_cold_starts:,}**
-            - Number of cold starts after applying {st.session_state.phase} mode shifts: **{after_cold_starts:,}**"""
+    bigger_markdown(inspect.cleandoc(
+        f"""- Number of cold starts before applying {st.session_state.phase} mode shifts: <strong>{before_cold_starts:,}</strong>
+            - Number of cold starts after applying {st.session_state.phase} mode shifts: <strong>{after_cold_starts:,}</strong>"""
         )
     )
     
     st.header("Shifts by categories")
     
-    st.markdown(r"Below, the % of trips that can shift when segmented by income bracket is shown.")
+    bigger_markdown(r"Below, the % of trips that can shift when segmented by income bracket is shown.")
     
     income_pct = df[df["income_detailed"] != "na"].groupby("income_detailed")[f"{st.session_state.phase}_shift"].mean().reindex(["Under $15,000", "$15,000-$24,999", "$25,000-$34,999", "$35,000-$49,999", "$50,000-$74,999", "$75,000-$99,999", "$100,000-$149,999", "$150,000-$199,999", "$200,000-$249,999", "$250,000 or more"])
     fig1 = px.bar(x=income_pct.index, y=income_pct.values, color=income_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
@@ -508,7 +506,7 @@ def final_summary():
     )
     st.plotly_chart(fig1)
     
-    st.markdown(r"Below, the % of trips that can shift when segmented by trip purpose are shown.")
+    bigger_markdown(r"Below, the % of trips that can shift when segmented by trip purpose are shown.")
     
     purpose_pct = df[df["purpose_cleaned"] != "Missing"].groupby("purpose_cleaned")[f"{st.session_state.phase}_shift"].mean()
     fig2 = px.bar(x=purpose_pct.index, y=purpose_pct.values, color=purpose_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
@@ -519,7 +517,7 @@ def final_summary():
         show_legend=False
     )
     
-    st.markdown(r"Below, the % of trips that can shift when segmented by person type are shown.")
+    bigger_markdown(r"Below, the % of trips that can shift when segmented by person type are shown.")
                 
     person_pct = df[df["person_type"] != "na"].groupby("person_type")[f"{st.session_state.phase}_shift"].mean()
     fig3 = px.bar(x=person_pct.index, y=person_pct.values, color=person_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
@@ -530,7 +528,7 @@ def final_summary():
         show_legend=False
     )
     
-    st.markdown(r"Below, the % of trips that can shift when segmented by gender are shown.")
+    bigger_markdown(r"Below, the % of trips that can shift when segmented by gender are shown.")
     
     gender_pct = df[df["gender_cleaned"] != "Prefer not to answer"].groupby("gender_cleaned")[f"{st.session_state.phase}_shift"].mean()
     fig4 = px.bar(x=gender_pct.index, y=gender_pct.values, color=gender_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
@@ -541,7 +539,7 @@ def final_summary():
         show_legend=False
     )
     
-    st.markdown(r"Below, the % of trips that can shift when segmented by TBI wave is shown.")
+    bigger_markdown(r"Below, the % of trips that can shift when segmented by TBI wave is shown.")
     
     wave_pct = df.groupby("wave")[f"{st.session_state.phase}_shift"].mean()
     fig6 = px.bar(x=wave_pct.index, y=wave_pct.values, color=wave_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
@@ -593,7 +591,7 @@ def final_summary():
         f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift_tour"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%',
     ]
     
-    st.markdown(f"We consider a tour-level shift possible if every component trip can also shift {adjective}.")
+    bigger_markdown(f"We consider a tour-level shift possible if every component trip can also shift {adjective}.")
     st.table(tour_df)
         
     
@@ -678,6 +676,16 @@ def run():
     
 
 if __name__ == "__main__":
+    st.markdown(
+        """
+            <style>
+                .bigger-font {
+                    font-size: 1.2rem !important;
+                }
+            </style>
+        """, 
+        unsafe_allow_html=True
+    )
     if "start_screen_feasible" not in st.session_state:
         logging.info("Doing initial setup")
         st.session_state["start_screen_feasible"] = True
@@ -695,5 +703,3 @@ if __name__ == "__main__":
         final_summary()
     else:
         run()
-
-    

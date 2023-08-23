@@ -156,3 +156,7 @@ def stateful_button(*args, key=None, **kwargs):
         st.experimental_rerun()
 
     return st.session_state[key]
+
+def bigger_markdown(x: str) -> str:
+    for line in x.split("\n"):
+        st.markdown(f'<p class="bigger-font">{line}</p>', unsafe_allow_html=True)
