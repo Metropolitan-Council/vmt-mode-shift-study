@@ -48,6 +48,10 @@ def run_all(phase: Phase):
 def start_screen_feasible():
     st.title("Configure the feasible phase")
     
+    bigger_markdown("The feasible phase involves steps that determine whether a trip can feasibly shift to a given mode or not. In contrast, the probable phase, which follows the feasible phase, places more restrictions on the already feasible trips to determine whether a trip can shift to a mode with likelihood.")
+    
+    st.markdown("***")
+    
     bigger_markdown(inspect.cleandoc("""The checked steps will be able to be run in the visualization tool. There should be at least one step checked before beginning, but ideally, one step that applies to each mode should be checked for meaningful overall results. 
                 
     At the left, clicking begin will start the in-depth tool with the selected steps, clicking begin with all steps checked will begin the in-depth tool with all the steps included regardless of the checked steps, and clicking run all will automatically run all the selected steps."""))
@@ -77,6 +81,10 @@ def start_screen_feasible():
     
 def start_screen_probable():
     st.title("Configure the probable steps")
+    
+    bigger_markdown("The feasible phase involves steps that determine whether a trip can feasibly shift to a given mode or not. In contrast, the probable phase, which follows the feasible phase, places more restrictions on the already feasible trips to determine whether a trip can shift to a mode with likelihood.")
+    
+    st.markdown("***")
     
     bigger_markdown(inspect.cleandoc("""The checked steps will be able to be run in the visualization tool. There should be at least one step checked before beginning, but ideally, one step that applies to each mode should be checked for meaningful overall results. 
                 
