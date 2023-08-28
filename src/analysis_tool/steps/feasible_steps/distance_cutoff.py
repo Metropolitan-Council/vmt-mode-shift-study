@@ -11,7 +11,7 @@ import inspect
 class WalkDistanceStep(ContinuousStep):
     
     def __init__(self, df: pd.DataFrame, cutoff=0.95):
-        super().__init__(df, "feasible_walking_dist", Mode.WALK, cutoff, "walk_distance_miles", Phase.FEASIBLE)
+        super().__init__(df, "feasible_walking_dist", Mode.WALK, cutoff, "walk_distance_miles", Phase.FEASIBLE, "miles")
         self.df.loc[:, "walk_distance_miles"] = self.df["walk_distance_meters"] * 0.000621371
     
     def get_summary_statistics(self):
@@ -64,7 +64,7 @@ class WalkDistanceStep(ContinuousStep):
 class BikeDistanceStep(ContinuousStep):
     
     def __init__(self, df: pd.DataFrame, cutoff=0.95):
-        super().__init__(df, "feasible_biking_dist", Mode.BIKE, cutoff, "bike_distance_miles", Phase.FEASIBLE)
+        super().__init__(df, "feasible_biking_dist", Mode.BIKE, cutoff, "bike_distance_miles", Phase.FEASIBLE, "miles")
         self.df.loc[:, "bike_distance_miles"] = self.df["bike_distance_meters"] * 0.000621371
     
     def get_summary_statistics(self):

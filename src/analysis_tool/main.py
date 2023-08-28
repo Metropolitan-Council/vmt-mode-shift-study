@@ -648,11 +648,11 @@ def show_step():
             curr.set_cutoff(st.sidebar.slider("Select a value:", 0.0, 1.0, 0.95, 0.01))
         elif curr.get_cutoff_mode() == CutoffMode.RAW:
             extrema = curr.get_extrema()
-            curr.set_cutoff(st.sidebar.slider("Select a value:", float(extrema[0]), float(extrema[1]), float(extrema[1]), float((extrema[1] - extrema[0]) / 100)))
+            curr.set_cutoff(st.sidebar.slider("Select a value:", float(extrema[0]), float(extrema[1]), float(extrema[1]), float((extrema[1] - extrema[0]) / 100), format=f"%0.2f {curr.get_units()}"))
         else:
             logging.exception(f"Something went worng with the cutoff mode enum: {curr.get_cutoff_mode()}")
             raise RuntimeError("something went wrong")
-        st.sidebar.markdown(f"Cutoff equivalent: {curr.get_cutoff_equivalent():.2f}")
+        st.sidebar.markdown(f"Cutoff equivalent: {curr.get_cutoff_equivalent():.2f} {curr.get_units()}")
     
     if st.sidebar.button("Disable step", use_container_width=True):
         curr.disable()

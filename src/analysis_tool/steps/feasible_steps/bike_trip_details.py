@@ -10,7 +10,7 @@ import inspect
 class BikeSnowDepthStep(ContinuousStep):
     
     def __init__(self, df: pd.DataFrame, cutoff=0.95):
-        super().__init__(df, "feasible_bike_snow_depth", Mode.BIKE, cutoff, "snow_depth", Phase.FEASIBLE)
+        super().__init__(df, "feasible_bike_snow_depth", Mode.BIKE, cutoff, "snow_depth", Phase.FEASIBLE, "mm")
     
     def get_summary_statistics(self):
         return show_summaries(self.df, modes=[[x, self.column_name] for x in Mode.get_all()], percentile=self.get_cutoff_pct(), column_names=["Snow depth in mm during trip day (observed bike trips)", "Snow depth in mm during trip day (observed car trips)"])
@@ -62,7 +62,7 @@ class BikeSnowDepthStep(ContinuousStep):
 class BikeHighLTSDistStep(ContinuousStep):
     
     def __init__(self, df: pd.DataFrame, cutoff=0.95):
-        super().__init__(df, "feasible_bike_high_lts_dist", Mode.BIKE, cutoff, "high_lts_biking_pct", Phase.FEASIBLE)
+        super().__init__(df, "feasible_bike_high_lts_dist", Mode.BIKE, cutoff, "high_lts_biking_pct", Phase.FEASIBLE, f"proportion high LTS")
         
         df.loc[:, "high_lts_dist"] = df["bike_distance_meters_3"] + df["bike_distance_meters_4"]
         df.loc[:, "high_lts_biking_pct"] = df["high_lts_dist"] / df["bike_distance_meters"]

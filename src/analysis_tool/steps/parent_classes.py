@@ -159,11 +159,15 @@ class BaseStep:
 
 class ContinuousStep(BaseStep):
     
-    def __init__(self, df: pd.DataFrame, name: str, mode: Mode, cutoff: float, column_name: str, overall_step: Phase):
+    def __init__(self, df: pd.DataFrame, name: str, mode: Mode, cutoff: float, column_name: str, overall_step: Phase, units: str):
         super().__init__(df, name, mode, overall_step)
         self.cutoff = cutoff
         self.cutoff_mode = CutoffMode.PCT
         self.column_name = column_name
+        self.units = units
+        
+    def get_units(self) -> str:
+        return self.units
         
     def apply_step(self, expression: pd.Series) -> None:
         logging.info(f"Running through the logic and visualization of continuous step {self.name}")
