@@ -68,10 +68,16 @@ class BaseStep:
                             range_color=(0, 1),
                             mapbox_style="carto-positron",
                             center={"lat": 44.9778, "lon": -93.2650},
-                            opacity=0.8,
-                            title="Choropleth of proportion of people that can shift from car for this criteria"  # doesnt work
+                            opacity=0.8
         )
-        fig.update_layout(margin=dict(l=0, r=0, b=0, t=0),
+        fig.update_layout(margin=dict(l=0, r=0, b=0, t=40),
+                  title=dict(
+                      text="Choropleth of proportion of people that can shift from car for this criteria",
+                      x=0.5,
+                      y=0.98,
+                      xanchor='center',
+                      font=dict(size=18)
+                  ),
                   width=900, 
                   height=500
         )

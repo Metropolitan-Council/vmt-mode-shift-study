@@ -18,15 +18,25 @@ class BikeSnowDepthStep(ContinuousStep):
     def get_summary_figure(self):
         fig = plot_density_plotly(self.df, self.mode, self.column_name, self.get_cutoff_pct())
         fig.update_layout(
-            title={
-                'text': "Snow depth during travel day for all modes",
-                'x': 0.5,
-                'xanchor': 'center',
-                'yanchor': 'top'
-            },
-            xaxis_title="Probability Density",
-            yaxis_title="Snow Depth (mm)",
-            legend_title="Legend"
+            title=dict(
+                text="Snow depth during travel day for all modes",
+                font=dict(size=18),
+                x=0.5,
+                y=0.9,
+                xanchor='center',
+            ),
+            xaxis_title=dict(
+                text="Probability Density",
+                font=dict(size=16)
+            ),
+            yaxis_title=dict(
+                text="Snow Depth (mm)",
+                font=dict(size=16)
+            ),
+            legend=dict(
+                title="Legend",
+                font=dict(size=16)
+            )
         )
         return fig
     
@@ -73,15 +83,25 @@ class BikeHighLTSDistStep(ContinuousStep):
     def get_summary_figure(self):
         fig = plot_density_plotly(self.df, self.mode, self.column_name, self.get_cutoff_pct())
         fig.update_layout(
-            title={
-                'text': r"% of bike trip on high LTS routes for observed bike and car trips",
-                'x': 0.5,
-                'xanchor': 'center',
-                'yanchor': 'top'
-            },
-            xaxis_title="Probability Density",
-            yaxis_title="% High LTS",
-            legend_title="Legend"
+            title=dict(
+                text=r"% of bike trip on high LTS routes for observed bike and car trips",
+                font=dict(size=18),
+                x=0.5,
+                y=0.9,
+                xanchor='center',
+            ),
+            xaxis_title=dict(
+                text="Probability Density",
+                font=dict(size=16)
+            ),
+            yaxis_title=dict(
+                text="% High LTS",
+                font=dict(size=16)
+            ),
+            legend=dict(
+                title="Legend",
+                font=dict(size=16)
+            )
         )
         return fig
     

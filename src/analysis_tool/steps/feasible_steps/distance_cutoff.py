@@ -20,15 +20,25 @@ class WalkDistanceStep(ContinuousStep):
     def get_summary_figure(self):
         fig = plot_density_plotly(self.df, self.mode, self.column_name, self.get_cutoff_pct())
         fig.update_layout(
-            title={
-                'text': "Rerouted walk distance distributions for observed walk and car trips",
-                'x': 0.5,
-                'xanchor': 'center',
-                'yanchor': 'top'
-            },
-            xaxis_title="Probability Density",
-            yaxis_title="Walk Distance (miles)",
-            legend_title="Legend"
+            title=dict(
+                text="Rerouted walk distance distributions<br>for observed walk and car trips",
+                font=dict(size=18),
+                x=0.5,
+                y=0.9,
+                xanchor='center',
+            ),
+            xaxis_title=dict(
+                text="Probability Density",
+                font=dict(size=16)
+            ),
+            yaxis_title=dict(
+                text="Walk Distance (miles)",
+                font=dict(size=16)
+            ),
+            legend=dict(
+                title="Legend",
+                font=dict(size=16)
+            )
         )
         return fig
     
@@ -73,15 +83,25 @@ class BikeDistanceStep(ContinuousStep):
     def get_summary_figure(self):
         fig = plot_density_plotly(self.df, self.mode, self.column_name, self.get_cutoff_pct())
         fig.update_layout(
-            title={
-                'text': "Rerouted walk distance distributions for observed bike and car trips",
-                'x': 0.5,
-                'xanchor': 'center',
-                'yanchor': 'top'
-            },
-            xaxis_title="Probability Density",
-            yaxis_title="Walk Distance (miles)",
-            legend_title="Legend"
+            title=dict(
+                text="Rerouted walk distance distributions<br>for observed bike and car trips",
+                font=dict(size=18),
+                x=0.5,
+                y=0.9,
+                xanchor='center',
+            ),
+            xaxis_title=dict(
+                text="Probability Density",
+                font=dict(size=16)
+            ),
+            yaxis_title=dict(
+                text="Walk Distance (miles)",
+                font=dict(size=16)
+            ),
+            legend=dict(
+                title="Legend",
+                font=dict(size=16)
+            )
         )
         return fig
     

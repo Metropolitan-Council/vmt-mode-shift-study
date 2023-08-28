@@ -391,12 +391,16 @@ def final_summary():
     fig1 = px.histogram(df, x="car_minus_min_alt_mode_duration", range_x=[-30,120])
     fig1.update_layout(
         title={
-                'text': "Histogram of duration difference between the best feasible alternative and the equivalent car trip",
-                'x': 0.5,
-                'xanchor': 'center',
-                'yanchor': 'top'
+            'text': "Histogram of duration difference between<br>the best feasible alternative and the equivalent car trip",
+            'font': dict(
+                size=18
+            ),
+            'x': 0.5, 
+            'xanchor': 'center',
+            'y': 0.9
         },
-        xaxis_title="Car minus best alternative mode duration (minutes)"
+        xaxis_title=dict(text="Car minus best alternative mode duration (minutes)", font=dict(size=16)),
+        yaxis_title=dict(text="Count", font=dict(size=16))
     )
     st.plotly_chart(fig1)
     
@@ -434,11 +438,17 @@ def final_summary():
                          mapbox_style="carto-positron",
                          center={"lat": 44.9778, "lon": -93.2650},
                          opacity=0.8,
-                         title=f"Proportion of car trips in CTUs that can shift {adjective} to any non-car mode",  # this doesnt work
     )
-    fig2.update_layout(margin=dict(l=0, r=0, b=0, t=0),
+    fig2.update_layout(margin=dict(l=0, r=0, b=0, t=40),
                 width=900, 
-                height=500
+                height=500,
+                title=dict(
+                    text=f"Proportion of car trips in CTUs that can shift {adjective} to any non-car mode",
+                    x=0.5,
+                    y=0.98,
+                    xanchor="center",
+                    font=dict(size=18)
+                )
     )
     fig2.update_geos(fitbounds="locations", visible=False)
     st.plotly_chart(fig2)
@@ -457,10 +467,16 @@ def final_summary():
                          range_color=(0, 1),
                          mapbox_style="carto-positron",
                          center={"lat": 44.9778, "lon": -93.2650},
-                         opacity=0.8,
-                         title="Proportion of trips in CTUs that can competitively shift to a non-car mode"  # this doesnt work
+                         opacity=0.8
     )
-    fig3.update_layout(margin=dict(l=0, r=0, b=0, t=0),
+    fig3.update_layout(margin=dict(l=0, r=0, b=0, t=40),
+                title=dict(
+                    text="Proportion of trips in CTUs that can competitively shift to a non-car mode",
+                    font=dict(size=18),
+                    x=0.5,
+                    y=0.98,
+                    xanchor="center"
+                ),
                 width=900, 
                 height=500
     )
@@ -513,15 +529,18 @@ def final_summary():
     income_pct = df[df["income_detailed"] != "na"].groupby("income_detailed")[f"{st.session_state.phase}_shift"].mean().reindex(["Under $15,000", "$15,000-$24,999", "$25,000-$34,999", "$35,000-$49,999", "$50,000-$74,999", "$75,000-$99,999", "$100,000-$149,999", "$150,000-$199,999", "$200,000-$249,999", "$250,000 or more"])
     fig4 = px.bar(x=income_pct.index, y=income_pct.values, color=income_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
     fig4.update_layout(
-        xaxis_title="Income group",
-        yaxis_title=f"Proportion of people in the category that can shift {adjective}",
-        legend_title="Legend",
         title={
-                'x': 0.5,
-                'xanchor': 'center',
-                'yanchor': 'top',
-                'text': 'Proportion of people that can shift modes by income group'
-        }
+            'text': 'Proportion of people that can shift modes by income group',
+            'font': dict(
+                size=18
+            ),
+            'x': 0.5, 
+            'xanchor': 'center',
+            'y': 0.9
+        },
+        xaxis_title=dict(text="Income group", font=dict(size=16)),
+        yaxis_title=dict(text="proportion of people in the<br>category that can shift {adjective}", font=dict(size=16)),
+        showlegend=False
     )
     st.plotly_chart(fig4)
     
@@ -530,15 +549,19 @@ def final_summary():
     purpose_pct = df[df["purpose_cleaned"] != "Missing"].groupby("purpose_cleaned")[f"{st.session_state.phase}_shift"].mean()
     fig5 = px.bar(x=purpose_pct.index, y=purpose_pct.values, color=purpose_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
     fig5.update_layout(
-        xaxis_title="Purpose category",
-        yaxis_title=f"Proportion of people in the category that can shift {adjective}",
-        showlegend=False,
         title={
-                'x': 0.5,
-                'xanchor': 'center',
-                'yanchor': 'top',
-                'text': 'Proportion of people that can shift mode by trip purpose'
-        }
+            'text': 'Proportion of people that can shift mode by trip purpose',
+            'font': dict(
+                size=18
+            ),
+            'x': 0.5, 
+            'xanchor': 'center',
+            'y': 0.9
+        },
+        xaxis_title=dict(text="Purpose category", font=dict(size=16)),
+        yaxis_title=dict(text=f"proportion of people in the<br>category that can shift {adjective}", font=dict(size=16)),
+        legend=dict(font=dict(size=16)),
+        showlegend=False
     )
     st.plotly_chart(fig5)
     
@@ -547,15 +570,19 @@ def final_summary():
     person_pct = df[df["person_type"] != "na"].groupby("person_type")[f"{st.session_state.phase}_shift"].mean()
     fig6 = px.bar(x=person_pct.index, y=person_pct.values, color=person_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
     fig6.update_layout(
-        xaxis_title="Person type",
-        yaxis_title=f"Proportion of people in the category that can shift {adjective}",
-        showlegend=False,
         title={
-                'x': 0.5,
-                'xanchor': 'center',
-                'yanchor': 'top',
-                'text': 'Proportion of people that can shift mode by person type'
-        }
+            'text': 'Proportion of people that can shift mode by person type',
+            'font': dict(
+                size=18
+            ),
+            'x': 0.5, 
+            'xanchor': 'center',
+            'y': 0.9
+        },
+        xaxis_title=dict(text="Person type", font=dict(size=16)),
+        yaxis_title=dict(text=f"proportion of people in the<br>category that can shift {adjective}", font=dict(size=16)),
+        legend=dict(font=dict(size=16)),
+        showlegend=False
     )
     st.plotly_chart(fig6)
     
@@ -564,15 +591,19 @@ def final_summary():
     gender_pct = df[df["gender_cleaned"] != "Prefer not to answer"].groupby("gender_cleaned")[f"{st.session_state.phase}_shift"].mean()
     fig7 = px.bar(x=gender_pct.index, y=gender_pct.values, color=gender_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
     fig7.update_layout(
-        xaxis_title="Gender",
-        yaxis_title=f"Proportion of people in the category that can shift {adjective}",
-        showlegend=False,
         title={
-                'x': 0.5,
-                'xanchor': 'center',
-                'yanchor': 'top',
-                'text': 'Proportion of people that can shift by gender'
-        }
+            'text': 'Proportion of people that can shift mode by gender',
+            'font': dict(
+                size=18
+            ),
+            'x': 0.5, 
+            'xanchor': 'center',
+            'y': 0.9
+        },
+        xaxis_title=dict(text="Gender", font=dict(size=16)),
+        yaxis_title=dict(text=f"proportion of people in the<br>category that can shift {adjective}", font=dict(size=16)),
+        legend=dict(font=dict(size=16)),
+        showlegend=False
     )
     st.plotly_chart(fig7)
     
@@ -581,15 +612,19 @@ def final_summary():
     wave_pct = df.groupby("wave")[f"{st.session_state.phase}_shift"].mean()
     fig8 = px.bar(x=wave_pct.index, y=wave_pct.values, color=wave_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
     fig8.update_layout(
-        xaxis_title="Wave",
-        yaxis_title=f"Proportion of people in the category that can shift {adjective}",
-        showlegend=False,
         title={
-                'x': 0.5,
-                'xanchor': 'center',
-                'yanchor': 'top',
-                'text': 'Proportion of people that can shift by TBI wave'
-        }
+            'text': 'Proportion of people that can shift mode by TBI wave',
+            'font': dict(
+                size=18
+            ),
+            'x': 0.5, 
+            'xanchor': 'center',
+            'y': 0.9
+        },
+        xaxis_title=dict(text="Wave", font=dict(size=16)),
+        yaxis_title=dict(text=f"proportion of people in the<br>category that can shift {adjective}", font=dict(size=16)),
+        legend=dict(font=dict(size=16)),
+        showlegend=False
     )
     st.plotly_chart(fig8)
     

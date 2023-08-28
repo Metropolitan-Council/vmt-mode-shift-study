@@ -20,15 +20,25 @@ class TransitAccessDistanceStep(ContinuousStep):
     def get_summary_figure(self):
         fig = plot_density_plotly(self.df, self.mode, self.column_name, self.get_cutoff_pct())
         fig.update_layout(
-            title={
-                'text': "Rerouted transit access distance for observed transit and car trips",
-                'x': 0.5,
-                'xanchor': 'center',
-                'yanchor': 'top'
-            },
-            xaxis_title="Probability Density",
-            yaxis_title="Access Distance (miles)",
-            legend_title="Legend"
+            title=dict(
+                text="Rerouted transit access distance for observed transit and car trips",
+                font=dict(size=18),
+                x=0.5,
+                y=0.9,
+                xanchor='center',
+            ),
+            xaxis_title=dict(
+                text="Probability Density",
+                font=dict(size=16)
+            ),
+            yaxis_title=dict(
+                text="Access Distance (miles)",
+                font=dict(size=16)
+            ),
+            legend=dict(
+                title="Legend",
+                font=dict(size=16)
+            )
         )
         return fig
     

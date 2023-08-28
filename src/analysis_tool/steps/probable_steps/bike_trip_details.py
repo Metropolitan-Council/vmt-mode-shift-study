@@ -21,15 +21,25 @@ class BikeHighLTSDistStep(ContinuousStep):
     def get_summary_figure(self):
         fig = plot_density_plotly(self.df, self.mode, self.column_name, self.get_cutoff_pct())
         fig.update_layout(
-            title={
-                'text': r"High LTS (3/4) distance for observed bike and car trips",
-                'x': 0.5,
-                'xanchor': 'center',
-                'yanchor': 'top'
-            },
-            xaxis_title="Probability Density",
-            yaxis_title="High LTS Distance (meters)",
-            legend_title="Legend"
+            title=dict(
+                text=r"High LTS (3/4) distance for observed bike and car trips",
+                font=dict(size=18),
+                x=0.5,
+                y=0.9,
+                xanchor='center',
+            ),
+            xaxis_title=dict(
+                text="Probability Density",
+                font=dict(size=16)
+            ),
+            yaxis_title=dict(
+                text="High LTS Distance (meters)",
+                font=dict(size=16)
+            ),
+            legend=dict(
+                title="Legend",
+                font=dict(size=16)
+            )
         )
         return fig
     

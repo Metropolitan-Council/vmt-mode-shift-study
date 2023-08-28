@@ -21,15 +21,25 @@ class WalkDurationDifferenceStep(ContinuousStep):
     def get_summary_figure(self):
         fig = plot_density_plotly(self.df, self.mode, self.column_name, self.get_cutoff_pct())
         fig.update_layout(
-            title={
-                'text': r"Difference between car and walk rerouted durations",
-                'x': 0.5,
-                'xanchor': 'center',
-                'yanchor': 'top'
-            },
-            xaxis_title="Probability Density",
-            yaxis_title="Duration Difference (minutes)",
-            legend_title="Legend"
+            title=dict(
+                text=r"Difference between car and walk rerouted durations",
+                font=dict(size=18),
+                x=0.5,
+                y=0.9,
+                xanchor='center',
+            ),
+            xaxis_title=dict(
+                text="Probability Density",
+                font=dict(size=16)
+            ),
+            yaxis_title=dict(
+                text="Duration Difference (minutes)",
+                font=dict(size=16)
+            ),
+            legend=dict(
+                title="Legend",
+                font=dict(size=16)
+            )
         )
         return fig
     
@@ -74,15 +84,25 @@ class BikeDurationDifferenceStep(ContinuousStep):
     def get_summary_figure(self):
         fig = plot_density_plotly(self.df, self.mode, self.column_name, self.get_cutoff_pct())
         fig.update_layout(
-            title={
-                'text': r"Difference between car and bike rerouted durations",
-                'x': 0.5,
-                'xanchor': 'center',
-                'yanchor': 'top'
-            },
-            xaxis_title="Probability Density",
-            yaxis_title="Duration Difference (minutes)",
-            legend_title="Legend"
+            title=dict(
+                text=r"Difference between car and bike rerouted durations",
+                font=dict(size=18),
+                x=0.5,
+                y=0.9,
+                xanchor='center',
+            ),
+            xaxis_title=dict(
+                text="Probability Density",
+                font=dict(size=16)
+            ),
+            yaxis_title=dict(
+                text="Duration Difference (minutes)",
+                font=dict(size=16)
+            ),
+            legend=dict(
+                title="Legend",
+                font=dict(size=16)
+            )
         )
         return fig
     
@@ -129,15 +149,25 @@ class TransitDurationDifferenceStep(ContinuousStep):
     def get_summary_figure(self):
         fig = plot_density_plotly(self.df[~self.df["transit-duration"].isna()], self.mode, self.column_name, self.get_cutoff_pct())
         fig.update_layout(
-            title={
-                'text': r"Difference between car and transit rerouted durations",
-                'x': 0.5,
-                'xanchor': 'center',
-                'yanchor': 'top'
-            },
-            xaxis_title="Probability Density",
-            yaxis_title="Duration Difference (minutes)",
-            legend_title="Legend"
+            title=dict(
+                text=r"Difference between car and transit rerouted durations",
+                font=dict(size=18),
+                x=0.5,
+                y=0.9,
+                xanchor='center',
+            ),
+            xaxis_title=dict(
+                text="Probability Density",
+                font=dict(size=16)
+            ),
+            yaxis_title=dict(
+                text="Duration Difference (minutes)",
+                font=dict(size=16)
+            ),
+            legend=dict(
+                title="Legend",
+                font=dict(size=16)
+            )
         )
         return fig
     
