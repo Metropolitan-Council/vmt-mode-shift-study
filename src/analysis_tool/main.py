@@ -662,6 +662,7 @@ def show_step():
         curr.show_step_streamlit()
     else:
         st.header("Click the apply step button once the desired settings have been set or click disable to disable the step.")
+        bigger_markdown(curr.get_desc())
     
 
 def run():

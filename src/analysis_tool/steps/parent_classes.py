@@ -156,6 +156,9 @@ class BaseStep:
     
     def get_mode(self) -> Mode:
         return self.mode
+    
+    def get_desc(self) -> str:
+        raise NotImplementedError("Please implement this function")
 
 class ContinuousStep(BaseStep):
     
@@ -165,6 +168,9 @@ class ContinuousStep(BaseStep):
         self.cutoff_mode = CutoffMode.PCT
         self.column_name = column_name
         self.units = units
+        
+    def get_desc(self) -> str:
+        return f"This step applies a rule that if a trip has a value of <strong>{' '.join(self.get_name().split()[1:]).lower()}</strong> above the set cutoff (as a percentile or raw value), then it is considered {'infeasible' if self.overall_step == Phase.FEASIBLE else 'unlikely'} to shift to {self.mode}."
         
     def get_units(self) -> str:
         return self.units
@@ -227,4 +233,7 @@ class CategoricalStep(BaseStep):
         
     def get_cutoff(self) -> float:
         return -1
+    
+    def get_desc(self) -> str:
+        return f"This step applies a categorical rule where if a trip satisfies the <string>{' '.join(self.get_name().split()[1:]).lower()}</strong> property, it is considered {'feasible' if self.overall_step == Phase.FEASIBLE else 'likely'} to shift to {self.mode}; otherwise, it is considered {'infeasible' if self.overall_step == Phase.FEASIBLE else 'unlikely'}."
     
