@@ -234,6 +234,13 @@ def stateful_button(*args, key=None, **kwargs):
 
     return st.session_state[key]
 
-def bigger_markdown(x: str) -> str:
+def bigger_markdown(x: str) -> None:
+    """This function converts the string x into a form that will be a larger font size upon being displayed in stremalit
+
+    Args:
+        x (str): the string to display
+    """
+    
+    # for each paragraph in x, output markdown of the paragraph and have it be of the bigger-font class
     for line in x.split("\n"):
         st.markdown(f'<p class="bigger-font">{line}</p>', unsafe_allow_html=True)
