@@ -851,10 +851,11 @@ def run() -> None:
         st.experimental_rerun()
     
     # have the ability to choose what step to run (with segmentation based on phase)
+    # can only go to new steps; TODO: add functionality to save snapshots after each step is left to allow full backtracking
     if st.session_state.phase == Phase.FEASIBLE:
-        option = option_slot.selectbox("Choose the step you want to run.", st.session_state["feasible_steps"])
+        option = option_slot.selectbox("Choose the step you want to run.", [step for step in st.session_state["feasible_steps"] if step not in st.session_state.step_class_dict])
     elif st.session_state.phase == Phase.PROBABLE:
-        option = option_slot.selectbox("Choose the step you want to run.", st.session_state["probable_steps"])
+        option = option_slot.selectbox("Choose the step you want to run.", [step for step in st.session_state["probable_steps"] if step not in st.session_state.step_class_dict])
     else:
         logging.exception(f"something went wrong with the overall step session state variable: {st.session_state.phase}")
         raise RuntimeError("Something went wrong with the overall step session state variable")
@@ -871,11 +872,11 @@ def run() -> None:
         # update current step
         st.session_state.step = option
         
-        # if the step we are at has not been created already, create it
-        if option in st.session_state.step_class_dict:
+        # if the step has already been created, retrieve it from the dictionary
+        if False and option in st.session_state.step_class_dict:  # currently disabled -- backtracking breaks things without some kind of "commit" structure
             logging.info("Retrieving existing instantiation of the new step")
             st.session_state.step_class = st.session_state.step_class_dict[option]
-        # otherwise, just retrieve it from the step class dictionary (to preserve state)
+        # otherwise, create it from scratch
         else:
             logging.info("Creating the new step for the first time")
             st.session_state.step_class_dict[option] = getattr(st.session_state.overall_step, option)(st.session_state.df)
