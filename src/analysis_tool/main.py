@@ -172,8 +172,6 @@ def start_screen_probable() -> None:
     # NOTE: like with feasible steps, this can also be buggy sometimes
     st.session_state["probable_steps"] = st.multiselect("Choose the probable steps to run", handler["probable_steps"])
 
-# have it so that it only runs once
-@st.cache_data()
 def setup_df() -> 0:
     """
     This function reads in/sets up the input dataframe for the visualization tool.
@@ -811,16 +809,18 @@ def show_step() -> None:
     
     # if the step we are at is continuous, have settings for setting the cutoff/choosing between pct/raw selection/a blurb for the equivalent opposite cutoff
     if curr.is_continuous():
-        curr.set_cutoff_mode(st.sidebar.radio("Choose how to set the cutoff", (CutoffMode.PCT, CutoffMode.RAW)))
+        curr.set_cutoff_mode(st.sidebar.radio("Choose how to set the cutoff", (CutoffMode.PCT, CutoffMode.RAW), key=st.session_state.id))
         if curr.get_cutoff_mode() == CutoffMode.PCT:
-            curr.set_cutoff(st.sidebar.slider("Select a value:", 0.0, 1.0, 0.95, 0.01))
+            curr.set_cutoff(st.sidebar.slider("Select a value:", 0.0, 1.0, 0.95, 0.01, key=st.session_state.id + 1))
+            st.sidebar.markdown(f"Cutoff equivalent: {curr.get_cutoff_equivalent():.2f} {curr.get_units()}")
         elif curr.get_cutoff_mode() == CutoffMode.RAW:
             extrema = curr.get_extrema()
-            curr.set_cutoff(st.sidebar.slider("Select a value:", float(extrema[0]), float(extrema[1]), float(extrema[1]), float((extrema[1] - extrema[0]) / 100), format=f"%0.2f {curr.get_units()}"))
+            curr.set_cutoff(st.sidebar.slider("Select a value:", float(extrema[0]), float(extrema[1]), float(extrema[1]), float((extrema[1] - extrema[0]) / 100), format=f"%0.2f {curr.get_units()}", key=st.session_state.id + 2))
+            st.sidebar.markdown(f"Cutoff equivalent: {curr.get_cutoff_equivalent():.2f} percentile")
         else:
             logging.exception(f"Something went worng with the cutoff mode enum: {curr.get_cutoff_mode()}")
             raise RuntimeError("something went wrong")
-        st.sidebar.markdown(f"Cutoff equivalent: {curr.get_cutoff_equivalent():.2f} {curr.get_units()}")
+        
     
     # button to dsiable the current step
     if st.sidebar.button("Disable step", use_container_width=True):
@@ -853,9 +853,9 @@ def run() -> None:
     # have the ability to choose what step to run (with segmentation based on phase)
     # can only go to new steps; TODO: add functionality to save snapshots after each step is left to allow full backtracking
     if st.session_state.phase == Phase.FEASIBLE:
-        option = option_slot.selectbox("Choose the step you want to run.", [step for step in st.session_state["feasible_steps"] if step not in st.session_state.step_class_dict])
+        option = option_slot.selectbox("Choose the step you want to run. If you move away from the current step, the settings of the current step will be 'locked in' and will be unable to be changed.", [step for step in st.session_state["feasible_steps"] if step not in st.session_state.step_class_dict or step == st.session_state.step or (step in st.session_state.step_class_dict and st.session_state.step_class_dict[step].get_previous_run() == None)])
     elif st.session_state.phase == Phase.PROBABLE:
-        option = option_slot.selectbox("Choose the step you want to run.", [step for step in st.session_state["probable_steps"] if step not in st.session_state.step_class_dict])
+        option = option_slot.selectbox("Choose the step you want to run. If you move away from the current step, the settings of the current step will be 'locked in' and will be unable to be changed.", [step for step in st.session_state["probable_steps"] if step not in st.session_state.step_class_dict or step == st.session_state.step or (step in st.session_state.step_class_dict and st.session_state.step_class_dict[step].get_previous_run() == None)])
     else:
         logging.exception(f"something went wrong with the overall step session state variable: {st.session_state.phase}")
         raise RuntimeError("Something went wrong with the overall step session state variable")
@@ -881,6 +881,8 @@ def run() -> None:
             logging.info("Creating the new step for the first time")
             st.session_state.step_class_dict[option] = getattr(st.session_state.overall_step, option)(st.session_state.df)
             st.session_state.step_class = st.session_state.step_class_dict[option]
+            st.session_state.id += 10
+            st.experimental_rerun()
             
     # show the meat of the current step
     show_step()
@@ -933,6 +935,7 @@ if __name__ == "__main__":
         logging.info("Doing initial setup")
         st.session_state["start_screen_feasible"] = True
         st.session_state["start_screen_probable"] = False
+        st.session_state.id = 0
     
     # main page handler -- in general, if any session state page indicator is True, run that and only one indicator should be True at a time
     

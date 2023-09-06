@@ -135,7 +135,7 @@ class TransitReroutedStep(CategoricalStep):
     def __init__(self, df: pd.DataFrame):
         super().__init__(df, "feasible_transit_route_found", Mode.TRANSIT, Phase.FEASIBLE)
         
-        self.df.loc[:, self.name] = ~self.df["transit_trip_id"].isna()
+        self.df.loc[:, self.name] = ~self.df["transit_duration"].isna()
         
     def get_summary_statistics(self):
         return show_value_counts(self.df, [[x, self.name] for x in [self.mode, Mode.CAR]])
