@@ -11,6 +11,9 @@ from steps.enums import Mode
 from settings import handler
 
 def clean_mode_names(df: pd.DataFrame):
+    """
+    This function standardizes the mode names based on the defined mode enum in-place.
+    """
     logging.info("cleaning mode names")
     df["mode"] = np.where(df["mode"] == "Car", Mode.CAR, df["mode"])
     df["mode"] = np.where(df["mode"] == "Transit", Mode.TRANSIT, df["mode"])
@@ -18,6 +21,9 @@ def clean_mode_names(df: pd.DataFrame):
     df["mode"] = np.where(df["mode"] == "Walk", Mode.WALK, df["mode"])
 
 def merge_weather(df: pd.DataFrame):
+    """
+    This function merges in the weather df from handler['weather_file_name'] into the main df in-place.
+    """
     logging.info("merging in weather")
     # reading in weather data
     # https://www.ncei.noaa.gov/pub/data/ghcn/daily/
@@ -25,6 +31,7 @@ def merge_weather(df: pd.DataFrame):
     weather = weather[["Date", "Measurement", "Value"]]
     weather = weather.pivot(index="Date", columns="Measurement", values="Value")
     
+    # get useful date columns and set that as the index
     weather["year"] = weather.index.astype(str).str[0:4]
     weather["month"] = weather.index.astype(str).str[4:6]
     weather["day"] = weather.index.astype(str).str[6:8]
@@ -32,6 +39,7 @@ def merge_weather(df: pd.DataFrame):
     weather = weather.set_index("date")
     
     # see https://www.ncei.noaa.gov/pub/data/ghcn/daily/readme.txt for a key
+    # merge in temperature/atmospheric indicator into df by querying weather with a list of dates from df
     df["temperature"] = (weather.loc[df["travel_date"].values, "TAVG"] / 10).values # average temperature in Celsius
     df["precipitation"] = (weather.loc[df["travel_date"].values, "PRCP"] / 10).values # precipition in mm
     df["snowfall"] = (weather.loc[df["travel_date"].values, "SNOW"] / 10).values # snowfall in mm
@@ -41,12 +49,19 @@ def merge_weather(df: pd.DataFrame):
     df["snow_depth"] = (weather.loc[df["travel_date"].values, "SNWD"] / 10).values # snowfall in mm
     
 def transit_cleanup(transit):
+    """
+    This function does some basic clean up on the transit df before it is merged into the main df dataframe. 
+
+    Args:
+        transit (DataFrame): the initial not-cleaned transit dataframe
+
+    Returns:
+        DataFrame : the cleaned up dataframe
+    """
     logging.info("cleanup on transit")
     # calculate duration from star/tend times
     transit["start_time_dt"] = pd.to_datetime(transit["start_time"])
     transit["end_time_dt"] = pd.to_datetime(transit["end_time"])
-
-    # transit["duration"] = (transit["end_time_dt"] - transit["start_time_dt"]).apply(lambda x: x.seconds / 60)
     
     transit["num_transfers"] = (transit["leg_type"] == "TransitRouter.transfer") # temporary field to calculate number of transfers
     transit["non_transit_duration"] = (transit["leg_type"].isin(["TransitRouter.access", "TransitRouter.egress"])) * (transit["end_time_dt"] - transit["start_time_dt"]).apply(lambda x: x.seconds / 60) # non-transit time (access and egress)
@@ -82,18 +97,22 @@ def transit_cleanup(transit):
         "non_transit_duration": "sum"
     }
     
+    # group transit (which are initially unlinked trips) into linked trips
     transit_grouped = transit.dissolve(by="trip_id", aggfunc=agg_fns) # merges geometries in addition to aggregating the rest of the columns
     transit_grouped["duration"] = (transit_grouped["end_time_dt"] - transit_grouped["start_time_dt"]).apply(lambda x: x.seconds / 60)
 
+    # return the grouped transit dataframe 
     return transit_grouped[["trip_id", "duration", "access_length", "num_transfers", "non_transit_duration", "length"]]
 
 def merge_transit_trip_details(df: pd.DataFrame, data_dir: str):
+    """
+    This function does some processing on the raw TBI data to estimate various details about transit trips -- distance to stop/num transfers -- and merges this into df in-place.
+    """
     logging.info("merging in transit details from raw tbi data")
-    drive_data_dir = keyring.get_password('msp', 'vmt_reduction_dir')
     
     # read in raw tbi data
-    wave1_trips = pd.read_csv(drive_data_dir + "/Data/TBI Wave 1 Dataset 20200630/trip.csv")
-    wave2_trips = pd.read_csv(drive_data_dir + "/Data/Wave 2 Data Deliverable/trip.csv")
+    wave1_trips = pd.read_csv(data_dir + "/Data/TBI Wave 1 Dataset 20200630/trip.csv")
+    wave2_trips = pd.read_csv(data_dir + "/Data/Wave 2 Data Deliverable/trip.csv")
     raw_trips = pd.concat([wave1_trips, wave2_trips]).set_index("trip_id")
     
     def get_dist_to_stop(trips, wave): # calculate distance to get to stop to start transit trip
@@ -105,6 +124,7 @@ def merge_transit_trip_details(df: pd.DataFrame, data_dir: str):
         # otherwise assume that transit can be reached in 0.1 miles
         return 0.1
     
+    # fill in df with estimated transit access distance based on results of above function into
     df["est_observed_transit_access_dist"] = 0
     df.loc[df["mode"] == "Transit", "est_observed_transit_access_dist"] = df[df["mode"] == "Transit"].apply(lambda x: get_dist_to_stop(literal_eval(x["trip_id"]), x["wave"]), axis=1)
     
@@ -120,22 +140,37 @@ def merge_transit_trip_details(df: pd.DataFrame, data_dir: str):
                 res += 1
         return res
     
+    # fill in df with estimated transfer count based on above function
     df["transfers"] = 0
     df.loc[df["mode"] == "Transit", "transfers"] = df[df["mode"] == "Transit"].apply(lambda x: get_num_transfers(literal_eval(x["trip_id"]), x["wave"]), axis=1)
     
 def add_community(df: pd.DataFrame):
+    """
+    This function adds communities to each unlinked trip of the dataframe based on the trip's origin latlon.
+    """
     logging.info("adding communities")
+    
+    # read in communities
     communities = gpd.read_file("data/" + handler["community_shape_file_name"]).to_crs("EPSG:4326").set_index("CTU_NAME")
     
-    gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df["home_lon"], df["home_lat"]), crs="EPSG:4326")
+    # convert df to a geodataframe using origin lat/lon of trip
+    gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df["o_lon"], df["o_lat"]), crs="EPSG:4326")
     
+    # by default, community is na, unless the trip's origin latlon is within some community in the shape file
     df["community"] = "na"
     for _, row in communities.iterrows():
         df["community"] = np.where(gdf["geometry"].within(row["geometry"]), row.name, df["community"])
         
 def final_field_cleanup(df: pd.DataFrame):
+    """
+    This function does some in-place final cleanups on dataframe.
+    """
+    
+    # clean up purpose
     df["purpose_cleaned"] = df["d_purpose_category"]
+    # if the d_purpose is home, change it to the o_purpose
     df["purpose_cleaned"] = np.where(df["purpose_cleaned"] == "Home", df["o_purpose_category"], df["purpose_cleaned"])
+    # merging of similar purposes into one
     df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["School", "School-related", "School related"]), "School", df["purpose_cleaned"])
     df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Work", "Work-related", "Work related"]), "Work", df["purpose_cleaned"])
     df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Errand/Other", "Errand"]), "Errand", df["purpose_cleaned"])
@@ -143,12 +178,14 @@ def final_field_cleanup(df: pd.DataFrame):
     df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Other", "Change mode", "Overnight", "Spent the night at non-home location"]), "Other", df["purpose_cleaned"])
     df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Missing: Non-response", "Missing: Skip logic", "Not imputable", "Missing", "Missing: Non-imputable"]), "Missing", df["purpose_cleaned"])
     
+    # creation of person categories based on various categories of age/employment/student status
     df["child"] = df["age"].isin(["5-15", "5 to 15", "16-17", "16 to 17", "Under 5"])
     df["senior"] = df["age"].isin(["65-74", "65 to 74", "75 or older", "75 to 84", "85 or older"])
     df["student"] = ~df["student_status"].str.contains("No")
     df["unemployed"] = df["job_type"].str.contains("Missing")
     df["parent"] = df["num_kids"] != 0
-        
+    
+    # create person types based on the above categories
     df["person_type"] = "na"
     df["person_type"] = np.where(df["child"], "child", df["person_type"])
     df["person_type"] = np.where(~df["unemployed"] & df["parent"], "working adult with kids", df["person_type"])
@@ -158,30 +195,43 @@ def final_field_cleanup(df: pd.DataFrame):
     df["person_type"] = np.where(df["senior"] & df["unemployed"], "retired", df["person_type"])
     df["person_type"] = np.where((~df["child"]) & (df["student"]), "college student", df["person_type"]) # if placed above, everything else overwrites it
     
+    # merge some similar gender-categories into one
     df["gender_cleaned"] = df["gender"]
     df["gender_cleaned"] = np.where(df["gender_cleaned"] == "Other/prefer to self-describe", "Other/Prefer to self-describe", df["gender_cleaned"])
     
+    # merge some similar income categories into one
     df["income_detailed"] = np.where(df["income_detailed"].isin(set(["Less than $15,000", "Under $15,000"])), "Under $15,000", df["income_detailed"])
     df["income_detailed"] = np.where(df["income_detailed"] == "Prefer not to answer", "na", df["income_detailed"])
     
 def add_terminal_times(df: pd.DataFrame):
+    """
+    This function adds terminal times of bike/car trips for each unlinked trip into the main df in-place.
+    """
     logging.info("adding terminal times for tazs")
+    
+    # read in terminal times
     tazs = gpd.read_file("data/" + handler["taz_terminal_time_file_name"]).to_crs("EPSG:4326")
     
+    # create o/d geodataframes from df based on origin/destination latlon
     o_gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df["o_lon"], df["o_lat"]), crs="EPSG:4326")
     d_gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df["d_lon"], df["d_lat"]), crs="EPSG:4326")
     
+    # by default, terminal times are 0 unless the unlinked trip in the current row starts/ends in a place with terminal time
     df["o_car_terminal_time"] = 0
     df["d_car_terminal_time"] = 0
     
     for _, row in tazs[~tazs["TAZ"].isna()].iterrows():
         df["o_car_terminal_time"] = np.where(o_gdf["geometry"].within(row["geometry"]), row["TERM_TIME"], df["o_car_terminal_time"])
         df["d_car_terminal_time"] = np.where(d_gdf["geometry"].within(row["geometry"]), row["TERM_TIME"], df["d_car_terminal_time"])
-        
+    
+    # recalculate adjusted durations based on these car terminal times (and with a bike terminal time of 120 seconds flat)
     df["car_duration_seconds_adj"] = df["car_duration_seconds"] + 60 * df["o_car_terminal_time"] + 60 * df["d_car_terminal_time"]
     df["bike_duration_seconds_adj"] = df["bike_duration_seconds"] + 120
     
 def round_off_columns(df: pd.DataFrame):
+    """
+    This function rounds off some columns of the dataframe in-place for anonymization.
+    """
     logging.info("rounding off columns")
     
     df["car_duration_seconds"] = df["car_duration_seconds"].round()
@@ -201,17 +251,32 @@ def round_off_columns(df: pd.DataFrame):
     df["transit_length"] = df["transit_length"].round()
     df["transit_access_length"] = df["transit_access_length"].round()
     
+# make it so that it only runs once
 @st.cache_data()
 def prepare_data(df: pd.DataFrame, data_dir: str):
+    """
+    This function is the "main" function for cleaning the raw TBI dataframe.
+
+    Args:
+        df (pd.DataFrame): raw TBI df to clean
+        data_dir (str): directory of the root TBI OneDrive
+
+    Returns:
+        DataFrame: cleaned/fully specified DataFrame
+    """
     logging.info("beginning data intake and cleaning")
+    
+    # merge in weather
     merge_weather(df)
 
+    # read in rerouting files
     logging.info("reading in rerouting files")
     car = pd.read_parquet(data_dir + "/Data_Processed/geodata/car_congestion_nogeom.parquet")
     bike = pd.read_parquet(data_dir + "/Data_Processed/geodata/bike_no_weight_penalty.parquet").drop("geometry", axis=1)
     transit = gpd.read_parquet(data_dir + "/Data_Processed/geodata/transit_trips.parquet")
     walk = pd.read_parquet(data_dir + "/Data_Processed/geodata/walk_trips_nogeom.parquet")
     
+    # group/cleanup transit
     transit_grouped = transit_cleanup(transit)
     
     logging.info("merging rerouting to dataframe")
@@ -225,8 +290,9 @@ def prepare_data(df: pd.DataFrame, data_dir: str):
     car = add_mode_to_column_name(car, 'car')
     walk = add_mode_to_column_name(walk, 'walk')
     bike = add_mode_to_column_name(bike, 'bike')
-    transit = add_mode_to_column_name(transit_grouped, 'transit')
+    transit_grouped = add_mode_to_column_name(transit_grouped, 'transit')
     
+    # helper function for querying from the car rerouting file
     def get_car_data(row, field):
         hour = int(row["arrive_time"][0:2])
         sunday = row["travel_dow"] == "Sunday"
@@ -251,28 +317,35 @@ def prepare_data(df: pd.DataFrame, data_dir: str):
 
         return car.loc[(query, row["trip_id"])][field]
     
-    # missing one trip for some reason
+    # missing one trip for some reason; gets car duration/distance using the above helper function
     df["car_duration_seconds"] = df.apply(lambda x: get_car_data(x, "car_duration_seconds"), axis=1)
     df["car_distance_meters"] = df.apply(lambda x: get_car_data(x, "car_distance_meters"), axis=1)
     
+    # merge in rerouted files
     df = df.merge(walk, left_on="trip_id", right_on="walk_trip_id", how="left")
     df = df.merge(bike, left_on="trip_id", right_on="bike_trip_id", how="left")
-    df = df.merge(transit, left_on="trip_id", right_on="transit_trip_id", how="left")
+    df = df.merge(transit_grouped, left_on="trip_id", right_on="transit_trip_id", how="left")
     
+    # merge in estimated transit trip details
     merge_transit_trip_details(df, data_dir)
     
+    # add communities to df
     add_community(df)
     
+    # clean df mode names
     clean_mode_names(df)
     
+    # do some final column cleanup on df
     final_field_cleanup(df)
     
+    # add terminal time to df
     add_terminal_times(df)
     
+    # round off some columns to df
     round_off_columns(df)
     
     logging.info("exporting newly created table to csv")
-    # possibly change to provided name
+    # possibly change to provided name; export to disk for future use
     df.to_csv("data/tbi_full.csv", index=False)
     
     return df
