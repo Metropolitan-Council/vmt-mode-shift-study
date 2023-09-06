@@ -10,9 +10,15 @@ import inspect
 
 class WalkDistanceStep(ContinuousStep):
     
-    def __init__(self, df: pd.DataFrame, cutoff=0.95):
-        super().__init__(df, "feasible_walking_dist", Mode.WALK, cutoff, "walk_distance_miles", Phase.FEASIBLE, "miles")
-        self.df.loc[:, "walk_distance_miles"] = self.df["walk_distance_meters"] * 0.000621371
+    def __init__(self, df: pd.DataFrame, cutoff=0.95, column="walk_distance_miles", scenario=False):
+        super().__init__(df, "feasible_walking_dist", Mode.WALK, cutoff, column, Phase.FEASIBLE, "miles")
+        
+        if column == "walk_distance_miles":
+            self.df.loc[:, "walk_distance_miles"] = self.df["walk_distance_meters"] * 0.000621371
+        
+        # make the name distinct if we are at a scenario
+        if scenario:
+            self.name = self.name + "_scenario_" + column
     
     def get_summary_statistics(self):
         return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct(), column_names=["Walk distance in miles if walking chosen (observed walk trips)", "Walk distance in miles if walking chosen (observed car trips)"])
@@ -73,9 +79,15 @@ class WalkDistanceStep(ContinuousStep):
     
 class BikeDistanceStep(ContinuousStep):
     
-    def __init__(self, df: pd.DataFrame, cutoff=0.95):
-        super().__init__(df, "feasible_biking_dist", Mode.BIKE, cutoff, "bike_distance_miles", Phase.FEASIBLE, "miles")
-        self.df.loc[:, "bike_distance_miles"] = self.df["bike_distance_meters"] * 0.000621371
+    def __init__(self, df: pd.DataFrame, cutoff=0.95, column="bike_distance_miles", scenario=False):
+        super().__init__(df, "feasible_biking_dist", Mode.BIKE, cutoff, column, Phase.FEASIBLE, "miles")
+        
+        if column == "bike_distance_miles":
+            self.df.loc[:, "bike_distance_miles"] = self.df["bike_distance_meters"] * 0.000621371
+            
+        # make the name distinct if we are at a scenario
+        if scenario:
+            self.name = self.name + "_scenario_" + column
     
     def get_summary_statistics(self):
         return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct(), column_names=["Bike distance in miles if biking chosen (observed bike trips)", "Bike distance in miles if biking chosen (observed car trips)"])

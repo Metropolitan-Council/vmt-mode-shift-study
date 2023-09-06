@@ -75,9 +75,10 @@ def start_screen_feasible() -> None:
                 
     At the left, clicking begin will start the in-depth tool with the selected steps, clicking begin with all steps checked will begin the in-depth tool with all the steps included regardless of the checked steps, and clicking run all will automatically run all the selected steps."""))
     
-    # create feasible_steps session state array if not present
+    # create feasible_steps session state array if not present as well as a scenarios dictionary
     if "feasible_steps" not in st.session_state:
         st.session_state["feasible_steps"] = []
+        st.session_state["scenarios"] = {mode: "none" for mode in Mode.get_all()}
     
     # define all actions that can be done
     st.sidebar.header("Actions")
@@ -116,6 +117,24 @@ def start_screen_feasible() -> None:
     # create the multiselect to choose steps
     # NOTE: this can sometimes be buggy if you don't click off the multiselect before running it, as the session state sometimes takes a bit to fully respond to user input
     st.session_state["feasible_steps"] = st.multiselect("Choose the feasible steps to run", handler["feasible_steps"])
+    
+    st.markdown("***")
+    
+    # create the scenario picker; scenarios are persisted throughout the entire application
+    bigger_markdown("Choose the scenarios to run for each mode. Choosing 'default' will not run any scenarios for the mode.")
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.session_state["scenarios"][Mode.CAR] = st.radio("Choose the car scenario:", [x[0] for x in handler["scenario_columns"][Mode.CAR]])
+        
+    with col2:
+        st.session_state["scenarios"][Mode.WALK] = st.radio("Choose the walk scenario:", [x[0] for x in handler["scenario_columns"][Mode.WALK]])
+        
+    with col3:
+        st.session_state["scenarios"][Mode.BIKE] = st.radio("Choose the bike scenario:", [x[0] for x in handler["scenario_columns"][Mode.BIKE]])
+        
+    with col4:
+        st.session_state["scenarios"][Mode.TRANSIT] = st.radio("Choose the transit scenario:", [x[0] for x in handler["scenario_columns"][Mode.TRANSIT]])
     
 def start_screen_probable() -> None:
     """

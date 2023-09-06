@@ -87,11 +87,19 @@ def evaluate_feasible_timing(chunk_len: int, depart_time: list[str], leg_duratio
 
 class WalkTimingStep(CategoricalStep):
     
-    def __init__(self, df: pd.DataFrame):
+    def __init__(self, df: pd.DataFrame, column="walk_duration_seconds", scenario=False):
         super().__init__(df, "feasible_walk_timing", Mode.WALK, Phase.FEASIBLE)
         
-        self.df.loc[:, "walk_duration"] = self.df["walk_duration_seconds"] / 60
-        feasible_walking = evaluate_timing(df, "walk_duration")
+        # make the name distinct if we are at a scenario
+        if scenario:
+            self.name = self.name + "_scenario_" + column
+        
+        if column == "walk_duration_seconds":
+            self.df.loc[:, "walk_duration"] = self.df[column] / 60
+            feasible_walking = evaluate_timing(df, "walk_duration")
+        else:
+            feasible_walking = evaluate_timing(df, column)
+            
         feasible_walking = feasible_walking.reset_index().rename(columns={0: self.name})
         
         temp = df[["wave", "person_id", "travel_date"]].copy()
@@ -137,11 +145,18 @@ class WalkTimingStep(CategoricalStep):
         
 class TransitTimingStep(CategoricalStep):
     
-    def __init__(self, df: pd.DataFrame):
+    def __init__(self, df: pd.DataFrame, column="transit_duration", scenario=False):
         super().__init__(df, "feasible_transit_timing", Mode.TRANSIT, Phase.FEASIBLE)
         
-        self.df.loc[:, "transit_duration"] = self.df["transit_duration"].fillna(9999999)  # if there is no path, it's not feasible
-        feasible_transit = evaluate_timing(df, "transit_duration")
+        # make the name distinct if we are at a scenario
+        if scenario:
+            self.name = self.name + "_scenario_" + column
+        
+        if column == "transit_duration":
+            self.df.loc[:, column] = self.df[column].fillna(9999999)  # if there is no path, it's not feasible
+            feasible_transit = evaluate_timing(df, column)
+        else:
+            feasible_transit = evaluate_timing(df, column)
         feasible_transit = feasible_transit.reset_index().rename(columns={0: self.name})
         
         temp = df[["wave", "person_id", "travel_date"]].copy()
@@ -187,11 +202,19 @@ class TransitTimingStep(CategoricalStep):
         
 class BikeTimingStep(CategoricalStep):
     
-    def __init__(self, df: pd.DataFrame):
+    def __init__(self, df: pd.DataFrame, column="bike_duration_seconds_adj", scenario=False):
         super().__init__(df, "feasible_bike_timing", Mode.BIKE, Phase.FEASIBLE)
         
-        self.df.loc[:, "bike_duration"] = self.df["bike_duration_seconds_adj"] / 60
-        feasible_biking = evaluate_timing(df, "bike_duration")
+        # make the name distinct if we are at a scenario
+        if scenario:
+            self.name = self.name + "_scenario_" + column
+        
+        if column == "bike_duration_seconds_adj":
+            self.df.loc[:, "bike_duration"] = self.df[column] / 60
+            feasible_biking = evaluate_timing(df, "bike_duration")
+        else:
+            feasible_biking = evaluate_timing(df, column)
+            
         feasible_biking = feasible_biking.reset_index().rename(columns={0: self.name})
         
         temp = df[["wave", "person_id", "travel_date"]].copy()
