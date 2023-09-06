@@ -9,7 +9,7 @@ import seaborn as sns
 import steps
 from settings import handler, get_communities
 from steps.enums import *
-from util import get_num_cold_starts, add_value_labels, rvb, stateful_button, stacked_shift_histogram, get_summary_df, get_duration_diff_df, bigger_markdown
+from util import get_num_cold_starts, stacked_shift_histogram, get_summary_df, get_duration_diff_df, bigger_markdown
 import json
 import logging
 
@@ -29,7 +29,7 @@ except Exception as e:
     logging.exception(f"Something has gone wrong with the import logic: {e}")
     raise e
     
-def run_all(phase: Phase):
+def run_all(phase: Phase) -> None:
     """
     This function is the helper for running all selected steps in a given phase.
     """
@@ -57,7 +57,7 @@ def run_all(phase: Phase):
     st.session_state["summary_screen"] = True
     st.experimental_rerun()
         
-def start_screen_feasible():
+def start_screen_feasible() -> None:
     """
     This function generates the start screen for the feasible phase.
     """
@@ -117,7 +117,7 @@ def start_screen_feasible():
     # NOTE: this can sometimes be buggy if you don't click off the multiselect before running it, as the session state sometimes takes a bit to fully respond to user input
     st.session_state["feasible_steps"] = st.multiselect("Choose the feasible steps to run", handler["feasible_steps"])
     
-def start_screen_probable():
+def start_screen_probable() -> None:
     """
     This function generates the start screen for the probable step.
     """
@@ -174,7 +174,7 @@ def start_screen_probable():
 
 # have it so that it only runs once
 @st.cache_data()
-def setup_df():
+def setup_df() -> 0:
     """
     This function reads in/sets up the input dataframe for the visualization tool.
     """
@@ -184,6 +184,7 @@ def setup_df():
         logger = logging.getLogger()
         logger.disabled = True
     else:
+        logging.getLogger().setLevel("INFO")
         logging.basicConfig(filename="output/streamlit.log", filemode="w", format="%(name)s - %(levelname)s - %(message)s")
         
     # if we are not in build, get the drive data dir using keyring
@@ -227,7 +228,7 @@ def setup_df():
     
     return 0
 
-def setup_vars(phase: Phase):
+def setup_vars(phase: Phase) -> None:
     """This function sets up the variables for the passed in phase.
 
     Args:
@@ -276,7 +277,7 @@ def setup_vars(phase: Phase):
     # turn off the summary screen (want to show the normal step screen right now)
     st.session_state["summary_screen"] = False
     
-def final_summary():
+def final_summary() -> None:
     """
     This function generates the final summary for the visualization tool. 
     """
@@ -373,12 +374,12 @@ def final_summary():
     
     # get % trips and vmt for each walk step and for overall shifts to walking
     bigger_markdown(r"Below, a table detailing processed steps and the % of car trips and VMT that meet those constraints can be seen.")
-    st.table(get_summary_df(df, st.session_state.step_class_dict.values(), Mode.WALK, f"{st.session_state.phase}_walk_shift"))
+    st.table(get_summary_df(df, st.session_state.step_class_dict.values(), Mode.WALK, f"{st.session_state.phase}_walk_shift", st.session_state.phase))
         
     # stacked histogram of duration difference for feasible drive, non-feasible drive, and walk trips
     bigger_markdown("Below, a stacked histogram detailing the travel time difference distributions for drive trips that can feasibly shift to walk, drive trips that can't shift, and observed walk trips can be seen.")
     
-    st.plotly_chart(stacked_shift_histogram(df, Mode.WALK, "walk_duration_minutes", f"{st.session_state.phase}_walk_shift"))
+    st.plotly_chart(stacked_shift_histogram(df, Mode.WALK, "walk_duration_minutes", f"{st.session_state.phase}_walk_shift", st.session_state.phase))
     
     # get df of the % of trips/vmt that are within x minutes of walking
     bigger_markdown(r"The % of car trips and VMT that are within x minutes from walking can be seen in the below table.")
@@ -392,12 +393,12 @@ def final_summary():
     
     # get % trips and vmt for each walk step and for overall shifts to biking
     bigger_markdown(r"Below, a table detailing processed steps and the % of car trips and VMT that meet those constraints can be seen.")
-    st.table(get_summary_df(df, st.session_state.step_class_dict.values(), Mode.BIKE, f"{st.session_state.phase}_bike_shift"))
+    st.table(get_summary_df(df, st.session_state.step_class_dict.values(), Mode.BIKE, f"{st.session_state.phase}_bike_shift", st.session_state.phase))
         
     # stacked histogram of duration difference for feasible drive, non-feasible drive, and bike trips
     bigger_markdown("Below, a stacked histogram detailing the travel time difference distributions for drive trips that can feasibly shift to biking, drive trips that can't shift, and observed biking trips can be seen.")
     
-    st.plotly_chart(stacked_shift_histogram(df, Mode.BIKE, "bike_duration_minutes_adj", f"{st.session_state.phase}_bike_shift"))
+    st.plotly_chart(stacked_shift_histogram(df, Mode.BIKE, "bike_duration_minutes_adj", f"{st.session_state.phase}_bike_shift", st.session_state.phase))
     
     # get df of the % of trips/vmt that are within x minutes of biking
     bigger_markdown(r"The % of car trips and VMT that are within x minutes from walking can be seen in the below table.")
@@ -408,12 +409,12 @@ def final_summary():
     
     # get % trips and vmt for each transit step and for overall shifts to transit
     bigger_markdown(r"Below, a table detailing processed steps and the % of car trips and VMT that meet those constraints can be seen.")
-    st.table(get_summary_df(df, st.session_state.step_class_dict.values(), Mode.TRANSIT, f"{st.session_state.phase}_transit_shift"))
+    st.table(get_summary_df(df, st.session_state.step_class_dict.values(), Mode.TRANSIT, f"{st.session_state.phase}_transit_shift", st.session_state.phase))
         
     # stacked histogram of duration difference for feasible drive, non-feasible drive, and transit trips
     bigger_markdown("Below, a stacked histogram detailing the travel time difference distributions for drive trips that can feasibly shift to transit, drive trips that can't shift, and observed transit trips can be seen. NOTE: due to the need to filter out trips with no valid transit trip (and thus no applicable transit duration), there are no infeasible drive trips within this histogram.")
     
-    st.plotly_chart(stacked_shift_histogram(df[(~df["transit_duration"].isna())&(df["transit_duration"]>0)&(df["transit_duration"]<1440)], Mode.TRANSIT, "transit_duration", f"{st.session_state.phase}_transit_shift"))
+    st.plotly_chart(stacked_shift_histogram(df[(~df["transit_duration"].isna())&(df["transit_duration"]>0)&(df["transit_duration"]<1440)], Mode.TRANSIT, "transit_duration", f"{st.session_state.phase}_transit_shift", st.session_state.phase))
     
     # get df of the % of trips/vmt that are within x minutes of transit
     bigger_markdown(r"The % of car trips and VMT that are within x minutes from transit can be seen in the below table.")
@@ -798,7 +799,7 @@ def final_summary():
     st.table(tour_df)
         
     
-def show_step():
+def show_step() -> None:
     """
     This function generates the step we are currently at, including all information blurbs/interactiveness. 
     """
@@ -834,7 +835,7 @@ def show_step():
         bigger_markdown(curr.get_desc())
     
 
-def run():
+def run() -> None:
     """
     This function provides the main wrapper for the visualization tool, implementing actions like switching between steps/moving to sumary
     """
