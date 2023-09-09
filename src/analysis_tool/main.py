@@ -901,7 +901,7 @@ def run() -> None:
             st.session_state.step_class_dict[option] = getattr(st.session_state.overall_step, option)(st.session_state.df)
             st.session_state.step_class = st.session_state.step_class_dict[option]
             st.session_state.id += 10
-            st.experimental_rerun()
+            # st.experimental_rerun()
             
     # show the meat of the current step
     show_step()
