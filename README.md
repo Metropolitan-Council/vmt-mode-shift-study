@@ -7,13 +7,9 @@ Do this to set up your repository/code:
 1. Clone the repository to your local machine. 
 2. Copy the contents of the example directory to a working directory located outside the repository.  
 3. Request access to the data stored on the Teams directory from @gregerhardt and create a path to the data directory. 
-4. Run the script using the command: 
-
-	```
-	python run_all.py Usage: python run_all.py -d [DATA_DIR] -c [CONFIG_DIR] -o [OUTPUT_DIR]
-	```
-
-You may need to adjust the sys.path.append command in `run_all.py` to reference the source code within the repository. **It is important that no private data or outputs be stored in the repository.**  See Handling data for details.
+4. Follow the install directions below.
+ 
+**It is important that no private data or outputs be stored in the repository.**  See Handling data for details.
 
 This repository is in active development. See the [CONTRIBUTING](CONTRIBUTING.md) page on the right to learn how to contribute 🤝.
 
@@ -29,16 +25,16 @@ This repository is in active development. See the [CONTRIBUTING](CONTRIBUTING.md
 
 The files here are mostly jupyter notebooks running python.  The installed packages used for development are stored in environment.yml.  You can use `conda` to set up the environment with the right installs:
 
-	conda env create -n msp --file environment.yml
+	conda env create --file environment.yml
 
 Then to activate the environment:
 
-	conda activate msp
+	conda activate vmtmodeenv
 
 If you have difficulties solving pacakges on macOS, try using the Mac-specific environment.
 
-	conda env create -n msp-mac --file mac-environment.yml
-	conda activate msp-mac
+	conda env create --file mac-environment.yml
+	conda activate vmtmodeenv
 
 After installing the packages, you'll use keyring to set the main directory on our shared drive.  This avoids the need to hard-code file names in the scripts:
 
