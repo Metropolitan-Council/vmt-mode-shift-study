@@ -347,7 +347,7 @@ def final_summary() -> None:
     
     # save the feasible pct for later use in probable step
     if st.session_state.phase == Phase.FEASIBLE:
-        st.session_state["feasible_pct"] = df[df['mode'] == Mode.CAR][f'{st.session_state.phase}_shift'].sum() / len(df[df['mode'] == Mode.CAR])
+        st.session_state["feasible_pct"] = df[(df[f'{st.session_state.phase}_shift']) & (df['mode'] == Mode.CAR)]['vehicle_trips'].sum() / df[df['mode'] == Mode.CAR]['vehicle_trips'].sum()
     
     # which adjective to use (depends on phase)
     adjective = 'feasibly' if st.session_state.phase == Phase.FEASIBLE else 'with likelihood'
@@ -356,10 +356,10 @@ def final_summary() -> None:
     st.title("Summary")
     
     # total trips is the # of car trips total
-    total_trips: int = len(df[df["mode"] == Mode.CAR])
+    total_trips = df[df["mode"] == Mode.CAR]["vehicle_trips"].sum()
     
     # tell the % of people that can shift to any mode and to individual modes
-    bigger_markdown(f"Overall, <strong>{len(st.session_state.step_class_dict)}</strong> steps were run, and, accounting for these restrictions, <strong>{len(df[(df[f'{st.session_state.phase}_shift']) & (df['mode'] == Mode.CAR)]) / total_trips * 100:.2f}%</strong> of all trips could shift {adjective} from car to some non-car mode. When considering individual mode shifts, <strong>{len(df[(df[f'{st.session_state.phase}_transit_shift']) & (df['mode'] == Mode.CAR)]) / total_trips * 100:.2f}%</strong> of trips could shift {adjective} to transit, <strong>{len(df[(df[f'{st.session_state.phase}_walk_shift']) & (df['mode'] == Mode.CAR)]) / total_trips * 100:.2f}%</strong> to bike, and <strong>{len(df[(df[f'{st.session_state.phase}_bike_shift']) & (df['mode'] == Mode.CAR)]) / total_trips * 100:.2f}%</strong> to bike.")
+    bigger_markdown(f"Overall, <strong>{len(st.session_state.step_class_dict)}</strong> steps were run, and, accounting for these restrictions, <strong>{df[(df[f'{st.session_state.phase}_shift']) & (df['mode'] == Mode.CAR)]['vehicle_trips'].sum() / total_trips * 100:.2f}%</strong> of all trips could shift {adjective} from car to some non-car mode. When considering individual mode shifts, <strong>{df[(df[f'{st.session_state.phase}_transit_shift']) & (df['mode'] == Mode.CAR)]['vehicle_trips'].sum() / total_trips * 100:.2f}%</strong> of trips could shift {adjective} to transit, <strong>{df[(df[f'{st.session_state.phase}_walk_shift']) & (df['mode'] == Mode.CAR)]['vehicle_trips'].sum() / total_trips * 100:.2f}%</strong> to bike, and <strong>{df[(df[f'{st.session_state.phase}_bike_shift']) & (df['mode'] == Mode.CAR)]['vehicle_trips'].sum() / total_trips * 100:.2f}%</strong> to bike.")
     
     # record of settings for all steps that were run
     bigger_markdown("Below are the steps that were run and their settings (1 for categoricals indicates that it was run).")
@@ -444,19 +444,19 @@ def final_summary() -> None:
     bigger_markdown(r"Below, the % of car trips/VMT that can shift to the 3 modes/any non-car mode can be seen in table form.")
     overall_shifts = pd.DataFrame(index=[r"% of Car Trips", r"% of VMT"])
     overall_shifts["Feasible to switch to walk"] = [
-        f'{len(df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_walk_shift"])]) / len(df[(df["mode"] == Mode.CAR)]) * 100: .2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_walk_shift"])]["vehicle_trips"].sum() / df[(df["mode"] == Mode.CAR)]["vehicle_trips"].sum() * 100: .2f}%',
         f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_walk_shift"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100: .2f}%'
     ]
     overall_shifts["Feasible to switch to bike"] = [
-        f'{len(df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_bike_shift"])]) / len(df[(df["mode"] == Mode.CAR)]) * 100: .2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_bike_shift"])]["vehicle_trips"].sum() / df[(df["mode"] == Mode.CAR)]["vehicle_trips"].sum() * 100: .2f}%',
         f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_bike_shift"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%'
     ]
     overall_shifts["Feasible to switch to transit"] = [
-        f'{len(df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_transit_shift"])]) / len(df[(df["mode"] == Mode.CAR)]) * 100:.2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_transit_shift"])]["vehicle_trips"].sum() / df[(df["mode"] == Mode.CAR)]["vehicle_trips"].sum() * 100:.2f}%',
         f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_transit_shift"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%'
     ]
     overall_shifts["Feasible to switch to any non-car mode"] = [
-        f'{len(df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"])]) / len(df[(df["mode"] == Mode.CAR)]) * 100:.2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"])]["vehicle_trips"].sum() / df[(df["mode"] == Mode.CAR)]["vehicle_trips"].sum() * 100:.2f}%',
         f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%'
     ]
     st.table(overall_shifts)
@@ -488,19 +488,19 @@ def final_summary() -> None:
     # create a table of the % of car trips/vmt that shifts to each/any mode can mitigate
     overall_shift_comparison = pd.DataFrame(index=[r"% of Car Trips", r"% of VMT"])
     overall_shift_comparison["Walk is the fastest alternative"] = [
-        f'{len(df[(df["mode"] == Mode.CAR) & (df["fastest_mode"] == Mode.WALK)]) / len(df[df["mode"] == Mode.CAR]) * 100:.2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df["fastest_mode"] == Mode.WALK)]["vehicle_trips"].sum() / df[df["mode"] == Mode.CAR]["vehicle_trips"].sum() * 100:.2f}%',
         f'{df[(df["mode"] == Mode.CAR) & (df["fastest_mode"] == Mode.WALK)]["vmt"].sum() / df[df["mode"] == Mode.CAR]["vmt"].sum() * 100:.2f}%'
     ]
     overall_shift_comparison["Bike is the fastest alternative"] = [
-        f'{len(df[(df["mode"] == Mode.CAR) & (df["fastest_mode"] == Mode.BIKE)]) / len(df[df["mode"] == Mode.CAR]) * 100:.2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df["fastest_mode"] == Mode.BIKE)]["vehicle_trips"].sum() / df[df["mode"] == Mode.CAR]["vehicle_trips"].sum() * 100:.2f}%',
         f'{df[(df["mode"] == Mode.CAR) & (df["fastest_mode"] == Mode.BIKE)]["vmt"].sum() / df[df["mode"] == Mode.CAR]["vmt"].sum() * 100:.2f}%'
     ]
     overall_shift_comparison["Transit is the fastest alternative"] = [
-        f'{len(df[(df["mode"] == Mode.CAR) & (df["fastest_mode"] == Mode.TRANSIT)]) / len(df[df["mode"] == Mode.CAR]) * 100:.2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df["fastest_mode"] == Mode.TRANSIT)]["vehicle_trips"].sum() / df[df["mode"] == Mode.CAR]["vehicle_trips"].sum() * 100:.2f}%',
         f'{df[(df["mode"] == Mode.CAR) & (df["fastest_mode"] == Mode.TRANSIT)]["vmt"].sum() / df[df["mode"] == Mode.CAR]["vmt"].sum() * 100:.2f}%'
     ]
     overall_shift_comparison["Feasible to switch to any non-car mode"] = [
-        f'{len(df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"])]) / len(df[(df["mode"] == Mode.CAR)]) * 100:.2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"])]["vehicle_trips"].sum() / df[(df["mode"] == Mode.CAR)]["vehicle_trips"].sum() * 100:.2f}%',
         f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%'
     ]
     st.table(overall_shift_comparison)
@@ -528,15 +528,15 @@ def final_summary() -> None:
     bigger_markdown(r"The % of car trips and VMT that are within x minutes from the fastest alternative mode can be seen in the below table.")
     duration_diff_df = pd.DataFrame(index=[r"% of Car Trips", r"% of VMT"])
     duration_diff_df["Fastest mode is within 5 minutes of driving"] = [
-        f'{len(df[(df["mode"] == Mode.CAR) & (df["car_minus_min_alt_mode_duration"].abs() <= 5)]) / len(df[(df["mode"] == Mode.CAR)]) * 100: .2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df["car_minus_min_alt_mode_duration"].abs() <= 5)]["vehicle_trips"].sum() / df[(df["mode"] == Mode.CAR)]["vehicle_trips"].sum() * 100: .2f}%',
         f'{df[(df["mode"] == Mode.CAR) & (df["car_minus_min_alt_mode_duration"].abs() <= 5)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%'
     ]
     duration_diff_df["Fastest mode is within 15 minutes of driving"] = [
-        f'{len(df[(df["mode"] == Mode.CAR) & (df["car_minus_min_alt_mode_duration"].abs() <= 15)]) / len(df[(df["mode"] == Mode.CAR)]) * 100: .2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df["car_minus_min_alt_mode_duration"].abs() <= 15)]["vehicle_trips"].sum() / df[(df["mode"] == Mode.CAR)]["vehicle_trips"].sum() * 100: .2f}%',
         f'{df[(df["mode"] == Mode.CAR) & (df["car_minus_min_alt_mode_duration"].abs() <= 15)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%'
     ]
     duration_diff_df["Fastest mode is within 30 minutes of driving"] = [
-        f'{len(df[(df["mode"] == Mode.CAR) & (df["car_minus_min_alt_mode_duration"].abs() <= 30)]) / len(df[(df["mode"] == Mode.CAR)]) * 100: .2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df["car_minus_min_alt_mode_duration"].abs() <= 30)]["vehicle_trips"].sum() / df[(df["mode"] == Mode.CAR)]["vehicle_trips"].sum() * 100: .2f}%',
         f'{df[(df["mode"] == Mode.CAR) & (df["car_minus_min_alt_mode_duration"].abs() <= 30)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%'
     ]
     st.table(duration_diff_df)
@@ -615,8 +615,8 @@ def final_summary() -> None:
     
     # person trip count before/after mode shifts
     bigger_markdown(inspect.cleandoc(
-        f"""- Total number of person trips on car before applying mode shifts: <strong>{len(df[df['mode'] == Mode.CAR]):,}</strong>
-            - Total number of person trips on car after applying mode shifts: <strong>{len(df[(df['mode'] == Mode.CAR) & (~df[f'{st.session_state.phase}_shift'])]):,}</strong>"""
+        f"""- Total number of person trips on car before applying mode shifts: <strong>{round(df[df['mode'] == Mode.CAR]["person_trips"].sum()):,}</strong>
+            - Total number of person trips on car after applying mode shifts: <strong>{round(df[(df['mode'] == Mode.CAR) & (~df[f'{st.session_state.phase}_shift'])]["person_trips"].sum()):,}</strong>"""
         )
     )
     
@@ -796,19 +796,19 @@ def final_summary() -> None:
     # create a dataframe to show the % of car trips/vmt that can be mitigated when considering only tour-level shifts as possible and display this in streamlit
     tour_df = pd.DataFrame(index=[r"% of Car Trips", r"% of VMT"])
     tour_df["Feasible to switch to walk"] = [
-        f'{len(df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_walk_shift_tour"])]) / len(df[(df["mode"] == Mode.CAR)]) * 100:.2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_walk_shift_tour"])]["vehicle_trips"].sum() / df[(df["mode"] == Mode.CAR)]["vehicle_trips"].sum() * 100:.2f}%',
         f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_walk_shift_tour"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%',
     ]
     tour_df["Feasible to switch to bike"] = [
-        f'{len(df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_bike_shift_tour"])]) / len(df[(df["mode"] == Mode.CAR)]) * 100:.2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_bike_shift_tour"])]["vehicle_trips"].sum() / df[(df["mode"] == Mode.CAR)]["vehicle_trips"].sum() * 100:.2f}%',
         f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_bike_shift_tour"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%',
     ]
     tour_df["Feasible to switch to transit"] = [
-        f'{len(df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_transit_shift_tour"])]) / len(df[(df["mode"] == Mode.CAR)]) * 100:.2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_transit_shift_tour"])]["vehicle_trips"].sum() / df[(df["mode"] == Mode.CAR)]["vehicle_trips"].sum() * 100:.2f}%',
         f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_transit_shift_tour"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%',
     ]
     tour_df["Feasible to switch to any non-car mode"] = [
-        f'{len(df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift_tour"])]) / len(df[(df["mode"] == Mode.CAR)]) * 100:.2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift_tour"])]["vehicle_trips"].sum() / df[(df["mode"] == Mode.CAR)]["vehicle_trips"].sum() * 100:.2f}%',
         f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift_tour"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%',
     ]
     

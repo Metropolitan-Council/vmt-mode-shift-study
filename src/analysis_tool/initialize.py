@@ -365,6 +365,11 @@ def prepare_data(df: pd.DataFrame, data_dir: str) -> pd.DataFrame:
     
     # drop location information to protect it    
     df = df.drop(columns=["o_lat", "o_lon", "d_lat", "d_lon"])
+    
+    # apply expansion weights to person trips, vehicle trips, vmt and trips
+    df['person_trips'] = df['trip_weight']
+    df['vehicle_trips'] = df['vehicle_trips'] * df['trip_weight']
+    df['vmt'] = df['vmt'] * df['trip_weight']
 
     logging.info("exporting newly created table to csv")
     # possibly change to provided name; export to disk for future use

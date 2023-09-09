@@ -65,6 +65,7 @@ keep_columns:
     - o_lon
     - d_lat
     - d_lon
+    - trip_weight
 
 scenario_columns:
     bike:

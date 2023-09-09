@@ -80,12 +80,12 @@ class BaseStep:
             tuple: 3 2-tuples, the first being percent shift before/after, the second being vmt before/after, and the third absolute car/vmt that satisfy this constraint
         """
         # absolute car/vmt % this step applies
-        abs_car_percent = len(self.df[(self.df['mode']==Mode.CAR) & (self.df[self.name])]) / len(self.df[self.df['mode']==Mode.CAR])
+        abs_car_percent = self.df[(self.df['mode']==Mode.CAR) & (self.df[self.name])]["vehicle_trips"].sum() / self.df[self.df['mode']==Mode.CAR]["vehicle_trips"].sum()
         abs_vmt_percent = self.df[(self.df['mode']==Mode.CAR) & (self.df[self.name])]["vmt"].sum() / self.df[self.df['mode']==Mode.CAR]["vmt"].sum()
         
         # % feasible/likely shifts before/after this step
-        percent_shifts_before = len(self.df[(self.df['mode']==Mode.CAR) & (self.prev)]) / len(self.df[self.df['mode']==Mode.CAR]) * 100
-        percent_shifts_after = len(self.df[(self.df['mode']==Mode.CAR) & (self.df[f'{self.overall_step}_{self.mode}_shift'])]) / len(self.df[self.df['mode']==Mode.CAR]) * 100
+        percent_shifts_before = self.df[(self.df['mode']==Mode.CAR) & (self.prev)]["vehicle_trips"].sum() / self.df[self.df['mode']==Mode.CAR]["vehicle_trips"].sum() * 100
+        percent_shifts_after = self.df[(self.df['mode']==Mode.CAR) & (self.df[f'{self.overall_step}_{self.mode}_shift'])]["vehicle_trips"].sum() / self.df[self.df['mode']==Mode.CAR]["vehicle_trips"].sum() * 100
         
         # VMT before/after this step
         prev_vmt = self.df[(self.df["mode"] == Mode.CAR) & (self.prev)]["vmt"].sum()
