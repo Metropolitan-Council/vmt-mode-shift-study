@@ -28,7 +28,7 @@ probable_steps:
 fixed_purposes: ["Work", "Work-related", "Escort", "School", "School-related"]
 unlikely_purposes: ["Escort", "Shop"]
 
-build: False  # whether we are currently building to docker/streamlit
+build: False  # whether we are currently building to docker/streamlit; disables initialization/keyring
 force_reinitialize: False
 # save_result: False
 
@@ -66,6 +66,15 @@ keep_columns:
     - d_lat
     - d_lon
 
-
+scenario_columns:
+    bike:
+        # the format for scenarios is [title, new_column, replaced_column]
+        - [default, None, None]
+    transit:
+        - [default, None, None]
+    walk:
+        - [default, None, None]
+    car:
+        - [default, None, None]
 
 cold_start_threshold: 15
