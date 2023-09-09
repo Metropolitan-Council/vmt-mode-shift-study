@@ -28,7 +28,7 @@ def merge_weather(df: pd.DataFrame) -> None:
     logging.info("merging in weather")
     # reading in weather data
     # https://www.ncei.noaa.gov/pub/data/ghcn/daily/
-    weather = pd.read_csv("data/" + handler["weather_file_name"])
+    weather = pd.read_csv("data/" + handler["weather_file_name"], low_memory=False)
     weather = weather[["Date", "Measurement", "Value"]]
     weather = weather.pivot(index="Date", columns="Measurement", values="Value")
     
@@ -112,8 +112,8 @@ def merge_transit_trip_details(df: pd.DataFrame, data_dir: str) -> None:
     logging.info("merging in transit details from raw tbi data")
     
     # read in raw tbi data
-    wave1_trips = pd.read_csv(data_dir + "/Data/TBI Wave 1 Dataset 20200630/trip.csv")
-    wave2_trips = pd.read_csv(data_dir + "/Data/Wave 2 Data Deliverable/trip.csv")
+    wave1_trips = pd.read_csv(data_dir + "/Data/TBI Wave 1 Dataset 20200630/trip.csv", low_memory=False)
+    wave2_trips = pd.read_csv(data_dir + "/Data/Wave 2 Data Deliverable/trip.csv", low_memory=False)
     raw_trips = pd.concat([wave1_trips, wave2_trips]).set_index("trip_id")
     
     def get_dist_to_stop(trips, wave): # calculate distance to get to stop to start transit trip
@@ -362,6 +362,9 @@ def prepare_data(df: pd.DataFrame, data_dir: str) -> pd.DataFrame:
 
     # round off some columns to df
     round_off_columns(df)
+    
+    # drop location information to protect it    
+    df = df.drop(columns=["o_lat", "o_lon", "d_lat", "d_lon"])
 
     logging.info("exporting newly created table to csv")
     # possibly change to provided name; export to disk for future use
