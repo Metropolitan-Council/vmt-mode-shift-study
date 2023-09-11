@@ -126,7 +126,7 @@ def stacked_shift_histogram(df: pd.DataFrame, mode: Mode, mode_duration: str, mo
     plotly_colors = [colors_dict[c] for c in view["Category"].unique()]
     
     # create the stacked histogram
-    fig = px.histogram(view, x="curr", color="Category", barmode="stack", range_x=[-30,120],
+    fig = px.histogram(view, x="curr", y="person_trips", histfunc="sum", color="Category", barmode="stack", range_x=[-20,120],
                        color_discrete_sequence=plotly_colors)
     fig.update_layout(
         title=dict(
@@ -140,7 +140,7 @@ def stacked_shift_histogram(df: pd.DataFrame, mode: Mode, mode_duration: str, mo
         ),
         legend=dict(font=dict(size=16)),
         xaxis_title=dict(text="Travel Time Difference (Alternative Time - Drive Time, minutes)", font=dict(size=16)),
-        yaxis_title=dict(text="Count", font=dict(size=16))
+        yaxis_title=dict(text="Person Trips", font=dict(size=16))
     )
     
     # return figure
