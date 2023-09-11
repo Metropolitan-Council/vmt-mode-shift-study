@@ -130,6 +130,8 @@ def plot_density_plotly(df: pd.DataFrame, alt_mode: str, column: str, cutoff: fl
     fig = px.histogram(
         df[df["mode"].isin([alt_mode, Mode.CAR])], 
         x=column, 
+        y="person_trips",
+        range_x=[0,25],
         color="mode", 
         barmode="overlay",
         color_discrete_sequence=["orange", "blue"],

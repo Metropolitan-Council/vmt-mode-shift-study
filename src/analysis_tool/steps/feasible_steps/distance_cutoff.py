@@ -34,11 +34,11 @@ class WalkDistanceStep(ContinuousStep):
                 xanchor='center',
             ),
             xaxis_title=dict(
-                text="Probability Density",
+                text="Walk Distance (miles)",
                 font=dict(size=16)
             ),
             yaxis_title=dict(
-                text="Walk Distance (miles)",
+                text="Probability Density",
                 font=dict(size=16)
             ),
             legend=dict(
@@ -96,18 +96,18 @@ class BikeDistanceStep(ContinuousStep):
         fig = plot_density_plotly(self.df, self.mode, self.column_name, self.get_cutoff_pct())
         fig.update_layout(
             title=dict(
-                text="Rerouted walk distance distributions<br>for observed bike and car trips",
+                text="Rerouted bike distance distributions<br>for observed bike and car trips",
                 font=dict(size=18),
                 x=0.5,
                 y=0.9,
                 xanchor='center',
             ),
             xaxis_title=dict(
-                text="Probability Density",
+                text="Bike Distance (miles)",
                 font=dict(size=16)
             ),
             yaxis_title=dict(
-                text="Walk Distance (miles)",
+                text="Probability Density",
                 font=dict(size=16)
             ),
             legend=dict(

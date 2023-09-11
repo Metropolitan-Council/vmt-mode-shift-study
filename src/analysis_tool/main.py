@@ -584,14 +584,14 @@ def final_summary() -> None:
     df["competitive_timing"] = df["car_minus_min_alt_mode_duration"].abs() <= 15
     # TODO update to be weigthed average
     values_competitive = (df.groupby("community")["competitive_timing"].mean()).fillna(0)
-    communities[f"Proportion of people that can shift {adjective}"] = values_competitive
+    communities[f"Proportion of trips that can shift {adjective}"] = values_competitive
     
     # create the choropleth mapbox
     bigger_markdown(f"This map shows the proportion of person trips in each community region that can competitively shift (maximum bidirectional difference of 15 minutes) to the fastest alternative non-car mode.")
     fig3 = px.choropleth_mapbox(communities, 
                          geojson=communities.geometry, 
                          locations=communities.index, 
-                         color=f"Proportion of person people that can shift {adjective}",
+                         color=f"Proportion of trips that can shift {adjective}",
                          color_continuous_scale="viridis_r", 
                          range_color=(0, 1),
                          mapbox_style="carto-positron",
