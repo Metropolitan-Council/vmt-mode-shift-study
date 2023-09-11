@@ -464,7 +464,14 @@ def final_summary() -> None:
     # fastest alternative by mode comparisons
     bigger_markdown(r"Below, the distribution of the duration difference between the best non-car mode and car for shifted trips is shown. Note: a trip can only have a fastest mode if there is a mode that is feasible/likely for it take.")
     df["transit_duration_seconds_na"] = df["transit_duration"].fillna(9999999) * 60 # if no transit trip found, make it very slow to allow other modes to beat it
-    df["min_alt_mode_duration"] = df[["transit_duration_seconds_na", "bike_duration_seconds_adj", "walk_duration_seconds"]].min(axis=1)
+
+    # mode must be feasible to be the minimum alternative mode duration
+    df["feasible_walk_duration_seconds"] = np.where(df[f"{st.session_state.phase}_walk_shift"], df["walk_duration_seconds"], 9999999)
+    df["feasible_bike_duration_seconds_adj"] = np.where(df[f"{st.session_state.phase}_bike_shift"], df["bike_duration_seconds_adj"], 9999999)
+    df["feasible_transit_duration_seconds_na"] = np.where(df[f"{st.session_state.phase}_transit_shift"], df["transit_duration_seconds_na"], 9999999)        
+    
+    df["min_alt_mode_duration"] = df[["feasible_transit_duration_seconds_na", "feasible_bike_duration_seconds_adj", "feasible_walk_duration_seconds"]].min(axis=1)
+
     df["fastest_mode"] = "na"
     df["fastest_mode"] = np.where(
         (df[f"{st.session_state.phase}_walk_shift"]) 
@@ -484,6 +491,7 @@ def final_summary() -> None:
         Mode.TRANSIT, 
         df["fastest_mode"]
     ) 
+       
     
     # create a table of the % of car trips/vmt that shifts to each/any mode can mitigate
     overall_shift_comparison = pd.DataFrame(index=[r"% of Car Trips", r"% of VMT"])
@@ -506,9 +514,12 @@ def final_summary() -> None:
     st.table(overall_shift_comparison)
     
     # histogram for min travel time difference for all modes
+    # TODO - update this chart to be stacked histogram by mode
     bigger_markdown(r"Below, the distribution of the duration difference between the best non-car mode and car for shifted trips is shown")
     df["car_minus_min_alt_mode_duration"] = (df["min_alt_mode_duration"] - df["car_duration_seconds_adj"]) / 60
-    fig1 = px.histogram(df, x="car_minus_min_alt_mode_duration", y="person_trips", histfunc="sum", range_x=[-30,120])
+    
+    feasible_shift_df = df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"])]
+    fig1 = px.histogram(feasible_shift_df, x="car_minus_min_alt_mode_duration", y="person_trips", histfunc="sum", range_x=[-30,120])
     fig1.update_layout(
         title={
             'text': "Histogram of duration difference between<br>the best feasible alternative and the equivalent car trip",
