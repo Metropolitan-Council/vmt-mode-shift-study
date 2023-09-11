@@ -399,8 +399,8 @@ def final_summary() -> None:
     st.plotly_chart(stacked_shift_histogram(df, Mode.WALK, "walk_duration_minutes", f"{st.session_state.phase}_walk_shift", st.session_state.phase))
     
     # get df of the % of trips/vmt that are within x minutes of walking
-    bigger_markdown(r"The % of car trips and VMT that are within x minutes from walking can be seen in the below table.")
-    st.table(get_duration_diff_df(df, Mode.WALK, "walk_duration_minutes"))
+    bigger_markdown(f"The % of car trips and VMT that are {st.session_state.phase} and within x minutes from walking can be seen in the below table.")
+    st.table(get_duration_diff_df(df, Mode.WALK, f"{st.session_state.phase}_walk_shift", "walk_duration_minutes"))
     
     # details about biking shifts
     st.header("Shifts to biking")
@@ -418,8 +418,8 @@ def final_summary() -> None:
     st.plotly_chart(stacked_shift_histogram(df, Mode.BIKE, "bike_duration_minutes_adj", f"{st.session_state.phase}_bike_shift", st.session_state.phase))
     
     # get df of the % of trips/vmt that are within x minutes of biking
-    bigger_markdown(r"The % of car trips and VMT that are within x minutes from walking can be seen in the below table.")
-    st.table(get_duration_diff_df(df, Mode.BIKE, "bike_duration_minutes_adj"))
+    bigger_markdown(f"The % of car trips and VMT that are {st.session_state.phase} and within x minutes from walking can be seen in the below table.")
+    st.table(get_duration_diff_df(df, Mode.BIKE, f"{st.session_state.phase}_bike_shift", "bike_duration_minutes_adj"))
     
     # details about biking shifts
     st.header("Shifts to transit")
@@ -434,8 +434,8 @@ def final_summary() -> None:
     st.plotly_chart(stacked_shift_histogram(df[(~df["transit_duration"].isna())&(df["transit_duration"]>0)&(df["transit_duration"]<1440)], Mode.TRANSIT, "transit_duration", f"{st.session_state.phase}_transit_shift", st.session_state.phase))
     
     # get df of the % of trips/vmt that are within x minutes of transit
-    bigger_markdown(r"The % of car trips and VMT that are within x minutes from transit can be seen in the below table.")
-    st.table(get_duration_diff_df(df[~df["transit_duration"].isna()], Mode.TRANSIT, "transit_duration"))
+    bigger_markdown(f"The % of car trips and VMT that are {st.session_state.phase} and within x minutes from transit can be seen in the below table.")
+    st.table(get_duration_diff_df(df[~df["transit_duration"].isna()], Mode.TRANSIT, f"{st.session_state.phase}_transit_shift", "transit_duration"))
     
     st.header("Shifts to any mode")
     
@@ -525,19 +525,19 @@ def final_summary() -> None:
     st.plotly_chart(fig1)
     
     # table for fastest alternative mode being within x minutes of driving
-    bigger_markdown(r"The % of car trips and VMT that are within x minutes from the fastest alternative mode can be seen in the below table.")
+    bigger_markdown(f"The % of car trips and VMT that are {st.session_state.phase} and within x minutes from the fastest alternative mode can be seen in the below table.")
     duration_diff_df = pd.DataFrame(index=[r"% of Car Trips", r"% of VMT"])
     duration_diff_df["Fastest mode is within 5 minutes of driving"] = [
-        f'{df[(df["mode"] == Mode.CAR) & (df["car_minus_min_alt_mode_duration"].abs() <= 5)]["vehicle_trips"].sum() / df[(df["mode"] == Mode.CAR)]["vehicle_trips"].sum() * 100: .2f}%',
-        f'{df[(df["mode"] == Mode.CAR) & (df["car_minus_min_alt_mode_duration"].abs() <= 5)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%'
+        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"]) & (df["car_minus_min_alt_mode_duration"].abs() <= 5)]["vehicle_trips"].sum() / df[(df["mode"] == Mode.CAR)]["vehicle_trips"].sum() * 100: .2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"]) & (df["car_minus_min_alt_mode_duration"].abs() <= 5)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%'
     ]
     duration_diff_df["Fastest mode is within 15 minutes of driving"] = [
-        f'{df[(df["mode"] == Mode.CAR) & (df["car_minus_min_alt_mode_duration"].abs() <= 15)]["vehicle_trips"].sum() / df[(df["mode"] == Mode.CAR)]["vehicle_trips"].sum() * 100: .2f}%',
-        f'{df[(df["mode"] == Mode.CAR) & (df["car_minus_min_alt_mode_duration"].abs() <= 15)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%'
+        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"]) & (df["car_minus_min_alt_mode_duration"].abs() <= 15)]["vehicle_trips"].sum() / df[(df["mode"] == Mode.CAR)]["vehicle_trips"].sum() * 100: .2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"]) & (df["car_minus_min_alt_mode_duration"].abs() <= 15)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%'
     ]
     duration_diff_df["Fastest mode is within 30 minutes of driving"] = [
-        f'{df[(df["mode"] == Mode.CAR) & (df["car_minus_min_alt_mode_duration"].abs() <= 30)]["vehicle_trips"].sum() / df[(df["mode"] == Mode.CAR)]["vehicle_trips"].sum() * 100: .2f}%',
-        f'{df[(df["mode"] == Mode.CAR) & (df["car_minus_min_alt_mode_duration"].abs() <= 30)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%'
+        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"]) & (df["car_minus_min_alt_mode_duration"].abs() <= 30)]["vehicle_trips"].sum() / df[(df["mode"] == Mode.CAR)]["vehicle_trips"].sum() * 100: .2f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"]) & (df["car_minus_min_alt_mode_duration"].abs() <= 30)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%'
     ]
     st.table(duration_diff_df)
     
