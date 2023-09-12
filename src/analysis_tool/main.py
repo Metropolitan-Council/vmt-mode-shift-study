@@ -335,7 +335,7 @@ def final_summary() -> None:
             with st.spinner("Exporting dataframe and percentiles"):
                 df.to_csv(f"output/{st.session_state.phase}_trips.csv", index=False)
                 f = open(f"output/{st.session_state.phase}_percentiles.json", "w")
-                f.write({step_name: step_class.get_cutoff() for step_name, step_class in st.session_state.step_class_dict.items()})
+                f.write(str({step_name: step_class.get_cutoff() for step_name, step_class in st.session_state.step_class_dict.items()}))
                 f.close()
             
     # calculate overall shift ability -- can shift to at least one mode
@@ -671,16 +671,22 @@ def final_summary() -> None:
     st.header("Shifts by categories")
     
     # ability to shift when segmented by income bracket
-    bigger_markdown(r"Below, the % of trips that can shift when segmented by income bracket is shown.")
+    bigger_markdown(r"Below, the % of vehicle trips that can shift when segmented by income bracket is shown.")
     
-    # get the % of people in each income group that can shift & reorder the columns into a readable order
-    # TODO - update to use weighted values
-    income_pct = df[df["income_detailed"] != "na"].groupby("income_detailed")[f"{st.session_state.phase}_shift"].mean().reindex(["Under $15,000", "$15,000-$24,999", "$25,000-$34,999", "$35,000-$49,999", "$50,000-$74,999", "$75,000-$99,999", "$100,000-$149,999", "$150,000-$199,999", "$200,000-$249,999", "$250,000 or more"])
+    # get the % of vehicle trips in each income group that can shift & reorder the columns into a readable order
+    income_pct = df.groupby(["income_cleaned",f"{st.session_state.phase}_shift"])[["vehicle_trips"]].sum().reset_index()
+    income_pct['percent_vehicle_trips'] = round(100* income_pct['vehicle_trips'] / income_pct.groupby('income_cleaned')['vehicle_trips'].transform('sum'),2)
+    
     # creat the barplot
-    fig4 = px.bar(x=income_pct.index, y=income_pct.values, color=income_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
+    fig4 = px.bar(income_pct[income_pct[f"{st.session_state.phase}_shift"]], 
+                  x='income_cleaned', 
+                  y='vehicle_trips', 
+                  color='percent_vehicle_trips', 
+                  labels={'percent_vehicle_trips':'Percent of vehicle trips'}, 
+                  category_orders = dict(income_cleaned=["Under $25,000", "$25,000-$49,999","$50,000-$74,999","$75,000-$99,999","$100,000-$149,999", "$150,000 or more","na"]))
     fig4.update_layout(
         title={
-            'text': 'Proportion of people that can shift modes by income group',
+            'text': 'Vehicle trips that can shift modes by income group',
             'font': dict(
                 size=18
             ),
@@ -689,20 +695,27 @@ def final_summary() -> None:
             'y': 0.9
         },
         xaxis_title=dict(text="Income group", font=dict(size=16)),
-        yaxis_title=dict(text="proportion of people in the<br>category that can shift {adjective}", font=dict(size=16)),
+        yaxis_title=dict(text=f"Vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
         showlegend=False
     )
     st.plotly_chart(fig4)
     
-    # abiliyt to shift by trip purpose (usually destination purpose unless destination is home, then origin purpose -- this is done in the intiialization step)
-    bigger_markdown(r"Below, the % of trips that can shift when segmented by trip purpose are shown.")
+    # ability to shift by trip purpose (usually destination purpose unless destination is home, then origin purpose -- this is done in the intiialization step)
+    bigger_markdown(r"Below, the % of vehicle trips that can shift when segmented by trip purpose are shown.")
     
-    # TODO - update to use weighted values
-    purpose_pct = df[df["purpose_cleaned"] != "Missing"].groupby("purpose_cleaned")[f"{st.session_state.phase}_shift"].mean()
-    fig5 = px.bar(x=purpose_pct.index, y=purpose_pct.values, color=purpose_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
+    purpose_pct = df.groupby(["purpose_cleaned",f"{st.session_state.phase}_shift"])[["vehicle_trips"]].sum().reset_index()
+    purpose_pct['percent_vehicle_trips'] = round(100* purpose_pct['vehicle_trips'] / purpose_pct.groupby('purpose_cleaned')['vehicle_trips'].transform('sum'),2)
+    
+    fig5 = px.bar(purpose_pct[purpose_pct[f"{st.session_state.phase}_shift"]], 
+                  x='purpose_cleaned', 
+                  y='vehicle_trips', 
+                  color='percent_vehicle_trips', 
+                  labels={'percent_vehicle_trips':'Percent of vehicle trips'}, 
+                  category_orders = dict(purpose_cleaned=["Work", "School", "Escort", "Shop", "Errand", "Meal", "Social/Recreation", "Other"]),
+                  color_discrete_sequence=px.colors.qualitative.G10[:8])
     fig5.update_layout(
         title={
-            'text': 'Proportion of people that can shift mode by trip purpose',
+            'text': 'Vehicle trips that can shift mode by trip purpose',
             'font': dict(
                 size=18
             ),
@@ -710,22 +723,29 @@ def final_summary() -> None:
             'xanchor': 'center',
             'y': 0.9
         },
-        xaxis_title=dict(text="Purpose category", font=dict(size=16)),
-        yaxis_title=dict(text=f"proportion of people in the<br>category that can shift {adjective}", font=dict(size=16)),
+        xaxis_title=dict(text="Trip Purpose", font=dict(size=16)),
+        yaxis_title=dict(text=f"Vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
         legend=dict(font=dict(size=16)),
         showlegend=False
     )
     st.plotly_chart(fig5)
     
     # ability to shift by person type (adult, student, etc.)
-    bigger_markdown(r"Below, the % of trips that can shift when segmented by person type are shown.")
+    bigger_markdown(r"Below, the % of vehicle trips that can shift when segmented by person type are shown.")
                 
-    # TODO - update to use weighted values
-    person_pct = df[df["person_type"] != "na"].groupby("person_type")[f"{st.session_state.phase}_shift"].mean()
-    fig6 = px.bar(x=person_pct.index, y=person_pct.values, color=person_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
+    person_pct = df.groupby(["person_type",f"{st.session_state.phase}_shift"])[["vehicle_trips"]].sum().reset_index()
+    person_pct['percent_vehicle_trips'] = round(100* person_pct['vehicle_trips'] / person_pct.groupby('person_type')['vehicle_trips'].transform('sum'),2)
+    
+    fig6 = px.bar(person_pct[person_pct[f"{st.session_state.phase}_shift"]], 
+                  x='person_type', 
+                  y='vehicle_trips', 
+                  color='percent_vehicle_trips', 
+                  labels={'percent_vehicle_trips':'Percent of vehicle trips'}, 
+                  category_orders = dict(person_type=["Working adult with kids", "Working adult without kids", "Non-working adult with kids","Non-working adult without kids","Retired","College student","Child"]),
+                  color_discrete_sequence=px.colors.qualitative.G10[:7])
     fig6.update_layout(
         title={
-            'text': 'Proportion of people that can shift mode by person type',
+            'text': 'Vehicle trips that can shift mode by person type',
             'font': dict(
                 size=18
             ),
@@ -734,7 +754,7 @@ def final_summary() -> None:
             'y': 0.9
         },
         xaxis_title=dict(text="Person type", font=dict(size=16)),
-        yaxis_title=dict(text=f"proportion of people in the<br>category that can shift {adjective}", font=dict(size=16)),
+        yaxis_title=dict(text=f"Vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
         legend=dict(font=dict(size=16)),
         showlegend=False
     )
@@ -742,13 +762,18 @@ def final_summary() -> None:
     
     # ability to shift by gender
     bigger_markdown(r"Below, the % of trips that can shift when segmented by gender are shown.")
+                
+    gender_pct = df.groupby(["gender_cleaned",f"{st.session_state.phase}_shift"])[["vehicle_trips"]].sum().reset_index()
+    gender_pct['percent_vehicle_trips'] = round(100* gender_pct['vehicle_trips'] / gender_pct.groupby('gender_cleaned')['vehicle_trips'].transform('sum'),2)
     
-    # TODO - update to use weighted values
-    gender_pct = df[df["gender_cleaned"] != "Prefer not to answer"].groupby("gender_cleaned")[f"{st.session_state.phase}_shift"].mean()
-    fig7 = px.bar(x=gender_pct.index, y=gender_pct.values, color=gender_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
+    fig7 = px.bar(gender_pct[gender_pct[f"{st.session_state.phase}_shift"]], 
+                  x='gender_cleaned', 
+                  y='vehicle_trips', 
+                  color='percent_vehicle_trips',
+                  labels={'percent_vehicle_trips':'Percent of vehicle trips'})
     fig7.update_layout(
         title={
-            'text': 'Proportion of people that can shift mode by gender',
+            'text': 'Vehicle trips that can shift mode by gender',
             'font': dict(
                 size=18
             ),
@@ -757,7 +782,7 @@ def final_summary() -> None:
             'y': 0.9
         },
         xaxis_title=dict(text="Gender", font=dict(size=16)),
-        yaxis_title=dict(text=f"proportion of people in the<br>category that can shift {adjective}", font=dict(size=16)),
+        yaxis_title=dict(text=f"Vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
         legend=dict(font=dict(size=16)),
         showlegend=False
     )
@@ -765,13 +790,18 @@ def final_summary() -> None:
     
     # ability to shift by recorded TBI wave (either 1/2)
     bigger_markdown(r"Below, the % of trips that can shift when segmented by TBI wave is shown.")
+                
+    wave_pct = df.groupby(["wave",f"{st.session_state.phase}_shift"])[["vehicle_trips"]].sum().reset_index()
+    wave_pct['percent_vehicle_trips'] = round(100* wave_pct['vehicle_trips'] / wave_pct.groupby('wave')['vehicle_trips'].transform('sum'),2)
     
-    # TODO - update to use weighted values
-    wave_pct = df.groupby("wave")[f"{st.session_state.phase}_shift"].mean()
-    fig8 = px.bar(x=wave_pct.index, y=wave_pct.values, color=wave_pct.index, color_discrete_sequence=px.colors.qualitative.G10)
+    fig8 = px.bar(wave_pct[wave_pct[f"{st.session_state.phase}_shift"]], 
+                  x='wave', 
+                  y='vehicle_trips', 
+                  color='percent_vehicle_trips',
+                  labels={'percent_vehicle_trips':'Percent of vehicle trips'})
     fig8.update_layout(
         title={
-            'text': 'Proportion of people that can shift mode by TBI wave',
+            'text': 'Percent of vehicle trips that can shift mode by TBI wave',
             'font': dict(
                 size=18
             ),
@@ -780,7 +810,7 @@ def final_summary() -> None:
             'y': 0.9
         },
         xaxis_title=dict(text="Wave", font=dict(size=16)),
-        yaxis_title=dict(text=f"proportion of people in the<br>category that can shift {adjective}", font=dict(size=16)),
+        yaxis_title=dict(text=f"Vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
         legend=dict(font=dict(size=16)),
         showlegend=False
     )

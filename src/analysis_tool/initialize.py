@@ -183,7 +183,8 @@ def final_field_cleanup(df: pd.DataFrame) -> None:
     df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Errand/Other", "Errand"]), "Errand", df["purpose_cleaned"])
     df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Shop", "Shopping"]), "Shop", df["purpose_cleaned"])
     df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Other", "Change mode", "Overnight", "Spent the night at non-home location"]), "Other", df["purpose_cleaned"])
-    df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Missing: Non-response", "Missing: Skip logic", "Not imputable", "Missing", "Missing: Non-imputable"]), "Missing", df["purpose_cleaned"])
+    df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Missing: Non-response", "Missing: Skip logic", "Not imputable", "Missing", "Missing: Non-imputable"]), "Other", df["purpose_cleaned"])
+    df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Home"]), "Other", df["purpose_cleaned"])  # a few home-to-home trips -> group with other
     
     # creation of person categories based on various categories of age/employment/student status
     df["child"] = df["age"].isin(["5-15", "5 to 15", "16-17", "16 to 17", "Under 5"])
@@ -194,22 +195,30 @@ def final_field_cleanup(df: pd.DataFrame) -> None:
     
     # create person types based on the above categories
     df["person_type"] = "na"
-    df["person_type"] = np.where(df["child"], "child", df["person_type"])
-    df["person_type"] = np.where(~df["unemployed"] & df["parent"], "working adult with kids", df["person_type"])
-    df["person_type"] = np.where(df["unemployed"] & df["parent"], "non-working adult with kids", df["person_type"])
-    df["person_type"] = np.where(~df["unemployed"] & ~df["parent"], "working adult without kids", df["person_type"])
-    df["person_type"] = np.where(df["unemployed"] & ~df["parent"], "non-working adult without kids", df["person_type"])
-    df["person_type"] = np.where(df["senior"] & df["unemployed"], "retired", df["person_type"])
-    df["person_type"] = np.where((~df["child"]) & (df["student"]), "college student", df["person_type"]) # if placed above, everything else overwrites it
+    df["person_type"] = np.where(df["child"], "Child", df["person_type"])
+    df["person_type"] = np.where(~df["unemployed"] & df["parent"] & ~df["child"], "Working adult with kids", df["person_type"])
+    df["person_type"] = np.where(df["unemployed"] & df["parent"] & ~df["child"], "Non-working adult with kids", df["person_type"])
+    df["person_type"] = np.where(~df["unemployed"] & ~df["parent"] & ~df["child"], "Working adult without kids", df["person_type"])
+    df["person_type"] = np.where(df["unemployed"] & ~df["parent"] & ~df["child"], "Non-working adult without kids", df["person_type"])
+    df["person_type"] = np.where(df["senior"] & df["unemployed"], "Retired", df["person_type"])
+    df["person_type"] = np.where((~df["child"]) & (df["student"]), "College student", df["person_type"]) # if placed above, everything else overwrites it
     
     # merge some similar gender-categories into one
     df["gender_cleaned"] = df["gender"]
     df["gender_cleaned"] = np.where(df["gender_cleaned"] == "Other/prefer to self-describe", "Other/Prefer to self-describe", df["gender_cleaned"])
+    df["gender_cleaned"] = np.where(df["gender_cleaned"] == "Prefer not to answer", "Other/Prefer to self-describe", df["gender_cleaned"])
+    df["gender_cleaned"] = np.where(df["gender_cleaned"] == "Non-binary/third gender", "Other/Prefer to self-describe", df["gender_cleaned"])
+    df["gender_cleaned"] = np.where(df["gender_cleaned"] == "Transgender", "Other/Prefer to self-describe", df["gender_cleaned"])
     
-    # merge some similar income categories into one
-    df["income_detailed"] = np.where(df["income_detailed"].isin(set(["Less than $15,000", "Under $15,000"])), "Under $15,000", df["income_detailed"])
-    df["income_detailed"] = np.where(df["income_detailed"] == "Prefer not to answer", "na", df["income_detailed"])
-    
+    # merge some similar income into one
+    df["income_cleaned"] = "na"
+    df["income_cleaned"] = np.where(df["income_detailed"].isin(["Under $15,000", "$15,000-$24,999"]), "Under $25,000", df['income_cleaned'])
+    df["income_cleaned"] = np.where(df["income_detailed"].isin(["$25,000-$34,999", "$35,000-$49,999"]), "$25,000-$49,999", df['income_cleaned'])
+    df["income_cleaned"] = np.where(df["income_detailed"].isin(["$50,000-$74,999"]), "$50,000-$74,999", df['income_cleaned'])
+    df["income_cleaned"] = np.where(df["income_detailed"].isin(["$75,000-$99,999"]), "$75,000-$99,999", df['income_cleaned'])
+    df["income_cleaned"] = np.where(df["income_detailed"].isin(["$100,000-$149,999"]), "$100,000-$149,999", df['income_cleaned'])
+    df["income_cleaned"] = np.where(df["income_detailed"].isin(["$150,000-$199,999", "$200,000-$249,999", "$250,000 or more"]), "$150,000 or more", df['income_cleaned'])
+
 def add_terminal_times(df: pd.DataFrame) -> None:
     """
     This function adds terminal times of bike/car trips for each unlinked trip into the main df in-place.
