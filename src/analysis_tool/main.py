@@ -557,19 +557,21 @@ def final_summary() -> None:
     
     # map of the % of trips in each community regino that can shift given the restrictions
     
-    # get a dummy communities df with a column for the proportion of people that could shift in an area
-    # TODO update to be weigthed average
-    values = (df.groupby("community")[f"{st.session_state.phase}_shift"].mean()).fillna(0)
+    # get a dummy communities df with a column for the proportion of people that could shift in an area    
+    community_pct = df.groupby(["community",f"{st.session_state.phase}_shift"])[["vehicle_trips"]].sum().reset_index()
+    community_pct['percent_vehicle_trips'] = round(100* community_pct['vehicle_trips'] / community_pct.groupby('community')['vehicle_trips'].transform('sum'),1)
+    community_pct.set_index('community', inplace=True)
+    values = community_pct[community_pct[f"{st.session_state.phase}_shift"]==1]['percent_vehicle_trips'].fillna(0)
     communities = get_communities()
-    communities[f"Proportion of person trips that can shift {adjective}"] = values
+    communities[f"Percent of vehicle trips that can shift {adjective}"] = values
     
     # create a choropleth mapbox using this (use mapbox since this allows for the desired projection)
-    bigger_markdown(f"This map shows the proportion of trips in each community region that can {adjective} shift to any alternative non-car mode.")
+    bigger_markdown(f"This map shows the percent of vehicle trips in each community region that can {adjective} shift to any alternative non-car mode.")
     fig2 = px.choropleth_mapbox(communities, 
                          geojson=communities.geometry, 
                          locations=communities.index, 
-                         color=f"Proportion of person trips that can shift {adjective}", 
-                         range_color=(0, 1), 
+                         color=f"Percent of vehicle trips that can shift {adjective}", 
+                         range_color=(0, 100), 
                          color_continuous_scale="viridis_r",
                          mapbox_style="carto-positron",
                          center={"lat": 44.9778, "lon": -93.2650},
@@ -579,8 +581,8 @@ def final_summary() -> None:
                 width=900, 
                 height=500,
                 title=dict(
-                    text=f"Proportion of person trips in CTUs that can shift {adjective} to any non-car mode",
-                    x=0.5,
+                    text=f"Percent of vehicle trips in that can shift {adjective} to any non-car mode",
+                    x=0.4,
                     y=0.98,
                     xanchor="center",
                     font=dict(size=18)
@@ -593,18 +595,21 @@ def final_summary() -> None:
     
     # use previously used dummy communities df to store this metric for each geography
     df["competitive_timing"] = df["car_minus_min_alt_mode_duration"].abs() <= 15
-    # TODO update to be weigthed average
-    values_competitive = (df.groupby("community")["competitive_timing"].mean()).fillna(0)
-    communities[f"Proportion of trips that can shift {adjective}"] = values_competitive
+    
+    community_pct = df.groupby(["community","competitive_timing"])[["vehicle_trips"]].sum().reset_index()
+    community_pct['percent_vehicle_trips'] = round(100* community_pct['vehicle_trips'] / community_pct.groupby('community')['vehicle_trips'].transform('sum'),1)
+    community_pct.set_index('community', inplace=True)
+    values_competitive = community_pct[community_pct["competitive_timing"]==1]['percent_vehicle_trips'].fillna(0)
+    communities[f"Percent of vehicle trips that can shift {adjective}"] = values_competitive
     
     # create the choropleth mapbox
-    bigger_markdown(f"This map shows the proportion of person trips in each community region that can competitively shift (maximum bidirectional difference of 15 minutes) to the fastest alternative non-car mode.")
+    bigger_markdown(f"This map shows the percent of vehicle trips in each community region that can competitively shift (maximum bidirectional difference of 15 minutes) to the fastest alternative non-car mode.")
     fig3 = px.choropleth_mapbox(communities, 
                          geojson=communities.geometry, 
                          locations=communities.index, 
-                         color=f"Proportion of trips that can shift {adjective}",
+                         color=f"Percent of vehicle trips that can shift {adjective}",
                          color_continuous_scale="viridis_r", 
-                         range_color=(0, 1),
+                         range_color=(0, 100),
                          mapbox_style="carto-positron",
                          center={"lat": 44.9778, "lon": -93.2650},
                          opacity=0.8
@@ -613,7 +618,7 @@ def final_summary() -> None:
                 title=dict(
                     text="Proportion of person trips in CTUs that can competitively shift to a non-car mode",
                     font=dict(size=18),
-                    x=0.5,
+                    x=0.4,
                     y=0.98,
                     xanchor="center"
                 ),
@@ -675,7 +680,7 @@ def final_summary() -> None:
     
     # get the % of vehicle trips in each income group that can shift & reorder the columns into a readable order
     income_pct = df.groupby(["income_cleaned",f"{st.session_state.phase}_shift"])[["vehicle_trips"]].sum().reset_index()
-    income_pct['percent_vehicle_trips'] = round(100* income_pct['vehicle_trips'] / income_pct.groupby('income_cleaned')['vehicle_trips'].transform('sum'),2)
+    income_pct['percent_vehicle_trips'] = round(100* income_pct['vehicle_trips'] / income_pct.groupby('income_cleaned')['vehicle_trips'].transform('sum'),1)
     
     # creat the barplot
     fig4 = px.bar(income_pct[income_pct[f"{st.session_state.phase}_shift"]], 
@@ -704,7 +709,7 @@ def final_summary() -> None:
     bigger_markdown(r"Below, the % of vehicle trips that can shift when segmented by trip purpose are shown.")
     
     purpose_pct = df.groupby(["purpose_cleaned",f"{st.session_state.phase}_shift"])[["vehicle_trips"]].sum().reset_index()
-    purpose_pct['percent_vehicle_trips'] = round(100* purpose_pct['vehicle_trips'] / purpose_pct.groupby('purpose_cleaned')['vehicle_trips'].transform('sum'),2)
+    purpose_pct['percent_vehicle_trips'] = round(100* purpose_pct['vehicle_trips'] / purpose_pct.groupby('purpose_cleaned')['vehicle_trips'].transform('sum'),1)
     
     fig5 = px.bar(purpose_pct[purpose_pct[f"{st.session_state.phase}_shift"]], 
                   x='purpose_cleaned', 
@@ -734,7 +739,7 @@ def final_summary() -> None:
     bigger_markdown(r"Below, the % of vehicle trips that can shift when segmented by person type are shown.")
                 
     person_pct = df.groupby(["person_type",f"{st.session_state.phase}_shift"])[["vehicle_trips"]].sum().reset_index()
-    person_pct['percent_vehicle_trips'] = round(100* person_pct['vehicle_trips'] / person_pct.groupby('person_type')['vehicle_trips'].transform('sum'),2)
+    person_pct['percent_vehicle_trips'] = round(100* person_pct['vehicle_trips'] / person_pct.groupby('person_type')['vehicle_trips'].transform('sum'),1)
     
     fig6 = px.bar(person_pct[person_pct[f"{st.session_state.phase}_shift"]], 
                   x='person_type', 
@@ -764,7 +769,7 @@ def final_summary() -> None:
     bigger_markdown(r"Below, the % of trips that can shift when segmented by gender are shown.")
                 
     gender_pct = df.groupby(["gender_cleaned",f"{st.session_state.phase}_shift"])[["vehicle_trips"]].sum().reset_index()
-    gender_pct['percent_vehicle_trips'] = round(100* gender_pct['vehicle_trips'] / gender_pct.groupby('gender_cleaned')['vehicle_trips'].transform('sum'),2)
+    gender_pct['percent_vehicle_trips'] = round(100* gender_pct['vehicle_trips'] / gender_pct.groupby('gender_cleaned')['vehicle_trips'].transform('sum'),1)
     
     fig7 = px.bar(gender_pct[gender_pct[f"{st.session_state.phase}_shift"]], 
                   x='gender_cleaned', 
@@ -792,7 +797,7 @@ def final_summary() -> None:
     bigger_markdown(r"Below, the % of trips that can shift when segmented by TBI wave is shown.")
                 
     wave_pct = df.groupby(["wave",f"{st.session_state.phase}_shift"])[["vehicle_trips"]].sum().reset_index()
-    wave_pct['percent_vehicle_trips'] = round(100* wave_pct['vehicle_trips'] / wave_pct.groupby('wave')['vehicle_trips'].transform('sum'),2)
+    wave_pct['percent_vehicle_trips'] = round(100* wave_pct['vehicle_trips'] / wave_pct.groupby('wave')['vehicle_trips'].transform('sum'),1)
     
     fig8 = px.bar(wave_pct[wave_pct[f"{st.session_state.phase}_shift"]], 
                   x='wave', 
