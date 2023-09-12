@@ -146,6 +146,59 @@ def stacked_shift_histogram(df: pd.DataFrame, mode: Mode, mode_duration: str, mo
     # return figure
     return fig
 
+def total_shift_histogram(df: pd.DataFrame, phase: Phase) -> go.Figure:
+    """This function creates a stacked shift histogram (as seen in the presentation) given a non-car mode, mode duration column, and mode feasible field.
+
+    Args:
+        df (pd.DataFrame): input dataframe
+        phase (Phase): the current phase we are in
+
+    Returns:
+        go.Figure: The plotly stacked shift histogram (pre-formatted)
+    """
+    # create temp columns for duration difference & categories (mode trips, drive shifts that can shift, and drive shifts that can't)
+    df.loc[:, "curr"] = (df["min_alt_mode_duration"] - df["car_duration_seconds_adj"]) / 60
+    df.loc[:, "Category"] = "na"
+    df.loc[:, "Category"] = np.where((df["mode"] == Mode.CAR) & (df["fastest_mode"] == Mode.WALK), f"Walk is fastest alternative", df["Category"])    
+    df.loc[:, "Category"] = np.where((df["mode"] == Mode.CAR) & (df["fastest_mode"] == Mode.BIKE), f"Bike is fastest alternative", df["Category"])    
+    df.loc[:, "Category"] = np.where((df["mode"] == Mode.CAR) & (df["fastest_mode"] == Mode.TRANSIT), f"Transit is fastest alternative", df["Category"])
+    df.loc[:, "Category"] = np.where((df["mode"] == Mode.CAR) & (~df[f"{phase}_shift"]), f"Drive trips - not {phase} to switch", df["Category"])
+    
+    # only consider non-na trips
+    view = df[df["Category"] != "na"]
+    
+    # map each category to a different color
+    colors_dict = {        
+        f"Walk is fastest alternative": "#7F7F7F", 
+        f"Bike is fastest alternative": "#BCBD22", 
+        f"Transit is fastest alternative": "#17BECF",         
+        f"Drive trips - not {phase} to switch": "#0068C9"
+    }
+    
+    # use mapping to create a color list for plotly
+    plotly_colors = [colors_dict[c] for c in view["Category"].unique()]
+    
+    # create the stacked histogram
+    fig = px.histogram(view, x="curr", y="vehicle_trips", histfunc="sum", color="Category", barmode="stack", range_x=[-20,180],
+                       color_discrete_sequence=plotly_colors)
+    fig.update_layout(
+        title=dict(
+            text=f"Stacked histogram of duration difference<br>between fastest feasible alternative and driving",
+            font=dict(
+                size=16
+            ),
+            x=0.4,
+            y=0.95,
+            xanchor='center',
+        ),
+        legend=dict(font=dict(size=14)),
+        xaxis_title=dict(text="Travel Time Difference (Alternative Time - Drive Time, minutes)", font=dict(size=14)),
+        yaxis_title=dict(text="Vehicle Trips", font=dict(size=14))
+    )
+    
+    # return figure
+    return fig
+    
 def get_summary_df(df: pd.DataFrame, steps: list, mode: Mode, mode_shift_col: str, phase: Phase) -> pd.DataFrame:
     """This function gets the summary table for a given mode, describing the % of car trips/% of VMT that each step (and all steps) apply to.
 

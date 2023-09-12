@@ -172,24 +172,24 @@ class BaseStep:
         if self.overall_step == Phase.FEASIBLE:
             return [
                 f"Here, the map of the proportion of car trips in each community area that meet this mode's specified criteria for shifting to {self.mode} can be seen. There are a few transparent/white areas; these are the areas with no people to report.",
-                f"""Before this step, <strong>{stats[0][0]:.2f}%</strong> of trips could shift to {self.mode} {'feasibly' if self.overall_step == Phase.FEASIBLE else 'with likelihood'}, and after this step, <strong>{stats[0][1]:.2f}%</strong> of trips could shift to {self.mode} {'feasibly' if self.overall_step == Phase.FEASIBLE else 'with likelihood'}.
+                f"""Before this step, <strong>{stats[0][0]:.1f}%</strong> of trips could shift to {self.mode} {'feasibly' if self.overall_step == Phase.FEASIBLE else 'with likelihood'}, and after this step, <strong>{stats[0][1]:.1f}%</strong> of trips could shift to {self.mode} {'feasibly' if self.overall_step == Phase.FEASIBLE else 'with likelihood'}.
                 
-                Additionally, before this step, <strong>{stats[1][0] / total_vmt * 100:.2f}%</strong> of VMT could be mitigated with shifts to {self.mode}, and after this step, <strong>{stats[1][1] / total_vmt * 100:.2f}%</strong> of VMT could be mitigated with shifts to {self.mode}.
+                Additionally, before this step, <strong>{stats[1][0] / total_vmt * 100:.1f}%</strong> of VMT could be mitigated with shifts to {self.mode}, and after this step, <strong>{stats[1][1] / total_vmt * 100:.1f}%</strong> of VMT could be mitigated with shifts to {self.mode}.
                 
-                Overall, independent of other steps, <strong>{stats[2][0] * 100:.2f}</strong>% of all car trips and <strong>{stats[2][1] * 100:.2f}</strong>% of VMT can satisfy this constraint."""
+                Overall, independent of other steps, <strong>{stats[2][0] * 100:.1f}</strong>% of all car trips and <strong>{stats[2][1] * 100:.1f}</strong>% of VMT can satisfy this constraint."""
             ]
         elif self.overall_step == Phase.PROBABLE:
             return [
                 f"Here, the map of the proportion of car trips in each community area that meet this mode's specified criteria for shifting to {self.mode} can be seen. There are a few transparent/white areas; these are the areas with no people to report.",
-                f"""Before this step, <strong>{stats[0][0]:.2f}%</strong> of feasible trips could shift to {self.mode} {'feasibly' if self.overall_step == Phase.FEASIBLE else 'with likelihood'}, and after this step, <strong>{stats[0][1]:.2f}%</strong> of feasible trips could shift to {self.mode} {'feasibly' if self.overall_step == Phase.FEASIBLE else 'with likelihood'}.
+                f"""Before this step, <strong>{stats[0][0]:.1f}%</strong> of feasible trips could shift to {self.mode} {'feasibly' if self.overall_step == Phase.FEASIBLE else 'with likelihood'}, and after this step, <strong>{stats[0][1]:.1f}%</strong> of feasible trips could shift to {self.mode} {'feasibly' if self.overall_step == Phase.FEASIBLE else 'with likelihood'}.
                 
-                Additionally, before this step, <strong>{stats[1][0] / total_vmt * 100:.2f}%</strong> of feasible trip VMT could be mitigated with shifts to {self.mode}, and after this step, <strong>{stats[1][1] / total_vmt * 100:.2f}%</strong> of feasible trip VMT could be mitigated with shifts to {self.mode}.
+                Additionally, before this step, <strong>{stats[1][0] / total_vmt * 100:.1f}%</strong> of feasible trip VMT could be mitigated with shifts to {self.mode}, and after this step, <strong>{stats[1][1] / total_vmt * 100:.1f}%</strong> of feasible trip VMT could be mitigated with shifts to {self.mode}.
                 
-                For absolute statistics, before this step, <strong>{stats[0][0] * st.session_state.feasible_pct:.2f}%</strong> of all trips could shift to {self.mode} {'feasibly' if self.overall_step == Phase.FEASIBLE else 'with likelihood'}, and after this step, <strong>{stats[0][1] * st.session_state.feasible_pct:.2f}%</strong> of all trips could shift to {self.mode} {'feasibly' if self.overall_step == Phase.FEASIBLE else 'with likelihood'}. 
+                For absolute statistics, before this step, <strong>{stats[0][0] * st.session_state.feasible_pct:.1f}%</strong> of all trips could shift to {self.mode} {'feasibly' if self.overall_step == Phase.FEASIBLE else 'with likelihood'}, and after this step, <strong>{stats[0][1] * st.session_state.feasible_pct:.1f}%</strong> of all trips could shift to {self.mode} {'feasibly' if self.overall_step == Phase.FEASIBLE else 'with likelihood'}. 
                 
-                Furthermore, before this step, <strong>{stats[1][0] / total_vmt * 100 * st.session_state.feasible_pct:.2f}%</strong> of feasible trip VMT could be mitigated with shifts to {self.mode}, and after this step, <strong>{stats[1][1] / total_vmt * 100 * st.session_state.feasible_pct:.2f}%</strong> of feasible trip VMT could be mitigated with shifts to {self.mode}.
+                Furthermore, before this step, <strong>{stats[1][0] / total_vmt * 100 * st.session_state.feasible_pct:.1f}%</strong> of feasible trip VMT could be mitigated with shifts to {self.mode}, and after this step, <strong>{stats[1][1] / total_vmt * 100 * st.session_state.feasible_pct:.1f}%</strong> of feasible trip VMT could be mitigated with shifts to {self.mode}.
                 
-                Overall, independent of other steps, <strong>{stats[2][0] * 100:.2f}</strong>% of all car trips and <strong>{stats[2][1] * 100:.2f}</strong>% of VMT can satisfy this constraint."""
+                Overall, independent of other steps, <strong>{stats[2][0] * 100:.1f}</strong>% of all car trips and <strong>{stats[2][1] * 100:.1f}</strong>% of VMT can satisfy this constraint."""
             ]
         else:
             logging.exception(f"Something went wrong with the overall step enum: {self.overall_step}")

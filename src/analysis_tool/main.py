@@ -9,7 +9,7 @@ import seaborn as sns
 import steps
 from settings import handler, get_communities
 from steps.enums import *
-from util import get_num_cold_starts, stacked_shift_histogram, get_summary_df, get_duration_diff_df, bigger_markdown
+from util import get_num_cold_starts, stacked_shift_histogram, total_shift_histogram, get_summary_df, get_duration_diff_df, bigger_markdown
 import json
 import logging
 
@@ -470,28 +470,31 @@ def final_summary() -> None:
     df["feasible_bike_duration_seconds_adj"] = np.where(df[f"{st.session_state.phase}_bike_shift"], df["bike_duration_seconds_adj"], 9999999)
     df["feasible_transit_duration_seconds_na"] = np.where(df[f"{st.session_state.phase}_transit_shift"], df["transit_duration_seconds_na"], 9999999)        
     
-    df["min_alt_mode_duration"] = df[["feasible_transit_duration_seconds_na", "feasible_bike_duration_seconds_adj", "feasible_walk_duration_seconds"]].min(axis=1)
+    df["min_feasible_alt_mode_duration"] = df[["feasible_transit_duration_seconds_na", "feasible_bike_duration_seconds_adj", "feasible_walk_duration_seconds"]].min(axis=1)
 
     df["fastest_mode"] = "na"
     df["fastest_mode"] = np.where(
         (df[f"{st.session_state.phase}_walk_shift"]) 
-        & (df["walk_duration_seconds"] == df["min_alt_mode_duration"]),  # is fastest if it is the previously calculated minimum
+        & (df["walk_duration_seconds"] == df["min_feasible_alt_mode_duration"]),  # is fastest if it is the previously calculated minimum
         Mode.WALK, 
         df["fastest_mode"]
     )
     df["fastest_mode"] = np.where(
         (df[f"{st.session_state.phase}_bike_shift"]) 
-        & (df["bike_duration_seconds_adj"] == df["min_alt_mode_duration"]),  # is fastest if it is the previously calculated minimum
+        & (df["bike_duration_seconds_adj"] == df["min_feasible_alt_mode_duration"]),  # is fastest if it is the previously calculated minimum
         Mode.BIKE, 
         df["fastest_mode"]
     )
     df["fastest_mode"] = np.where(
         (df[f"{st.session_state.phase}_transit_shift"]) 
-        & (df["transit_duration_seconds_na"] == df["min_alt_mode_duration"]),  # is fastest if it is the previously calculated minimum
+        & (df["transit_duration_seconds_na"] == df["min_feasible_alt_mode_duration"]),  # is fastest if it is the previously calculated minimum
         Mode.TRANSIT, 
         df["fastest_mode"]
     ) 
        
+    # for histograms, calculate difference evenw hen not feasible
+    df["min_alt_mode_duration"] = df[["transit_duration_seconds_na", "bike_duration_seconds_adj", "walk_duration_seconds"]].min(axis=1)
+    df["min_alt_mode_duration"] = np.where(df["fastest_mode"]=="na", df["min_alt_mode_duration"], df["min_feasible_alt_mode_duration"])
     
     # create a table of the % of car trips/vmt that shifts to each/any mode can mitigate
     overall_shift_comparison = pd.DataFrame(index=[r"% of Car Trips", r"% of VMT"])
@@ -514,25 +517,8 @@ def final_summary() -> None:
     st.table(overall_shift_comparison)
     
     # histogram for min travel time difference for all modes
-    # TODO - update this chart to be stacked histogram by mode
     bigger_markdown(r"Below, the distribution of the duration difference between the best non-car mode and car for shifted trips is shown")
-    df["car_minus_min_alt_mode_duration"] = (df["min_alt_mode_duration"] - df["car_duration_seconds_adj"]) / 60
-    
-    feasible_shift_df = df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"])]
-    fig1 = px.histogram(feasible_shift_df, x="car_minus_min_alt_mode_duration", y="person_trips", histfunc="sum", range_x=[-30,120])
-    fig1.update_layout(
-        title={
-            'text': "Histogram of duration difference between<br>the best feasible alternative and the equivalent car trip",
-            'font': dict(
-                size=18
-            ),
-            'x': 0.5, 
-            'xanchor': 'center',
-            'y': 0.9
-        },
-        xaxis_title=dict(text="Car minus best alternative mode duration (minutes)", font=dict(size=16)),
-        yaxis_title=dict(text="Count", font=dict(size=16))
-    )
+    fig1 = total_shift_histogram(df, st.session_state.phase)
     st.plotly_chart(fig1)
     
     # table for fastest alternative mode being within x minutes of driving
