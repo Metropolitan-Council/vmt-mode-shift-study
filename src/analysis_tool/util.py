@@ -165,12 +165,12 @@ def get_summary_df(df: pd.DataFrame, steps: list, mode: Mode, mode_shift_col: st
     for step in steps:
         if step.get_mode() == mode:
             stats = step.get_step_statistics()
-            res[step.get_name()] = [f"{stats[2][0] * 100: .2f}%", f"{stats[2][1] * 100: .2f}%"]
+            res[step.get_name()] = [f"{stats[2][0] * 100: .1f}%", f"{stats[2][1] * 100: .1f}%"]
             
     # calculate statistics for all criteria at once
     res[f"{phase} Across All Criteria"] = [
-        f"{df[(df['mode'] == Mode.CAR) & df[mode_shift_col]]['vehicle_trips'].sum() / df[df['mode'] == Mode.CAR]['vehicle_trips'].sum() * 100:.2f}%",
-        f"{df[(df['mode'] == Mode.CAR) & df[mode_shift_col]]['vmt'].sum() / df[df['mode'] == Mode.CAR]['vmt'].sum() * 100:.2f}%"
+        f"{df[(df['mode'] == Mode.CAR) & df[mode_shift_col]]['vehicle_trips'].sum() / df[df['mode'] == Mode.CAR]['vehicle_trips'].sum() * 100:.1f}%",
+        f"{df[(df['mode'] == Mode.CAR) & df[mode_shift_col]]['vmt'].sum() / df[df['mode'] == Mode.CAR]['vmt'].sum() * 100:.1f}%"
     ]
     
     return res
@@ -194,16 +194,16 @@ def get_duration_diff_df(df: pd.DataFrame, mode: Mode, mode_shift_col: str, mode
     
     # calculate summary statistics for mode trips within 5/15/30 minutes of driving
     res[f"{mode.capitalize()} within 5 minutes of driving"] = [
-        f'{df[(df["mode"] == Mode.CAR) & (df[mode_shift_col]) & (df["curr"] <= 5)]["vehicle_trips"].sum() / df[(df["mode"] == Mode.CAR)]["vehicle_trips"].sum() * 100: .2f}%',
-        f'{df[(df["mode"] == Mode.CAR) & (df[mode_shift_col]) & (df["curr"] <= 5)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%'
+        f'{df[(df["mode"] == Mode.CAR) & (df[mode_shift_col]) & (df["curr"] <= 5)]["vehicle_trips"].sum() / df[(df["mode"] == Mode.CAR)]["vehicle_trips"].sum() * 100: .1f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df[mode_shift_col]) & (df["curr"] <= 5)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.1f}%'
     ]
     res[f"{mode.capitalize()} within 15 minutes of driving"] = [
-        f'{df[(df["mode"] == Mode.CAR) & (df[mode_shift_col]) & (df["curr"] <= 15)]["vehicle_trips"].sum() / df[(df["mode"] == Mode.CAR)]["vehicle_trips"].sum() * 100: .2f}%',
-        f'{df[(df["mode"] == Mode.CAR) & (df[mode_shift_col]) & (df["curr"] <= 15)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%'
+        f'{df[(df["mode"] == Mode.CAR) & (df[mode_shift_col]) & (df["curr"] <= 15)]["vehicle_trips"].sum() / df[(df["mode"] == Mode.CAR)]["vehicle_trips"].sum() * 100: .1f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df[mode_shift_col]) & (df["curr"] <= 15)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.1f}%'
     ]
     res[f"{mode.capitalize()} within 30 minutes of driving"] = [
-        f'{df[(df["mode"] == Mode.CAR) & (df[mode_shift_col]) & (df["curr"] <= 30)]["vehicle_trips"].sum() / df[(df["mode"] == Mode.CAR)]["vehicle_trips"].sum() * 100: .2f}%',
-        f'{df[(df["mode"] == Mode.CAR) & (df[mode_shift_col]) & (df["curr"] <= 30)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.2f}%'
+        f'{df[(df["mode"] == Mode.CAR) & (df[mode_shift_col]) & (df["curr"] <= 30)]["vehicle_trips"].sum() / df[(df["mode"] == Mode.CAR)]["vehicle_trips"].sum() * 100: .1f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df[mode_shift_col]) & (df["curr"] <= 30)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.1f}%'
     ]
     
     return res
