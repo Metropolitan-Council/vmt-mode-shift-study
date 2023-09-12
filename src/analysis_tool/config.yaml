@@ -12,9 +12,6 @@ probable_steps:
     - WalkDurationDifferenceStep
     - BikeDurationDifferenceStep
     - TransitDurationDifferenceStep
-    # - WalkTimingStep
-    # - BikeTimingStep
-    # - TransitTimingStep
     - BikeHighLTSDistStep
     - WalkPurposeStep
     - BikePurposeStep
@@ -79,3 +76,20 @@ scenario_columns:
         - [default, None, None]
 
 cold_start_threshold: 15
+
+# This is the cleaned TBI file, as input to the whole process. 
+# it is on the network drive, as specified in the keyring variable.
+input_tbi_file: "/data_processed/tbi_cleaned.csv"
+
+
+# These is are the routes for each TBI trip.  To change the scenario, change these. 
+# it is on the network drive, as specified in the keyring variable.
+route_files: 
+    car: "/Data_Processed/geodata/car_congestion_nogeom.parquet"
+    walk: "/Data_Processed/geodata/walk_trips_nogeom.parquet"
+    bike: "/Data_Processed/geodata/bike_no_weight_penalty.parquet"
+    transit: "/Data_Processed/geodata/transit_trips.parquet"
+
+# This is an output file, with the TBI trips and select route information saved. 
+# it is stored relative to the local run directory. 
+saved_tbi_file: "data/tbi_full.csv"

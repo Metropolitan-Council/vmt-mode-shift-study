@@ -299,10 +299,11 @@ def prepare_data(df: pd.DataFrame, data_dir: str) -> pd.DataFrame:
 
     # read in rerouting files
     logging.info("reading in rerouting files")
-    car = pd.read_parquet(data_dir + "/Data_Processed/geodata/car_congestion_nogeom.parquet")
-    bike = pd.read_parquet(data_dir + "/Data_Processed/geodata/bike_no_weight_penalty.parquet").drop("geometry", axis=1)
-    transit = gpd.read_parquet(data_dir + "/Data_Processed/geodata/transit_trips.parquet")
-    walk = pd.read_parquet(data_dir + "/Data_Processed/geodata/walk_trips_nogeom.parquet")
+    
+    car = pd.read_parquet(data_dir + handler["route_files"][Mode.CAR])
+    walk = pd.read_parquet(data_dir + handler["route_files"][Mode.WALK])
+    bike = pd.read_parquet(data_dir + handler["route_files"][Mode.BIKE]).drop("geometry", axis=1)
+    transit = gpd.read_parquet(data_dir + handler["route_files"][Mode.TRANSIT])
     
     # group/cleanup transit
     transit_grouped = transit_cleanup(transit)
@@ -382,6 +383,6 @@ def prepare_data(df: pd.DataFrame, data_dir: str) -> pd.DataFrame:
 
     logging.info("exporting newly created table to csv")
     # possibly change to provided name; export to disk for future use
-    df.to_csv("data/tbi_full.csv", index=False)
+    df.to_csv(handler['saved_tbi_file'], index=False)
     
     return df
