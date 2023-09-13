@@ -22,10 +22,20 @@ clear = require("clear_result")
 function setup()
   local default_speed = 12 * 1.609
   local walking_speed = 4.86
+  local use_lts = true
+
+  -- apply scenarios
+  local SCENARIO = assert(os.getenv("BIKE_SCENARIO"), "BIKE_SCENARIO environment variable not specified!")
+
+  if SCENARIO == "baseline" then
+    -- no-op, keep defaults
+  elseif SCENARIO == "all-lts1" then
+    use_lts = false
+  end   
 
   return {
     -- scenario controls
-    use_lts = true, -- set to false to treat everything as LTS 1
+    use_lts = use_lts, -- set to false to treat everything as LTS 1
 
     properties = {
       u_turn_penalty                = 20,
