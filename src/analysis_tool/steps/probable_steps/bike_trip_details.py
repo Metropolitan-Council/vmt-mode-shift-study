@@ -12,8 +12,8 @@ class BikeHighLTSDistStep(ContinuousStep):
     def __init__(self, df: pd.DataFrame, cutoff=0.01):
         super().__init__(df, "probable_bike_high_lts_dist", Mode.BIKE, cutoff, "high_lts_dist", Phase.PROBABLE, "meters")
         
-        df.loc[:, "high_lts_dist"] = df["bike_distance_meters_3"] + df["bike_distance_meters_4"]
-        df.loc[:, "high_lts_biking_pct"] = df["high_lts_dist"] / df["bike_distance_meters"]
+        df.loc[:, "high_lts_dist"] = df["bike_distance_lts_3_rerouted"] + df["bike_distance_lts_4_rerouted"]
+        df.loc[:, "high_lts_biking_pct"] = df["high_lts_dist"] / df["bike_distance_rerouted"]
         
     def get_summary_statistics(self):
         return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct(), column_names=["High LTS distance proportion if biking chosen (observed car trips)", "High LTS distance proportion if biking chosen (observed bike trips)"])

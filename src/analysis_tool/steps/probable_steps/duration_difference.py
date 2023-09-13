@@ -12,7 +12,7 @@ class WalkDurationDifferenceStep(ContinuousStep):
     
     def __init__(self, df: pd.DataFrame, cutoff=0.95):
         super().__init__(df, "likely_walking_car_duration_difference", Mode.WALK, cutoff, "car_minus_walk_minutes", Phase.PROBABLE, "minutes")
-        self.df.loc[:, "car_minus_walk_minutes"] = df["car_duration_seconds_adj"] / 60 - df["walk_duration_seconds"] / 60
+        self.df.loc[:, "car_minus_walk_minutes"] = df["car_duration_rerouted"] / 60 - df["walk_duration_rerouted"] / 60
         self.cutoff = stats.percentileofscore(self.df[self.df["mode"] == self.mode]["car_minus_walk_minutes"], -15) / 100
     
     def get_summary_statistics(self):
@@ -75,7 +75,7 @@ class BikeDurationDifferenceStep(ContinuousStep):
     
     def __init__(self, df: pd.DataFrame, cutoff=0.95):
         super().__init__(df, "likely_biking_car_duration_difference", Mode.BIKE, cutoff, "car_minus_bike_minutes", Phase.PROBABLE, "minutes")
-        self.df.loc[:, "car_minus_bike_minutes"] = df["car_duration_seconds_adj"] / 60 - df["bike_duration_seconds_adj"] / 60
+        self.df.loc[:, "car_minus_bike_minutes"] = df["car_duration_rerouted"] / 60 - df["bike_duration_rerouted"] / 60
         self.cutoff = stats.percentileofscore(self.df[self.df["mode"] == self.mode]["car_minus_bike_minutes"], -15) / 100
     
     def get_summary_statistics(self):
@@ -139,15 +139,15 @@ class TransitDurationDifferenceStep(ContinuousStep):
     
     def __init__(self, df: pd.DataFrame, cutoff=0.95):
         super().__init__(df, "likely_transit_car_duration_difference", Mode.TRANSIT, cutoff, "car_minus_transit_minutes", Phase.PROBABLE, "minutes")
-        self.df.loc[:, "car_minus_transit_minutes"] = df["car_duration_seconds_adj"] / 60 - df["transit_duration"]
+        self.df.loc[:, "car_minus_transit_minutes"] = df["car_duration_rerouted"] / 60 - df["transit_duration_rerouted"]
 
-        self.cutoff = stats.percentileofscore(self.df[(self.df["mode"] == self.mode) & ~self.df["car_minus_transit_minutes"].isna()]["car_minus_transit_minutes"], -15) / 100
+        self.cutoff = stats.percentileofscore(self.df[(self.df["mode"] == self.mode) & ~self.df["transit_rerouting_missing"]]["car_minus_transit_minutes"], -15) / 100
     
     def get_summary_statistics(self):
-        return show_summaries(self.df[~self.df["transit_duration"].isna()], modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct())
+        return show_summaries(self.df[~self.df["transit_rerouting_missing"]], modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct())
     
     def get_summary_figure(self):
-        fig = plot_density_plotly(self.df[~self.df["transit-duration"].isna()], self.mode, self.column_name, self.get_cutoff_pct())
+        fig = plot_density_plotly(self.df[~self.df["transit_rerouting_missing"]], self.mode, self.column_name, self.get_cutoff_pct())
         fig.update_layout(
             title=dict(
                 text=r"Difference between car and transit rerouted durations",
@@ -173,7 +173,7 @@ class TransitDurationDifferenceStep(ContinuousStep):
     
     def apply_step(self) -> None:
         if self.cutoff_mode == CutoffMode.PCT:
-            super().apply_step(self.df[self.column_name] < self.df[(self.df["mode"] == self.mode) & ~self.df["car_minus_transit_minutes"].isna()][self.column_name].quantile(self.cutoff))
+            super().apply_step(self.df[self.column_name] < self.df[(self.df["mode"] == self.mode) & ~self.df["transit_rerouting_missing"]][self.column_name].quantile(self.cutoff))
         elif self.cutoff_mode == CutoffMode.RAW:
             super().apply_step(self.df[self.column_name] < self.cutoff)
         else:

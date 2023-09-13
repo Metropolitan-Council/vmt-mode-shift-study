@@ -135,6 +135,7 @@ dmypy.json
 README.html
 
 # data files
+*.parquet
 *.csv
 !config.csv
 !USW00014922.csv

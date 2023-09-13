@@ -1,3 +1,12 @@
+"""
+This initialization file is used to take in multiple sources of data and create an input file compatible with the TBI tool
+
+The code/cleanup here will be dependent on the exact types of data used in the TBI (as of 9/12, it works for the cleaned wave1/2 TBI inputs along with the associated rerouting files/weather data/CTU shape file), but the requirements for what the input should actually have are described in the config.yml file (and the mappings between the created cleaned df and these input columns should be defined).
+
+This is the only place of the tool where non-standardized column names should be used; after cleanup, the column names should be standardized according to the schema outlined in the config.yml. New columns can still be created/referenced within the tool, but they will not persist. 
+"""
+
+
 import numpy as np
 import pandas as pd
 import geopandas as gpd
@@ -6,6 +15,9 @@ import streamlit as st
 import keyring
 import logging
 from settings import get_communities
+import nbformat
+from nbconvert.preprocessors import ExecutePreprocessor
+import itertools
 
 from steps.enums import Mode
 
@@ -54,7 +66,7 @@ def transit_cleanup(transit) -> pd.DataFrame:
     This function does some basic clean up on the transit df before it is merged into the main df dataframe. 
 
     Args:
-        transit (DataFrame): the initial not-cleaned transit dataframe
+        transit (DataFrame): the initial non-cleaned transit dataframe
 
     Returns:
         DataFrame : the cleaned up dataframe
@@ -145,7 +157,7 @@ def merge_transit_trip_details(df: pd.DataFrame, data_dir: str) -> None:
     df["transfers"] = 0
     df.loc[df["mode"] == "Transit", "transfers"] = df[df["mode"] == "Transit"].apply(lambda x: get_num_transfers(literal_eval(x["trip_id"]), x["wave"]), axis=1)
     
-def add_community(df: pd.DataFrame) -> None:
+def add_CTU(df: pd.DataFrame) -> None:
     """
     This function adds communities to each unlinked trip of the dataframe based on the trip's origin latlon.
     """
@@ -157,14 +169,14 @@ def add_community(df: pd.DataFrame) -> None:
     # convert df to a geodataframe using origin lat/lon of trip
     gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df["o_lon"].fillna(0), df["o_lat"].fillna(0)), crs="EPSG:4326")
     
-    # do sjoin to determine what community each olon/olat point of df is in
-    df["community"] = (
+    # do sjoin to determine what CTU each olon/olat point of df is in
+    df["CTU"] = (
         gpd.sjoin(gdf[["geometry"]], communities.reset_index(), how="left")
         .reset_index()
         .groupby("index")  # after sjoin, some things map to multiple geometries, so we deduplicate by grouping by idx and taking the first of each one
         .first()
         ["CTU_NAME"]
-        .fillna("na")  # if nothing matches, is not in any community
+        .fillna("na")  # if nothing matches, is not in any CTU
         .values
     )
         
@@ -292,97 +304,237 @@ def prepare_data(df: pd.DataFrame, data_dir: str) -> pd.DataFrame:
     Returns:
         DataFrame: cleaned/fully specified DataFrame
     """
-    logging.info("beginning data intake and cleaning")
-    
-    # merge in weather
-    merge_weather(df)
-
-    # read in rerouting files
-    logging.info("reading in rerouting files")
-    
-    car = pd.read_parquet(data_dir + handler["route_files"][Mode.CAR])
-    walk = pd.read_parquet(data_dir + handler["route_files"][Mode.WALK])
-    bike = pd.read_parquet(data_dir + handler["route_files"][Mode.BIKE]).drop("geometry", axis=1)
-    transit = gpd.read_parquet(data_dir + handler["route_files"][Mode.TRANSIT])
-    
-    # group/cleanup transit
-    transit_grouped = transit_cleanup(transit)
-    
-    logging.info("merging rerouting to dataframe")
-    # rename columns to distinguish by mode
-    def add_mode_to_column_name(mode_df, mode_name): 
-        renames = {}
-        for col in mode_df.columns:
-            renames[col] = mode_name + '_' + col
-        return mode_df.rename(columns = renames)
-
-    car = add_mode_to_column_name(car, 'car')
-    walk = add_mode_to_column_name(walk, 'walk')
-    bike = add_mode_to_column_name(bike, 'bike')
-    transit_grouped = add_mode_to_column_name(transit_grouped, 'transit')
-    
-    # helper function for querying from the car rerouting file
-    def get_car_data(row, field):
-        hour = int(row["arrive_time"][0:2])
-        sunday = row["travel_dow"] == "Sunday"
-        saturday = row["travel_dow"] == "Saturday"
-        if sunday:
-            query = "sundays"
-        elif saturday:
-            query = "saturdays_"
-        else:
-            query = "weekdays_"
+    if handler["cleanup_notebook_path"] is not None:
+        logging.info("Running the cleanup notebook")
         
-        if hour >= 0 and hour <= 5:
-            query += "0-6"
-        elif hour >= 20 and hour <= 23:
-            query += "20-24"
-        else:
-            query += str(hour) + "-" + str(hour + 1)
+        # check the cleanup notebook is actually ipynb
+        if handler["cleanup_notebook_path"].split(".")[-1] != "ipynb":
+            logging.exception("Specified cleanup notebook path is not a jupyter notebook")
+            raise RuntimeError("Cleanup notebook is not a jupyter notebook")
+        
+        # convert jupyter notebook to runnable python code
+        with open(handler["cleanup_notebook_path"]) as ff:
+            nb_in = nbformat.read(ff, nbformat.NO_CONVERT)
+        
+        # run the python code
+        # NOTE: may have to specify the kernel in ExecutePreprocessor arguments
+        logging.info("NOTE: this is untested; you may have to manually specify the kernel at line 316 of initialize.py")
+        ep = ExecutePreprocessor()
+        ep.preprocess(nb_in)
+        
+        # get the output of the script into df
+        df = pd.read_parquet(handler["output_file_name"])
+    else:
+        logging.info("beginning data intake and cleaning")
+        
+        # merge in weather
+        merge_weather(df)
 
-        if (query, row["trip_id"]) not in car.index:
-            print(row["trip_id"])
-            return np.nan
+        # read in rerouting files
+        logging.info("reading in rerouting files")
+        
+        car = pd.read_parquet(data_dir + handler["route_files"][Mode.CAR])
+        walk = pd.read_parquet(data_dir + handler["route_files"][Mode.WALK])
+        bike = pd.read_parquet(data_dir + handler["route_files"][Mode.BIKE]).drop("geometry", axis=1)
+        transit = gpd.read_parquet(data_dir + handler["route_files"][Mode.TRANSIT])
+        
+        # group/cleanup transit
+        transit_grouped = transit_cleanup(transit)
+        
+        logging.info("merging rerouting to dataframe")
+        # rename columns to distinguish by mode
+        def add_mode_to_column_name(mode_df, mode_name): 
+            renames = {}
+            for col in mode_df.columns:
+                renames[col] = mode_name + '_' + col
+            return mode_df.rename(columns = renames)
 
-        return car.loc[(query, row["trip_id"])][field]
+        car = add_mode_to_column_name(car, 'car')
+        walk = add_mode_to_column_name(walk, 'walk')
+        bike = add_mode_to_column_name(bike, 'bike')
+        transit_grouped = add_mode_to_column_name(transit_grouped, 'transit')
+        
+        # helper function for querying from the car rerouting file
+        def get_car_data(row, field):
+            hour = int(row["arrive_time"][0:2])
+            sunday = row["travel_dow"] == "Sunday"
+            saturday = row["travel_dow"] == "Saturday"
+            if sunday:
+                query = "sundays"
+            elif saturday:
+                query = "saturdays_"
+            else:
+                query = "weekdays_"
+            
+            if hour >= 0 and hour <= 5:
+                query += "0-6"
+            elif hour >= 20 and hour <= 23:
+                query += "20-24"
+            else:
+                query += str(hour) + "-" + str(hour + 1)
+
+            if (query, row["trip_id"]) not in car.index:
+                print(row["trip_id"])
+                return np.nan
+
+            return car.loc[(query, row["trip_id"])][field]
+        
+        # missing one trip for some reason; gets car duration/distance using the above helper function
+        df["car_duration_seconds"] = df.apply(lambda x: get_car_data(x, "car_duration_seconds"), axis=1)
+        df["car_distance_meters"] = df.apply(lambda x: get_car_data(x, "car_distance_meters"), axis=1)
+        
+        # merge in rerouted files
+        df = df.merge(walk, left_on="trip_id", right_on="walk_trip_id", how="left")
+        df = df.merge(bike, left_on="trip_id", right_on="bike_trip_id", how="left")
+        df = df.merge(transit_grouped, left_on="trip_id", right_on="transit_trip_id", how="left")
+        
+        # merge in estimated transit trip details
+        merge_transit_trip_details(df, data_dir)
+        
+        # add communities to df
+        add_CTU(df)
+
+        # clean df mode names
+        clean_mode_names(df)
+
+        # do some final column cleanup on df
+        final_field_cleanup(df)
+
+        # add terminal time to df
+        add_terminal_times(df)
+
+        # round off some columns to df
+        round_off_columns(df)
+        
+        # final miscellaneous things to do before standardization
+        
+        # apply expansion weights to person trips, vehicle trips, vmt and trips
+        df['person_trips'] = df['trip_weight']
+        df['vehicle_trips'] = df['vehicle_trips'] * df['trip_weight']
+        df['vmt'] = df['vmt'] * df['trip_weight']
+        
+        # convert to minutes/miles; create na columns
+        MILES_PER_METER = 0.000621371
+        df["car_distance_miles"] = df["car_distance_meters"] * MILES_PER_METER
+        df["car_duration_minutes_adj"] = df["car_duration_seconds_adj"] / 60
+        df["car_rerouting_missing"] = ~df["car_distance_meters"].isna()
+        
+        df["walk_duration_minutes"] = df["walk_duration_seconds"] / 60
+        df["walk_distance_miles"] = df["walk_distance_meters"] * MILES_PER_METER
+        df["walk_rerouting_missing"] = ~df["walk_duration_seconds"].isna()
+        
+        df["bike_distance_miles"] = df["bike_distance_meters"] / 60
+        df["bike_distance_miles_1"] = df["bike_distance_meters_1"] * MILES_PER_METER
+        df["bike_distance_miles_2"] = df["bike_distance_meters_2"] * MILES_PER_METER
+        df["bike_distance_miles_3"] = df["bike_distance_meters_3"] * MILES_PER_METER
+        df["bike_distance_miles_4"] = df["bike_distance_meters_4"] * MILES_PER_METER
+        df["bike_duration_minutes_adj"] = df["bike_duration_seconds_adj"] / 60
+        df["bike_rerouting_missing"] = ~df["bike_distance_meters"].isna()
+        
+        df["transit_rerouting_missing"] = ~df["transit_duration"].isna()
     
-    # missing one trip for some reason; gets car duration/distance using the above helper function
-    df["car_duration_seconds"] = df.apply(lambda x: get_car_data(x, "car_duration_seconds"), axis=1)
-    df["car_distance_meters"] = df.apply(lambda x: get_car_data(x, "car_distance_meters"), axis=1)
-    
-    # merge in rerouted files
-    df = df.merge(walk, left_on="trip_id", right_on="walk_trip_id", how="left")
-    df = df.merge(bike, left_on="trip_id", right_on="bike_trip_id", how="left")
-    df = df.merge(transit_grouped, left_on="trip_id", right_on="transit_trip_id", how="left")
-    
-    # merge in estimated transit trip details
-    merge_transit_trip_details(df, data_dir)
-    
-    # add communities to df
-    add_community(df)
+    return standardize(df)
 
-    # clean df mode names
-    clean_mode_names(df)
 
-    # do some final column cleanup on df
-    final_field_cleanup(df)
 
-    # add terminal time to df
-    add_terminal_times(df)
+### do not edit:
 
-    # round off some columns to df
-    round_off_columns(df)
+def standardize(df: pd.DataFrame) -> pd.DataFrame:
+    """This function standardizes the final cleaned up dataframe in terms of column naming/columns and throws and error if any required columns are missing
+
+    Args:
+        df (pd.DataFrame): The final cleaned dataframe
+
+    Raises:
+        RuntimeError: Occurs if a required input column is not present
+    """
+    logging.info("Standardizing the cleaned df for input/saving to disk")
+    # invert mappings to get input column -> standardized column
+    mappings = {value: key for key, value in handler["mappings"].items()}
     
-    # drop location information to protect it    
-    df = df.drop(columns=["o_lat", "o_lon", "d_lat", "d_lon"])
+    df = df.reset_index()
+    # df.to_csv("data/temp2.csv")
+    # go through and rename all columns described in the mapping
+    for column in df.columns:
+        if column in mappings:
+            df = df.rename(columns={column: mappings[column]})
     
-    # apply expansion weights to person trips, vehicle trips, vmt and trips
-    df['person_trips'] = df['trip_weight']
-    df['vehicle_trips'] = df['vehicle_trips'] * df['trip_weight']
-    df['vmt'] = df['vmt'] * df['trip_weight']
-
+    # check all necessary columns are within it
+    for column in mappings.values():
+        if column not in df.columns:
+            logging.exception("Cannot proceed -- the dataframe created in initialize.py does not have all the required inputs or the mappings described in config.yml are wrong")
+            raise RuntimeError(f"The cleaned dataframe does not contain all required columns -- {column}")
+    
+    # TODO: can assert more invariants here for more accurate standardization
+    
     logging.info("exporting newly created table to csv")
-    # possibly change to provided name; export to disk for future use
-    df.to_csv(handler['saved_tbi_file'], index=False)
+    df.to_csv(handler["output_file_name"] + ".csv", index=False)
+    
+    # do anonymization in parallel and save that to csv
+    anonymize(df)
     
     return df
+
+@st.cache_data()
+def anonymize(df: pd.DataFrame):
+    """This function creates an anonymized and compressed parquet version of the main cleaned dataframe. 
+
+    Args:
+        df (pd.DataFrame): The cleaned, standardized dataframe
+    """
+    logging.info("Running anonymization of data")
+    # only keep important columns
+    df_anonymous = df[handler["mappings"].keys()].copy()
+    
+    # anonymize person id and trip id
+    df_anonymous["person_id"] = pd.factorize(df["person_id"])[0]
+    df_anonymous["person_id"] = df_anonymous["person_id"].astype("Int32")
+    
+    trips = list(itertools.chain(*df["trip_id"].apply(lambda x: literal_eval(str(x))).values))
+    temp = pd.factorize(trips)
+    trip_conversion = dict(zip(temp[1], temp[0]))
+    
+    def map_trip_ids(x: list) -> list:
+        res = list(map(lambda ele: trip_conversion[ele], x))
+        return res
+
+    df_anonymous["trip_id"] = df["trip_id"].apply(lambda x: literal_eval(x)).apply(lambda x: map_trip_ids(x))
+    
+    # compress datatypes + renaming
+    df_anonymous["wave"] = df["wave"].astype("Int8")
+    # df_anonymous["person_id"] = df_anonymous["person_id"].astype("Int32")
+    df_anonymous["duration"] = df["duration"].round().astype("Int16")
+    df_anonymous["distance"] = df["distance"].round(1).astype("Float32")
+    df_anonymous["vehicle_trips"] = df["vehicle_trips"].astype("Float32")
+    df_anonymous["vmt"] = df["vmt"].astype("Float32")
+    df_anonymous["temperature"] = df["temperature"].astype("Float32")
+    df_anonymous["precipitation"] = df["precipitation"].astype("Float32")
+    df_anonymous["snow_depth"] = df["snow_depth"].astype("Float32")
+    
+    df_anonymous["car_distance_rerouted"] = df["car_distance_rerouted"].round().astype("Int32")
+    df_anonymous["car_duration_rerouted"] = df["car_duration_rerouted"].round(1).astype("Float32")
+    df_anonymous["car_rerouting_missing"] = df["car_rerouting_missing"].astype("bool")
+    
+    df_anonymous["walk_duration_rerouted"] = df["walk_duration_rerouted"].round().astype("Int32")
+    df_anonymous["walk_distance_rerouted"] = df["walk_distance_rerouted"].round().astype("Int32")
+    df_anonymous["walk_rerouting_missing"] = df["walk_rerouting_missing"].astype("bool")
+    
+    df_anonymous["bike_distance_rerouted"] = df["bike_distance_rerouted"].round().astype("Int32")
+    df_anonymous["bike_distance_lts_1_rerouted"] = df["bike_distance_lts_1_rerouted"].round().astype("Int32")
+    df_anonymous["bike_distance_lts_2_rerouted"] = df["bike_distance_lts_2_rerouted"].round().astype("Int32")
+    df_anonymous["bike_distance_lts_3_rerouted"] = df["bike_distance_lts_3_rerouted"].round().astype("Int32")
+    df_anonymous["bike_distance_lts_4_rerouted"] = df["bike_distance_lts_4_rerouted"].round().astype("Int32")
+    df_anonymous["bike_duration_rerouted"] = df["bike_duration_rerouted"].round(1).astype("Float32")
+    df_anonymous["bike_rerouting_missing"] = df["bike_rerouting_missing"].astype("bool")
+    
+    df_anonymous["transit_duration_rerouted"] = df["transit_duration_rerouted"].round().astype("Int16")
+    df_anonymous["transit_rerouting_missing"] = df["transit_rerouting_missing"].round().astype("bool")
+    df_anonymous["transit_access_length_rerouted"] = df["transit_access_length_rerouted"].round().astype("Int16")
+    df_anonymous["transit_num_transfers_rerouted"] = df["transit_num_transfers_rerouted"].round().astype("Int8")
+    df_anonymous["transit_access_length"] = df["transit_access_length"].round().astype("Int16")
+    df_anonymous["transit_num_transfers"] = df["transit_num_transfers"].round().astype("Int8")
+    
+    
+    df_anonymous.to_parquet(handler["output_file_name"] + ".parquet")
+    
+    return 0

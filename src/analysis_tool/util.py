@@ -5,6 +5,7 @@ import matplotlib.colors as mcolors
 import streamlit as st
 import plotly.graph_objects as go
 import plotly.express as px
+import logging
 
 from steps.enums import Mode, Phase
 from settings import handler
@@ -298,3 +299,17 @@ def bigger_markdown(x: str) -> None:
     # for each paragraph in x, output markdown of the paragraph and have it be of the bigger-font class
     for line in x.split("\n"):
         st.markdown(f'<p class="bigger-font">{line}</p>', unsafe_allow_html=True)
+        
+def validate_input(df: pd.DataFrame):
+    """This function validates that the input dataframe has all the required columns to run the tool
+
+    Args:
+        df (pd.DataFrame): The input dataframe
+    """
+    
+    columns_to_check = set(df.columns)
+    
+    for column in df.columns:
+        if column not in columns_to_check:
+            logging.exception("Input dataframe does not have all required columns (see config.yml for all columns necessary)")
+            raise RuntimeError("Input dataframe is not fully specified")

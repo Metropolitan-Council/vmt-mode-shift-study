@@ -100,11 +100,11 @@ class BaseStep:
         Returns:
             go.Figure: A plotly choropleth map
         """
-        # get a view of df with na communities filtered out and only car trips and with only community and the name of the step's column as columns
-        temp = self.df[(self.df["community"] != "na") & (self.df["mode"]==Mode.CAR)][["community", self.name]]
+        # get a view of df with na communities filtered out and only car trips and with only CTU and the name of the step's column as columns
+        temp = self.df[(self.df["CTU"] != "na") & (self.df["mode"]==Mode.CAR)][["CTU", self.name]]
         
         # get communities and create a dummy column in it as the proportion of people in each CTU that can shift
-        values = (temp.groupby("community")[self.name].mean()).fillna(0)
+        values = (temp.groupby("CTU")[self.name].mean()).fillna(0)
         communities = get_communities()
         communities[f"Proportion of people that can shift {'feasibly' if self.overall_step == Phase.FEASIBLE else 'with likelihood'}"] = values
         
@@ -171,7 +171,7 @@ class BaseStep:
         total_vmt = self.df[(self.df["mode"] == Mode.CAR)]["vmt"].sum()
         if self.overall_step == Phase.FEASIBLE:
             return [
-                f"Here, the map of the proportion of car trips in each community area that meet this mode's specified criteria for shifting to {self.mode} can be seen. There are a few transparent/white areas; these are the areas with no people to report.",
+                f"Here, the map of the proportion of car trips in each CTU area that meet this mode's specified criteria for shifting to {self.mode} can be seen. There are a few transparent/white areas; these are the areas with no people to report.",
                 f"""Before this step, <strong>{stats[0][0]:.1f}%</strong> of trips could shift to {self.mode} {'feasibly' if self.overall_step == Phase.FEASIBLE else 'with likelihood'}, and after this step, <strong>{stats[0][1]:.1f}%</strong> of trips could shift to {self.mode} {'feasibly' if self.overall_step == Phase.FEASIBLE else 'with likelihood'}.
                 
                 Additionally, before this step, <strong>{stats[1][0] / total_vmt * 100:.1f}%</strong> of VMT could be mitigated with shifts to {self.mode}, and after this step, <strong>{stats[1][1] / total_vmt * 100:.1f}%</strong> of VMT could be mitigated with shifts to {self.mode}.
@@ -180,7 +180,7 @@ class BaseStep:
             ]
         elif self.overall_step == Phase.PROBABLE:
             return [
-                f"Here, the map of the proportion of car trips in each community area that meet this mode's specified criteria for shifting to {self.mode} can be seen. There are a few transparent/white areas; these are the areas with no people to report.",
+                f"Here, the map of the proportion of car trips in each CTU area that meet this mode's specified criteria for shifting to {self.mode} can be seen. There are a few transparent/white areas; these are the areas with no people to report.",
                 f"""Before this step, <strong>{stats[0][0]:.1f}%</strong> of feasible trips could shift to {self.mode} {'feasibly' if self.overall_step == Phase.FEASIBLE else 'with likelihood'}, and after this step, <strong>{stats[0][1]:.1f}%</strong> of feasible trips could shift to {self.mode} {'feasibly' if self.overall_step == Phase.FEASIBLE else 'with likelihood'}.
                 
                 Additionally, before this step, <strong>{stats[1][0] / total_vmt * 100:.1f}%</strong> of feasible trip VMT could be mitigated with shifts to {self.mode}, and after this step, <strong>{stats[1][1] / total_vmt * 100:.1f}%</strong> of feasible trip VMT could be mitigated with shifts to {self.mode}.

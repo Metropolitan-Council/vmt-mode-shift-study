@@ -79,8 +79,8 @@ class BikeHighLTSDistStep(ContinuousStep):
         super().__init__(df, "feasible_bike_high_lts_dist", Mode.BIKE, cutoff, column, Phase.FEASIBLE, f"proportion high LTS")
         
         if column == "high_lts_biking_pct":
-            df.loc[:, "high_lts_dist"] = df["bike_distance_meters_3"] + df["bike_distance_meters_4"]
-            df.loc[:, "high_lts_biking_pct"] = df["high_lts_dist"] / df["bike_distance_meters"]
+            df.loc[:, "high_lts_dist"] = df["bike_distance_lts_3_rerouted"] + df["bike_distance_lts_4_rerouted"]
+            df.loc[:, "high_lts_biking_pct"] = df["high_lts_dist"] / df["bike_distance_rerouted"]
         
         # make the name distinct if we are at a scenario
         if scenario:
