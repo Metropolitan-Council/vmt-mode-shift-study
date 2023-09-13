@@ -675,6 +675,7 @@ def final_summary() -> None:
                   x='income_cleaned', 
                   y='vehicle_trips', 
                   color='percent_vehicle_trips', 
+                  range_color=(0, 100), 
                   labels={'percent_vehicle_trips':'Percent of vehicle trips'}, 
                   category_orders = dict(income_cleaned=["Under $25,000", "$25,000-$49,999","$50,000-$74,999","$75,000-$99,999","$100,000-$149,999", "$150,000 or more","na"]))
     fig4.update_layout(
@@ -703,9 +704,9 @@ def final_summary() -> None:
                   x='purpose_cleaned', 
                   y='vehicle_trips', 
                   color='percent_vehicle_trips', 
+                  range_color=(0, 100), 
                   labels={'percent_vehicle_trips':'Percent of vehicle trips'}, 
-                  category_orders = dict(purpose_cleaned=["Work", "School", "Escort", "Shop", "Errand", "Meal", "Social/Recreation", "Other"]),
-                  color_discrete_sequence=px.colors.qualitative.G10[:8])
+                  category_orders = dict(purpose_cleaned=["Work", "School", "Escort", "Shop", "Errand", "Meal", "Social/Recreation", "Other"]))
     fig5.update_layout(
         title={
             'text': 'Vehicle trips that can shift mode by trip purpose',
@@ -733,9 +734,9 @@ def final_summary() -> None:
                   x='person_type', 
                   y='vehicle_trips', 
                   color='percent_vehicle_trips', 
+                  range_color=(0, 100), 
                   labels={'percent_vehicle_trips':'Percent of vehicle trips'}, 
-                  category_orders = dict(person_type=["Working adult with kids", "Working adult without kids", "Non-working adult with kids","Non-working adult without kids","Retired","College student","Child"]),
-                  color_discrete_sequence=px.colors.qualitative.G10[:7])
+                  category_orders = dict(person_type=["Working adult with kids", "Working adult without kids", "Non-working adult with kids","Non-working adult without kids","Retired","College student","Child"]))
     fig6.update_layout(
         title={
             'text': 'Vehicle trips that can shift mode by person type',
@@ -763,6 +764,7 @@ def final_summary() -> None:
                   x='gender_cleaned', 
                   y='vehicle_trips', 
                   color='percent_vehicle_trips',
+                  range_color=(0, 100), 
                   labels={'percent_vehicle_trips':'Percent of vehicle trips'})
     fig7.update_layout(
         title={
@@ -791,6 +793,7 @@ def final_summary() -> None:
                   x='wave', 
                   y='vehicle_trips', 
                   color='percent_vehicle_trips',
+                  range_color=(0, 100), 
                   labels={'percent_vehicle_trips':'Percent of vehicle trips'})
     fig8.update_layout(
         title={
