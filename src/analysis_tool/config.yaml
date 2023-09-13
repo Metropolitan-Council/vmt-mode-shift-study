@@ -27,7 +27,7 @@ unlikely_purposes: ["Escort", "Shop"]
 
 build: False  # whether we are currently building to docker/streamlit; disables initialization/keyring
 force_reinitialize: False  # whether to rebuild the input file (including scenarios)
-refresh_scenarios: True  # whether to rebuild the scenario columns
+refresh_scenarios: False  # whether to rebuild the scenario columns only
 # save_result: False
 
 # assumed to be in data/ directory
@@ -103,40 +103,40 @@ mappings:
 
 scenarios:
     bike:
-        - name: default  # name of the scenario (for internal use)
+        default:  # name of the scenario (for internal use)
           description: "Base Scenario"  # description of scenario
           mappings:  # mappings of new columns -> old columns they should replace; these should be compatible in terms of units
           file_path:  # file path to the rerouting
-        - name: best_bike
+        best_bike:
           description: "Improve all streets to best bike LTS"
           mappings:
           file_path: "/Data_Processed/geodata/bike-scenario-6df8c.parquet"
     transit:
-        - name: default
+        default:
           description: "Base Scenario"
           mappings:
           file_path:
-        - name: double_transit
+        double_transit:
           description: "Double frequency of all transit routes"
           dissolve: True  # whether or not to go through normal transit preprocessing
           mappings:
-            duration_rerouted: walk_seconds_rerouted
-            distance_rerouted: walk_distance_meters
+            duration_rerouted: transit_duration_rerouted
+            distance_rerouted: transit_distance_rerouted
           file_path: "/Data_Processed/geodata/transit-scenario-93d71.parquet"
     walk:
-        - name: default
+        default:
           description: "Base Scenario"
           mappings:
           file_path:
-        - name: best_walk
+        best_walk:
           description: "Improve all streets best bike LTS"
           key: trip_id
           mappings:
-            duration_rerouted: walk_seconds_rerouted
+            duration_rerouted: walk_duration_rerouted
             distance_rerouted: walk_distance_meters
           file_path: "/Data_Processed/geodata/walk-scenario-a37e1.parquet"
     car:
-        - name: default
+        default:
           description: "Base Scenario"
           mappings:
           file_path:
