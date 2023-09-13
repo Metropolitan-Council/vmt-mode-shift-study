@@ -334,8 +334,8 @@ def final_summary() -> None:
     if not handler["build"]:
         if st.sidebar.button("Save current result to csv"):
             with st.spinner("Exporting dataframe and percentiles"):
-                df.to_csv(f"output/{st.session_state.phase}_trips.csv", index=False)
-                f = open(f"output/{st.session_state.phase}_percentiles.json", "w")
+                df.to_csv(scenario['saved_results'], index=False)
+                f = open(scenario['saved_options'], "w")
                 f.write(str({step_name: step_class.get_cutoff() for step_name, step_class in st.session_state.step_class_dict.items()}))
                 f.close()
             
