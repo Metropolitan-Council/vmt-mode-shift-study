@@ -23,6 +23,9 @@ from steps.enums import Mode
 
 from settings import handler
 
+dir = keyring.get_password("msp", "vmt_reduction_dir")
+MILES_PER_METER = 0.000621371
+
 def clean_mode_names(df: pd.DataFrame) -> None:
     """
     This function standardizes the mode names based on the defined mode enum in-place.
@@ -84,24 +87,11 @@ def transit_cleanup(transit) -> pd.DataFrame:
     transit.crs = "EPSG:4326"
     transit = transit.to_crs("EPSG:32615")
     
-    transit["length"] = transit.length
-    transit["access_length"] = transit["length"]
-    
     # create a gdf for linked trips
     agg_fns = {
-        "trip_id": "first",
         "leg_index": "count",
         "start_time": "first",
         "end_time": "last",
-        "origin_stop_id": "first", # throw away
-        "origin_stop_name": "first",
-        "destination_stop_id": "first",
-        "destination_stop_name": "first",
-        "route_id": "first", 
-        "route_short_name": "first",
-        "route_long_name": "first",
-        "route_type": "first", 
-        "leg_type": "first", # end throw away
         "start_time_dt": "first",
         "end_time_dt": "last",
         "length": "sum",
@@ -110,12 +100,20 @@ def transit_cleanup(transit) -> pd.DataFrame:
         "non_transit_duration": "sum"
     }
     
+    # branching logic for whether we need to calculate distances ourselves based on projection
+    if "distance_meters" in transit.columns:
+        transit["length"] = transit["distance_meters"]
+    else:
+        transit["length"] = transit.length
+        
+    transit["access_length"] = transit["length"]
+        
     # group transit (which are initially unlinked trips) into linked trips
     transit_grouped = transit.dissolve(by="trip_id", aggfunc=agg_fns) # merges geometries in addition to aggregating the rest of the columns
     transit_grouped["duration"] = (transit_grouped["end_time_dt"] - transit_grouped["start_time_dt"]).apply(lambda x: x.seconds / 60)
 
     # return the grouped transit dataframe 
-    return transit_grouped[["trip_id", "duration", "access_length", "num_transfers", "non_transit_duration", "length"]]
+    return transit_grouped.reset_index()[["trip_id", "duration", "access_length", "num_transfers", "non_transit_duration", "length"]]
 
 def merge_transit_trip_details(df: pd.DataFrame, data_dir: str) -> None:
     """
@@ -414,7 +412,6 @@ def prepare_data(df: pd.DataFrame, data_dir: str) -> pd.DataFrame:
         df['vmt'] = df['vmt'] * df['trip_weight']
         
         # convert to minutes/miles; create na columns
-        MILES_PER_METER = 0.000621371
         df["car_distance_miles"] = df["car_distance_meters"] * MILES_PER_METER
         df["car_duration_minutes_adj"] = df["car_duration_seconds_adj"] / 60
         df["car_rerouting_missing"] = ~df["car_distance_meters"].isna()
@@ -423,7 +420,7 @@ def prepare_data(df: pd.DataFrame, data_dir: str) -> pd.DataFrame:
         df["walk_distance_miles"] = df["walk_distance_meters"] * MILES_PER_METER
         df["walk_rerouting_missing"] = ~df["walk_duration_seconds"].isna()
         
-        df["bike_distance_miles"] = df["bike_distance_meters"] / 60
+        df["bike_distance_miles"] = df["bike_distance_meters"] * MILES_PER_METER
         df["bike_distance_miles_1"] = df["bike_distance_meters_1"] * MILES_PER_METER
         df["bike_distance_miles_2"] = df["bike_distance_meters_2"] * MILES_PER_METER
         df["bike_distance_miles_3"] = df["bike_distance_meters_3"] * MILES_PER_METER
@@ -431,13 +428,146 @@ def prepare_data(df: pd.DataFrame, data_dir: str) -> pd.DataFrame:
         df["bike_duration_minutes_adj"] = df["bike_duration_seconds_adj"] / 60
         df["bike_rerouting_missing"] = ~df["bike_distance_meters"].isna()
         
-        df["transit_rerouting_missing"] = ~df["transit_duration"].isna()
+        df["transit_length"] = df["transit_length"] * MILES_PER_METER
+        df["transit_access_length"] = df["transit_access_length"] * MILES_PER_METER
+        df["transit_rerouting_missing"] = df["transit_duration"].isna()
+        
+        add_scenarios(df)
     
     return standardize(df)
 
 
+def process_walk_scenario(scenario_name: str, scenario_df: pd.DataFrame, df: pd.DataFrame):
+    """
+    This function processes a generic walk scenario that adds a new duration/distance. More specialized functions can be created, but it will need branching in the main
+    add_scenarios function and a distinct mapping.
 
-### do not edit:
+    Args:
+        scenario_name (str): the name of the scenario
+        scenario_df (pd.DataFrame): the dataframe of the read-in rerouting file
+        df (pd.DataFrame): an alias to the overall dataframe
+    """
+    scenario_df["trip_id"] = scenario_df["trip_id"].astype("str")
+    
+    # convert to be in line with mapping units
+    scenario_df[f"walk_{scenario_name}_duration_rerouted"] = scenario_df["duration_seconds"] / 60
+    scenario_df[f"walk_{scenario_name}_distance_rerouted"] = scenario_df["distance_meters"] * MILES_PER_METER
+
+    scenario_df = scenario_df.reindex(df["trip_id"].astype(str))
+    
+    df[f"walk_{scenario_name}_distance_rerouted"] = scenario_df[f"walk_{scenario_name}_distance_rerouted"].round().astype("Int32")
+    df[f"walk_{scenario_name}_duration_rerouted"] = scenario_df[f"walk_{scenario_name}_duration_rerouted"].round().astype("Int32")
+    df[f"walk_{scenario_name}_rerouting_missing"] = scenario_df[f"walk_{scenario_name}_distance_rerouted"].isna().astype("bool")
+    
+def process_bike_scenario(scenario_name: str, scenario_df: pd.DataFrame, df: pd.DataFrame):
+    """
+    This function processes a generic bike scenario that adds a new duration/distance/lts distances. More specialized functions can be created, 
+    but it will need branching in the main add_scenarios function and a distinct mapping.
+
+    Args:
+        scenario_name (str): the name of the scenario
+        scenario_df (pd.DataFrame): the dataframe of the read-in rerouting file
+        df (pd.DataFrame): an alias to the overall dataframe
+    """
+    # convert to be in line with mapping units
+    scenario_df[f"bike_{scenario_name}_duration_rerouted"] = scenario_df["duration_seconds"] / 60
+    scenario_df[f"bike_{scenario_name}_distance_rerouted"] = scenario_df["distance_meters"] * MILES_PER_METER
+    scenario_df[f"bike_{scenario_name}_distance_lts_1_rerouted"] = scenario_df["distance_meters_1"] * MILES_PER_METER
+    scenario_df[f"bike_{scenario_name}_distance_lts_2_rerouted"] = scenario_df["distance_meters_2"] * MILES_PER_METER
+    scenario_df[f"bike_{scenario_name}_distance_lts_3_rerouted"] = scenario_df["distance_meters_3"] * MILES_PER_METER
+    scenario_df[f"bike_{scenario_name}_distance_lts_4_rerouted"] = scenario_df["distance_meters_4"] * MILES_PER_METER
+    
+    scenario_df = scenario_df.reindex(df["trip_id"].astype(str))
+    
+    df[f"bike_{scenario_name}_distance_rerouted"] = scenario_df[f"bike_{scenario_name}_distance_rerouted"].round().astype("Int32")
+    df[f"bike_{scenario_name}_duration_rerouted"] = scenario_df[f"bike_{scenario_name}_duration_rerouted"].round().astype("Int32")
+    
+    df[f"bike_{scenario_name}_distance_lts_1_rerouted"] = scenario_df[f"bike_{scenario_name}_distance_lts_1_rerouted"].round().astype("Int32")
+    df[f"bike_{scenario_name}_distance_lts_2_rerouted"] = scenario_df[f"bike_{scenario_name}_distance_lts_2_rerouted"].round().astype("Int32")
+    df[f"bike_{scenario_name}_distance_lts_3_rerouted"] = scenario_df[f"bike_{scenario_name}_distance_lts_3_rerouted"].round().astype("Int32")
+    df[f"bike_{scenario_name}_distance_lts_4_rerouted"] = scenario_df[f"bike_{scenario_name}_distance_lts_4_rerouted"].round().astype("Int32")
+    
+    df[f"bike_{scenario_name}_rerouting_missing"] = scenario_df[f"bike_{scenario_name}_distance_rerouted"].isna().astype("bool")
+    
+def process_transit_scenario(scenario_name: str, scenario_df: pd.DataFrame, df: pd.DataFrame):
+    """
+    This function processes a generic transit scenario that adds a new duration/distance/transit details. More specialized functions can be created, 
+    but it will need branching in the main add_scenarios function and a distinct mapping.
+    This function utilizes the transit_cleanup function defined previously to do trip grouping.
+
+    Args:
+        scenario_name (str): the name of the scenario
+        scenario_df (pd.DataFrame): the dataframe of the read-in rerouting file
+        df (pd.DataFrame): an alias to the overall dataframe
+    """
+    scenario_df = transit_cleanup(scenario_df)
+    
+    scenario_df[f"transit_{scenario_name}_distance_rerouted"] = scenario_df["length"] * MILES_PER_METER
+    scenario_df[f"transit_{scenario_name}_access_length_rerouted"] = scenario_df["access_length"] * MILES_PER_METER
+    scenario_df[f"transit_{scenario_name}_duration_rerouted"] = scenario_df["duration"]
+    scenario_df[f"transit_{scenario_name}_num_transfers_rerouted"] = scenario_df["num_transfers"] 
+    scenario_df[f"transit_{scenario_name}_nontransit_duration"] = scenario_df["non_transit_duration"]
+    
+    scenario_df = scenario_df.reindex(df["trip_id"].astype(str))
+    
+    df[f"transit_{scenario_name}_distance_rerouted"] = scenario_df[f"transit_{scenario_name}_distance_rerouted"].round().astype("Int16")
+    df[f"transit_{scenario_name}_duration_rerouted"] = scenario_df[f"transit_{scenario_name}_duration_rerouted"].round().astype("Int16")
+    df[f"transit_{scenario_name}_access_length_rerouted"] = scenario_df[f"transit_{scenario_name}_access_length_rerouted"].round().astype("Int16")
+    df[f"transit_{scenario_name}_num_transfers_rerouted"] = scenario_df[f"transit_{scenario_name}_num_transfers_rerouted"].astype("Int8")
+    df[f"transit_{scenario_name}_num_transfers_rerouted"] = scenario_df[f"transit_{scenario_name}_num_transfers_rerouted"].astype("Int8")
+    df[f"transit_{scenario_name}_rerouting_missing"] = scenario_df[f"transit_{scenario_name}_distance_rerouted"].isna().astype("bool")
+    
+    
+
+def add_scenarios(df: pd.DataFrame, save: bool):
+    # get rid of all existing scenario columns
+    for column in df.columns:
+        if "scenario" in column:
+            df.drop(columns=[column], inplace=True)
+    
+    # iterate over all scenarios
+    for mode in handler["scenarios"]:
+        for scenario in handler["scenarios"][mode]:
+            # don't process default sceanrios
+            if scenario["name"] == "default":
+                continue
+            
+            logging.info(f"Reading in scenario {scenario['name']} for mode {mode}")
+            
+            # try to read in the scenario file
+            try:
+                lib = pd
+                if mode == "transit":
+                    lib = gpd
+                    
+                if scenario["file_path"].split(".")[-1] == "parquet":
+                    scenario_df = lib.read_parquet(dir + scenario["file_path"])
+                elif scenario["file_path"].split(".")[-1] == "csv":
+                    scenario_df = lib.read_csv(dir + scenario["file_path"])
+            except Exception:
+                logging.exception(f"Error reading in scenario file for scenario {scenario} for mode {mode}")
+                raise RuntimeError("There was an issue reading in a scenario file")
+            
+            # do the corresponding process function to add it into the df according to a well-specified naming scheme
+            if mode == Mode.BIKE:
+                process_bike_scenario(scenario["name"], scenario_df, df)
+            elif mode == Mode.WALK:
+                process_walk_scenario(scenario["name"], scenario_df, df)
+            elif mode == Mode.TRANSIT:
+                process_transit_scenario(scenario["name"], scenario_df, df)
+            elif mode == Mode.CAR:
+                pass
+            else:
+                raise RuntimeError("Something went wrong with the mode enum")
+            
+    if not handler["build"] and save:
+        if handler["tbi_file_name"].split(".")[-1] == "csv":
+            df.to_csv(handler["output_file_name"] + ".csv", index=False)
+        elif handler["tbi_file_name"].split(".")[-1] == "parquet":
+            anonymize(df)
+            
+
+# metaprocessing to make things easier: (generally shouldn't edit)
 
 def standardize(df: pd.DataFrame) -> pd.DataFrame:
     """This function standardizes the final cleaned up dataframe in terms of column naming/columns and throws and error if any required columns are missing
@@ -483,8 +613,8 @@ def anonymize(df: pd.DataFrame):
         df (pd.DataFrame): The cleaned, standardized dataframe
     """
     logging.info("Running anonymization of data")
-    # only keep important columns
-    df_anonymous = df[handler["mappings"].keys()].copy()
+    # only keep important columns (specified in config somewhere, whether as scenario or as a base thing)
+    df_anonymous = df[[col for col in df.columns if col in handler["mappings"].keys() or "scenario" in col]].copy()
     
     # anonymize person id and trip id
     df_anonymous["person_id"] = pd.factorize(df["person_id"])[0]
@@ -499,6 +629,8 @@ def anonymize(df: pd.DataFrame):
         return res
 
     df_anonymous["trip_id"] = df["trip_id"].apply(lambda x: literal_eval(x)).apply(lambda x: map_trip_ids(x))
+    
+    # TODO: with minutes, we can compress to int16 proabbly
     
     # compress datatypes + renaming
     df_anonymous["wave"] = df["wave"].astype("Int8")

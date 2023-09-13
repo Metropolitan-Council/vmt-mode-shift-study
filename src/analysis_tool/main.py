@@ -16,7 +16,7 @@ import logging
 # do conditional imports based on whether we are in build mode
 # keyring/initialization is not necessary in build mode amd breaks things
 try:
-    from initialize import prepare_data, anonymize
+    from initialize import prepare_data, anonymize, add_scenarios
     import keyring
 except ImportError as e:
     logging.error("Unable to import keyring/prepare_data; if this is occurring and the program is not in build mode, something is wrong")
@@ -125,16 +125,16 @@ def start_screen_feasible() -> None:
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        st.session_state["scenarios"][Mode.CAR] = st.radio("Choose the car scenario:", [x[0] for x in handler["scenario_columns"][Mode.CAR]])
+        st.session_state["scenarios"][Mode.CAR] = st.radio("Choose the car scenario:", [f"{x['name']}: {x['description']}" for x in handler["scenarios"][Mode.CAR]])
         
     with col2:
-        st.session_state["scenarios"][Mode.WALK] = st.radio("Choose the walk scenario:", [x[0] for x in handler["scenario_columns"][Mode.WALK]])
+        st.session_state["scenarios"][Mode.WALK] = st.radio("Choose the walk scenario:", [f"{x['name']}: {x['description']}" for x in handler["scenarios"][Mode.WALK]])
         
     with col3:
-        st.session_state["scenarios"][Mode.BIKE] = st.radio("Choose the bike scenario:", [x[0] for x in handler["scenario_columns"][Mode.BIKE]])
+        st.session_state["scenarios"][Mode.BIKE] = st.radio("Choose the bike scenario:", [f"{x['name']}: {x['description']}" for x in handler["scenarios"][Mode.BIKE]])
         
     with col4:
-        st.session_state["scenarios"][Mode.TRANSIT] = st.radio("Choose the transit scenario:", [x[0] for x in handler["scenario_columns"][Mode.TRANSIT]])
+        st.session_state["scenarios"][Mode.TRANSIT] = st.radio("Choose the transit scenario:", [f"{x['name']}: {x['description']}" for x in handler["scenarios"][Mode.TRANSIT]])
     
 def start_screen_probable() -> None:
     """
@@ -208,9 +208,12 @@ def setup_df() -> 0:
     if not handler["build"]:
         drive_data_dir = keyring.get_password('msp', 'vmt_reduction_dir')
         
+    built_from_raw = False
+        
     # if we are forcing reinitialization and we are not in build mode, reinitialize
     if handler["force_reinitialize"] and not handler["build"]:
         logging.info("Rebuilding data from raw inputs")
+        built_from_raw = True
         
         # read in data & pipe it through the cleaning function
         raw = pd.read_csv(drive_data_dir + handler["input_tbi_file"])
@@ -238,6 +241,12 @@ def setup_df() -> 0:
             raw = pd.read_csv(drive_data_dir + handler["input_tbi_file"])
 
             df = prepare_data(raw, drive_data_dir)
+            
+            built_from_raw = True
+            
+    if not built_from_raw and not handler["build"] and handler["refresh_scenarios"]:
+        logging.info("Refreshing scenario columns of the columns and resaving")
+        add_scenarios(df, True)
         
     # store the generated df into a session state variable
     logging.info("Setting up the data inputs has succeeded")
@@ -396,11 +405,11 @@ def final_summary() -> None:
     # stacked histogram of duration difference for feasible drive, non-feasible drive, and walk trips
     bigger_markdown("Below, a stacked histogram detailing the travel time difference distributions for drive trips that can feasibly shift to walk, drive trips that can't shift, and observed walk trips can be seen.")
     
-    st.plotly_chart(stacked_shift_histogram(df, Mode.WALK, "walk_duration_minutes", f"{st.session_state.phase}_walk_shift", st.session_state.phase))
+    st.plotly_chart(stacked_shift_histogram(df, Mode.WALK, "walk_duration_rerouted", f"{st.session_state.phase}_walk_shift", st.session_state.phase))
     
     # get df of the % of trips/vmt that are within x minutes of walking
     bigger_markdown(f"The % of car trips and VMT that are {st.session_state.phase} and within x minutes from walking can be seen in the below table.")
-    st.table(get_duration_diff_df(df, Mode.WALK, f"{st.session_state.phase}_walk_shift", "walk_duration_minutes"))
+    st.table(get_duration_diff_df(df, Mode.WALK, f"{st.session_state.phase}_walk_shift", "walk_duration_rerouted"))
     
     # details about biking shifts
     st.header("Shifts to biking")
@@ -428,11 +437,11 @@ def final_summary() -> None:
     # stacked histogram of duration difference for feasible drive, non-feasible drive, and transit trips
     bigger_markdown("Below, a stacked histogram detailing the travel time difference distributions for drive trips that can feasibly shift to transit, drive trips that can't shift, and observed transit trips can be seen. NOTE: due to the need to filter out trips with no valid transit trip (and thus no applicable transit duration), there are no infeasible drive trips within this histogram.")
     
-    st.plotly_chart(stacked_shift_histogram(df[(~df["transit_rerouting_missing"])&(df["transit_duration_rerouted"]>0)&(df["transit_duration_rerouted"]<1440)], Mode.TRANSIT, "transit_duration", f"{st.session_state.phase}_transit_shift", st.session_state.phase))
+    st.plotly_chart(stacked_shift_histogram(df[(~df["transit_rerouting_missing"])&(df["transit_duration_rerouted"]>0)&(df["transit_duration_rerouted"]<1440)], Mode.TRANSIT, "transit_duration_rerouted", f"{st.session_state.phase}_transit_shift", st.session_state.phase))
     
     # get df of the % of trips/vmt that are within x minutes of transit
     bigger_markdown(f"The % of car trips and VMT that are {st.session_state.phase} and within x minutes from transit can be seen in the below table.")
-    st.table(get_duration_diff_df(df[~df["transit_rerouting_missing"]], Mode.TRANSIT, f"{st.session_state.phase}_transit_shift", "transit_duration"))
+    st.table(get_duration_diff_df(df[~df["transit_rerouting_missing"]], Mode.TRANSIT, f"{st.session_state.phase}_transit_shift", "transit_duration_rerouted"))
     
     st.header("Shifts to any mode")
     
@@ -460,7 +469,7 @@ def final_summary() -> None:
     
     # fastest alternative by mode comparisons
     bigger_markdown(r"Below, the distribution of the duration difference between the best non-car mode and car for shifted trips is shown. Note: a trip can only have a fastest mode if there is a mode that is feasible/likely for it take.")
-    df["transit_duration_rerouted_na"] = df["transit_duration_rerouted"].fillna(9999999) # if no transit trip found, make it very slow to allow other modes to beat it
+    df["transit_duration_rerouted_na"] = np.where(df["transit_rerouting_missing"], 9999999, df["transit_duration_rerouted"]) # if no transit trip found, make it very slow to allow other modes to beat it
 
     # mode must be feasible to be the minimum alternative mode duration
     df["feasible_walk_duration_min"] = np.where(df[f"{st.session_state.phase}_walk_shift"], df["walk_duration_rerouted"], 9999999)
