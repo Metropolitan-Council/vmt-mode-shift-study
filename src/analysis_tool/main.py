@@ -78,7 +78,7 @@ def start_screen_feasible() -> None:
     # create feasible_steps session state array if not present as well as a scenarios dictionary
     if "feasible_steps" not in st.session_state:
         st.session_state["feasible_steps"] = []
-        st.session_state["scenarios"] = {mode: "none" for mode in Mode.get_all()}
+        st.session_state["scenarios"] = {mode: "default" for mode in Mode.get_all()}
     
     # define all actions that can be done
     st.sidebar.header("Actions")
@@ -125,16 +125,32 @@ def start_screen_feasible() -> None:
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        st.session_state["scenarios"][Mode.CAR] = st.radio("Choose the car scenario:", [f"{x['name']}: {x['description']}" for x in handler["scenarios"][Mode.CAR]])
+        st.session_state["scenarios"][Mode.CAR] = st.radio(
+            "Choose the car scenario:", 
+            [x for x in handler["scenarios"][Mode.CAR].keys()], 
+            format_func=lambda x: f"{x}: {handler['scenarios'][Mode.CAR][x]['description']}"
+        )
         
     with col2:
-        st.session_state["scenarios"][Mode.WALK] = st.radio("Choose the walk scenario:", [f"{x['name']}: {x['description']}" for x in handler["scenarios"][Mode.WALK]])
+        st.session_state["scenarios"][Mode.WALK] = st.radio(
+            "Choose the walk scenario:", 
+            [x for x in handler["scenarios"][Mode.WALK].keys()], 
+            format_func=lambda x: f"{x}: {handler['scenarios'][Mode.WALK][x]['description']}"
+        )
         
     with col3:
-        st.session_state["scenarios"][Mode.BIKE] = st.radio("Choose the bike scenario:", [f"{x['name']}: {x['description']}" for x in handler["scenarios"][Mode.BIKE]])
+        st.session_state["scenarios"][Mode.BIKE] = st.radio(
+            "Choose the bike scenario:", 
+            [x for x in handler["scenarios"][Mode.BIKE].keys()], 
+            format_func=lambda x: f"{x}: {handler['scenarios'][Mode.BIKE][x]['description']}"
+        )
         
     with col4:
-        st.session_state["scenarios"][Mode.TRANSIT] = st.radio("Choose the transit scenario:", [f"{x['name']}: {x['description']}" for x in handler["scenarios"][Mode.TRANSIT]])
+        st.session_state["scenarios"][Mode.TRANSIT] = st.radio(
+            "Choose the transit scenario:", 
+            [x for x in handler["scenarios"][Mode.TRANSIT].keys()], 
+            format_func=lambda x: f"{x}: {handler['scenarios'][Mode.TRANSIT][x]['description']}"
+        )
     
 def start_screen_probable() -> None:
     """
@@ -299,6 +315,7 @@ def setup_vars(phase: Phase) -> None:
     
     # create a dictionary for storing initialized step class objects and store the first step within it already
     st.session_state["step_class_dict"] = dict()
+    st.session_state["step_class_scenario_dict"] = dict()
     st.session_state["step_class_dict"][st.session_state.step] = getattr(st.session_state.overall_step, st.session_state.step)(st.session_state.df)
     
     # store the current step class (as an alias to the stored one in the dictionary)
@@ -872,6 +889,24 @@ def show_step() -> None:
     # title the page by the step name
     st.title(curr.get_name())
     
+    in_scenario = False
+    scenario_name = st.session_state.scenarios[curr.get_mode()]
+    if scenario_name != "default":
+        scenario = handler["scenarios"][curr.get_mode()][scenario_name]
+        mapping = {value: key for key, value in scenario["mappings"].items()}
+        
+        if len(set(mapping.keys()).intersection(set(curr.get_default_cols()))) != 0:
+            in_scenario = True
+            
+    if in_scenario:
+        if scenario_name not in st.session_state.step_class_scenario_dict:
+            st.session_state.step_class_scenario_dict[scenario_name] = getattr(st.session_state.overall_step, curr.__class__)(
+                st.session_state.df, 
+                column=f"{curr.get_mode()}_{scenario_name}_{mapping[curr.get_default_cols()]}"
+            )
+        scenario_class: steps.BaseStep = st.session_state.step_class_scenario_dict[scenario_name]
+            
+    
     # if the step we are at is continuous, have settings for setting the cutoff/choosing between pct/raw selection/a blurb for the equivalent opposite cutoff
     if curr.is_continuous():
         curr.set_cutoff_mode(st.sidebar.radio("Choose how to set the cutoff", (CutoffMode.PCT, CutoffMode.RAW), key=st.session_state.id))
@@ -886,15 +921,31 @@ def show_step() -> None:
             logging.exception(f"Something went worng with the cutoff mode enum: {curr.get_cutoff_mode()}")
             raise RuntimeError("something went wrong")
         
+        if in_scenario:
+            scenario_class.set_cutoff_mode(curr.get_cutoff_mode())
+            scenario_class.set_cutoff(curr.get_cutoff())
+        
     
     # button to dsiable the current step
     if st.sidebar.button("Disable step", use_container_width=True):
         curr.disable()
+        if in_scenario:
+            scenario_class.disable()
+        
         
     # button to apply (& show the entire narrative of the current step); otherwise, just have a blurb on the current step/how to run it
     if st.sidebar.button("Apply step", use_container_width=True):
         curr.apply_step()
-        curr.show_step_streamlit()
+        if in_scenario:
+            scenario_class.apply_step()
+            col1, col2 = st.columns(2)
+            with col1:
+                curr.show_step_streamlit()
+            with col2:
+                scenario_class.show_step_streamlit()
+        else:
+            curr.show_step_streamlit()
+        
     else:
         st.header("Click the apply step button once the desired settings have been set or click disable to disable the step.")
         bigger_markdown(curr.get_desc())

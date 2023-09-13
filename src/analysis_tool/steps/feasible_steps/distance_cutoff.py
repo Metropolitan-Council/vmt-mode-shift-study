@@ -1,3 +1,4 @@
+from typing import List
 import pandas as pd
 import matplotlib.pyplot as plt
 import plotly.express as px
@@ -72,6 +73,10 @@ class WalkDistanceStep(ContinuousStep):
         res = [inspect.cleandoc(x) for x in res]
         
         return res
+    
+    @staticmethod
+    def get_default_cols():
+        return ["walk_distance_rerouted"]
         
     
 class BikeDistanceStep(ContinuousStep):
@@ -136,3 +141,7 @@ class BikeDistanceStep(ContinuousStep):
         res = [inspect.cleandoc(x) for x in res]
         
         return res
+    
+    @staticmethod
+    def get_default_cols() -> List[str]:
+        return ["bike_distance_rerouted"]

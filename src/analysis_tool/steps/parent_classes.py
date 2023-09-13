@@ -6,6 +6,7 @@ import streamlit as st
 import re
 from scipy import stats
 import logging
+from typing import List
 
 from matplotlib.colors import LinearSegmentedColormap
 from util import bigger_markdown
@@ -276,6 +277,10 @@ class BaseStep:
         """
         # abstract function
         raise NotImplementedError("Please implement this function")
+    
+    @staticmethod
+    def get_default_cols() -> List[str]:
+        raise NotImplementedError("Please implement this function.")
 
 class ContinuousStep(BaseStep):
     """
