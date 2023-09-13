@@ -31,7 +31,6 @@ force_reinitialize: False
 
 # assumed to be in data/ directory
 community_shape_file_name: "shp_bdry_census2020counties_ctus/Census2020CTUs.shp"
-tbi_file_name: "tbi_full.csv"  # recommended to keep it this; must be parquet or csv
 weather_file_name: "USW00014922.csv"
 taz_terminal_time_file_name: "taz_terminal_times/TAZ3030_Terminal_times.shp"
 
@@ -77,19 +76,67 @@ scenario_columns:
 
 cold_start_threshold: 15
 
-# This is the cleaned TBI file, as input to the whole process. 
-# it is on the network drive, as specified in the keyring variable.
-input_tbi_file: "/data_processed/tbi_cleaned.csv"
 
+# One entry for each scenario
+#   description: text description of the scenario
+# 
+#   These are inputs, stored on the network drive, as specified in the keyring variable: 
+#       input_tbi_file: cleaned TBI file, as input to the whole process
+#       car_route_file: car routes in parquet format, matched by trip_id
+#       walk_route_file: walk routes in parquet format, matched by trip_id
+#       bike_route_file: bike routes in parquet format, matched by trip_id
+#       transit_route_file: transit routes in parquet format, matched by trip_id
+#
+#   These are outputs, which will be stored locally in the run folder.  
+#   If the run detects the output file there, it will not overwrite it unless you force_reinitialize
+#   This file should be stripped of any personally identifiable information, which would allow it to be 
+#   shared on the cloud for ease of deployment. 
+#       saved_tbi_file: matches the input TBI to the routes, and adds derived columns, must be parqeut or csv
+scenario_to_run: "base"
 
-# These is are the routes for each TBI trip.  To change the scenario, change these. 
-# it is on the network drive, as specified in the keyring variable.
-route_files: 
-    car: "/Data_Processed/geodata/car_congestion_nogeom.parquet"
-    walk: "/Data_Processed/geodata/walk_trips_nogeom.parquet"
-    bike: "/Data_Processed/geodata/bike_no_weight_penalty.parquet"
-    transit: "/Data_Processed/geodata/transit_trips.parquet"
-
-# This is an output file, with the TBI trips and select route information saved. 
-# it is stored relative to the local run directory. 
-saved_tbi_file: "data/tbi_full.csv"
+scenarios: 
+    base:
+        description: "Base Scenario"
+        input_tbi_file: "/data_processed/tbi_cleaned.csv" 
+        car_route_file: "/Data_Processed/geodata/car_congestion_1d39c/car_congestion.parquet"
+        walk_route_file: "/Data_Processed/geodata/walk-trips-1d39c.parquet"
+        bike_route_file: "/Data_Processed/geodata/bike-trips-fe43e.parquet"
+        transit_route_file: "/Data_Processed/geodata/transit-trips-93d71.parquet"
+        saved_tbi_file: "data/tbi_base.csv"  
+        
+    best_walk: 
+        description: "Improve all streets to best walk quality"
+        input_tbi_file: "/data_processed/tbi_cleaned.csv" 
+        car_route_file: "/Data_Processed/geodata/car_congestion_1d39c/car_congestion.parquet"
+        walk_route_file: "/Data_Processed/geodata/walk-scenario-a37e1.parquet"
+        bike_route_file: "/Data_Processed/geodata/bike-trips-fe43e.parquet"
+        transit_route_file: "/Data_Processed/geodata/transit-trips-93d71.parquet"
+        saved_tbi_file: "data/tbi_best_walk.csv"  
+        
+    best_bike: 
+        description: "Improve all streets to best bike LTS"
+        input_tbi_file: "/data_processed/tbi_cleaned.csv" 
+        car_route_file: "/Data_Processed/geodata/car_congestion_1d39c/car_congestion.parquet"
+        walk_route_file: "/Data_Processed/geodata/walk-trips-1d39c.parquet"
+        bike_route_file: "/Data_Processed/geodata/bike-scenario-6df8c.parquet"
+        transit_route_file: "/Data_Processed/geodata/transit-trips-93d71.parquet"
+        saved_tbi_file: "data/tbi_best_bike.csv"  
+        
+    double_transit: 
+        description: "Double frequenency of all transit routes" 
+        input_tbi_file: "/data_processed/tbi_cleaned.csv" 
+        car_route_file: "/Data_Processed/geodata/car_congestion_1d39c/car_congestion.parquet"
+        walk_route_file: "/Data_Processed/geodata/walk-trips-1d39c.parquet"
+        bike_route_file: "/Data_Processed/geodata/bike-trips-fe43e.parquet"
+        transit_route_file: "/Data_Processed/geodata/transit-scenario-93d71.parquet"
+        saved_tbi_file: "data/tbi_double_transit.csv"  
+        
+    all_three: 
+        description: "All of the above"
+        input_tbi_file: "/data_processed/tbi_cleaned.csv" 
+        car_route_file: "/Data_Processed/geodata/car_congestion_1d39c/car_congestion.parquet"
+        walk_route_file: "/Data_Processed/geodata/walk-scenario-a37e1.parquet"
+        bike_route_file: "/Data_Processed/geodata/bike-scenario-6df8c.parquet"
+        transit_route_file: "/Data_Processed/geodata/transit-scenario-93d71.parquet"
+        saved_tbi_file: "data/tbi_all_three.csv"  
+        

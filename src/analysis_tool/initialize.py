@@ -9,7 +9,7 @@ from settings import get_communities
 
 from steps.enums import Mode
 
-from settings import handler
+from settings import handler, scenario
 
 def clean_mode_names(df: pd.DataFrame) -> None:
     """
@@ -296,14 +296,14 @@ def prepare_data(df: pd.DataFrame, data_dir: str) -> pd.DataFrame:
     
     # merge in weather
     merge_weather(df)
-
+    
     # read in rerouting files
     logging.info("reading in rerouting files")
     
-    car = pd.read_parquet(data_dir + handler["route_files"][Mode.CAR])
-    walk = pd.read_parquet(data_dir + handler["route_files"][Mode.WALK])
-    bike = pd.read_parquet(data_dir + handler["route_files"][Mode.BIKE]).drop("geometry", axis=1)
-    transit = gpd.read_parquet(data_dir + handler["route_files"][Mode.TRANSIT])
+    car = pd.read_parquet(data_dir + scenario["car_route_file"]).drop("geometry", axis=1)
+    walk = pd.read_parquet(data_dir + scenario["walk_route_file"]).drop("geometry", axis=1)
+    bike = pd.read_parquet(data_dir + scenario["bike_route_file"]).drop("geometry", axis=1)
+    transit = gpd.read_parquet(data_dir + scenario["transit_route_file"])
     
     # group/cleanup transit
     transit_grouped = transit_cleanup(transit)
@@ -321,36 +321,8 @@ def prepare_data(df: pd.DataFrame, data_dir: str) -> pd.DataFrame:
     bike = add_mode_to_column_name(bike, 'bike')
     transit_grouped = add_mode_to_column_name(transit_grouped, 'transit')
     
-    # helper function for querying from the car rerouting file
-    def get_car_data(row, field):
-        hour = int(row["arrive_time"][0:2])
-        sunday = row["travel_dow"] == "Sunday"
-        saturday = row["travel_dow"] == "Saturday"
-        if sunday:
-            query = "sundays"
-        elif saturday:
-            query = "saturdays_"
-        else:
-            query = "weekdays_"
-        
-        if hour >= 0 and hour <= 5:
-            query += "0-6"
-        elif hour >= 20 and hour <= 23:
-            query += "20-24"
-        else:
-            query += str(hour) + "-" + str(hour + 1)
-
-        if (query, row["trip_id"]) not in car.index:
-            print(row["trip_id"])
-            return np.nan
-
-        return car.loc[(query, row["trip_id"])][field]
-    
-    # missing one trip for some reason; gets car duration/distance using the above helper function
-    df["car_duration_seconds"] = df.apply(lambda x: get_car_data(x, "car_duration_seconds"), axis=1)
-    df["car_distance_meters"] = df.apply(lambda x: get_car_data(x, "car_distance_meters"), axis=1)
-    
     # merge in rerouted files
+    df = df.merge(car, left_on="trip_id", right_on="car_trip_id", how="left")
     df = df.merge(walk, left_on="trip_id", right_on="walk_trip_id", how="left")
     df = df.merge(bike, left_on="trip_id", right_on="bike_trip_id", how="left")
     df = df.merge(transit_grouped, left_on="trip_id", right_on="transit_trip_id", how="left")
@@ -383,6 +355,6 @@ def prepare_data(df: pd.DataFrame, data_dir: str) -> pd.DataFrame:
 
     logging.info("exporting newly created table to csv")
     # possibly change to provided name; export to disk for future use
-    df.to_csv(handler['saved_tbi_file'], index=False)
+    df.to_csv(scenario['saved_tbi_file'], index=False)
     
     return df

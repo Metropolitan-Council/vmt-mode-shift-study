@@ -6,6 +6,7 @@ import geopandas as gpd
 with open("config.yaml", "r", encoding="utf-8") as stream:
     try:
         handler = yaml.safe_load(stream)
+        scenario = handler['scenarios'][handler['scenario_to_run']]
     except yaml.YAMLError as exc:
         raise RuntimeError("Error parsing the yaml file")
 

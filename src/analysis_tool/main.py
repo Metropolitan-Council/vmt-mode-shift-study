@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 import steps
-from settings import handler, get_communities
+from settings import handler, scenario, get_communities
 from steps.enums import *
 from util import get_num_cold_starts, stacked_shift_histogram, total_shift_histogram, get_summary_df, get_duration_diff_df, bigger_markdown
 import json
@@ -119,22 +119,23 @@ def start_screen_feasible() -> None:
     st.session_state["feasible_steps"] = st.multiselect("Choose the feasible steps to run", handler["feasible_steps"])
     
     st.markdown("***")
-    
+    # overriding this scenario approach to use separate files instead. 
     # create the scenario picker; scenarios are persisted throughout the entire application
-    bigger_markdown("Choose the scenarios to run for each mode. Choosing 'default' will not run any scenarios for the mode.")
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.session_state["scenarios"][Mode.CAR] = st.radio("Choose the car scenario:", [x[0] for x in handler["scenario_columns"][Mode.CAR]])
-        
-    with col2:
-        st.session_state["scenarios"][Mode.WALK] = st.radio("Choose the walk scenario:", [x[0] for x in handler["scenario_columns"][Mode.WALK]])
-        
-    with col3:
-        st.session_state["scenarios"][Mode.BIKE] = st.radio("Choose the bike scenario:", [x[0] for x in handler["scenario_columns"][Mode.BIKE]])
-        
-    with col4:
-        st.session_state["scenarios"][Mode.TRANSIT] = st.radio("Choose the transit scenario:", [x[0] for x in handler["scenario_columns"][Mode.TRANSIT]])
+    #bigger_markdown("Choose the scenarios to run for each mode. Choosing 'default' will not run any scenarios for the mode.")
+    #col1, col2, col3, col4 = st.columns(4)
+    #
+    #with col1:
+    #    st.session_state["scenarios"][Mode.CAR] = st.radio("Choose the car scenario:", [x[0] for x in handler["scenario_columns"][Mode.CAR]])
+    #    
+    #with col2:
+    #    st.session_state["scenarios"][Mode.WALK] = st.radio("Choose the walk scenario:", [x[0] for x in handler["scenario_columns"][Mode.WALK]])
+    #    
+    #with col3:
+    #    st.session_state["scenarios"][Mode.BIKE] = st.radio("Choose the bike scenario:", [x[0] for x in handler["scenario_columns"][Mode.BIKE]])
+    #    
+    #with col4:
+    #    st.session_state["scenarios"][Mode.TRANSIT] = st.radio("Choose the transit scenario:", [x[0] for x in handler["scenario_columns"][Mode.TRANSIT]])
+
     
 def start_screen_probable() -> None:
     """
@@ -213,20 +214,20 @@ def setup_df() -> 0:
         logging.info("Rebuilding data from raw inputs")
         
         # read in data & pipe it through the cleaning function
-        raw = pd.read_csv(drive_data_dir + handler["input_tbi_file"], usecols=handler["keep_columns"])
+        raw = pd.read_csv(drive_data_dir + scenario["input_tbi_file"], usecols=handler["keep_columns"])
         df = prepare_data(raw, drive_data_dir)
     # otherwise, we are not reinitialization -- read in precleaned files
     else:
         logging.info("Attempting to read in pre-cleaned data files")
         
-        # try to read in file specified as tbi_file_name (supporting parquet/csv)
+        # try to read in file specified as saved_tbi_file (supporting parquet/csv)
         try:
-            if handler["tbi_file_name"].split(".")[-1] == "parquet":
+            if scenario["saved_tbi_file"].split(".")[-1] == "parquet":
                 logging.info("Reading in the specified parquet file")
-                df = pd.read_parquet("data/" + handler["tbi_file_name"])
-            elif handler["tbi_file_name"].split(".")[-1] == "csv":
+                df = pd.read_parquet(scenario["saved_tbi_file"])
+            elif scenario["saved_tbi_file"].split(".")[-1] == "csv":
                 logging.info("Reading in the specified csv file")
-                df = pd.read_csv("data/" + handler["tbi_file_name"])
+                df = pd.read_csv(scenario["saved_tbi_file"])
             
         # if we cannot read the input, try rebuilding, but if we are in build mode, raise an exception
         except Exception as e:
@@ -235,7 +236,7 @@ def setup_df() -> 0:
                 logging.exception("Unable to rebuild data in build mode")
                 raise e
             logging.info("Attempting to rebuild inputs manually from scratch")
-            raw = pd.read_csv(drive_data_dir + handler["input_tbi_file"], usecols=handler["keep_columns"])
+            raw = pd.read_csv(drive_data_dir + scenario["input_tbi_file"], usecols=handler["keep_columns"])
 
             df = prepare_data(raw, drive_data_dir)
         
@@ -523,18 +524,19 @@ def final_summary() -> None:
     
     # table for fastest alternative mode being within x minutes of driving
     bigger_markdown(f"The % of car trips and VMT that are {st.session_state.phase} and within x minutes from the fastest alternative mode can be seen in the below table.")
+    df["min_alt_mode_minus_car_duration"] = (df["min_feasible_alt_mode_duration"] - df["car_duration_seconds_adj"]) / 60
     duration_diff_df = pd.DataFrame(index=[r"% of Car Trips", r"% of VMT"])
     duration_diff_df["Fastest mode is within 5 minutes of driving"] = [
-        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"]) & (df["car_minus_min_alt_mode_duration"].abs() <= 5)]["vehicle_trips"].sum() / df[(df["mode"] == Mode.CAR)]["vehicle_trips"].sum() * 100: .1f}%',
-        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"]) & (df["car_minus_min_alt_mode_duration"].abs() <= 5)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.1f}%'
+        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"]) & (df["min_alt_mode_minus_car_duration"] <= 5)]["vehicle_trips"].sum() / df[(df["mode"] == Mode.CAR)]["vehicle_trips"].sum() * 100: .1f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"]) & (df["min_alt_mode_minus_car_duration"] <= 5)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.1f}%'
     ]
     duration_diff_df["Fastest mode is within 15 minutes of driving"] = [
-        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"]) & (df["car_minus_min_alt_mode_duration"].abs() <= 15)]["vehicle_trips"].sum() / df[(df["mode"] == Mode.CAR)]["vehicle_trips"].sum() * 100: .1f}%',
-        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"]) & (df["car_minus_min_alt_mode_duration"].abs() <= 15)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.1f}%'
+        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"]) & (df["min_alt_mode_minus_car_duration"] <= 15)]["vehicle_trips"].sum() / df[(df["mode"] == Mode.CAR)]["vehicle_trips"].sum() * 100: .1f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"]) & (df["min_alt_mode_minus_car_duration"] <= 15)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.1f}%'
     ]
     duration_diff_df["Fastest mode is within 30 minutes of driving"] = [
-        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"]) & (df["car_minus_min_alt_mode_duration"].abs() <= 30)]["vehicle_trips"].sum() / df[(df["mode"] == Mode.CAR)]["vehicle_trips"].sum() * 100: .1f}%',
-        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"]) & (df["car_minus_min_alt_mode_duration"].abs() <= 30)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.1f}%'
+        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"]) & (df["min_alt_mode_minus_car_duration"] <= 30)]["vehicle_trips"].sum() / df[(df["mode"] == Mode.CAR)]["vehicle_trips"].sum() * 100: .1f}%',
+        f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"]) & (df["min_alt_mode_minus_car_duration"] <= 30)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.1f}%'
     ]
     st.table(duration_diff_df)
     
@@ -580,7 +582,7 @@ def final_summary() -> None:
     # map of % of trips in each community regino that can shift competitively when considering the fastest alternative mode
     
     # use previously used dummy communities df to store this metric for each geography
-    df["competitive_timing"] = df["car_minus_min_alt_mode_duration"].abs() <= 15
+    df["competitive_timing"] = df["min_alt_mode_minus_car_duration"] <= 15
     
     community_pct = df.groupby(["community","competitive_timing"])[["vehicle_trips"]].sum().reset_index()
     community_pct['percent_vehicle_trips'] = round(100* community_pct['vehicle_trips'] / community_pct.groupby('community')['vehicle_trips'].transform('sum'),1)
