@@ -681,7 +681,7 @@ def final_summary() -> None:
                   category_orders = dict(income_cleaned=["Under $25,000", "$25,000-$49,999","$50,000-$74,999","$75,000-$99,999","$100,000-$149,999", "$150,000 or more","na"]))
     fig4.update_layout(
         title={
-            'text': 'Percent of fehicle trips that can shift modes by income group',
+            'text': 'Percent of vehicle trips that can shift modes by income group',
             'font': dict(
                 size=18
             ),
