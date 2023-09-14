@@ -604,7 +604,7 @@ def final_summary() -> None:
     )
     fig3.update_layout(margin=dict(l=0, r=0, b=0, t=40),
                 title=dict(
-                    text="Proportion of person trips in CTUs that can competitively shift to a non-car mode",
+                    text="Proportion of vehicle trips in CTUs that can competitively shift to a non-car mode",
                     font=dict(size=18),
                     x=0.4,
                     y=0.98,

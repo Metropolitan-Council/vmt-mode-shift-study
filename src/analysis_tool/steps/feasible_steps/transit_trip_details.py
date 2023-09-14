@@ -12,7 +12,8 @@ class TransitAccessDistanceStep(ContinuousStep):
     def __init__(self, df: pd.DataFrame, cutoff=0.95):
         super().__init__(df, "feasible_transit_access_distance", Mode.TRANSIT, cutoff, "transit_access_length_miles", Phase.FEASIBLE, "miles")
         
-        self.df.loc[:, "transit_access_length_miles"] = df["transit_access_length"] * 0.000621371
+        # is this necessary? 
+        self.df.loc[:, "transit_access_length_miles"] = df["transit_access_dist_mi"] 
     
     def get_summary_statistics(self):
         return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct())
