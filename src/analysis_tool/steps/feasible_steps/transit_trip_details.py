@@ -10,10 +10,9 @@ import inspect
 class TransitAccessDistanceStep(ContinuousStep):
     
     def __init__(self, df: pd.DataFrame, cutoff=0.95):
-        super().__init__(df, "feasible_transit_access_distance", Mode.TRANSIT, cutoff, "transit_access_length_miles", Phase.FEASIBLE, "miles")
+        super().__init__(df, "feasible_transit_access_distance", Mode.TRANSIT, cutoff, "transit_access_dist_mi", Phase.FEASIBLE, "miles")
         
-        # is this necessary? 
-        self.df.loc[:, "transit_access_length_miles"] = df["transit_access_dist_mi"] 
+        self.df.loc[:, self.name] = (~self.df["transit_access_dist_mi"].isna()) & (self.df["transit_access_dist_mi"]<99999)
     
     def get_summary_statistics(self):
         return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct())
@@ -29,30 +28,31 @@ class TransitAccessDistanceStep(ContinuousStep):
                 xanchor='center',
             ),
             xaxis_title=dict(
-                text="Probability Density",
+                text="Access Distance (miles)",
                 font=dict(size=16)
             ),
             yaxis_title=dict(
-                text="Access Distance (miles)",
+                text="Probability Density",
                 font=dict(size=16)
             ),
             legend=dict(
                 title="Legend",
                 font=dict(size=16)
             )
-        )
+        )        
+        fig.update_xaxes(autorange=True)
         return fig
     
     def apply_step(self):
         if self.cutoff_mode == CutoffMode.PCT:
-            super().apply_step(self.df[self.column_name] > self.df[self.df["mode"] == self.mode][self.column_name].quantile(self.cutoff))
+            super().apply_step((self.df[self.column_name] > self.df[self.df["mode"] == self.mode][self.column_name].quantile(self.cutoff)) | self.df[self.column_name].isna())
         elif self.cutoff_mode == CutoffMode.RAW:
-            super().apply_step(self.df[self.column_name] > self.cutoff)
+            super().apply_step((self.df[self.column_name] > self.cutoff) | self.df[self.column_name].isna())
         else:
             raise RuntimeError("Something went wrong with the cutoff mode enum")
     
     def __repr__(self):
-        return super().__repr__() + ". NOTE: With the current rerouting methodology, this step is superseded by assumptions made during rerouting."
+        return super().__repr__() + ". NOTE: It is possible that the results change slightly if disallowed trips are allowed to re-route."
     
     def get_text(self) -> list[str]:
         conclusion = super().get_text()
@@ -81,6 +81,147 @@ class TransitAccessDistanceStep(ContinuousStep):
         res = [inspect.cleandoc(x) for x in res]
         
         return res
+    
+
+class TransitEgressDistanceStep(ContinuousStep):
+    
+    def __init__(self, df: pd.DataFrame, cutoff=0.95):
+        super().__init__(df, "feasible_transit_egress_distance", Mode.TRANSIT, cutoff, "transit_egress_dist_mi", Phase.FEASIBLE, "miles")
+        
+        self.df.loc[:, self.name] = (~self.df["transit_egress_dist_mi"].isna()) & (self.df["transit_egress_dist_mi"]<99999)
+        
+    def get_summary_statistics(self):
+        return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct())
+    
+    def get_summary_figure(self):
+        fig = plot_density_plotly(self.df, self.mode, self.column_name, self.get_cutoff_pct())
+        fig.update_layout(
+            title=dict(
+                text="Rerouted transit egress distance for observed transit and car trips",
+                font=dict(size=18),
+                x=0.5,
+                y=0.9,
+                xanchor='center',
+            ),
+            xaxis_title=dict(
+                text="Egress Distance (miles)",
+                font=dict(size=16)
+            ),
+            yaxis_title=dict(
+                text="Probability Density",
+                font=dict(size=16)
+            ),
+            legend=dict(
+                title="Legend",
+                font=dict(size=16)
+            )
+        )        
+        fig.update_xaxes(autorange=True)
+        return fig
+    
+    def apply_step(self):
+        if self.cutoff_mode == CutoffMode.PCT:
+            super().apply_step((self.df[self.column_name] > self.df[self.df["mode"] == self.mode][self.column_name].quantile(self.cutoff)) | self.df[self.column_name].isna())
+        elif self.cutoff_mode == CutoffMode.RAW:
+            super().apply_step((self.df[self.column_name] > self.cutoff) | self.df[self.column_name].isna())
+        else:
+            raise RuntimeError("Something went wrong with the cutoff mode enum")
+    
+    def __repr__(self):
+        return super().__repr__() + ". NOTE: It is possible that the results change slightly if disallowed trips are allowed to re-route."
+    
+    def get_text(self) -> list[str]:
+        conclusion = super().get_text()
+        res = []
+        # intro
+        res.append("""Transit trips are a bit more complicated, because they come in several legs.  For example: 
+
+        Leg 1: Walk to Bus Stop
+        Leg 2: Ride Bus to Another Stop
+        Leg 3: Walk to Destination
+                   
+        Here we consider the maximum walking distance to or from a bus stop.  Here we can treat each walking leg on a transit trip as a separate observation.
+
+        It should be noted that currently, the transit re-routing already restricts the possibilty of switching to a transit trip, as it only returns a trip if the re-routing conditions are satisifed. This means this condition is already implicitly enforced in the re-routing analysis.""")
+        
+        # summary figure
+        res.append("""Below is a comparison between the distributions of the distance to a transit stop for observed transit versus that for observed car trips (re-routing data was used for both distributions to allow for a fairer comparison). It can be seen that generally, observed transit trips tend to have lower distances to transit stops, which makes sense as observed transit trips likely find transit attractive in some way, and this is one way it could be attractive to them.
+
+        The lines indicate the specified percentile of each of the distributions, and all of the orange distribution to the left of the blue line represent car trips that can feasibly switch to transit, when considering the egress distance indicator. At the default 95th percentile, it can be seen that all these trips can feasibly shift, as this represents re-routing distances, which already account for this factor when re-routing was then. """)
+        
+        # summary statistics
+        res.append("Here, the summary statistics for observed transit vs observed car trip distance to a transit stop can be seen, with the former drawing on the estimated TBI data and the latter drawing on the re-routing analysis. The specified percentile of the left column, drawing to some degree on the canoncial TBI data, can be used to determine the feasibility cutoff, which, at the default 95th percentile, is about 1.42. ")
+        
+        
+        res = res + conclusion
+        res = [inspect.cleandoc(x) for x in res]
+        
+        return res    
+        
+
+class TransitWaitTimeStep(ContinuousStep):
+    
+    def __init__(self, df: pd.DataFrame, cutoff=0.95):
+        super().__init__(df, "feasible_transit_wait_time", Mode.TRANSIT, cutoff, "transit_wait_time", Phase.FEASIBLE, "minutes")
+        
+        self.df.loc[:, self.name] = (~self.df["transit_wait_time"].isna()) & (self.df["transit_wait_time"]<1440)
+        
+    def get_summary_statistics(self):
+        return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct())
+    
+    def get_summary_figure(self):
+        fig = plot_density_plotly(self.df, self.mode, self.column_name, self.get_cutoff_pct())
+        fig.update_layout(
+            title=dict(
+                text="Rerouted transit wait time for observed transit and car trips",
+                font=dict(size=18),
+                x=0.5,
+                y=0.9,
+                xanchor='center',
+            ),
+            xaxis_title=dict(
+                text="Wait Time (min)",
+                font=dict(size=16)
+            ),
+            yaxis_title=dict(
+                text="Probability Density",
+                font=dict(size=16)
+            ),
+            legend=dict(
+                title="Legend",
+                font=dict(size=16)
+            )
+        )        
+        fig.update_xaxes(autorange=True)
+        return fig
+    
+    def apply_step(self):
+        if self.cutoff_mode == CutoffMode.PCT:
+            super().apply_step((self.df[self.column_name] > self.df[self.df["mode"] == self.mode][self.column_name].quantile(self.cutoff)) | self.df[self.column_name].isna())
+        elif self.cutoff_mode == CutoffMode.RAW:
+            super().apply_step((self.df[self.column_name] > self.cutoff) | self.df[self.column_name].isna())
+        else:
+            raise RuntimeError("Something went wrong with the cutoff mode enum")
+    
+    def __repr__(self):
+        return super().__repr__() + ". NOTE: It is possible that the results change slightly if disallowed trips are allowed to re-route."
+    
+    def get_text(self) -> list[str]:
+        conclusion = super().get_text()
+        res = []
+        # intro
+        res.append("""Transit wait time is calculated as the difference between the desired departure time and the departure time needed to catch the transit vehicle.  For trips to work, hold the arrival time constant, and the wait time is calculated as the early arrival time.""")
+        
+        # summary figure
+        res.append(""" """)
+        
+        # summary statistics
+        res.append("Here, the summary statistics for wait times.")
+        
+        res =res + conclusion
+        res = [inspect.cleandoc(x) for x in res]
+        
+        return res            
     
     
 class TransitTransferCountStep(ContinuousStep):

@@ -1,12 +1,15 @@
 ﻿feasible_steps: 
     - WalkDistanceStep
+    - WalkTimingStep
     - BikeDistanceStep
-    - TransitReroutedStep
     - BikeSnowDepthStep
     - BikeHighLTSDistStep
-    - WalkTimingStep
-    - TransitTimingStep
     - BikeTimingStep
+    - TransitReroutedStep
+    - TransitAccessDistanceStep
+    - TransitEgressDistanceStep
+    - TransitWaitTimeStep
+    - TransitTimingStep
 
 probable_steps: 
     - WalkDurationDifferenceStep
