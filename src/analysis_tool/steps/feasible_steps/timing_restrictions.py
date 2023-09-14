@@ -28,109 +28,34 @@ def convert_to_minutes(temp: str) -> float:
     return int(temp[0:2]) * 60 + int(temp[3:5]) + int(temp[6:8]) / 60
 
 
-def evaluate_timing(df: pd.DataFrame, alt_mode_times: str):
-    with st.spinner("Running timing logic"):
-        return df.groupby(["wave", "person_id", "travel_date"]).apply(lambda x: evaluate_feasible_timing(len(x), list(x["depart_time"]), x["duration"].values, list(x["d_purpose_category"]), list(x["o_purpose_category"]), x[alt_mode_times].values))
-
-def evaluate_feasible_timing(chunk_len: int, depart_time: list[str], leg_durations: 'np.ndarray[float]', d_purpose: list[str], o_purpose: list[str], alt_durations: list[float]):
-    # if there is only an inbound and outbound trip, don't need to worry about timing
-    if chunk_len == 2:
-        return True
-    leg_starts = np.fromiter(map(convert_to_minutes, depart_time), dtype=np.float32)
-    ref = leg_starts[0]
-    # start times, starting by 0 and accounting for midnight wraparound with the mod function, for each leg of the complete tour
-    leg_starts = (leg_starts - ref) % 1440
-    # calculate end times relative to the start times using the duration category
-    leg_ends = leg_starts + leg_durations
-    # these are arrays indicating whether each leg of the complete tour is a fixed arrival/departure
-    fixed_arrivals = is_in_set(d_purpose, fixed_purposes)
-    fixed_departures = is_in_set(o_purpose, fixed_purposes)
-            
-    # if the trip takes longer than 24 hours (usually because transit is not available), the timing is not feasible
-    if alt_durations.any() > 1440:
-        return False
-    
-    # sanity check; if the atlernative time for any of the legs can't be found, return False (means can't route it feasibly, usually for transit)
-    # do this as preprocessing
-    # if ~(chunk["trip_id"].isin(alt_mode_times.index).any()):
-    #     return False
-    # alternative durations for each of the legs
-    # if any invalid durations, means routing wasn't possible (generally only for transit)
-    # return true since this isn't due to timing issues
-    if -1 in alt_durations:
-        return True
-    # return true if there aren't any fixed things to work around
-    # also return true if there is only one fixed thing--all trips of these kind can be boiled down to traveling to the fixed thing and traveling back if all non-fixed, discretionary trips are omitted; which can be scheduled around feasibly
-    if not over_cutoff(fixed_arrivals, 1):
-        return True
-
-    alt_durations_cumul = np.cumsum(alt_durations)
-    
-    # keeps track of a previous fixed arrival trip to compare against a current one (see whether they overlap)
-    prev_fixed_arrival = -1
-    for i in range(chunk_len):
-        if fixed_arrivals[i]: # if current trip is fixed arrival
-            if prev_fixed_arrival != -1: # if there exists some previous fixed arrival trip
-                if leg_ends[i] - (alt_durations_cumul[i] - alt_durations_cumul[prev_fixed_arrival]) < leg_starts[prev_fixed_arrival + 1]: # if there is an overlap between this trip and the pregvious fixed arrival trip, not feasible
-                    return False
-            prev_fixed_arrival = i # update previous fixed arrival trip
-    # basically the same as the above, except work backwards since we want to consider whether the next trip would overlap
-    next_fixed_departure = -1
-    for i in range(chunk_len - 1, -1, -1):
-        if fixed_departures[i]:
-            if next_fixed_departure != -1:
-                if leg_starts[i] + (alt_durations_cumul[next_fixed_departure] - alt_durations_cumul[i]) > leg_ends[next_fixed_departure - 1]:
-                    return False
-                next_fixed_departure = i
-
-    # feasible if nothing is weird
-    return True
-
-
-def calculate_available_time_for_row(row): 
-    '''
-    Determines the available time in minutes without conflicting with an adjacent
-    required activity.  Always allow up to 5 minutes on each end.  Operates on a single row 
-    of data and returns a value in minutes. 
-    '''
-        
-    # if the current and the next place are fixed, you can't expand the travel time either way
-    if row['current_place_fixed'] & row['next_place_fixed']: 
-        return (row['arrive_time_dt'] - row['depart_time_dt']).seconds / 60 + 5 + 5
-        
-    # if the current and the previous place are fixed, you can use the time from the current activity
-    elif row['previous_place_fixed'] & row['next_place_fixed']: 
-        return (row['arrive_time_dt'] - row['arrival_time_here_dt']).seconds / 60 + 5 + 5
-    
-    # if no constraints, you have all day
-    else: 
-        return 1440
-    
-
 def calculate_available_time(df: pd.DataFrame): 
     '''
     Determines the available time in minutes without conflicting with an adjacent
-    required activity.  Always allow up to 5 minutes on each end.  Returns a series
+    required activity.  Allow up to 5 minutes early/late.  Returns a series
     of the available times in minutes
     '''
-
-    # don't re-calculate if not needed
-    if 'available_time' in df.columns: 
-        return df['available_time']
-        
         
     temp = df[['wave','person_id','travel_date','trip_id','depart_time', 'arrive_time', 'o_purpose_category', 'd_purpose_category']]
-    temp = temp.sort_values(['wave','person_id','travel_date','trip_id'])
 
     temp['depart_time_dt'] = pd.to_datetime(temp['depart_time'], format="%H:%M:%S")
     temp['arrive_time_dt'] = pd.to_datetime(temp['arrive_time'], format="%H:%M:%S")
-    temp['arrival_time_here_dt'] = temp.groupby(['wave','person_id','travel_date'])['arrive_time_dt'].shift(1)
 
-    temp['previous_place_fixed'] = temp.groupby(['wave','person_id','travel_date'])['o_purpose_category'].shift(1).apply(lambda x : x in ['Work', 'School', 'Escort'])
-    temp['current_place_fixed'] = temp['o_purpose_category'].apply(lambda x : x in ['Work', 'School', 'Escort'])
-    temp['next_place_fixed'] = temp['d_purpose_category'].apply(lambda x : x in ['Work', 'School', 'Escort'])
+    # only constrain mandatory activies
+    temp['fixed_depart'] = temp['o_purpose_category'].apply(lambda x : x in ['Work', 'School', 'Escort'])
+    temp['fixed_arrive'] = temp['d_purpose_category'].apply(lambda x : x in ['Work', 'School', 'Escort'])
 
-    temp['available_time'] = temp.apply(calculate_available_time_for_row, axis=1)
+    # calculate when I need to be there next    
+    temp = temp.sort_values(['wave','person_id','travel_date','trip_id'])
+    temp['fixed_depart_time'] = pd.to_datetime(np.where(temp['fixed_depart'], temp['depart_time'], None), format="%H:%M:%S")
+    temp['fixed_arrive_time'] = pd.to_datetime(np.where(temp['fixed_arrive'], temp['arrive_time'], None), format="%H:%M:%S")
+    temp['fixed_depart_time'] = temp.groupby(['wave','person_id','travel_date'])['fixed_depart_time'].ffill()
+    temp['fixed_arrive_time'] = temp.groupby(['wave','person_id','travel_date'])['fixed_arrive_time'].bfill()
+
+    # allow people to be 5 minutes late
+    temp['available_time'] = (temp['fixed_arrive_time'] - temp['fixed_depart_time']).apply(lambda x : x.seconds / 60 + 5)
+    
+    # missing values are unconstrained
+    temp['available_time'] = temp['available_time'].fillna(1440) 
     
     return temp['available_time']
 
@@ -140,24 +65,6 @@ class WalkTimingStep(CategoricalStep):
     def __init__(self, df: pd.DataFrame, column="walk_duration_seconds", scenario=False):
         super().__init__(df, "feasible_walk_timing", Mode.WALK, Phase.FEASIBLE)
         
-        '''
-        # make the name distinct if we are at a scenario
-        if scenario:
-            self.name = self.name + "_scenario_" + column
-        
-        if column == "walk_duration_seconds":
-            self.df.loc[:, "walk_duration"] = self.df[column] / 60
-            feasible_walking = evaluate_timing(df, "walk_duration")
-        else:
-            feasible_walking = evaluate_timing(df, column)
-            
-        feasible_walking = feasible_walking.reset_index().rename(columns={0: self.name})
-        
-        temp = df[["wave", "person_id", "travel_date"]].copy()
-        temp = temp.reset_index().merge(feasible_walking, on=["wave", "person_id", "travel_date"], how="left").set_index("index")
-        
-        df[self.name] = temp[self.name]
-        '''
         df['available_time'] = calculate_available_time(df)
         
         if column == "walk_duration_seconds":
@@ -207,25 +114,7 @@ class TransitTimingStep(CategoricalStep):
     
     def __init__(self, df: pd.DataFrame, column="transit_duration", scenario=False):
         super().__init__(df, "feasible_transit_timing", Mode.TRANSIT, Phase.FEASIBLE)
-        
-        '''
-        # make the name distinct if we are at a scenario
-        if scenario:
-            self.name = self.name + "_scenario_" + column
-        
-        if column == "transit_duration":
-            self.df.loc[:, column] = self.df[column].fillna(9999999)  # if there is no path, it's not feasible
-            feasible_transit = evaluate_timing(df, column)
-        else:
-            feasible_transit = evaluate_timing(df, column)
-        feasible_transit = feasible_transit.reset_index().rename(columns={0: self.name})
-        
-        temp = df[["wave", "person_id", "travel_date"]].copy()
-        temp = temp.reset_index().merge(feasible_transit, on=["wave", "person_id", "travel_date"], how="left").set_index("index")
-        
-        df[self.name] = temp[self.name]
-        '''
-        
+                
         df['available_time'] = calculate_available_time(df)
         
         if column == "transit_duration":
@@ -275,26 +164,7 @@ class BikeTimingStep(CategoricalStep):
     
     def __init__(self, df: pd.DataFrame, column="bike_duration_seconds_adj", scenario=False):
         super().__init__(df, "feasible_bike_timing", Mode.BIKE, Phase.FEASIBLE)
-        
-        '''
-        # make the name distinct if we are at a scenario
-        if scenario:
-            self.name = self.name + "_scenario_" + column
-        
-        if column == "bike_duration_seconds_adj":
-            self.df.loc[:, "bike_duration"] = self.df[column] / 60
-            feasible_biking = evaluate_timing(df, "bike_duration")
-        else:
-            feasible_biking = evaluate_timing(df, column)
-            
-        feasible_biking = feasible_biking.reset_index().rename(columns={0: self.name})
-        
-        temp = df[["wave", "person_id", "travel_date"]].copy()
-        temp = temp.reset_index().merge(feasible_biking, on=["wave", "person_id", "travel_date"], how="left").set_index("index")
-        
-        df[self.name] = temp[self.name]
-        '''
-        
+                
         df['available_time'] = calculate_available_time(df)
         
         if column == "bike_duration_seconds_adj":
