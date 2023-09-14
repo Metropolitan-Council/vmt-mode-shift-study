@@ -673,14 +673,15 @@ def final_summary() -> None:
     # creat the barplot
     fig4 = px.bar(income_pct[income_pct[f"{st.session_state.phase}_shift"]], 
                   x='income_cleaned', 
-                  y='vehicle_trips', 
-                  color='percent_vehicle_trips', 
-                  range_color=(0, 100), 
-                  labels={'percent_vehicle_trips':'Percent of vehicle trips'}, 
+                  y='percent_vehicle_trips', 
+                  color='vehicle_trips', 
+                  range_color=(0, 2000000), 
+                  labels={'percent_vehicle_trips':'Percent of vehicle trips', 
+                          'vehicle_trips': 'Total vehicle trips'},
                   category_orders = dict(income_cleaned=["Under $25,000", "$25,000-$49,999","$50,000-$74,999","$75,000-$99,999","$100,000-$149,999", "$150,000 or more","na"]))
     fig4.update_layout(
         title={
-            'text': 'Vehicle trips that can shift modes by income group',
+            'text': 'Percent of fehicle trips that can shift modes by income group',
             'font': dict(
                 size=18
             ),
@@ -689,7 +690,7 @@ def final_summary() -> None:
             'y': 0.9
         },
         xaxis_title=dict(text="Income group", font=dict(size=16)),
-        yaxis_title=dict(text=f"Vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
+        yaxis_title=dict(text=f"Percent of vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
         showlegend=False
     )
     st.plotly_chart(fig4)
@@ -702,14 +703,15 @@ def final_summary() -> None:
     
     fig5 = px.bar(purpose_pct[purpose_pct[f"{st.session_state.phase}_shift"]], 
                   x='purpose_cleaned', 
-                  y='vehicle_trips', 
-                  color='percent_vehicle_trips', 
-                  range_color=(0, 100), 
-                  labels={'percent_vehicle_trips':'Percent of vehicle trips'}, 
+                  y='percent_vehicle_trips', 
+                  color='vehicle_trips', 
+                  range_color=(0, 2000000), 
+                  labels={'percent_vehicle_trips':'Percent of vehicle trips', 
+                          'vehicle_trips': 'Total vehicle trips'},
                   category_orders = dict(purpose_cleaned=["Work", "School", "Escort", "Shop", "Errand", "Meal", "Social/Recreation", "Other"]))
     fig5.update_layout(
         title={
-            'text': 'Vehicle trips that can shift mode by trip purpose',
+            'text': 'Percent of vehicle trips that can shift mode by trip purpose',
             'font': dict(
                 size=18
             ),
@@ -718,7 +720,7 @@ def final_summary() -> None:
             'y': 0.9
         },
         xaxis_title=dict(text="Trip Purpose", font=dict(size=16)),
-        yaxis_title=dict(text=f"Vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
+        yaxis_title=dict(text=f"Percent of vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
         legend=dict(font=dict(size=16)),
         showlegend=False
     )
@@ -732,14 +734,15 @@ def final_summary() -> None:
     
     fig6 = px.bar(person_pct[person_pct[f"{st.session_state.phase}_shift"]], 
                   x='person_type', 
-                  y='vehicle_trips', 
-                  color='percent_vehicle_trips', 
-                  range_color=(0, 100), 
-                  labels={'percent_vehicle_trips':'Percent of vehicle trips'}, 
+                  y='percent_vehicle_trips', 
+                  color='vehicle_trips', 
+                  range_color=(0, 3000000), 
+                  labels={'percent_vehicle_trips':'Percent of vehicle trips', 
+                          'vehicle_trips': 'Total vehicle trips'},
                   category_orders = dict(person_type=["Working adult with kids", "Working adult without kids", "Non-working adult with kids","Non-working adult without kids","Retired","College student","Child"]))
     fig6.update_layout(
         title={
-            'text': 'Vehicle trips that can shift mode by person type',
+            'text': 'Percent of vehicle trips that can shift mode by person type',
             'font': dict(
                 size=18
             ),
@@ -748,7 +751,7 @@ def final_summary() -> None:
             'y': 0.9
         },
         xaxis_title=dict(text="Person type", font=dict(size=16)),
-        yaxis_title=dict(text=f"Vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
+        yaxis_title=dict(text=f"Percent of vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
         legend=dict(font=dict(size=16)),
         showlegend=False
     )
@@ -762,13 +765,14 @@ def final_summary() -> None:
     
     fig7 = px.bar(gender_pct[gender_pct[f"{st.session_state.phase}_shift"]], 
                   x='gender_cleaned', 
-                  y='vehicle_trips', 
-                  color='percent_vehicle_trips',
-                  range_color=(0, 100), 
-                  labels={'percent_vehicle_trips':'Percent of vehicle trips'})
+                  y='percent_vehicle_trips', 
+                  color='vehicle_trips', 
+                  range_color=(0, 5000000), 
+                  labels={'percent_vehicle_trips':'Percent of vehicle trips', 
+                          'vehicle_trips': 'Total vehicle trips'})
     fig7.update_layout(
         title={
-            'text': 'Vehicle trips that can shift mode by gender',
+            'text': 'Percent of vehicle trips that can shift mode by gender',
             'font': dict(
                 size=18
             ),
@@ -777,7 +781,7 @@ def final_summary() -> None:
             'y': 0.9
         },
         xaxis_title=dict(text="Gender", font=dict(size=16)),
-        yaxis_title=dict(text=f"Vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
+        yaxis_title=dict(text=f"Percent of vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
         legend=dict(font=dict(size=16)),
         showlegend=False
     )
@@ -791,10 +795,11 @@ def final_summary() -> None:
     
     fig8 = px.bar(wave_pct[wave_pct[f"{st.session_state.phase}_shift"]], 
                   x='wave', 
-                  y='vehicle_trips', 
-                  color='percent_vehicle_trips',
-                  range_color=(0, 100), 
-                  labels={'percent_vehicle_trips':'Percent of vehicle trips'})
+                  y='percent_vehicle_trips', 
+                  color='vehicle_trips',
+                  range_color=(0, 5000000), 
+                  labels={'percent_vehicle_trips':'Percent of vehicle trips', 
+                          'vehicle_trips': 'Total vehicle trips'})
     fig8.update_layout(
         title={
             'text': 'Percent of vehicle trips that can shift mode by TBI wave',
@@ -806,7 +811,7 @@ def final_summary() -> None:
             'y': 0.9
         },
         xaxis_title=dict(text="Wave", font=dict(size=16)),
-        yaxis_title=dict(text=f"Vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
+        yaxis_title=dict(text=f"Percent of vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
         legend=dict(font=dict(size=16)),
         showlegend=False
     )
