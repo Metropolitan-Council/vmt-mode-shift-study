@@ -224,12 +224,9 @@ def setup_df() -> 0:
     if not handler["build"]:
         drive_data_dir = keyring.get_password('msp', 'vmt_reduction_dir')
         
-    built_from_raw = False
-        
     # if we are forcing reinitialization and we are not in build mode, reinitialize
     if handler["force_reinitialize"] and not handler["build"]:
         logging.info("Rebuilding data from raw inputs")
-        built_from_raw = True
         
         # read in data & pipe it through the cleaning function
         raw = pd.read_csv(drive_data_dir + handler["input_tbi_file"])
@@ -257,12 +254,6 @@ def setup_df() -> 0:
             raw = pd.read_csv(drive_data_dir + handler["input_tbi_file"])
 
             df = prepare_data(raw, drive_data_dir)
-            
-            built_from_raw = True
-            
-    if not built_from_raw and not handler["build"] and handler["refresh_scenarios"]:
-        logging.info("Refreshing scenario columns of the columns and resaving")
-        add_scenarios(df, True)
         
     # store the generated df into a session state variable
     logging.info("Setting up the data inputs has succeeded")
