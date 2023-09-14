@@ -117,7 +117,6 @@ scenarios:
           file_path:
         double_transit:
           description: "Double frequency of all transit routes"
-          dissolve: True  # whether or not to go through normal transit preprocessing
           mappings:
             duration_rerouted: transit_duration_rerouted
             distance_rerouted: transit_distance_rerouted
