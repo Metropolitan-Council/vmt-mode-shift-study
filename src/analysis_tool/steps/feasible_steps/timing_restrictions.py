@@ -34,30 +34,30 @@ def calculate_available_time(df: pd.DataFrame):
     required activity.  Allow up to 5 minutes early/late.  Returns a series
     of the available times in minutes
     '''
-        
-    temp = df[['wave','person_id','travel_date','trip_id','depart_time', 'arrive_time', 'o_purpose_category', 'd_purpose_category']]
 
-    temp['depart_time_dt'] = pd.to_datetime(temp['depart_time'], format="%H:%M:%S")
-    temp['arrive_time_dt'] = pd.to_datetime(temp['arrive_time'], format="%H:%M:%S")
+    df['depart_time_dt'] = pd.to_datetime(df['depart_time'], format="%H:%M:%S")
+    df['arrive_time_dt'] = pd.to_datetime(df['arrive_time'], format="%H:%M:%S")
 
     # only constrain mandatory activies
-    temp['fixed_depart'] = temp['o_purpose_category'].apply(lambda x : x in ['Work', 'School', 'Escort'])
-    temp['fixed_arrive'] = temp['d_purpose_category'].apply(lambda x : x in ['Work', 'School', 'Escort'])
+    #df['fixed_depart'] = df['o_purpose_category'].apply(lambda x : x in ['Work', 'School', 'Escort'])
+    #df['fixed_arrive'] = df['d_purpose_category'].apply(lambda x : x in ['Work', 'School', 'Escort'])
+    df['fixed_depart'] = df['o_purpose_category'].apply(lambda x : x != 'Home')
+    df['fixed_arrive'] = df['d_purpose_category'].apply(lambda x : x != 'Home')
 
     # calculate when I need to be there next    
-    temp = temp.sort_values(['wave','person_id','travel_date','trip_id'])
-    temp['fixed_depart_time'] = pd.to_datetime(np.where(temp['fixed_depart'], temp['depart_time'], None), format="%H:%M:%S")
-    temp['fixed_arrive_time'] = pd.to_datetime(np.where(temp['fixed_arrive'], temp['arrive_time'], None), format="%H:%M:%S")
-    temp['fixed_depart_time'] = temp.groupby(['wave','person_id','travel_date'])['fixed_depart_time'].ffill()
-    temp['fixed_arrive_time'] = temp.groupby(['wave','person_id','travel_date'])['fixed_arrive_time'].bfill()
+    df = df.sort_values(['wave','person_id','travel_date','trip_id'])
+    df['fixed_depart_time'] = pd.to_datetime(np.where(df['fixed_depart'], df['depart_time'], None), format="%H:%M:%S")
+    df['fixed_arrive_time'] = pd.to_datetime(np.where(df['fixed_arrive'], df['arrive_time'], None), format="%H:%M:%S")
+    df['fixed_depart_time'] = df.groupby(['wave','person_id','travel_date'])['fixed_depart_time'].ffill()
+    df['fixed_arrive_time'] = df.groupby(['wave','person_id','travel_date'])['fixed_arrive_time'].bfill()
 
-    # allow people to be 5 minutes late
-    temp['available_time'] = (temp['fixed_arrive_time'] - temp['fixed_depart_time']).apply(lambda x : x.seconds / 60 + 5)
+    # allow people to be 5 minutes late and leave 5 minutes early
+    df['available_time'] = (df['fixed_arrive_time'] - df['fixed_depart_time']).apply(lambda x : x.seconds / 60 + 5 + 5)
     
     # missing values are unconstrained
-    temp['available_time'] = temp['available_time'].fillna(1440) 
+    df['available_time'] = df['available_time'].fillna(1440) 
     
-    return temp['available_time']
+    return df['available_time']
 
 
 class WalkTimingStep(CategoricalStep):
