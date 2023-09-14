@@ -27,6 +27,7 @@ def over_cutoff(x, cutoff: int):
 def convert_to_minutes(temp: str) -> float:
     return int(temp[0:2]) * 60 + int(temp[3:5]) + int(temp[6:8]) / 60
 
+
 def evaluate_timing(df: pd.DataFrame, alt_mode_times: str):
     with st.spinner("Running timing logic"):
         return df.groupby(["wave", "person_id", "travel_date"]).apply(lambda x: evaluate_feasible_timing(len(x), list(x["depart_time"]), x["duration"].values, list(x["d_purpose_category"]), list(x["o_purpose_category"]), x[alt_mode_times].values))
@@ -85,11 +86,61 @@ def evaluate_feasible_timing(chunk_len: int, depart_time: list[str], leg_duratio
     # feasible if nothing is weird
     return True
 
+
+def calculate_available_time_for_row(row): 
+    '''
+    Determines the available time in minutes without conflicting with an adjacent
+    required activity.  Always allow up to 5 minutes on each end.  Operates on a single row 
+    of data and returns a value in minutes. 
+    '''
+        
+    # if the current and the next place are fixed, you can't expand the travel time either way
+    if row['current_place_fixed'] & row['next_place_fixed']: 
+        return (row['arrive_time_dt'] - row['depart_time_dt']).seconds / 60 + 5 + 5
+        
+    # if the current and the previous place are fixed, you can use the time from the current activity
+    elif row['previous_place_fixed'] & row['next_place_fixed']: 
+        return (row['arrive_time_dt'] - row['arrival_time_here_dt']).seconds / 60 + 5 + 5
+    
+    # if no constraints, you have all day
+    else: 
+        return 1440
+    
+
+def calculate_available_time(df: pd.DataFrame): 
+    '''
+    Determines the available time in minutes without conflicting with an adjacent
+    required activity.  Always allow up to 5 minutes on each end.  Returns a series
+    of the available times in minutes
+    '''
+
+    # don't re-calculate if not needed
+    if 'available_time' in df.columns: 
+        return df['available_time']
+        
+        
+    temp = df[['wave','person_id','travel_date','trip_id','depart_time', 'arrive_time', 'o_purpose_category', 'd_purpose_category']]
+    temp = temp.sort_values(['wave','person_id','travel_date','trip_id'])
+
+    temp['depart_time_dt'] = pd.to_datetime(temp['depart_time'], format="%H:%M:%S")
+    temp['arrive_time_dt'] = pd.to_datetime(temp['arrive_time'], format="%H:%M:%S")
+    temp['arrival_time_here_dt'] = temp.groupby(['wave','person_id','travel_date'])['arrive_time_dt'].shift(1)
+
+    temp['previous_place_fixed'] = temp.groupby(['wave','person_id','travel_date'])['o_purpose_category'].shift(1).apply(lambda x : x in ['Work', 'School', 'Escort'])
+    temp['current_place_fixed'] = temp['o_purpose_category'].apply(lambda x : x in ['Work', 'School', 'Escort'])
+    temp['next_place_fixed'] = temp['d_purpose_category'].apply(lambda x : x in ['Work', 'School', 'Escort'])
+
+    temp['available_time'] = temp.apply(calculate_available_time_for_row, axis=1)
+    
+    return temp['available_time']
+
+
 class WalkTimingStep(CategoricalStep):
     
     def __init__(self, df: pd.DataFrame, column="walk_duration_seconds", scenario=False):
         super().__init__(df, "feasible_walk_timing", Mode.WALK, Phase.FEASIBLE)
         
+        '''
         # make the name distinct if we are at a scenario
         if scenario:
             self.name = self.name + "_scenario_" + column
@@ -106,7 +157,16 @@ class WalkTimingStep(CategoricalStep):
         temp = temp.reset_index().merge(feasible_walking, on=["wave", "person_id", "travel_date"], how="left").set_index("index")
         
         df[self.name] = temp[self.name]
+        '''
+        df['available_time'] = calculate_available_time(df)
         
+        if column == "walk_duration_seconds":
+            self.df.loc[:, "walk_duration"] = self.df[column] / 60
+            df[self.name] = (df["walk_duration"] <= df['available_time'])
+        else:
+            df[self.name] = (df[column] <= df['available_time'])
+            
+     
     def get_summary_statistics(self):
         return show_value_counts(self.df, [[x, self.name] for x in [self.mode, Mode.CAR]])
     
@@ -148,6 +208,7 @@ class TransitTimingStep(CategoricalStep):
     def __init__(self, df: pd.DataFrame, column="transit_duration", scenario=False):
         super().__init__(df, "feasible_transit_timing", Mode.TRANSIT, Phase.FEASIBLE)
         
+        '''
         # make the name distinct if we are at a scenario
         if scenario:
             self.name = self.name + "_scenario_" + column
@@ -163,6 +224,16 @@ class TransitTimingStep(CategoricalStep):
         temp = temp.reset_index().merge(feasible_transit, on=["wave", "person_id", "travel_date"], how="left").set_index("index")
         
         df[self.name] = temp[self.name]
+        '''
+        
+        df['available_time'] = calculate_available_time(df)
+        
+        if column == "transit_duration":
+            self.df.loc[:, column] = self.df[column].fillna(9999999)  # if there is no path, it's not feasible
+            df[self.name] = (df["transit_duration"] <= df['available_time'])
+        else:
+            df[self.name] = (df[column] <= df['available_time'])
+            
         
     def get_summary_statistics(self):
         return show_value_counts(self.df, [[x, self.name] for x in [self.mode, Mode.CAR]])
@@ -205,6 +276,7 @@ class BikeTimingStep(CategoricalStep):
     def __init__(self, df: pd.DataFrame, column="bike_duration_seconds_adj", scenario=False):
         super().__init__(df, "feasible_bike_timing", Mode.BIKE, Phase.FEASIBLE)
         
+        '''
         # make the name distinct if we are at a scenario
         if scenario:
             self.name = self.name + "_scenario_" + column
@@ -221,6 +293,16 @@ class BikeTimingStep(CategoricalStep):
         temp = temp.reset_index().merge(feasible_biking, on=["wave", "person_id", "travel_date"], how="left").set_index("index")
         
         df[self.name] = temp[self.name]
+        '''
+        
+        df['available_time'] = calculate_available_time(df)
+        
+        if column == "bike_duration_seconds_adj":
+            self.df.loc[:, "bike_duration"] = self.df[column] / 60
+            df[self.name] = (df["bike_duration"] <= df['available_time'])
+        else:
+            df[self.name] = (df[column] <= df['available_time'])
+            
         
     def get_summary_statistics(self):
         return show_value_counts(self.df, [[x, self.name] for x in [self.mode, Mode.CAR]])
