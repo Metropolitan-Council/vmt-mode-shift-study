@@ -1,6 +1,6 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.9.2"
+julia_version = "1.9.3"
 manifest_format = "2.0"
 project_hash = "1b268abdac8b1f3ea0f8d0147a23c9d91b04247b"
 
@@ -1434,9 +1434,9 @@ version = "0.4.75"
 
 [[deps.TransitRouter]]
 deps = ["ArchGDAL", "ArgParse", "CSV", "DataFrames", "Dates", "Geodesy", "LibGEOS", "Logging", "OSRM", "ProgressBars", "Revise", "Serialization", "Tables", "ThreadsX", "ZipFile"]
-git-tree-sha1 = "6aeb04eb0321aba11c813d0d8e07a4cc87f25bff"
+git-tree-sha1 = "e81c6d1e5323ef79eb3aac1a67abea2bab06abeb"
 uuid = "f9e57d04-be1f-4339-a529-971801331ddb"
-version = "0.2.0"
+version = "0.2.1"
 
 [[deps.URIs]]
 git-tree-sha1 = "074f993b0ca030848b897beff716d93aca60f06a"
