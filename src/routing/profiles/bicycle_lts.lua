@@ -1,9 +1,6 @@
 -- Bicycle profile
 
--- originally 59, from the San Francisco paper, but reduced as that seemed excessive
-FLAT_DISTANCE_PER_VERTICAL_METER = 25
-
--- TODO version incompatibilities with api version 2
+-- TODO version incompatibilities with api version 2?
 api_version = 4
 
 Set = require('lualib/set')
@@ -23,6 +20,8 @@ function setup()
   local default_speed = 12 * 1.609
   local walking_speed = 4.86
   local use_lts = true
+  -- originally 59, from the San Francisco paper, but reduced as that seemed excessive
+  local flat_distance_per_vertical_meter = 25
 
   -- apply scenarios
   local SCENARIO = assert(os.getenv("BIKE_SCENARIO"), "BIKE_SCENARIO environment variable not specified!")
@@ -31,11 +30,35 @@ function setup()
     -- no-op, keep defaults
   elseif SCENARIO == "all-lts1" then
     use_lts = false
+  elseif SCENARIO == "e-bike" then
+    -- e-bike scenario also implies all LTS1
+    use_lts = false
+    -- slopes don't matter
+    flat_distance_per_vertical_meter = 0
+    -- Speeds are slightly higher, by a factor of 13%, based on several articles
+    -- Mean speed increase of 13.7%: Schleinitz, K., Petzoldt, T., Franke-Bartholdt, L., Krems, J., & Gehlert, T. (2017). The German Naturalistic
+    --   Cycling Study – Comparing cycling speed of riders of different e-bikes and conventional bicycles. Safety 
+    --   Science, 92, 290–297. https://doi.org/10.1016/j.ssci.2015.07.027
+    -- This is also consistent with evidence from China and Portugal,
+    -- Mean speed increase of 10-15%: Fishman, E., & Cherry, C. (2016). E-bikes in the Mainstream: Reviewing a Decade of Research. Transport Reviews,
+    --  36(1), 72–91. https://doi.org/10.1080/01441647.2015.1069907
+    -- Mean speed increase of 13%: Baptista, P., Pina, A., Duarte, G., Rolim, C., Pereira, G., Silva, C., & Farias, T. (2015). From on-road trial
+    --   evaluation of electric and conventional bicycles to comparison with other urban transport modes: Case study in
+    --   the city of Lisbon, Portugal. Energy Conversion and Management, 92, 10–18. https://doi.org/10.1016/j.enconman.2014.12.043
+    -- Note that all of these articles evaluated _mean_ speeds, which is not exactly what we're doing here. Check after calculation the change in mean
+    -- speed from the all LTS 1 scenario.
+    default_speed = default_speed * 1.13
+
+
+
+  else
+    error("Unknown scenario " .. SCENARIO)
   end   
 
   return {
     -- scenario controls
     use_lts = use_lts, -- set to false to treat everything as LTS 1
+    flat_distance_per_vertical_meter = flat_distance_per_vertical_meter,
 
     properties = {
       u_turn_penalty                = 20,
@@ -836,10 +859,10 @@ function process_segment(profile, segment)
     --print("Weight was " .. segment.weight)
     -- calculate the weight factor. Each meter of elevation gain is equivalent to an additional 59 meters flat.
     local weight_per_meter = segment.weight / segment.distance
-    segment.weight = segment.weight + weight_per_meter * FLAT_DISTANCE_PER_VERTICAL_METER * math.max(0, elevation_gain_mm) / 1000
+    segment.weight = segment.weight + weight_per_meter * profile.flat_distance_per_vertical_meter * math.max(0, elevation_gain_mm) / 1000
     --print("Weight is " .. segment.weight)
   else
-    print("Skipping elevation on non-startpoint (bridge/tunnel)")
+    --print("Skipping elevation on non-startpoint (bridge/tunnel)")
   end
 end
 
