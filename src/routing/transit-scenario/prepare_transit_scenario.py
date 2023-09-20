@@ -123,8 +123,8 @@ def process_feed(feed):
                 else:
                     dupe_stoptimes = stoptimes.copy()
                     dupe_stoptimes["trip_id"] = dupetrip["trip_id"]
-                    dupe_stoptimes["arrival_time"] = (dupe_stoptimes.arrival_time.apply(gtfs_time_to_seconds) + headway / 2).astype("Int64").apply(seconds_to_gtfs_time)
-                    dupe_stoptimes["departure_time"] = (dupe_stoptimes.departure_time.apply(gtfs_time_to_seconds) + headway / 2).astype("Int64").apply(seconds_to_gtfs_time)
+                    dupe_stoptimes["arrival_time"] = (dupe_stoptimes.arrival_time.apply(gtfs_time_to_seconds) + headway // 2).astype("Int64").apply(seconds_to_gtfs_time)
+                    dupe_stoptimes["departure_time"] = (dupe_stoptimes.departure_time.apply(gtfs_time_to_seconds) + headway // 2).astype("Int64").apply(seconds_to_gtfs_time)
                     new_stoptimes.append(dupe_stoptimes)
                     new_trips.append(dupetrip)
 
