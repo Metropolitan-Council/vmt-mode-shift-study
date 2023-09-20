@@ -17,7 +17,7 @@ COMMIT_HASH=$(cd "$routing"; git rev-parse HEAD | head -c 5)
 OUT_FILE="${OUT_DIR}/bike-ebike-${COMMIT_HASH}.parquet"
 SEGMENTS_FILE="${OUT_DIR}/bike-ebike-${COMMIT_HASH}-segments.parquet"
 
-if [ ! -e "$OUT_FILE" -o -e "$SEGMENTS_FILE" ]; then
+if [ -e "$OUT_FILE" ]; then
     echo "Output files already exist!"
 else
     # no reason to write segments; everything is LTS 1

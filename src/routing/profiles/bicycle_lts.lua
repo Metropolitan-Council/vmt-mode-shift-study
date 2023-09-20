@@ -45,8 +45,9 @@ function setup()
     -- Mean speed increase of 13%: Baptista, P., Pina, A., Duarte, G., Rolim, C., Pereira, G., Silva, C., & Farias, T. (2015). From on-road trial
     --   evaluation of electric and conventional bicycles to comparison with other urban transport modes: Case study in
     --   the city of Lisbon, Portugal. Energy Conversion and Management, 92, 10–18. https://doi.org/10.1016/j.enconman.2014.12.043
-    -- Note that all of these articles evaluated _mean_ speeds, which is not exactly what we're doing here. Check after calculation the change in mean
-    -- speed from the all LTS 1 scenario.
+
+    -- Note that all of these articles evaluated _mean_ speeds, which is not exactly what we're doing here. However, this does result in a mean
+    -- speed increase of 13% when combined with route changes due to the elevation situation.
     default_speed = default_speed * 1.13
 
 
