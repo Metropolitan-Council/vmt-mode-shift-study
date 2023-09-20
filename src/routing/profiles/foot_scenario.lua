@@ -165,6 +165,11 @@ function setup()
     bridge_speeds = {
     },
 
+    -- Note that having lower walking speeds for some surfaces may lead to increases in travel distance
+    -- when applying the pedestrian stress scenario. The main reason for this is that these trips were
+    -- previously using gravel roads/trails, which have low pedestrian stress, but are penalized by OSRM
+    -- In the scenario, the router finds a longer but faster path on paved roads that were previously
+    -- penalized due to pedestrian stress.
     surface_speeds = {
       fine_gravel =   walking_speed*0.75,
       gravel =        walking_speed*0.75,
