@@ -24,7 +24,26 @@ const HOW_MUCH_A_TRIP_CAN_VIOLATE_REQUESTED_DEPARTURE_ARRIVAL_TIME_WHEN_ALTERNAT
 # is earlier in this list will be the end that is constrained. Anything not in the list is assumed
 # to be after the end of the list
 const CONSTRAINED_PURPOSE_CATEGORY_PECKING_ORDER = [
-    "Work"
+    "Medical visit (e.g., doctor, dentist)",
+    "Errand with appointment (e.g., haircut, accountant)",
+    "Errand with appointment (e.g., haircut)",
+    
+    "K-12 school",
+    "Attend K-12 school",
+    "Daycare or preschool",
+    "Attend daycare or preschool",
+    "College/university",
+    "Attend college/university",
+    "Other education-related (e.g., field trip)",
+    "Attend other education-related activity (e.g., field trip)",
+    "Attend vocational education class",
+    "Other type of class (e.g., cooking class)",
+    "Attend other type of class (e.g., cooking class)",
+    
+    "Primary workplace",
+    "Work-related activity (e.g., meeting, delivery, worksite)",
+    "Went to work-related activity (e.g., meeting, delivery, worksite)",
+    "Other work-related"
 ]
 
 # Like most transit routing algorithms, RAPTOR and range-RAPTOR guarantee they will find the earliest arrival at the destination,
@@ -284,6 +303,7 @@ select_representative_date(date) = Dates.tonext(x -> dayofweek(x) == dayofweek(d
 function do_transit_route(net, osrm, max_rides, max_access_dist_meters, max_egress_dist_meters, include_geometry, data_itr, n_rows)
     # uncomment for single-thread debugging
     #map(enumerate(data_itr)) do (i, row)
+
     ThreadsX.mapi(enumerate(data_itr)) do (i, row)
         if i % 10_000 == 0
             @info "Processed $i trips ($(round(i / n_rows * 100, digits=1))%)"
@@ -293,8 +313,8 @@ function do_transit_route(net, osrm, max_rides, max_access_dist_meters, max_egre
 
         # figure out if we're routing forwards or backwards (which end of trip is constrained)
         # if purpose is not in constrained categories, it is lowest priority (typemax(Int64))
-        origin_priority = something(findfirst(row.o_purpose_category .== CONSTRAINED_PURPOSE_CATEGORY_PECKING_ORDER), typemax(Int64))
-        destination_priority = something(findfirst(row.d_purpose_category .== CONSTRAINED_PURPOSE_CATEGORY_PECKING_ORDER), typemax(Int64))
+        origin_priority = something(findfirst(row.o_purpose .== CONSTRAINED_PURPOSE_CATEGORY_PECKING_ORDER), typemax(Int64))
+        destination_priority = something(findfirst(row.d_purpose .== CONSTRAINED_PURPOSE_CATEGORY_PECKING_ORDER), typemax(Int64))
 
         # we route in reverse iff the destination is higher priority (smaller number) than the origin priority
         # otherwise (if they are equal or origin priority is higher) we route forwards
@@ -534,7 +554,11 @@ function main(args)
     else
         @info "Transit not requested"
         nothing
-    end 
+    end
+
+    # make sure the pecking orders make sense (mostly to catch typos)
+    all(CONSTRAINED_PURPOSE_CATEGORY_PECKING_ORDER .∈ Ref(Set(data.d_purpose) ∪ Set(data.o_purpose))) ||
+        error("Some constrained trip purposes do not occur in the TBI!")
 
     if transit
         time = @elapsed result = do_transit_route(transit_network, osrm, args["max-rides"], args["max-access-distance-meters"], args["max-egress-distance-meters"],
