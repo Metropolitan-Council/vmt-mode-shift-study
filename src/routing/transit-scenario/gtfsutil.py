@@ -21,17 +21,17 @@ Read a GTFS feed into a NamedTuple
 def read_gtfs(filename):
     with zipfile.ZipFile(filename) as z:
         with z.open("routes.txt") as c:
-            routes = pd.read_csv(c)
+            routes = pd.read_csv(c, dtype={"route_id": "str"})
         with z.open("trips.txt") as c:
-            trips = pd.read_csv(c, dtype={"shape_id": "str"}).set_index("trip_id")
+            trips = pd.read_csv(c, dtype={"shape_id": "str", "route_id": "str", "service_id": "str"}).set_index("trip_id")
         with z.open("stops.txt") as c:
-            stops = pd.read_csv(c)
+            stops = pd.read_csv(c, dtype={"stop_id": "str"})
         with z.open("stop_times.txt") as c:
-            stop_times = pd.read_csv(c).set_index(["trip_id", "stop_sequence"]).sort_index()
+            stop_times = pd.read_csv(c, dtype={"stop_id": "str", "trip_id": "str"}).set_index(["trip_id", "stop_sequence"]).sort_index()
         with z.open("calendar.txt") as c:
-            calendar = pd.read_csv(c).set_index("service_id")
+            calendar = pd.read_csv(c, dtype={"service_id": "str"}).set_index("service_id")
         with z.open("calendar_dates.txt") as c:
-            calendar_dates = pd.read_csv(c)
+            calendar_dates = pd.read_csv(c, dtype={"service_id": "str"})
             if len(calendar_dates) == 0:
                 calendar_dates = pd.DataFrame({"service_id": [], "date": []})
             
@@ -39,7 +39,7 @@ def read_gtfs(filename):
         with z.open("agency.txt") as c:
             agency = pd.read_csv(c)
         with z.open("shapes.txt") as c:
-            shapes = pd.read_csv(c)
+            shapes = pd.read_csv(c, dtype={"shape_id": "str"})
         
         return GtfsFeed(
             routes, 
