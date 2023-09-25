@@ -352,39 +352,40 @@ def prepare_data(df: pd.DataFrame, data_dir: str) -> pd.DataFrame:
         bike = add_mode_to_column_name(bike, 'bike')
         transit_grouped = add_mode_to_column_name(transit_grouped, 'transit')
         
-        # helper function for querying from the car rerouting file
-        def get_car_data(row, field):
-            hour = int(row["arrive_time"][0:2])
-            sunday = row["travel_dow"] == "Sunday"
-            saturday = row["travel_dow"] == "Saturday"
-            if sunday:
-                query = "sundays"
-            elif saturday:
-                query = "saturdays_"
-            else:
-                query = "weekdays_"
+        # # helper function for querying from the car rerouting file
+        # def get_car_data(row, field):
+        #     hour = int(row["arrive_time"][0:2])
+        #     sunday = row["travel_dow"] == "Sunday"
+        #     saturday = row["travel_dow"] == "Saturday"
+        #     if sunday:
+        #         query = "sundays"
+        #     elif saturday:
+        #         query = "saturdays_"
+        #     else:
+        #         query = "weekdays_"
             
-            if hour >= 0 and hour <= 5:
-                query += "0-6"
-            elif hour >= 20 and hour <= 23:
-                query += "20-24"
-            else:
-                query += str(hour) + "-" + str(hour + 1)
+        #     if hour >= 0 and hour <= 5:
+        #         query += "0-6"
+        #     elif hour >= 20 and hour <= 23:
+        #         query += "20-24"
+        #     else:
+        #         query += str(hour) + "-" + str(hour + 1)
 
-            if (query, row["trip_id"]) not in car.index:
-                print(row["trip_id"])
-                return np.nan
+        #     if (query, row["trip_id"]) not in car.index:
+        #         print(row["trip_id"])
+        #         return np.nan
 
-            return car.loc[(query, row["trip_id"])][field]
+        #     return car.loc[(query, row["trip_id"])][field]
         
         # missing one trip for some reason; gets car duration/distance using the above helper function
-        df["car_duration_seconds"] = df.apply(lambda x: get_car_data(x, "car_duration_seconds"), axis=1)
-        df["car_distance_meters"] = df.apply(lambda x: get_car_data(x, "car_distance_meters"), axis=1)
+        # df["car_duration_seconds"] = df.apply(lambda x: get_car_data(x, "car_duration_seconds"), axis=1)
+        # df["car_distance_meters"] = df.apply(lambda x: get_car_data(x, "car_distance_meters"), axis=1)
         
         # merge in rerouted files
         df = df.merge(walk, left_on="trip_id", right_on="walk_trip_id", how="left")
         df = df.merge(bike, left_on="trip_id", right_on="bike_trip_id", how="left")
         df = df.merge(transit_grouped, left_on="trip_id", right_on="transit_trip_id", how="left")
+        df = df.merge(car, left_on="trip_id", right_on="car_trip_id", how="left")
         
         # merge in estimated transit trip details
         merge_transit_trip_details(df, data_dir)
@@ -414,11 +415,11 @@ def prepare_data(df: pd.DataFrame, data_dir: str) -> pd.DataFrame:
         # convert to minutes/miles; create na columns
         df["car_distance_miles"] = df["car_distance_meters"] * MILES_PER_METER
         df["car_duration_minutes_adj"] = df["car_duration_seconds_adj"] / 60
-        df["car_rerouting_missing"] = ~df["car_distance_meters"].isna()
+        df["car_rerouting_missing"] = df["car_distance_meters"].isna()
         
         df["walk_duration_minutes"] = df["walk_duration_seconds"] / 60
         df["walk_distance_miles"] = df["walk_distance_meters"] * MILES_PER_METER
-        df["walk_rerouting_missing"] = ~df["walk_duration_seconds"].isna()
+        df["walk_rerouting_missing"] = df["walk_duration_seconds"].isna()
         
         df["bike_distance_miles"] = df["bike_distance_meters"] * MILES_PER_METER
         df["bike_distance_miles_1"] = df["bike_distance_meters_1"] * MILES_PER_METER
@@ -426,7 +427,7 @@ def prepare_data(df: pd.DataFrame, data_dir: str) -> pd.DataFrame:
         df["bike_distance_miles_3"] = df["bike_distance_meters_3"] * MILES_PER_METER
         df["bike_distance_miles_4"] = df["bike_distance_meters_4"] * MILES_PER_METER
         df["bike_duration_minutes_adj"] = df["bike_duration_seconds_adj"] / 60
-        df["bike_rerouting_missing"] = ~df["bike_distance_meters"].isna()
+        df["bike_rerouting_missing"] = df["bike_distance_meters"].isna()
         
         df["transit_length"] = df["transit_length"] * MILES_PER_METER
         df["transit_access_length"] = df["transit_access_length"] * MILES_PER_METER
