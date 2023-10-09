@@ -10,6 +10,7 @@ from steps.figure_lib import *
 import sys
 sys.path.append("...")
 from settings import handler
+from typing import List
 
 fixed_purposes = set(handler["fixed_purposes"])
 
@@ -32,7 +33,7 @@ def evaluate_timing(df: pd.DataFrame, alt_mode_times: str):
     with st.spinner("Running timing logic"):
         return df.groupby(["wave", "person_id", "travel_date"]).apply(lambda x: evaluate_likely_timing(len(x), list(x["depart_time"]), x["duration"].values, x[alt_mode_times].values))
 
-def evaluate_likely_timing(chunk_len: int, depart_time: list[str], leg_durations: 'np.ndarray[float]', alt_durations: 'np.ndarray[float]'):
+def evaluate_likely_timing(chunk_len: int, depart_time: List[str], leg_durations: 'np.ndarray[float]', alt_durations: 'np.ndarray[float]'):
     # if there is only an inbound and outbound trip, don't need to worry about timing
     if chunk_len == 2:
         return True
@@ -89,7 +90,7 @@ class WalkTimingStep(CategoricalStep):
     def apply_step(self) -> None:
         super().apply_step(~self.df[self.name])
         
-    def get_text(self) -> list[str]:
+    def get_text(self) -> List[str]:
         conclusion = super().get_text()
         res = []
         # intro
@@ -140,7 +141,7 @@ class BikeTimingStep(CategoricalStep):
     def apply_step(self) -> None:
         super().apply_step(~self.df[self.name])
         
-    def get_text(self) -> list[str]:
+    def get_text(self) -> List[str]:
         conclusion = super().get_text()
         res = []
         # intro
@@ -191,7 +192,7 @@ class TransitTimingStep(CategoricalStep):
     def apply_step(self) -> None:
         super().apply_step(~self.df[self.name])
         
-    def get_text(self) -> list[str]:
+    def get_text(self) -> List[str]:
         conclusion = super().get_text()
         res = []
         # intro

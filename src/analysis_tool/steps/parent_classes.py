@@ -6,8 +6,8 @@ import streamlit as st
 import re
 from scipy import stats
 import logging
-from typing import List
-from abc import ABC, abstractmethod
+from typing import List, Dict
+from abc import ABC, abstractstaticmethod, abstractmethod
 
 from matplotlib.colors import LinearSegmentedColormap
 from util import bigger_markdown
@@ -160,7 +160,7 @@ class BaseStep(ABC):
         """
         return "Running the step with " + self.name + " as a criteria for shifts to " + self.mode
     
-    def get_text(self) -> list[str]:
+    def get_text(self) -> List[str]:
         """
         This function returns a list of strings that can be used to build up a narrative about this step. Usually contains intro, analysis of summary
         statistics, and presentation/analysis of results. As a raw string, is meant for markdown.
@@ -284,12 +284,27 @@ class BaseStep(ABC):
         # abstract function
         raise NotImplementedError("This function needs to be overwritten")
     
-    @abstractmethod
-    def create_step_cols(self, inputs: dict, col_name: str):
+    def create_step_col(self, inputs: Dict[str, str], col_name: str):
         """
-        This function creates the input column for the current step, and its exact contents is dependent on the context of the step in question.
+        This function does the overall setup for creating the input column for the current step, including validating
+        the input fields and the target column name.
         
-        This function should only use columns defined in the settings dictionary.
+        Args:
+            inputs (dict): a mapping of the column concepts used in this step to the associated column in the dataframe
+        """
+        self.validate_inputs(inputs, col_name)
+        
+        self.df[col_name] = self.process_inputs({key: self.df[val] for key, val in inputs.items()})
+        
+    @abstractstaticmethod
+    def process_inputs(inputs: Dict) -> pd.Series:
+        """
+        This function implements the actual logic for creating the input column for the current step. 
+        
+        Args:
+            inputs (dict): a dictionary of the concepts this step uses to their associated series in the dataframe
+
+        This function needs to be overwritten, as the exact logic of processing inputs depends on the step.
         """
         raise NotImplementedError("This function needs to be overwritten")
 
@@ -309,7 +324,7 @@ class ContinuousStep(BaseStep):
     This class is one part of the first level of specialization of the base class, inheriting from it. It is the parent for all steps that are continuous in nature.
     """
     
-    def __init__(self, df: pd.DataFrame, name: str, mode: Mode, cutoff: float, column_name: str, overall_step: Phase, units: str):
+    def __init__(self, df: pd.DataFrame, inputs: dict, name: str, mode: Mode, cutoff: float, column_name: str, overall_step: Phase, units: str, scenario: bool):
         """
         Initializes the continuous step base class
 
@@ -327,6 +342,29 @@ class ContinuousStep(BaseStep):
         self.cutoff_mode = CutoffMode.PCT
         self.column_name = column_name
         self.units = units
+        
+        if scenario:
+            self.name = self.name + "_scenario"
+            self.column_name = self.column_name + "_scenario"
+        
+        super().create_step_col(inputs, column_name)
+    
+    @staticmethod
+    def process_inputs(inputs: dict) -> pd.Series:
+        """
+        This function implements the actual logic for creating the input column for the current step. NOTE: in the logic to create this
+        input column, only use the columns described in the config.yaml.
+
+        This particular specialization leverages the fact that for the majority of continuous steps, only one input is needed, which is exactly the column
+        used for the step. Therefore, we can just return that input, assuming there is no processing that needs to be done (e.g., scaling).
+        
+        However, this should be overwritten if any preprocessing is needed on the raw input column, and this needs to be overwritten
+        if there are >1 inputs.
+        """
+        if (len(kwargs) == 1):
+            return kwargs.values()[0]
+        
+        raise NotImplementedError("The input is nontrivial, and this function needs to be implemented in the specialized class.")
         
     def get_desc(self) -> str:
         # gives brief description of what the step does
@@ -438,6 +476,15 @@ class ContinuousStep(BaseStep):
         return self.df[self.df["mode"] == self.mode][self.column_name].quantile(0.01), self.df[self.df["mode"] == self.mode][self.column_name].quantile(0.99)
 
 class CategoricalStep(BaseStep):
+    
+    def __init__(self, df: pd.DataFrame, inputs: dict, name: str, mode: Mode, phase: Phase, scenario: bool):
+        super().__init__(df, name, mode, phase)
+        
+        if scenario:
+            self.name = self.name + "_scenario"
+            self.column_name = self.column_name + "_scenario"
+        
+        super().create_step_col(inputs, name)
     
     def apply_step(self, expression: pd.Series) -> None:
         logging.info(f"Running through the logic and visualization of categorical step {self.name}")

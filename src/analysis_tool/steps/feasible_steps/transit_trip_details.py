@@ -1,5 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+from typing import List
 
 from steps.parent_classes import ContinuousStep, CategoricalStep
 from steps.figure_lib import *
@@ -10,7 +11,7 @@ import inspect
 class TransitAccessDistanceStep(ContinuousStep):
     
     def __init__(self, df: pd.DataFrame, cutoff=0.95):
-        raise NotImplemented("This step is currently superseded by the rerouted transit step; to implement it, add these columns back to the config.yml and update the figures.")
+        raise NotImplementedError("This step is currently superseded by the rerouted transit step; to implement it, add these columns back to the config.yml and update the figures.")
         super().__init__(df, "feasible_transit_access_distance", Mode.TRANSIT, cutoff, "transit_access_length_miles", Phase.FEASIBLE, "miles")
         
         self.df.loc[:, "transit_access_length_miles"] = df["transit_access_length"] * 0.000621371
@@ -54,7 +55,7 @@ class TransitAccessDistanceStep(ContinuousStep):
     def __repr__(self):
         return super().__repr__() + ". NOTE: With the current rerouting methodology, this step is superseded by assumptions made during rerouting."
     
-    def get_text(self) -> list[str]:
+    def get_text(self) -> List[str]:
         conclusion = super().get_text()
         res = []
         # intro
@@ -86,7 +87,7 @@ class TransitAccessDistanceStep(ContinuousStep):
 class TransitTransferCountStep(ContinuousStep):
     
     def __init__(self, df: pd.DataFrame, cutoff=0.95):
-        raise NotImplemented("This step is currently superseded by the rerouted transit step; to implement it, add these columns back to the config.yml and update the figures.")
+        raise NotImplementedError("This step is currently superseded by the rerouted transit step; to implement it, add these columns back to the config.yml and update the figures.")
         super().__init__(df, "feasible_transit_transfer_number", Mode.TRANSIT, cutoff, "transit_num_transfers", Phase.FEASIBLE, "transfers")
     
     def get_summary_statistics(self):
@@ -112,7 +113,7 @@ class TransitTransferCountStep(ContinuousStep):
     def __repr__(self):
         return super().__repr__() + ". NOTE: With the current rerouting methodology, this step is superseded by assumptions made during rerouting."
     
-    def get_text(self) -> list[str]:
+    def get_text(self) -> List[str]:
         conclusion = super().get_text()
         res = []
         # intro
@@ -158,7 +159,7 @@ class TransitReroutedStep(CategoricalStep):
     def apply_step(self):
         super().apply_step(~self.df[self.name])
         
-    def get_text(self) -> list[str]:
+    def get_text(self) -> List[str]:
         conclusion = super().get_text()
         res = []
         # intro

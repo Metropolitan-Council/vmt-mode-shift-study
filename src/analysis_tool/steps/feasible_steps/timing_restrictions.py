@@ -2,6 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import streamlit as st
 import inspect
+from typing import List
 
 from steps.parent_classes import *
 from steps.figure_lib import *
@@ -31,7 +32,7 @@ def evaluate_timing(df: pd.DataFrame, alt_mode_times: str):
     with st.spinner("Running timing logic"):
         return df.groupby(["wave", "person_id", "travel_date"]).apply(lambda x: evaluate_feasible_timing(len(x), list(x["depart_time"]), x["duration"].values, list(x["d_purpose_category"]), list(x["o_purpose_category"]), x[alt_mode_times].values))
 
-def evaluate_feasible_timing(chunk_len: int, depart_time: list[str], leg_durations: 'np.ndarray[float]', d_purpose: list[str], o_purpose: list[str], alt_durations: list[float]):
+def evaluate_feasible_timing(chunk_len: int, depart_time: List[str], leg_durations: 'np.ndarray[float]', d_purpose: List[str], o_purpose: List[str], alt_durations: List[float]):
     # if there is only an inbound and outbound trip, don't need to worry about timing
     if chunk_len == 2:
         return True
@@ -119,7 +120,7 @@ class WalkTimingStep(CategoricalStep):
     def apply_step(self) -> None:
         super().apply_step(~self.df[self.name])
         
-    def get_text(self) -> list[str]:
+    def get_text(self) -> List[str]:
         conclusion = super().get_text()
         res = []
         # intro
@@ -174,7 +175,7 @@ class TransitTimingStep(CategoricalStep):
     def apply_step(self) -> None:
         super().apply_step(~self.df[self.name])
         
-    def get_text(self) -> list[str]:
+    def get_text(self) -> List[str]:
         conclusion = super().get_text()
         res = []
         # intro
@@ -230,7 +231,7 @@ class BikeTimingStep(CategoricalStep):
     def apply_step(self) -> None:
         super().apply_step(~self.df[self.name])
         
-    def get_text(self) -> list[str]:
+    def get_text(self) -> List[str]:
         conclusion = super().get_text()
         res = []
         # intro

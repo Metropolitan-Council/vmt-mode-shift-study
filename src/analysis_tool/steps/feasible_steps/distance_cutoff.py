@@ -54,7 +54,7 @@ class WalkDistanceStep(ContinuousStep):
         else:
             raise RuntimeError("Something went wrong with the cutoff mode enum")
         
-    def get_text(self) -> list[str]:
+    def get_text(self) -> List[str]:
         conclusion = super().get_text()
         res = []
         # intro
@@ -124,7 +124,7 @@ class BikeDistanceStep(ContinuousStep):
         else:
             raise RuntimeError("Something went wrong with the cutoff mode enum")
         
-    def get_text(self) -> list[str]:
+    def get_text(self) -> List[str]:
         conclusion = super().get_text()
         res = []
         # intro

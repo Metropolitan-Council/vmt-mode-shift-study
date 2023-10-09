@@ -4,36 +4,24 @@
 # transformation (optional): the function to apply to the inputs as the actual input to the step
 # the transformation should be defined as a static method returning a lambda in the step class definition
 feasible_steps: 
-    - name: WalkDistanceStep
-      inputs:
-        distance: walk_distance_rerouted
-      transformation:
-    - name: BikeDistanceStep
-      inputs:
-        distance: bike_distance_rerouted
-      transformation:
-    - name: TransitReroutedStep
-      inputs:
-        # trip_rerouted: feasible_transit_route_found
-      transformation:
-    - name: BikeSnowDepthStep
-      inputs:
-        depth: snow_depth
-    - name: BikeHighLTSDistStep
-      inputs:
-        lts3_distance: bike_distance_lts_3_rerouted
-        lts4_distance: bike_distance_lts_4_rerouted
-        distance: bike_distance_rerouted
-      transformation: calc_proportion_high_lts
-    - name: WalkTimingStep
-      inputs:
-        duration: walk_duration_rerouted
-    - TransitTimingStep
-      inputs:
-        duration: transit_duration_rerouted
-    - name: BikeTimingStep
-      inputs:
-        duration: bike_duration_rerouted
+    WalkDistanceStep:
+      distance: walk_distance_rerouted
+    BikeDistanceStep:
+      distance: bike_distance_rerouted
+    TransitReroutedStep:
+      trip_rerouted: feasible_transit_route_found
+    BikeSnowDepthStep:
+      depth: snow_depth
+    BikeHighLTSDistStep:
+      lts3_distance: bike_distance_lts_3_rerouted
+      lts4_distance: bike_distance_lts_4_rerouted
+      distance: bike_distance_rerouted
+    WalkTimingStep:
+      duration: walk_duration_rerouted
+    TransitTimingStep:
+      duration: transit_duration_rerouted
+    BikeTimingStep:
+      duration: bike_duration_rerouted
 
 probable_steps: 
     - WalkDurationDifferenceStep
@@ -53,7 +41,7 @@ fixed_purposes: ["Work", "Work-related", "Escort", "School", "School-related"]
 unlikely_purposes: ["Escort", "Shop"]
 
 build: False  # whether we are currently building to docker/streamlit; disables initialization/keyring
-force_reinitialize: True  # whether to rebuild the input file (including scenarios)
+force_reinitialize: False  # whether to rebuild the input file (including scenarios)
 # save_result: False
 
 # assumed to be in data/ directory

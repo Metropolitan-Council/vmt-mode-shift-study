@@ -5,10 +5,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import plotly.express as px
 import logging
+from typing import List, Callable
 
 from steps.enums import Mode
 
-def show_summaries(df: pd.DataFrame, modes, percentile=[0.95], column_names=None) -> pd.DataFrame: # show normal summaries for each mode side by side
+def show_summaries(df: pd.DataFrame, modes, percentile: List[float]=[0.95], column_names: List[str]=None) -> pd.DataFrame: # show normal summaries for each mode side by side
     """
     This function shows the summaries for 2+ modes side-by-side in a dataframe
 
@@ -83,7 +84,7 @@ def show_value_counts(df: pd.DataFrame, modes: list) -> pd.DataFrame:
     x.columns = labels
     return x
 
-def plot_mode_density(df: pd.DataFrame, modes, percentile=0.95, size=(12, 6), bins=300, function=lambda x: x):
+def plot_mode_density(df: pd.DataFrame, modes: List[tuple], percentile: float=0.95, size: tuple[int, int]=(12, 6), bins: int=300, function: Callable=lambda x: x):
     """
     This function returns a density plot/histogram for various mode/column combinations overlaid on one another.
 

@@ -8,6 +8,7 @@ from steps.figure_lib import *
 from util import bigger_markdown
 
 import inspect
+from typing import List
 
 import sys
 sys.path.append("...")
@@ -41,7 +42,7 @@ class WalkPurposeStep(CategoricalStep):
     def apply_step(self):
         super().apply_step(~self.df[self.name])
         
-    def get_text(self) -> list[str]:
+    def get_text(self) -> List[str]:
         conclusion = super().get_text()
         res = []
         # intro
@@ -113,7 +114,7 @@ class BikePurposeStep(CategoricalStep):
     def apply_step(self):
         super().apply_step(~self.df[self.name])
         
-    def get_text(self) -> list[str]:
+    def get_text(self) -> List[str]:
         conclusion = super().get_text()
         res = []
         # intro
@@ -185,7 +186,7 @@ class TransitPurposeStep(CategoricalStep):
     def apply_step(self):
         super().apply_step(~self.df[self.name])
         
-    def get_text(self) -> list[str]:
+    def get_text(self) -> List[str]:
         conclusion = super().get_text()
         res = []
         # intro

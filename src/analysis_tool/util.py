@@ -6,6 +6,7 @@ import streamlit as st
 import plotly.graph_objects as go
 import plotly.express as px
 import logging
+from typing import List
 
 from steps.enums import Mode, Phase
 from settings import handler
@@ -21,7 +22,7 @@ def convert_to_minutes(temp: str) -> float:
     """
     return int(temp[0:2]) * 60 + int(temp[3:5]) + int(temp[6:8]) / 60
 
-def get_num_cold_starts(depart_time: list[str], leg_durations: 'np.ndarray[float]', modes: list[str]) -> int:
+def get_num_cold_starts(depart_time: List[str], leg_durations: 'np.ndarray[float]', modes: List[str]) -> int:
     """This is a function that calculates the number of cold starts there will be in a given linked trip.
 
     Args:

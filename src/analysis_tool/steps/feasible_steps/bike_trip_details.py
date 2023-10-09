@@ -5,16 +5,14 @@ from steps.parent_classes import ContinuousStep
 from steps.enums import *
 from steps.figure_lib import *
 
+from typing import List
+
 import inspect
 
 class BikeSnowDepthStep(ContinuousStep):
     
-    def __init__(self, df: pd.DataFrame, cutoff=0.95, column="snow_depth", scenario=False):
-        super().__init__(df, "feasible_bike_snow_depth", Mode.BIKE, cutoff, column, Phase.FEASIBLE, "mm")
-        
-        # make it distinct if we are at a scenario
-        if scenario:
-            self.name = self.name + "_scenario_" + column
+    def __init__(self, df: pd.DataFrame, inputs: dict, cutoff=0.95, column="step_snow_depth", scenario=False):
+        super().__init__(df, "feasible_bike_snow_depth", inputs, Mode.BIKE, cutoff, column, Phase.FEASIBLE, "mm", scenario)
     
     def get_summary_statistics(self):
         return show_summaries(self.df, modes=[[x, self.column_name] for x in Mode.get_all()], percentile=self.get_cutoff_pct(), column_names=["Snow depth in mm during trip day (observed bike trips)", "Snow depth in mm during trip day (observed car trips)"])
@@ -52,7 +50,7 @@ class BikeSnowDepthStep(ContinuousStep):
         else:
             raise RuntimeError("Something went wrong with the cutoff mode enum")
         
-    def get_text(self) -> list[str]:
+    def get_text(self) -> List[str]:
         conclusion = super().get_text()
         res = []
         # intro
@@ -75,16 +73,12 @@ class BikeSnowDepthStep(ContinuousStep):
     
 class BikeHighLTSDistStep(ContinuousStep):
     
-    def __init__(self, df: pd.DataFrame, cutoff=0.95, column="high_lts_biking_pct", scenario=False):
-        super().__init__(df, "feasible_bike_high_lts_dist", Mode.BIKE, cutoff, column, Phase.FEASIBLE, f"proportion high LTS")
-        
-        if column == "high_lts_biking_pct":
-            df.loc[:, "high_lts_dist"] = df["bike_distance_lts_3_rerouted"] + df["bike_distance_lts_4_rerouted"]
-            df.loc[:, "high_lts_biking_pct"] = df["high_lts_dist"] / df["bike_distance_rerouted"]
-        
-        # make the name distinct if we are at a scenario
-        if scenario:
-            self.name = self.name + "_scenario_" + column
+    def __init__(self, df: pd.DataFrame, inputs: dict, cutoff=0.95, column="high_lts_biking_pct", scenario=False):
+        super().__init__(df, "feasible_bike_high_lts_dist", inputs, Mode.BIKE, cutoff, column, Phase.FEASIBLE, f"proportion high LTS")
+            
+    @staticmethod
+    def process_inputs(**kwargs) -> pd.Series:
+        return (kwargs["lts3_distance"] + kwargs["lts4_distance"]) / kwargs["distance"]
         
     def get_summary_statistics(self):
         return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct(), column_names=["Proportion of trip taken on high LTS if biking were chosen (observed bike trips)", "Proportion of trip taken on high LTS if biking were chosen (observed car trips)"])
@@ -122,7 +116,7 @@ class BikeHighLTSDistStep(ContinuousStep):
         else:
             raise RuntimeError("Something went wrong with the cutoff mode enum")
         
-    def get_text(self) -> list[str]:
+    def get_text(self) -> List[str]:
         conclusion = super().get_text()
         res = []
         # intro

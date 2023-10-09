@@ -1,5 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+from typing import List
 
 from steps.parent_classes import ContinuousStep
 from steps.enums import *
@@ -51,7 +52,7 @@ class BikeHighLTSDistStep(ContinuousStep):
         else:
             raise RuntimeError("Something went wrong with the cutoff mode enum")
         
-    def get_text(self) -> list[str]:
+    def get_text(self) -> List[str]:
         conclusion = super().get_text()
         res = []
         # intro

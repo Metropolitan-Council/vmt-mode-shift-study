@@ -6,6 +6,7 @@ from steps.figure_lib import *
 from steps.enums import *
 
 import inspect
+from typing import List
 
 class TransitTransferCountStep(ContinuousStep):
     
@@ -35,7 +36,7 @@ class TransitTransferCountStep(ContinuousStep):
     def __repr__(self):
         return super().__repr__() + ". NOTE: With the current rerouting methodology, this step is superseded by assumptions made during rerouting."
     
-    def get_text(self) -> list[str]:
+    def get_text(self) -> List[str]:
         conclusion = super().get_text()
         res = []
         # intro
