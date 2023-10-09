@@ -7,6 +7,7 @@ import re
 from scipy import stats
 import logging
 from typing import List
+from abc import ABC, abstractmethod
 
 from matplotlib.colors import LinearSegmentedColormap
 from util import bigger_markdown
@@ -18,9 +19,9 @@ from .enums import *
 
 import sys
 sys.path.append("..")
-from settings import get_communities
+from settings import get_communities, handler
     
-class BaseStep:
+class BaseStep(ABC):
     """
     This class serves as the base class for all other steps. It contains instance variables/methods shared by all children.
     """
@@ -43,20 +44,22 @@ class BaseStep:
         self.prev = pd.to_numeric(self.df[f"{self.overall_step}_{mode}_shift"]).copy()
         
         self.previous_run = None  # the summary statistics of the last run of the program
-        
+    
+    @abstractmethod
     def get_summary_statistics(self):
         """
         This function returns the the summary statistics of the column this step applies to.
         """
         # abstract function -- not defined for base class
-        raise NotImplementedError("Please implement this function")
+        raise NotImplementedError("This function needs to be overwritten")
     
+    @abstractmethod
     def get_summary_figure(self):
         """
         This function returns a representative summary figure for the current step.
         """
         # abstract function -- not defined for base class
-        raise NotImplementedError("Please implement this function")
+        raise NotImplementedError("This function needs to be overwritten")
     
     def apply_step(self, expression: pd.Series) -> None:
         """
@@ -207,19 +210,21 @@ class BaseStep:
         # convert this to distance in the UI
         return re.sub(r"(?<=\b)dist$", "distance", self.name.replace("_", " ")).title()
     
+    @abstractmethod
     def get_cutoff(self) -> float:
         """
         This function returns the cutoff of the step.
         """
         # abstract function
-        raise NotImplementedError("Please implement this function")
+        raise NotImplementedError("This function needs to be overwritten")
     
+    @abstractmethod
     def is_continuous(self):
         """
         This function returns whether this step is continuous or not
         """
         # abstract function
-        raise NotImplementedError("Please implement this function")
+        raise NotImplementedError("This function needs to be overwritten")
     
     def show_step_streamlit(self):
         """
@@ -271,16 +276,33 @@ class BaseStep:
         """
         return self.mode
     
+    @abstractmethod
     def get_desc(self) -> str:
         """
         This function gives a short blurb about the step to be shown in the pre-running stages.
         """
         # abstract function
-        raise NotImplementedError("Please implement this function")
+        raise NotImplementedError("This function needs to be overwritten")
     
-    @staticmethod
-    def get_default_cols() -> List[str]:
-        raise NotImplementedError("Please implement this function.")
+    @abstractmethod
+    def create_step_cols(self, inputs: dict, col_name: str):
+        """
+        This function creates the input column for the current step, and its exact contents is dependent on the context of the step in question.
+        
+        This function should only use columns defined in the settings dictionary.
+        """
+        raise NotImplementedError("This function needs to be overwritten")
+
+    def validate_inputs(self, inputs: dict, col_name: str):
+        """This function validates that this step's process of creating the column that will be used is valid--i.e., it won't cause a downstream error.
+        """
+        for field in inputs.values():
+            if field not in handler["mappings"].keys():
+                raise RuntimeError("Specified mapping does not reference a valid input column of the data")
+            
+        if col_name in handler["mappings"].keys():
+            raise RuntimeError("Target column will overwrite an input column of the data")
+    
 
 class ContinuousStep(BaseStep):
     """
