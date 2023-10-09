@@ -6,6 +6,7 @@ from steps.enums import *
 from steps.figure_lib import *
 
 import inspect
+from typing import List
 
 class WalkPrecipitationStep(ContinuousStep):
     
@@ -30,7 +31,7 @@ class WalkPrecipitationStep(ContinuousStep):
         else:
             raise RuntimeError("Something went wrong with the cutoff mode enum")
         
-    def get_text(self) -> list[str]:
+    def get_text(self) -> List[str]:
         conclusion = super().get_text()
         res = []
         # intro
@@ -71,7 +72,7 @@ class BikePrecipitationStep(ContinuousStep):
         else:
             raise RuntimeError("Something went wrong with the cutoff mode enum")
         
-    def get_text(self) -> list[str]:
+    def get_text(self) -> List[str]:
         conclusion = super().get_text()
         res = []
         # intro
@@ -112,7 +113,7 @@ class WalkTemperatureStep(ContinuousStep):
         else:
             raise RuntimeError("Something went wrong with the cutoff mode enum")
         
-    def get_text(self) -> list[str]:
+    def get_text(self) -> List[str]:
         conclusion = super().get_text()
         res = []
         # intro
@@ -155,7 +156,7 @@ class BikeTemperatureStep(ContinuousStep):
         else:
             raise RuntimeError("Something went wrong with the cutoff mode enum")
         
-    def get_text(self) -> list[str]:
+    def get_text(self) -> List[str]:
         conclusion = super().get_text()
         res = []
         # intro
