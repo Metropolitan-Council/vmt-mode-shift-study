@@ -229,7 +229,7 @@ def setup_df() -> 0:
         logging.info("Rebuilding data from raw inputs")
         
         # read in data & pipe it through the cleaning function
-        raw = pd.read_csv(drive_data_dir + handler["input_tbi_file"])
+        raw = pd.read_csv(drive_data_dir + handler["input_tbi_file"], usecols=handler["keep_columns"])
         df = prepare_data(raw, drive_data_dir)
     # otherwise, we are not reinitialization -- read in precleaned files
     else:
@@ -251,7 +251,7 @@ def setup_df() -> 0:
                 logging.exception("Unable to rebuild data in build mode")
                 raise e
             logging.info("Attempting to rebuild inputs manually from scratch")
-            raw = pd.read_csv(drive_data_dir + handler["input_tbi_file"])
+            raw = pd.read_csv(drive_data_dir + handler["input_tbi_file"], usecols=handler["keep_columns"])
 
             df = prepare_data(raw, drive_data_dir)
         

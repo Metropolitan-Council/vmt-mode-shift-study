@@ -9,7 +9,7 @@ feasible_steps:
     BikeDistanceStep:
       distance: bike_distance_rerouted
     TransitReroutedStep:
-      trip_rerouted: feasible_transit_route_found
+      trip_rerouted: transit_rerouting_missing
     BikeSnowDepthStep:
       depth: snow_depth
     BikeHighLTSDistStep:
@@ -17,11 +17,14 @@ feasible_steps:
       lts4_distance: bike_distance_lts_4_rerouted
       distance: bike_distance_rerouted
     WalkTimingStep:
-      duration: walk_duration_rerouted
+      rerouted_duration: walk_duration_rerouted
+      na_col: walk_rerouting_missing
     TransitTimingStep:
       duration: transit_duration_rerouted
+      na_col: transit_rerouting_missing
     BikeTimingStep:
       duration: bike_duration_rerouted
+      na_col: bike_rerouting_missing
 
 probable_steps: 
     - WalkDurationDifferenceStep
@@ -41,7 +44,7 @@ fixed_purposes: ["Work", "Work-related", "Escort", "School", "School-related"]
 unlikely_purposes: ["Escort", "Shop"]
 
 build: False  # whether we are currently building to docker/streamlit; disables initialization/keyring
-force_reinitialize: False  # whether to rebuild the input file (including scenarios)
+force_reinitialize: True  # whether to rebuild the input file (including scenarios)
 # save_result: False
 
 # assumed to be in data/ directory
@@ -54,6 +57,39 @@ taz_terminal_time_file_name: "taz_terminal_times/TAZ3030_Terminal_times.shp"
 # make sure the notebook exports the cleaned notebook as a parquet at the end using the same convention as output_file_name
 # if you have not done this, just leave this empty
 cleanup_notebook_path: 
+
+
+# these are the columns to keep in the initialization process
+# i.e., when the raw tbi cleaned data is read, only these columns are kept
+# this prevents bloat later on
+keep_columns:
+    - mode
+    - o_purpose_category
+    - d_purpose_category
+    - gender
+    - age
+    - student_status
+    - job_type
+    - num_kids
+    - travel_date
+    - home_lon
+    - home_lat
+    - income_detailed
+    - duration
+    - distance
+    - person_id
+    - trip_id
+    - wave
+    - depart_time
+    - arrive_time
+    - travel_dow
+    - vmt
+    - vehicle_trips
+    - o_lat
+    - o_lon
+    - d_lat
+    - d_lon
+    - trip_weight
 
 # all these mappings are needed for the tool to work correctly
 # these map names of the TBI input into their according standardized column

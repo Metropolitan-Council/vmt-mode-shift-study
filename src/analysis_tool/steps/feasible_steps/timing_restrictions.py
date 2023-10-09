@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import streamlit as st
 import inspect
-from typing import List
+from typing import List, Dict
 
 from steps.parent_classes import *
 from steps.figure_lib import *
@@ -28,9 +28,9 @@ def over_cutoff(x, cutoff: int):
 def convert_to_minutes(temp: str) -> float:
     return int(temp[0:2]) * 60 + int(temp[3:5]) + int(temp[6:8]) / 60
 
-def evaluate_timing(df: pd.DataFrame, alt_mode_times: str):
+def evaluate_timing(df: pd.DataFrame, alt_mode_times: pd.Series):
     with st.spinner("Running timing logic"):
-        return df.groupby(["wave", "person_id", "travel_date"]).apply(lambda x: evaluate_feasible_timing(len(x), list(x["depart_time"]), x["duration"].values, list(x["d_purpose_category"]), list(x["o_purpose_category"]), x[alt_mode_times].values))
+        return df.groupby(["wave", "person_id", "travel_date"]).apply(lambda x: evaluate_feasible_timing(len(x), list(x["depart_time"]), x["duration"].values, list(x["d_purpose_category"]), list(x["o_purpose_category"]), alt_mode_times.values))
 
 def evaluate_feasible_timing(chunk_len: int, depart_time: List[str], leg_durations: 'np.ndarray[float]', d_purpose: List[str], o_purpose: List[str], alt_durations: List[float]):
     # if there is only an inbound and outbound trip, don't need to worry about timing
@@ -88,22 +88,39 @@ def evaluate_feasible_timing(chunk_len: int, depart_time: List[str], leg_duratio
 
 class WalkTimingStep(CategoricalStep):
     
-    def __init__(self, df: pd.DataFrame, column="walk_duration_rerouted", scenario=False):
-        super().__init__(df, "feasible_walk_timing", Mode.WALK, Phase.FEASIBLE)
+    df_static = None  # not ideal; breaking static encapsulation but should be okay since they all alias the same thing
+    
+    def __init__(self, df: pd.DataFrame, inputs: Dict[str, str], scenario=False):
+        super().__init__(df, "feasible_walk_timing", inputs, Mode.WALK, Phase.FEASIBLE, scenario)
+        
+        if WalkTimingStep.df_static == None:
+            WalkTimingStep.df_static = df
         
         # make the name distinct if we are at a scenario
-        if scenario:
-            self.name = self.name + "_scenario_" + column
+        # if scenario:
+        #     self.name = self.name + "_scenario_" + column
             
-        self.df.loc[:, "temp"] = np.where(self.df["walk_rerouting_missing"], 9999999, df[column])
-        feasible_walking = evaluate_timing(df, "temp")
+        # self.df.loc[:, "temp"] = np.where(self.df["walk_rerouting_missing"], 9999999, df[column])
+        # feasible_walking = evaluate_timing(df, "temp")
             
-        feasible_walking = feasible_walking.reset_index().rename(columns={0: self.name})
+        # feasible_walking = feasible_walking.reset_index().rename(columns={0: self.name})
         
-        temp = df[["wave", "person_id", "travel_date"]].copy()
+        # temp = df[["wave", "person_id", "travel_date"]].copy()
+        # temp = temp.reset_index().merge(feasible_walking, on=["wave", "person_id", "travel_date"], how="left").set_index("index")
+        
+        # df[self.name] = temp[self.name]
+        
+    @staticmethod
+    def process_inputs(inputs: Dict[str, pd.Series]) -> pd.Series:
+        temp = np.where(inputs["na_col"], 9999999, inputs["duration"])
+        feasible_walking = evaluate_timing(WalkTimingStep.df_static, "temp")
+        
+        feasible_walking = feasible_walking.reset_index().rename(columns={0: "res"})
+        
+        temp = WalkTimingStep.df_static[["wave", "person_id", "travel_date"]].copy()
         temp = temp.reset_index().merge(feasible_walking, on=["wave", "person_id", "travel_date"], how="left").set_index("index")
         
-        df[self.name] = temp[self.name]
+        return temp["res"]
         
     def get_summary_statistics(self):
         return show_value_counts(self.df, [[x, self.name] for x in [self.mode, Mode.CAR]])
@@ -143,22 +160,34 @@ class WalkTimingStep(CategoricalStep):
         
 class TransitTimingStep(CategoricalStep):
     
-    def __init__(self, df: pd.DataFrame, column="transit_duration_rerouted", scenario=False):
-        super().__init__(df, "feasible_transit_timing", Mode.TRANSIT, Phase.FEASIBLE)
+    def __init__(self, df: pd.DataFrame, inputs: Dict[str, str], scenario=False):
+        super().__init__(df, "feasible_transit_timing", inputs, Mode.TRANSIT, Phase.FEASIBLE, scenario)
         
         # make the name distinct if we are at a scenario
-        if scenario:
-            self.name = self.name + "_scenario_" + column
+        # if scenario:
+        #     self.name = self.name + "_scenario_" + column
             
-        self.df.loc[:, "temp"] = np.where(self.df["transit_rerouting_missing"], 9999999, df[column])
-        feasible_transit = evaluate_timing(df, "temp")
+        # self.df.loc[:, "temp"] = np.where(self.df["transit_rerouting_missing"], 9999999, df[column])
+        # feasible_transit = evaluate_timing(df, "temp")
         
-        feasible_transit = feasible_transit.reset_index().rename(columns={0: self.name})
+        # feasible_transit = feasible_transit.reset_index().rename(columns={0: self.name})
         
-        temp = df[["wave", "person_id", "travel_date"]].copy()
+        # temp = df[["wave", "person_id", "travel_date"]].copy()
+        # temp = temp.reset_index().merge(feasible_transit, on=["wave", "person_id", "travel_date"], how="left").set_index("index")
+        
+        # df[self.name] = temp[self.name]
+        
+    @staticmethod
+    def process_inputs(inputs: Dict[str, pd.Series]) -> pd.Series:
+        temp = np.where(inputs["na_col"], 9999999, inputs["duration"])
+        feasible_transit = evaluate_timing(WalkTimingStep.df_static, "temp")
+        
+        feasible_transit = feasible_transit.reset_index().rename(columns={0: "res"})
+        
+        temp = WalkTimingStep.df_static[["wave", "person_id", "travel_date"]].copy()
         temp = temp.reset_index().merge(feasible_transit, on=["wave", "person_id", "travel_date"], how="left").set_index("index")
         
-        df[self.name] = temp[self.name]
+        return temp["res"]
         
     def get_summary_statistics(self):
         return show_value_counts(self.df, [[x, self.name] for x in [self.mode, Mode.CAR]])
@@ -198,23 +227,35 @@ class TransitTimingStep(CategoricalStep):
         
 class BikeTimingStep(CategoricalStep):
     
-    def __init__(self, df: pd.DataFrame, column="bike_duration_rerouted", scenario=False):
-        super().__init__(df, "feasible_bike_timing", Mode.BIKE, Phase.FEASIBLE)
+    def __init__(self, df: pd.DataFrame, inputs: Dict[str, str], scenario=False):
+        super().__init__(df, "feasible_bike_timing", inputs, Mode.BIKE, Phase.FEASIBLE, scenario)
         
         # make the name distinct if we are at a scenario
-        if scenario:
-            self.name = self.name + "_scenario_" + column
+        # if scenario:
+        #     self.name = self.name + "_scenario_" + column
         
-        self.df.loc[:, "temp"] = np.where(self.df["bike_rerouting_missing"], 9999999, df[column])
+        # self.df.loc[:, "temp"] = np.where(self.df["bike_rerouting_missing"], 9999999, df[column])
 
-        feasible_biking = evaluate_timing(df, "temp")
+        # feasible_biking = evaluate_timing(df, "temp")
             
-        feasible_biking = feasible_biking.reset_index().rename(columns={0: self.name})
+        # feasible_biking = feasible_biking.reset_index().rename(columns={0: self.name})
         
-        temp = df[["wave", "person_id", "travel_date"]].copy()
+        # temp = df[["wave", "person_id", "travel_date"]].copy()
+        # temp = temp.reset_index().merge(feasible_biking, on=["wave", "person_id", "travel_date"], how="left").set_index("index")
+        
+        # df[self.name] = temp[self.name]
+        
+    @staticmethod
+    def process_inputs(inputs: Dict[str, pd.Series]) -> pd.Series:
+        temp = np.where(inputs["na_col"], 9999999, inputs["duration"])
+        feasible_biking = evaluate_timing(WalkTimingStep.df_static, "temp")
+        
+        feasible_biking = feasible_biking.reset_index().rename(columns={0: "res"})
+        
+        temp = WalkTimingStep.df_static[["wave", "person_id", "travel_date"]].copy()
         temp = temp.reset_index().merge(feasible_biking, on=["wave", "person_id", "travel_date"], how="left").set_index("index")
         
-        df[self.name] = temp[self.name]
+        return temp["res"]
         
     def get_summary_statistics(self):
         return show_value_counts(self.df, [[x, self.name] for x in [self.mode, Mode.CAR]])

@@ -294,21 +294,29 @@ class BaseStep(ABC):
         """
         self.validate_inputs(inputs, col_name)
         
-        self.df[col_name] = self.process_inputs({key: self.df[val] for key, val in inputs.items()})
+        processed_inputs = self.process_inputs({key: self.df[val] for key, val in inputs.items()})
+        if type(processed_inputs) == pd.DataFrame or (type(processed_inputs) == pd.Series and len(processed_inputs) != len(self.df)):
+            raise RuntimeError("Something went wrong with input processing")
         
-    @abstractstaticmethod
-    def process_inputs(inputs: Dict) -> pd.Series:
+        if type(processed_inputs) == pd.Series:
+            self.df[col_name] = processed_inputs.values
+        else:
+            self.df[col_name] = processed_inputs
+        
+    @staticmethod
+    @abstractmethod
+    def process_inputs(inputs: Dict[str, pd.Series]) -> pd.Series:
         """
         This function implements the actual logic for creating the input column for the current step. 
         
         Args:
-            inputs (dict): a dictionary of the concepts this step uses to their associated series in the dataframe
+            inputs (dict): a dictionary of the concepts this step uses to their associated dataframe columns (series)
 
         This function needs to be overwritten, as the exact logic of processing inputs depends on the step.
         """
         raise NotImplementedError("This function needs to be overwritten")
 
-    def validate_inputs(self, inputs: dict, col_name: str):
+    def validate_inputs(self, inputs: Dict[str, str], col_name: str):
         """This function validates that this step's process of creating the column that will be used is valid--i.e., it won't cause a downstream error.
         """
         for field in inputs.values():
@@ -324,7 +332,7 @@ class ContinuousStep(BaseStep):
     This class is one part of the first level of specialization of the base class, inheriting from it. It is the parent for all steps that are continuous in nature.
     """
     
-    def __init__(self, df: pd.DataFrame, inputs: dict, name: str, mode: Mode, cutoff: float, column_name: str, overall_step: Phase, units: str, scenario: bool):
+    def __init__(self, df: pd.DataFrame, inputs: Dict[str, str], name: str, mode: Mode, cutoff: float, column_name: str, overall_step: Phase, units: str, scenario: bool):
         """
         Initializes the continuous step base class
 
@@ -350,7 +358,7 @@ class ContinuousStep(BaseStep):
         super().create_step_col(inputs, column_name)
     
     @staticmethod
-    def process_inputs(inputs: dict) -> pd.Series:
+    def process_inputs(inputs: Dict[str, pd.Series]) -> pd.Series:
         """
         This function implements the actual logic for creating the input column for the current step. NOTE: in the logic to create this
         input column, only use the columns described in the config.yaml.
@@ -361,8 +369,8 @@ class ContinuousStep(BaseStep):
         However, this should be overwritten if any preprocessing is needed on the raw input column, and this needs to be overwritten
         if there are >1 inputs.
         """
-        if (len(kwargs) == 1):
-            return kwargs.values()[0]
+        if (len(inputs) == 1):
+            return inputs.values()[0]
         
         raise NotImplementedError("The input is nontrivial, and this function needs to be implemented in the specialized class.")
         
@@ -477,7 +485,7 @@ class ContinuousStep(BaseStep):
 
 class CategoricalStep(BaseStep):
     
-    def __init__(self, df: pd.DataFrame, inputs: dict, name: str, mode: Mode, phase: Phase, scenario: bool):
+    def __init__(self, df: pd.DataFrame, inputs: Dict[str, str], name: str, mode: Mode, phase: Phase, scenario: bool):
         super().__init__(df, name, mode, phase)
         
         if scenario:

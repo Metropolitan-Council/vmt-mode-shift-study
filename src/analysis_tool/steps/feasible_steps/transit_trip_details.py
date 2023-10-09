@@ -1,6 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-from typing import List
+from typing import List, Dict
 
 from steps.parent_classes import ContinuousStep, CategoricalStep
 from steps.figure_lib import *
@@ -135,14 +135,18 @@ class TransitTransferCountStep(ContinuousStep):
     
 class TransitReroutedStep(CategoricalStep):
     
-    def __init__(self, df: pd.DataFrame, column="transit_rerouting_missing", scenario=False):
-        super().__init__(df, "feasible_transit_route_found", Mode.TRANSIT, Phase.FEASIBLE)
+    def __init__(self, df: pd.DataFrame, inputs: Dict[str, str], scenario=False):
+        super().__init__(df, "feasible_transit_route_found", inputs, Mode.TRANSIT, Phase.FEASIBLE, scenario)
         
         # make the name distinct if we are at a scenario
-        if scenario:
-            self.name = self.name + "_scenario_" + column
+        # if scenario:
+        #     self.name = self.name + "_scenario_" + column
         
-        self.df.loc[:, self.name] = ~self.df[column]
+        # self.df.loc[:, self.name] = ~self.df[column]
+        
+    @staticmethod
+    def process_inputs(inputs: Dict[str, pd.Series]) -> pd.Series:
+        return ~inputs.values()[0]
         
     def get_summary_statistics(self):
         return show_value_counts(self.df, [[x, self.name] for x in [self.mode, Mode.CAR]])

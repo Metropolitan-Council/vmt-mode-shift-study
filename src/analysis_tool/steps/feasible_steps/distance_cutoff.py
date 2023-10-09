@@ -8,15 +8,12 @@ from steps.enums import *
 from steps.figure_lib import *
 
 import inspect
+from typing import List, Dict
 
 class WalkDistanceStep(ContinuousStep):
     
-    def __init__(self, df: pd.DataFrame, cutoff=0.95, column="walk_distance_rerouted", scenario=False):
-        super().__init__(df, "feasible_walking_dist", Mode.WALK, cutoff, column, Phase.FEASIBLE, "miles")
-        
-        # make the name distinct if we are at a scenario
-        if scenario:
-            self.name = self.name + "_scenario_" + column
+    def __init__(self, df: pd.DataFrame, inputs: Dict[str, str], cutoff: float=0.95, scenario: bool=False):
+        super().__init__(df, "feasible_walking_dist", inputs, Mode.WALK, cutoff, "step_walk_distance_rerouted", Phase.FEASIBLE, "miles", scenario)
     
     def get_summary_statistics(self):
         return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct(), column_names=["Walk distance in miles if walking chosen (observed walk trips)", "Walk distance in miles if walking chosen (observed car trips)"])
@@ -73,20 +70,12 @@ class WalkDistanceStep(ContinuousStep):
         res = [inspect.cleandoc(x) for x in res]
         
         return res
-    
-    @staticmethod
-    def get_default_cols():
-        return ["walk_distance_rerouted"]
         
     
 class BikeDistanceStep(ContinuousStep):
     
-    def __init__(self, df: pd.DataFrame, cutoff=0.95, column="bike_distance_rerouted", scenario=False):
-        super().__init__(df, "feasible_biking_dist", Mode.BIKE, cutoff, column, Phase.FEASIBLE, "miles")
-            
-        # make the name distinct if we are at a scenario
-        if scenario:
-            self.name = self.name + "_scenario_" + column
+    def __init__(self, df: pd.DataFrame, inputs: Dict[str, str], cutoff: float=0.95, scenario: bool=False):
+        super().__init__(df, "feasible_biking_dist", inputs, Mode.BIKE, cutoff, "bike_distance_rerouted", Phase.FEASIBLE, "miles", scenario)
     
     def get_summary_statistics(self):
         return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct(), column_names=["Bike distance in miles if biking chosen (observed bike trips)", "Bike distance in miles if biking chosen (observed car trips)"])
@@ -141,7 +130,3 @@ class BikeDistanceStep(ContinuousStep):
         res = [inspect.cleandoc(x) for x in res]
         
         return res
-    
-    @staticmethod
-    def get_default_cols() -> List[str]:
-        return ["bike_distance_rerouted"]

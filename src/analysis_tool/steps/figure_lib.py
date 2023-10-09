@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import plotly.express as px
 import logging
-from typing import List, Callable
+from typing import List, Callable, Tuple
 
 from steps.enums import Mode
 
@@ -84,7 +84,7 @@ def show_value_counts(df: pd.DataFrame, modes: list) -> pd.DataFrame:
     x.columns = labels
     return x
 
-def plot_mode_density(df: pd.DataFrame, modes: List[tuple], percentile: float=0.95, size: tuple[int, int]=(12, 6), bins: int=300, function: Callable=lambda x: x):
+def plot_mode_density(df: pd.DataFrame, modes: List[tuple], percentile: float=0.95, size: Tuple[int, int]=(12, 6), bins: int=300, function: Callable=lambda x: x):
     """
     This function returns a density plot/histogram for various mode/column combinations overlaid on one another.
 

@@ -331,9 +331,9 @@ def prepare_data(df: pd.DataFrame, data_dir: str) -> pd.DataFrame:
         # read in rerouting files
         logging.info("reading in rerouting files")
         
-        car = pd.read_parquet(data_dir + handler["route_files"][Mode.CAR])
-        walk = pd.read_parquet(data_dir + handler["route_files"][Mode.WALK])
-        bike = pd.read_parquet(data_dir + handler["route_files"][Mode.BIKE]).drop("geometry", axis=1)
+        car = pd.read_parquet(data_dir + handler["route_files"][Mode.CAR]).drop("geometry", axis=1, errors="ignore")
+        walk = pd.read_parquet(data_dir + handler["route_files"][Mode.WALK]).drop("geometry", axis=1, errors="ignore")
+        bike = pd.read_parquet(data_dir + handler["route_files"][Mode.BIKE]).drop("geometry", axis=1, errors="ignore")
         transit = gpd.read_parquet(data_dir + handler["route_files"][Mode.TRANSIT])
         
         # group/cleanup transit
@@ -546,6 +546,7 @@ def add_scenarios(df: pd.DataFrame):
                     scenario_df = lib.read_parquet(dir + info["file_path"])
                 elif info["file_path"].split(".")[-1] == "csv":
                     scenario_df = lib.read_csv(dir + info["file_path"])
+                scenario_df.drop(["geometry"], axis=1, errors="ignore")
             except Exception:
                 logging.exception(f"Error reading in scenario file for scenario {scenario} for mode {mode}")
                 raise RuntimeError("There was an issue reading in a scenario file")
@@ -609,7 +610,7 @@ def anonymize(df: pd.DataFrame):
     """
     logging.info("Running anonymization of data")
     # only keep important columns (specified in config somewhere, whether as scenario or as a base thing)
-    df_anonymous = df[[col for col in df.columns if col in handler["mappings"].keys() or "scenario" in col]].copy()
+    df_anonymous = df[[col for col in df.columns if (col in handler["mappings"].keys() or "scenario" in col)]].copy()
     
     # anonymize person id and trip id
     df_anonymous["person_id"] = pd.factorize(df["person_id"])[0]
