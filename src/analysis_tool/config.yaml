@@ -44,7 +44,7 @@ fixed_purposes: ["Work", "Work-related", "Escort", "School", "School-related"]
 unlikely_purposes: ["Escort", "Shop"]
 
 build: False  # whether we are currently building to docker/streamlit; disables initialization/keyring
-force_reinitialize: True  # whether to rebuild the input file (including scenarios)
+force_reinitialize: False  # whether to rebuild the input file (including scenarios)
 # save_result: False
 
 # assumed to be in data/ directory

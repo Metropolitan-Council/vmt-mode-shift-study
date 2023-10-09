@@ -75,7 +75,7 @@ class WalkDistanceStep(ContinuousStep):
 class BikeDistanceStep(ContinuousStep):
     
     def __init__(self, df: pd.DataFrame, inputs: Dict[str, str], cutoff: float=0.95, scenario: bool=False):
-        super().__init__(df, "feasible_biking_dist", inputs, Mode.BIKE, cutoff, "bike_distance_rerouted", Phase.FEASIBLE, "miles", scenario)
+        super().__init__(df, "feasible_biking_dist", inputs, Mode.BIKE, cutoff, "step_bike_distance_rerouted", Phase.FEASIBLE, "miles", scenario)
     
     def get_summary_statistics(self):
         return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct(), column_names=["Bike distance in miles if biking chosen (observed bike trips)", "Bike distance in miles if biking chosen (observed car trips)"])

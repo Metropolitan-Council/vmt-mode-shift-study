@@ -295,6 +295,7 @@ class BaseStep(ABC):
         self.validate_inputs(inputs, col_name)
         
         processed_inputs = self.process_inputs({key: self.df[val] for key, val in inputs.items()})
+        
         if type(processed_inputs) == pd.DataFrame or (type(processed_inputs) == pd.Series and len(processed_inputs) != len(self.df)):
             raise RuntimeError("Something went wrong with input processing")
         
@@ -332,7 +333,7 @@ class ContinuousStep(BaseStep):
     This class is one part of the first level of specialization of the base class, inheriting from it. It is the parent for all steps that are continuous in nature.
     """
     
-    def __init__(self, df: pd.DataFrame, inputs: Dict[str, str], name: str, mode: Mode, cutoff: float, column_name: str, overall_step: Phase, units: str, scenario: bool):
+    def __init__(self, df: pd.DataFrame, name: str, inputs: Dict[str, str], mode: Mode, cutoff: float, column_name: str, overall_step: Phase, units: str, scenario: bool):
         """
         Initializes the continuous step base class
 
@@ -370,7 +371,8 @@ class ContinuousStep(BaseStep):
         if there are >1 inputs.
         """
         if (len(inputs) == 1):
-            return inputs.values()[0]
+            return list(inputs.values())[0]
+        
         
         raise NotImplementedError("The input is nontrivial, and this function needs to be implemented in the specialized class.")
         
@@ -485,7 +487,7 @@ class ContinuousStep(BaseStep):
 
 class CategoricalStep(BaseStep):
     
-    def __init__(self, df: pd.DataFrame, inputs: Dict[str, str], name: str, mode: Mode, phase: Phase, scenario: bool):
+    def __init__(self, df: pd.DataFrame, name: str, inputs: Dict[str, str], mode: Mode, phase: Phase, scenario: bool):
         super().__init__(df, name, mode, phase)
         
         if scenario:

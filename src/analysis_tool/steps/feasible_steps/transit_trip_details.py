@@ -146,7 +146,7 @@ class TransitReroutedStep(CategoricalStep):
         
     @staticmethod
     def process_inputs(inputs: Dict[str, pd.Series]) -> pd.Series:
-        return ~inputs.values()[0]
+        return ~list(inputs.values())[0]
         
     def get_summary_statistics(self):
         return show_value_counts(self.df, [[x, self.name] for x in [self.mode, Mode.CAR]])

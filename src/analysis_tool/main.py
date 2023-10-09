@@ -44,12 +44,18 @@ def run_all(phase: Phase) -> None:
     # run through each selected step of the current phase
     if phase == Phase.FEASIBLE:
         for step in st.session_state.feasible_steps:
-            curr: steps.parent_classes.BaseStep = getattr(st.session_state.overall_step, step)(st.session_state.df)
+            curr: steps.parent_classes.BaseStep = getattr(st.session_state.overall_step, step)(
+                st.session_state.df,
+                handler[f"feasible_steps"][step]
+            )
             curr.apply_step()
             st.session_state.step_class_dict[step] = curr
     elif phase == Phase.PROBABLE:
         for step in st.session_state.probable_steps:
-            curr: steps.parent_classes.BaseStep = getattr(st.session_state.overall_step, step)(st.session_state.df)
+            curr: steps.parent_classes.BaseStep = getattr(st.session_state.overall_step, step)(
+                st.session_state.df,
+                handler[f"probable_steps"][step]
+            )
             curr.apply_step()
             st.session_state.step_class_dict[step] = curr
             
@@ -307,7 +313,10 @@ def setup_vars(phase: Phase) -> None:
     # create a dictionary for storing initialized step class objects and store the first step within it already
     st.session_state["step_class_dict"] = dict()
     st.session_state["step_class_scenario_dict"] = dict()
-    st.session_state["step_class_dict"][st.session_state.step] = getattr(st.session_state.overall_step, st.session_state.step)(st.session_state.df)
+    st.session_state["step_class_dict"][st.session_state.step] = getattr(st.session_state.overall_step, st.session_state.step)(
+        st.session_state.df,
+        handler[f"{phase}_steps"][st.session_state.step]
+    )
     
     # store the current step class (as an alias to the stored one in the dictionary)
     st.session_state["step_class"] = st.session_state["step_class_dict"][st.session_state.step]
@@ -880,22 +889,22 @@ def show_step() -> None:
     # title the page by the step name
     st.title(curr.get_name())
     
-    in_scenario = False
-    scenario_name = st.session_state.scenarios[curr.get_mode()]
-    if scenario_name != "default":
-        scenario = handler["scenarios"][curr.get_mode()][scenario_name]
-        mapping = {value: key for key, value in scenario["mappings"].items()}
+    # in_scenario = False
+    # scenario_name = st.session_state.scenarios[curr.get_mode()]
+    # if scenario_name != "default":
+    #     scenario = handler["scenarios"][curr.get_mode()][scenario_name]
+    #     mapping = {value: key for key, value in scenario["mappings"].items()}
         
-        if len(set(mapping.keys()).intersection(set(curr.get_default_cols()))) != 0:
-            in_scenario = True
+    #     if len(set(mapping.keys()).intersection(set(curr.get_default_cols()))) != 0:
+    #         in_scenario = True
             
-    if in_scenario:
-        if scenario_name not in st.session_state.step_class_scenario_dict:
-            st.session_state.step_class_scenario_dict[scenario_name] = getattr(st.session_state.overall_step, curr.__class__)(
-                st.session_state.df, 
-                column=f"{curr.get_mode()}_{scenario_name}_{mapping[curr.get_default_cols()]}"
-            )
-        scenario_class: steps.BaseStep = st.session_state.step_class_scenario_dict[scenario_name]
+    # if in_scenario:
+    #     if scenario_name not in st.session_state.step_class_scenario_dict:
+    #         st.session_state.step_class_scenario_dict[scenario_name] = getattr(st.session_state.overall_step, curr.__class__)(
+    #             st.session_state.df, 
+    #             column=f"{curr.get_mode()}_{scenario_name}_{mapping[curr.get_default_cols()]}"
+    #         )
+    #     scenario_class: steps.BaseStep = st.session_state.step_class_scenario_dict[scenario_name]
             
     
     # if the step we are at is continuous, have settings for setting the cutoff/choosing between pct/raw selection/a blurb for the equivalent opposite cutoff
@@ -912,30 +921,30 @@ def show_step() -> None:
             logging.exception(f"Something went worng with the cutoff mode enum: {curr.get_cutoff_mode()}")
             raise RuntimeError("something went wrong")
         
-        if in_scenario:
-            scenario_class.set_cutoff_mode(curr.get_cutoff_mode())
-            scenario_class.set_cutoff(curr.get_cutoff())
+        # if in_scenario:
+        #     scenario_class.set_cutoff_mode(curr.get_cutoff_mode())
+        #     scenario_class.set_cutoff(curr.get_cutoff())
         
     
     # button to dsiable the current step
     if st.sidebar.button("Disable step", use_container_width=True):
         curr.disable()
-        if in_scenario:
-            scenario_class.disable()
+        # if in_scenario:
+        #     scenario_class.disable()
         
         
     # button to apply (& show the entire narrative of the current step); otherwise, just have a blurb on the current step/how to run it
     if st.sidebar.button("Apply step", use_container_width=True):
         curr.apply_step()
-        if in_scenario:
-            scenario_class.apply_step()
-            col1, col2 = st.columns(2)
-            with col1:
-                curr.show_step_streamlit()
-            with col2:
-                scenario_class.show_step_streamlit()
-        else:
-            curr.show_step_streamlit()
+        # if in_scenario:
+        #     scenario_class.apply_step()
+        #     col1, col2 = st.columns(2)
+        #     with col1:
+        #         curr.show_step_streamlit()
+        #     with col2:
+        #         scenario_class.show_step_streamlit()
+        # else:
+        curr.show_step_streamlit()
         
     else:
         st.header("Click the apply step button once the desired settings have been set or click disable to disable the step.")
@@ -986,7 +995,10 @@ def run() -> None:
         # otherwise, create it from scratch
         else:
             logging.info("Creating the new step for the first time")
-            st.session_state.step_class_dict[option] = getattr(st.session_state.overall_step, option)(st.session_state.df)
+            st.session_state.step_class_dict[option] = getattr(st.session_state.overall_step, option)(
+                st.session_state.df, 
+                handler[f"{st.session_state.phase}_steps"][option]
+            )
             st.session_state.step_class = st.session_state.step_class_dict[option]
             st.session_state.id += 10
             # st.experimental_rerun()
