@@ -17,7 +17,7 @@ feasible_steps:
       lts4_distance: bike_distance_lts_4_rerouted
       distance: bike_distance_rerouted
     WalkTimingStep:
-      rerouted_duration: walk_duration_rerouted
+      duration: walk_duration_rerouted
       na_col: walk_rerouting_missing
     TransitTimingStep:
       duration: transit_duration_rerouted

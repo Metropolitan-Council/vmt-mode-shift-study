@@ -1,6 +1,7 @@
 import yaml
 import streamlit as st
 import geopandas as gpd
+import pandas as pd
 
 # read in the config yaml and turn (all of) it into a dictionary that can be queried from
 with open("config.yaml", "r", encoding="utf-8") as stream:
@@ -8,6 +9,17 @@ with open("config.yaml", "r", encoding="utf-8") as stream:
         handler = yaml.safe_load(stream)
     except yaml.YAMLError as exc:
         raise RuntimeError("Error parsing the yaml file")
+    
+@st.cache_data()
+def get_data() -> pd.DataFrame():
+    if handler["tbi_file_name"].split(".")[-1] == "parquet":
+        df = pd.read_parquet("data/" + handler["tbi_file_name"])
+    elif handler["tbi_file_name"].split(".")[-1] == "csv":
+        df = pd.read_csv("data/" + handler["tbi_file_name"])
+    else:
+        raise RuntimeError()
+    
+    return df
 
 # get the communities df (cached for future use since it does not change)
 @st.cache_data()

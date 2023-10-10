@@ -9,7 +9,7 @@ from steps.figure_lib import *
 
 import sys
 sys.path.append("...")
-from settings import handler
+from settings import handler, get_data
 
 fixed_purposes = set(handler["fixed_purposes"])
 
@@ -28,9 +28,9 @@ def over_cutoff(x, cutoff: int):
 def convert_to_minutes(temp: str) -> float:
     return int(temp[0:2]) * 60 + int(temp[3:5]) + int(temp[6:8]) / 60
 
-def evaluate_timing(df: pd.DataFrame, alt_mode_times: pd.Series):
+def evaluate_timing(df: pd.DataFrame, alt_mode_times: np.ndarray[float]):
     with st.spinner("Running timing logic"):
-        return df.groupby(["wave", "person_id", "travel_date"]).apply(lambda x: evaluate_feasible_timing(len(x), list(x["depart_time"]), x["duration"].values, list(x["d_purpose_category"]), list(x["o_purpose_category"]), alt_mode_times.values))
+        return df.groupby(["wave", "person_id", "travel_date"]).apply(lambda x: evaluate_feasible_timing(len(x), list(x["depart_time"]), x["duration"].values, list(x["d_purpose_category"]), list(x["o_purpose_category"]), alt_mode_times))
 
 def evaluate_feasible_timing(chunk_len: int, depart_time: List[str], leg_durations: 'np.ndarray[float]', d_purpose: List[str], o_purpose: List[str], alt_durations: List[float]):
     # if there is only an inbound and outbound trip, don't need to worry about timing
@@ -88,13 +88,8 @@ def evaluate_feasible_timing(chunk_len: int, depart_time: List[str], leg_duratio
 
 class WalkTimingStep(CategoricalStep):
     
-    df_static = None  # not ideal; breaking static encapsulation but should be okay since they all alias the same thing
-    
     def __init__(self, df: pd.DataFrame, inputs: Dict[str, str], scenario=False):
         super().__init__(df, "feasible_walk_timing", inputs, Mode.WALK, Phase.FEASIBLE, scenario)
-        
-        if WalkTimingStep.df_static == None:
-            WalkTimingStep.df_static = df
         
         # make the name distinct if we are at a scenario
         # if scenario:
@@ -112,12 +107,13 @@ class WalkTimingStep(CategoricalStep):
         
     @staticmethod
     def process_inputs(inputs: Dict[str, pd.Series]) -> pd.Series:
+        df = get_data()
         temp = np.where(inputs["na_col"], 9999999, inputs["duration"])
-        feasible_walking = evaluate_timing(WalkTimingStep.df_static, "temp")
+        feasible_walking = evaluate_timing(df, temp)
         
         feasible_walking = feasible_walking.reset_index().rename(columns={0: "res"})
         
-        temp = WalkTimingStep.df_static[["wave", "person_id", "travel_date"]].copy()
+        temp = df[["wave", "person_id", "travel_date"]].copy()
         temp = temp.reset_index().merge(feasible_walking, on=["wave", "person_id", "travel_date"], how="left").set_index("index")
         
         return temp["res"]
@@ -179,12 +175,13 @@ class TransitTimingStep(CategoricalStep):
         
     @staticmethod
     def process_inputs(inputs: Dict[str, pd.Series]) -> pd.Series:
+        df = get_data()
         temp = np.where(inputs["na_col"], 9999999, inputs["duration"])
-        feasible_transit = evaluate_timing(WalkTimingStep.df_static, "temp")
+        feasible_transit = evaluate_timing(df, temp)
         
         feasible_transit = feasible_transit.reset_index().rename(columns={0: "res"})
         
-        temp = WalkTimingStep.df_static[["wave", "person_id", "travel_date"]].copy()
+        temp = df[["wave", "person_id", "travel_date"]].copy()
         temp = temp.reset_index().merge(feasible_transit, on=["wave", "person_id", "travel_date"], how="left").set_index("index")
         
         return temp["res"]
@@ -247,12 +244,13 @@ class BikeTimingStep(CategoricalStep):
         
     @staticmethod
     def process_inputs(inputs: Dict[str, pd.Series]) -> pd.Series:
+        df = get_data()
         temp = np.where(inputs["na_col"], 9999999, inputs["duration"])
-        feasible_biking = evaluate_timing(WalkTimingStep.df_static, "temp")
+        feasible_biking = evaluate_timing(df, temp)
         
         feasible_biking = feasible_biking.reset_index().rename(columns={0: "res"})
         
-        temp = WalkTimingStep.df_static[["wave", "person_id", "travel_date"]].copy()
+        temp = df[["wave", "person_id", "travel_date"]].copy()
         temp = temp.reset_index().merge(feasible_biking, on=["wave", "person_id", "travel_date"], how="left").set_index("index")
         
         return temp["res"]
