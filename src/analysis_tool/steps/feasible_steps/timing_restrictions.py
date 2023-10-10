@@ -29,8 +29,10 @@ def convert_to_minutes(temp: str) -> float:
     return int(temp[0:2]) * 60 + int(temp[3:5]) + int(temp[6:8]) / 60
 
 def evaluate_timing(df: pd.DataFrame, alt_mode_times: np.ndarray[float]):
+    temp = df.copy()
+    temp["alt_duration"] = alt_mode_times
     with st.spinner("Running timing logic"):
-        return df.groupby(["wave", "person_id", "travel_date"]).apply(lambda x: evaluate_feasible_timing(len(x), list(x["depart_time"]), x["duration"].values, list(x["d_purpose_category"]), list(x["o_purpose_category"]), alt_mode_times))
+        return temp.groupby(["wave", "person_id", "travel_date"]).apply(lambda x: evaluate_feasible_timing(len(x), list(x["depart_time"]), x["duration"].values, list(x["d_purpose_category"]), list(x["o_purpose_category"]), x["alt_duration"].values))
 
 def evaluate_feasible_timing(chunk_len: int, depart_time: List[str], leg_durations: 'np.ndarray[float]', d_purpose: List[str], o_purpose: List[str], alt_durations: List[float]):
     # if there is only an inbound and outbound trip, don't need to worry about timing
@@ -85,6 +87,7 @@ def evaluate_feasible_timing(chunk_len: int, depart_time: List[str], leg_duratio
 
     # feasible if nothing is weird
     return True
+
 
 class WalkTimingStep(CategoricalStep):
     
