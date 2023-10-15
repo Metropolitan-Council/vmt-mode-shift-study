@@ -10,11 +10,9 @@ import inspect
 
 class TransitAccessDistanceStep(ContinuousStep):
     
-    def __init__(self, df: pd.DataFrame, cutoff=0.95):
-        raise NotImplementedError("This step is currently superseded by the rerouted transit step; to implement it, add these columns back to the config.yml and update the figures.")
-        super().__init__(df, "feasible_transit_access_distance", Mode.TRANSIT, cutoff, "transit_access_length_miles", Phase.FEASIBLE, "miles")
-        
-        self.df.loc[:, "transit_access_length_miles"] = df["transit_access_length"] * 0.000621371
+    def __init__(self, df: pd.DataFrame, inputs: Dict[str, str], cutoff: float=0.95, scenario: bool=False):
+        raise RuntimeError("This step is currently superseded by the rerouted transit step. To run this step again, uncomment out the step definition in config.yml")
+        super().__init__(df, "feasible_transit_access_distance", inputs, Mode.TRANSIT, cutoff, "step_transit_access_distance_rerouted", Phase.FEASIBLE, "miles", scenario)
     
     def get_summary_statistics(self):
         return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct())
@@ -86,9 +84,9 @@ class TransitAccessDistanceStep(ContinuousStep):
     
 class TransitTransferCountStep(ContinuousStep):
     
-    def __init__(self, df: pd.DataFrame, cutoff=0.95):
-        raise NotImplementedError("This step is currently superseded by the rerouted transit step; to implement it, add these columns back to the config.yml and update the figures.")
-        super().__init__(df, "feasible_transit_transfer_number", Mode.TRANSIT, cutoff, "transit_num_transfers", Phase.FEASIBLE, "transfers")
+    def __init__(self, df: pd.DataFrame, inputs: Dict[str, str], cutoff: float=0.95, scenario: bool=False):
+        raise RuntimeError("This step is currently superseded by the rerouted transit step. To run this step again, uncomment out the step definition in config.yml")
+        super().__init__(df, "feasible_transit_transfer_count", inputs, Mode.TRANSIT, cutoff, "step_transit_transfer_count_rerouted", Phase.FEASIBLE, "transfers", scenario)
     
     def get_summary_statistics(self):
         return show_summaries(self.df, [[x, self.column_name] for x in [self.mode, Mode.CAR]], self.get_cutoff_pct())
@@ -137,12 +135,6 @@ class TransitReroutedStep(CategoricalStep):
     
     def __init__(self, df: pd.DataFrame, inputs: Dict[str, str], scenario=False):
         super().__init__(df, "feasible_transit_route_found", inputs, Mode.TRANSIT, Phase.FEASIBLE, scenario)
-        
-        # make the name distinct if we are at a scenario
-        # if scenario:
-        #     self.name = self.name + "_scenario_" + column
-        
-        # self.df.loc[:, self.name] = ~self.df[column]
         
     @staticmethod
     def process_inputs(inputs: Dict[str, pd.Series]) -> pd.Series:

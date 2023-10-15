@@ -25,6 +25,10 @@ feasible_steps:
     BikeTimingStep:
       duration: bike_duration_rerouted
       na_col: bike_rerouting_missing
+    # TransitAccessDistanceStep:
+    #   access_distance: transit_access_length_rerouted
+    # TransitTransferCountStep:
+    #   transfer_count: transit_num_transfers_rerouted
 
 probable_steps: 
     - WalkDurationDifferenceStep
@@ -204,7 +208,7 @@ route_files:
     car: "/Data_Processed/geodata/car_congestion_1d39c/car_congestion.parquet"
     walk: "/Data_Processed/geodata/walk-trips-1d39c.parquet"
     bike: "/Data_Processed/geodata/bike-lts-37721.parquet"
-    transit: "/Data_Processed/geodata/transit-trips-93d71.parquet"
+    transit: "/Data_Processed/geodata/transit-trips-7d58f.parquet"
 
 # This is an output file, with the TBI trips and select route information saved. 
 # it is stored relative to the local run directory. 
