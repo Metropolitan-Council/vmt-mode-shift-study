@@ -31,18 +31,34 @@ feasible_steps:
     #   transfer_count: transit_num_transfers_rerouted
 
 probable_steps: 
-    - WalkDurationDifferenceStep
-    - BikeDurationDifferenceStep
-    - TransitDurationDifferenceStep
-    - BikeHighLTSDistStep
-    - WalkPurposeStep
-    - BikePurposeStep
-    - TransitPurposeStep
-    - TransitTransferCountStep
-    - WalkPrecipitationStep
-    - BikePrecipitationStep
-    - WalkTemperatureStep
-    - BikeTemperatureStep
+    WalkDurationDifferenceStep:
+      car_duration: car_duration_rerouted
+      walk_duration: walk_duration_rerouted
+    BikeDurationDifferenceStep:
+      car_duration: car_duration_rerouted
+      bike_duration: bike_duration_rerouted
+    TransitDurationDifferenceStep:
+      car_duration: car_duration_rerouted
+      transit_duration: transit_duration_rerouted
+    BikeHighLTSDistStep:
+      lts3_distance: bike_distance_lts_3_rerouted
+      lts4_distance: bike_distance_lts_4_rerouted
+    WalkPurposeStep:
+      purpose: purpose_cleaned
+    BikePurposeStep:
+      purpose: purpose_cleaned
+    TransitPurposeStep:
+      purpose: purpose_cleaned
+    TransitTransferCountStep:
+      transfer_count: transit_num_transfers_rerouted
+    WalkPrecipitationStep:
+      precipitation: precipitation
+    BikePrecipitationStep:
+      precipitation: precipitation
+    WalkTemperatureStep:
+      temperature: temperature
+    BikeTemperatureStep:
+      temperature: temperature
 
 fixed_purposes: ["Work", "Work-related", "Escort", "School", "School-related"]
 unlikely_purposes: ["Escort", "Shop"]
