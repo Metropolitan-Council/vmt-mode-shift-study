@@ -169,18 +169,21 @@ mappings:
     purpose_cleaned: purpose_cleaned  # column representing the cleaned purpose of the trip (with origin purpose replacing destinaiton for home trips); for visualization/grouping
     person_type: person_type  # column representing the type of person this is (for visualization/grouping)
     gender_cleaned: gender_cleaned  # column representing the gender category this person falls into (for visualization/grouping)
-      
 
 scenarios:
+    # these scenarios are assumed to just be the rerouting files but with different values
     bike:
         default:  # name of the scenario (for internal use)
           description: "Base Scenario"  # description of scenario
-          mappings:  # mappings of new columns -> old columns they should replace; these should be compatible in terms of units
+          mappings:  # mappings of new columns, as imported in the initialize script -> old columns they should replace; these should be compatible in terms of units
           file_path:  # file path to the rerouting
         best_bike:
           description: "Improve all streets to best bike LTS"
           mappings: 
-
+            bike_scenario_best_bike_distance_lts_3_rerouted: bike_distance_lts_3_rerouted
+            bike_scenario_best_bike_distance_lts_4_rerouted: bike_distance_lts_4_rerouted
+            bike_scenario_best_bike_distance_rerouted: bike_distance_rerouted
+            bike_scenario_best_bike_duration_rerouted: bike_duration_rerouted
           file_path: "/Data_Processed/geodata/bike-scenario-6df8c.parquet"
     transit:
         default:
@@ -190,8 +193,9 @@ scenarios:
         double_transit:
           description: "Double frequency of all transit routes"
           mappings:
-            duration_rerouted: transit_duration_rerouted
-            distance_rerouted: transit_distance_rerouted
+            transit_scenario_double_transit_duration_rerouted: transit_duration_rerouted
+            transit_scenario_double_transit_distance_rerouted: transit_distance_rerouted
+            transit_scenario_double_transit_rerouting_missing: transit_rerouting_missing
           file_path: "/Data_Processed/geodata/transit-scenario-93d71.parquet"
     walk:
         default:
@@ -202,8 +206,8 @@ scenarios:
           description: "Improve all streets best bike LTS"
           key: trip_id
           mappings:
-            duration_rerouted: walk_duration_rerouted
-            distance_rerouted: walk_distance_meters
+            walk_scenario_best_walk_duration_rerouted: walk_duration_rerouted
+            walk_scenario_best_walk_distance_rerouted: walk_distance_meters
           file_path: "/Data_Processed/geodata/walk-scenario-a37e1.parquet"
     car:
         default:
