@@ -6,12 +6,12 @@ from steps.figure_lib import *
 from steps.enums import *
 
 import inspect
-from typing import List
+from typing import List, Dict
 
 class TransitTransferCountStep(ContinuousStep):
     
-    def __init__(self, df: pd.DataFrame, cutoff=0.01):
-        super().__init__(df, "likely_transit_transfer_number", Mode.TRANSIT, cutoff, "transit_num_transfers_rerouted", Phase.PROBABLE, "transfers")
+    def __init__(self, df: pd.DataFrame, inputs: Dict[str, pd.Series], cutoff: float=0.01, scenario: bool=False):
+        super().__init__(df, "likely_transit_transfer_number", inputs, Mode.TRANSIT, cutoff, "transit_num_transfers_rerouted", Phase.PROBABLE, "transfers", scenario)
     
     def get_summary_statistics(self):
         return show_summaries(self.df, [[x, self.column_name] for x in [self.mode, Mode.CAR]], self.get_cutoff_pct(), column_names=["Number of transfers if transit chosen (observed transit trips)", "Number of transfers if transit chosen (observed car trips)"])

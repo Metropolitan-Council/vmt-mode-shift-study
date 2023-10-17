@@ -1,7 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy import stats
-from typing import List
+from typing import List, Dict
 
 from steps.parent_classes import ContinuousStep
 from steps.enums import *
@@ -11,10 +11,15 @@ import inspect
 
 class WalkDurationDifferenceStep(ContinuousStep):
     
-    def __init__(self, df: pd.DataFrame, cutoff=0.95):
-        super().__init__(df, "likely_walking_car_duration_difference", Mode.WALK, cutoff, "car_minus_walk_minutes", Phase.PROBABLE, "minutes")
-        self.df.loc[:, "car_minus_walk_minutes"] = df["car_duration_rerouted"] / 60 - df["walk_duration_rerouted"] / 60
+    def __init__(self, df: pd.DataFrame, inputs: Dict[str, str], cutoff: float=0.95, scenario: bool=False):
+        super().__init__(df, "likely_walking_car_duration_difference", inputs, Mode.WALK, cutoff, "car_minus_walk_minutes", Phase.PROBABLE, "minutes", scenario)
+        
+        # self.df.loc[:, "car_minus_walk_minutes"] = df["car_duration_rerouted"] / 60 - df["walk_duration_rerouted"] / 60
         self.cutoff = stats.percentileofscore(self.df[self.df["mode"] == self.mode]["car_minus_walk_minutes"], -15) / 100
+        
+    @staticmethod
+    def process_inputs(inputs: Dict[str, pd.Series]) -> pd.Series:
+        return inputs["car_duration"] - inputs["walk_duration"]
     
     def get_summary_statistics(self):
         return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct(), column_names=["Car minus walk duration in minutes if walking chosen (walk trips)", "Car minus walk duration in minutes if walking chosen (car trips)"])
@@ -73,11 +78,15 @@ class WalkDurationDifferenceStep(ContinuousStep):
         return res
 
 class BikeDurationDifferenceStep(ContinuousStep):
-    
-    def __init__(self, df: pd.DataFrame, cutoff=0.95):
-        super().__init__(df, "likely_biking_car_duration_difference", Mode.BIKE, cutoff, "car_minus_bike_minutes", Phase.PROBABLE, "minutes")
-        self.df.loc[:, "car_minus_bike_minutes"] = df["car_duration_rerouted"] / 60 - df["bike_duration_rerouted"] / 60
+
+    def __init__(self, df: pd.DataFrame, inputs: Dict[str, str], cutoff: float=0.95, scenario: bool=False):
+        super().__init__(df, "likely_biking_car_duration_difference", inputs, Mode.BIKE, cutoff, "car_minus_bike_minutes", Phase.PROBABLE, "minutes", scenario)
+        # self.df.loc[:, "car_minus_bike_minutes"] = df["car_duration_rerouted"] / 60 - df["bike_duration_rerouted"] / 60
         self.cutoff = stats.percentileofscore(self.df[self.df["mode"] == self.mode]["car_minus_bike_minutes"], -15) / 100
+        
+    @staticmethod
+    def process_inputs(inputs: Dict[str, pd.Series]) -> pd.Series:
+        return inputs["car_duration"] - inputs["bike_duration"]
     
     def get_summary_statistics(self):
         return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct(), column_names=["Car minus walk duration in minutes if biking chosen (observed bike trips)", "Car minus walk duration in minutes if biking chosen (observed car trips)"])
@@ -138,11 +147,15 @@ class BikeDurationDifferenceStep(ContinuousStep):
     
 class TransitDurationDifferenceStep(ContinuousStep):
     
-    def __init__(self, df: pd.DataFrame, cutoff=0.95):
-        super().__init__(df, "likely_transit_car_duration_difference", Mode.TRANSIT, cutoff, "car_minus_transit_minutes", Phase.PROBABLE, "minutes")
-        self.df.loc[:, "car_minus_transit_minutes"] = df["car_duration_rerouted"] / 60 - df["transit_duration_rerouted"]
+    def __init__(self, df: pd.DataFrame, inputs: Dict[str, str], cutoff: float=0.95, scenario: bool=False):
+        super().__init__(df, "likely_transit_car_duration_difference", inputs, Mode.TRANSIT, cutoff, "car_minus_transit_minutes", Phase.PROBABLE, "minutes", scenario)
+        # self.df.loc[:, "car_minus_transit_minutes"] = df["car_duration_rerouted"] / 60 - df["transit_duration_rerouted"]
 
         self.cutoff = stats.percentileofscore(self.df[(self.df["mode"] == self.mode) & ~self.df["transit_rerouting_missing"]]["car_minus_transit_minutes"], -15) / 100
+        
+    @staticmethod
+    def process_inputs(inputs: Dict[str, pd.Series]) -> pd.Series:
+        return inputs["car_duration"] - inputs["transit_duration"]
     
     def get_summary_statistics(self):
         return show_summaries(self.df[~self.df["transit_rerouting_missing"]], modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct())

@@ -77,8 +77,8 @@ class BikeHighLTSDistStep(ContinuousStep):
         super().__init__(df, "feasible_bike_high_lts_dist", inputs, Mode.BIKE, cutoff, "step_high_lts_biking_pct", Phase.FEASIBLE, f"proportion high LTS", scenario)
             
     @staticmethod
-    def process_inputs(**kwargs) -> pd.Series:
-        return (kwargs["lts3_distance"] + kwargs["lts4_distance"]) / kwargs["distance"]
+    def process_inputs(inputs: Dict[str, pd.Series]) -> pd.Series:
+        return (inputs["lts3_distance"] + inputs["lts4_distance"]) / inputs["distance"]
         
     def get_summary_statistics(self):
         return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct(), column_names=["Proportion of trip taken on high LTS if biking were chosen (observed bike trips)", "Proportion of trip taken on high LTS if biking were chosen (observed car trips)"])

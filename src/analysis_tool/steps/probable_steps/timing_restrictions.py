@@ -65,6 +65,7 @@ def evaluate_likely_timing(chunk_len: int, depart_time: List[str], leg_durations
 class WalkTimingStep(CategoricalStep):
     
     def __init__(self, df: pd.DataFrame):
+        raise NotImplementedError("The probable timing steps are no longer supported.")
         super().__init__(df, "likely_walk_timing", Mode.WALK, Phase.PROBABLE)
         
         probable_walking = evaluate_timing(df, "walk_duration_rerouted")
@@ -116,6 +117,7 @@ class WalkTimingStep(CategoricalStep):
 class BikeTimingStep(CategoricalStep):
     
     def __init__(self, df: pd.DataFrame):
+        raise NotImplementedError("The probable timing steps are no longer supported.")
         super().__init__(df, "likely_bike_timing", Mode.BIKE, Phase.PROBABLE)
         
         probable_biking = evaluate_timing(df, "bike_duration_rerouted")
@@ -167,6 +169,7 @@ class BikeTimingStep(CategoricalStep):
 class TransitTimingStep(CategoricalStep):
     
     def __init__(self, df: pd.DataFrame):
+        raise NotImplementedError("The probable timing steps are no longer supported.")
         super().__init__(df, "likely_transit_timing", Mode.TRANSIT, Phase.PROBABLE)
         
         probable_transit = evaluate_timing(df, "transit_duration_rerouted")

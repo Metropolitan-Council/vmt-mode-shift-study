@@ -8,7 +8,7 @@ from steps.figure_lib import *
 from util import bigger_markdown
 
 import inspect
-from typing import List
+from typing import List, Dict
 
 import sys
 sys.path.append("...")
@@ -16,8 +16,8 @@ from settings import handler
 
 class WalkPurposeStep(CategoricalStep):
     
-    def __init__(self, df: pd.DataFrame):
-        super().__init__(df, "likely_walk_purpose", Mode.WALK, Phase.PROBABLE)
+    def __init__(self, df: pd.DataFrame, inputs: Dict[str, str], scenario: bool=False):
+        super().__init__(df, "likely_walk_purpose", inputs, Mode.WALK, Phase.PROBABLE, scenario)
         
         # df["purpose_cleaned"] = df["d_purpose_category"]
         # df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["School", "School-related"]), "School", df["purpose_cleaned"])
@@ -26,7 +26,11 @@ class WalkPurposeStep(CategoricalStep):
         # df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Shop", "Shopping"]), "Shop", df["purpose_cleaned"])
         # df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Missing: Non-response", "Missing: Skip logic", "Not imputable"]), "Missing", df["purpose_cleaned"])
         
-        self.df.loc[:, self.name] = ~self.df["purpose_cleaned"].isin(handler["unlikely_purposes"])
+        # self.df.loc[:, self.name] = ~self.df["purpose_cleaned"].isin(handler["unlikely_purposes"])
+        
+    @staticmethod
+    def process_inputs(inputs: Dict[str, pd.Series]) -> pd.Series:
+        return ~inputs["purpose"].isin(handler["unlikely_purposes"])
         
     def get_summary_statistics(self):
         return show_value_counts(self.df[self.df["purpose_cleaned"] != "Missing"], [[x, self.name] for x in [self.mode, Mode.CAR]])
@@ -88,8 +92,8 @@ class WalkPurposeStep(CategoricalStep):
         
 class BikePurposeStep(CategoricalStep):
     
-    def __init__(self, df: pd.DataFrame):
-        super().__init__(df, "likely_bike_purpose", Mode.BIKE, Phase.PROBABLE)
+    def __init__(self, df: pd.DataFrame, inputs: Dict[str, pd.Series], scenario: bool=False):
+        super().__init__(df, "likely_bike_purpose", inputs, Mode.BIKE, Phase.PROBABLE, scenario)
         
         # df["purpose_cleaned"] = df["d_purpose_category"]
         # df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["School", "School-related"]), "School", df["purpose_cleaned"])
@@ -98,7 +102,11 @@ class BikePurposeStep(CategoricalStep):
         # df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Shop", "Shopping"]), "Shop", df["purpose_cleaned"])
         # df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Missing: Non-response", "Missing: Skip logic", "Not imputable"]), "Missing", df["purpose_cleaned"])
         
-        self.df.loc[:, self.name] = ~self.df["purpose_cleaned"].isin(handler["unlikely_purposes"])
+        # self.df.loc[:, self.name] = ~self.df["purpose_cleaned"].isin(handler["unlikely_purposes"])
+        
+    @staticmethod
+    def process_inputs(inputs: Dict[str, pd.Series]) -> pd.Series:
+        return ~inputs["purpose"].isin(handler["unlikely_purposes"])
         
     def get_summary_statistics(self):
         return show_value_counts(self.df[self.df["purpose_cleaned"] != "Missing"], [[x, self.name] for x in [self.mode, Mode.CAR]])
@@ -160,8 +168,8 @@ class BikePurposeStep(CategoricalStep):
         
 class TransitPurposeStep(CategoricalStep):
     
-    def __init__(self, df: pd.DataFrame):
-        super().__init__(df, "likely_transit_purpose", Mode.TRANSIT, Phase.PROBABLE)
+    def __init__(self, df: pd.DataFrame, inputs: Dict[str, pd.Series], scenario: bool=False):
+        super().__init__(df, "likely_transit_purpose", inputs, Mode.TRANSIT, Phase.PROBABLE, scenario)
         
         # df["purpose_cleaned"] = df["d_purpose_category"]
         # df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["School", "School-related"]), "School", df["purpose_cleaned"])
@@ -170,7 +178,11 @@ class TransitPurposeStep(CategoricalStep):
         # df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Shop", "Shopping"]), "Shop", df["purpose_cleaned"])
         # df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Missing: Non-response", "Missing: Skip logic", "Not imputable"]), "Missing", df["purpose_cleaned"])
         
-        self.df.loc[:, self.name] = ~self.df["purpose_cleaned"].isin(handler["unlikely_purposes"])
+        # self.df.loc[:, self.name] = ~self.df["purpose_cleaned"].isin(handler["unlikely_purposes"])
+        
+    @staticmethod
+    def process_inputs(inputs: Dict[str, pd.Series]) -> pd.Series:
+        return ~inputs["purpose"].isin(handler["unlikely_purposes"])
         
     def get_summary_statistics(self):
         return show_value_counts(self.df[self.df["purpose_cleaned"] != "Missing"], [[x, self.name] for x in [self.mode, Mode.CAR]])
