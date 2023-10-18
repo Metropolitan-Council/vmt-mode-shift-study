@@ -95,7 +95,7 @@ cold_start_threshold: 15
 #   This file should be stripped of any personally identifiable information, which would allow it to be 
 #   shared on the cloud for ease of deployment. 
 #       saved_tbi_file: matches the input TBI to the routes, and adds derived columns, must be parqeut or csv
-scenario_to_run: "base"
+scenario_to_run: "e_bike"
 
 scenarios: 
     base:
@@ -104,7 +104,7 @@ scenarios:
         car_route_file: "/Data_Processed/geodata/car_congestion_1d39c/car_congestion.parquet"
         walk_route_file: "/Data_Processed/geodata/walk-trips-1d39c.parquet"
         bike_route_file: "/Data_Processed/geodata/bike-lts-37721.parquet"
-        transit_route_file: "/Data_Processed/geodata/transit-trips-93d71.parquet"
+        transit_route_file: "/Data_Processed/geodata/transit-trips-7d58f.parquet"
         saved_tbi_file: "data/tbi_base.csv"  
         saved_results: "output/trips_base.csv"  
         saved_options: "output/options_base.json"  
@@ -115,7 +115,7 @@ scenarios:
         car_route_file: "/Data_Processed/geodata/car_congestion_1d39c/car_congestion.parquet"
         walk_route_file: "/Data_Processed/geodata/walk-scenario-a37e1.parquet"
         bike_route_file: "/Data_Processed/geodata/bike-lts-37721.parquet"
-        transit_route_file: "/Data_Processed/geodata/transit-trips-93d71.parquet"
+        transit_route_file: "/Data_Processed/geodata/transit-trips-7d58f.parquet"
         saved_tbi_file: "data/tbi_best_walk.csv"  
         saved_results: "output/trips_best_walk.csv"  
         saved_options: "output/options_best_walk.json"  
@@ -126,7 +126,18 @@ scenarios:
         car_route_file: "/Data_Processed/geodata/car_congestion_1d39c/car_congestion.parquet"
         walk_route_file: "/Data_Processed/geodata/walk-trips-1d39c.parquet"
         bike_route_file: "/Data_Processed/geodata/bike-all-lts1-37721.parquet"
-        transit_route_file: "/Data_Processed/geodata/transit-trips-93d71.parquet"
+        transit_route_file: "/Data_Processed/geodata/transit-trips-7d58f.parquet"
+        saved_tbi_file: "data/tbi_best_bike.csv"  
+        saved_results: "output/trips_best_bike.csv"  
+        saved_options: "output/options_best_bike.json"  
+        
+    e_bike: 
+        description: "Improve all streets to best bike LTS and everyone rides an e-bike"
+        input_tbi_file: "/data_processed/tbi_cleaned.csv" 
+        car_route_file: "/Data_Processed/geodata/car_congestion_1d39c/car_congestion.parquet"
+        walk_route_file: "/Data_Processed/geodata/walk-trips-1d39c.parquet"
+        bike_route_file: "/Data_Processed/geodata/bike-ebike-8a1a0-1.parquet"
+        transit_route_file: "/Data_Processed/geodata/transit-trips-7d58f.parquet"
         saved_tbi_file: "data/tbi_best_bike.csv"  
         saved_results: "output/trips_best_bike.csv"  
         saved_options: "output/options_best_bike.json"  
@@ -137,7 +148,7 @@ scenarios:
         car_route_file: "/Data_Processed/geodata/car_congestion_1d39c/car_congestion.parquet"
         walk_route_file: "/Data_Processed/geodata/walk-trips-1d39c.parquet"
         bike_route_file: "/Data_Processed/geodata/bike-lts-37721.parquet"
-        transit_route_file: "/Data_Processed/geodata/transit-scenario-93d71.parquet"
+        transit_route_file: "/Data_Processed/geodata/transit-scenario-7d58f.parquet"       
         saved_tbi_file: "data/tbi_double_transit.csv"  
         saved_results: "output/trips_double_transit.csv"  
         saved_options: "output/options_double_transit.json"  
@@ -148,7 +159,7 @@ scenarios:
         car_route_file: "/Data_Processed/geodata/car_congestion_1d39c/car_congestion.parquet"
         walk_route_file: "/Data_Processed/geodata/walk-scenario-a37e1.parquet"
         bike_route_file: "/Data_Processed/geodata/bike-all-lts1-37721.parquet"
-        transit_route_file: "/Data_Processed/geodata/transit-scenario-93d71.parquet"
+        transit_route_file: "/Data_Processed/geodata/transit-scenario-7d58f.parquet"
         saved_tbi_file: "data/tbi_all_three.csv"  
         saved_results: "output/trips_all_three.csv"  
         saved_options: "output/options_all_three.json"  
