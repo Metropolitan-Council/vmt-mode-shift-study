@@ -291,7 +291,8 @@ def setup_vars(phase: Phase) -> None:
     df[f'{phase}_{Mode.TRANSIT}_shift'] = True
     df[f'{phase}_shift'] = True
     
-    if len(set(st.session_state["scenarios"].values())) != 1:
+    st.session_state.have_scenarios = (len(set(st.session_state["scenarios"].values())) != 1)
+    if st.session_state.have_scenarios:
         df[f'scenario_{phase}_{Mode.WALK}_shift'] = True
         df[f'scenario_{phase}_{Mode.BIKE}_shift'] = True
         df[f'scenario_{phase}_{Mode.TRANSIT}_shift'] = True
@@ -332,6 +333,13 @@ def setup_vars(phase: Phase) -> None:
 def final_summary() -> None:
     """
     This function generates the final summary for the visualization tool. 
+    """
+    
+    """
+    TODO: need to somehow interleave scenario steps with non-scenario steps
+
+    Raises:
+        RuntimeError: _description_
     """
     
     # define the actions we can do at this point
@@ -901,9 +909,6 @@ def show_step() -> None:
 
         scenario = handler["scenarios"][curr.get_mode()][scenario_name]
         mapping = {value: key for key, value in scenario["mappings"].items()}
-
-        print(set(handler[f"{st.session_state.phase}_steps"][st.session_state.step].values()))
-        print(len(set(mapping.keys()).intersection(set(handler[f"{st.session_state.phase}_steps"][st.session_state.step].values()))))
         
         if len(set(mapping.keys()).intersection(set(handler[f"{st.session_state.phase}_steps"][st.session_state.step].values()))) != 0:
             in_scenario = True
@@ -961,6 +966,14 @@ def show_step() -> None:
     else:
         st.header("Click the apply step button once the desired settings have been set or click disable to disable the step.")
         bigger_markdown(curr.get_desc())
+        
+    if not in_scenario and st.session_state.have_scenarios:
+        # TODO: add some way to "trace" through the steps even if there are no scenarios to run through
+        # idea 1: just amke a coyp of everything and run through it alongside it -- downside more latency even though nothing displayed
+        # idea 2: add another layer of specialization for steps that are scenarios in name but just copy everything
+        # idea 3: create a dummy "scenario" class objects and copy all of the state in the current step over every iteration
+        # this needs to be done before a reasonable final sumamry can be made
+        pass
     
 
 def run() -> None:
