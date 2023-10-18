@@ -9,7 +9,7 @@ import seaborn as sns
 import steps
 from settings import handler, get_communities
 from steps.enums import *
-from util import get_num_cold_starts, stacked_shift_histogram, total_shift_histogram, get_summary_df, get_duration_diff_df, bigger_markdown, validate_input
+from util import get_num_cold_starts, stacked_shift_histogram, total_shift_histogram, get_summary_df, get_duration_diff_df, bigger_markdown, validate_input, create_scenario_input
 import json
 import logging
 
@@ -276,7 +276,7 @@ def setup_vars(phase: Phase) -> None:
     Args:
         phase (Phase): the phase whose variables should be set up
     """
-    logging.info("Setting up variables for phase {phase}")
+    logging.info(f"Setting up variables for phase {phase}")
     
     # if we are in the probable phase, make df the subset of trips that can feasibly shift, according to the probable phase logic
     if phase == Phase.PROBABLE:
@@ -290,6 +290,12 @@ def setup_vars(phase: Phase) -> None:
     df[f'{phase}_{Mode.BIKE}_shift'] = True
     df[f'{phase}_{Mode.TRANSIT}_shift'] = True
     df[f'{phase}_shift'] = True
+    
+    if len(set(st.session_state["scenarios"].values())) != 1:
+        df[f'scenario_{phase}_{Mode.WALK}_shift'] = True
+        df[f'scenario_{phase}_{Mode.BIKE}_shift'] = True
+        df[f'scenario_{phase}_{Mode.TRANSIT}_shift'] = True
+        df[f'scenario_{phase}_shift'] = True
     
     # change the current phase stored in session state
     st.session_state["phase"] = phase
@@ -422,7 +428,7 @@ def final_summary() -> None:
     # stacked histogram of duration difference for feasible drive, non-feasible drive, and walk trips
     bigger_markdown("Below, a stacked histogram detailing the travel time difference distributions for drive trips that can feasibly shift to walk, drive trips that can't shift, and observed walk trips can be seen.")
     
-    st.plotly_chart(stacked_shift_histogram(df, Mode.WALK, "walk_duration_rerouted", f"{st.session_state.phase}_walk_shift", st.session_state.phase))
+    st.plotly_chart(stacked_shift_histogram(df, Mode.WALK, "walk_duration_rerouted", f"{st.session_state.phase}_walk_shift", st.session_state.phase), use_container_width=True)
     
     # get df of the % of trips/vmt that are within x minutes of walking
     bigger_markdown(f"The % of car trips and VMT that are {st.session_state.phase} and within x minutes from walking can be seen in the below table.")
@@ -438,7 +444,7 @@ def final_summary() -> None:
     # stacked histogram of duration difference for feasible drive, non-feasible drive, and bike trips
     bigger_markdown("Below, a stacked histogram detailing the travel time difference distributions for drive trips that can feasibly shift to biking, drive trips that can't shift, and observed biking trips can be seen.")
     
-    st.plotly_chart(stacked_shift_histogram(df, Mode.BIKE, "bike_duration_rerouted", f"{st.session_state.phase}_bike_shift", st.session_state.phase))
+    st.plotly_chart(stacked_shift_histogram(df, Mode.BIKE, "bike_duration_rerouted", f"{st.session_state.phase}_bike_shift", st.session_state.phase), use_container_width=True)
     
     # get df of the % of trips/vmt that are within x minutes of biking
     bigger_markdown(f"The % of car trips and VMT that are {st.session_state.phase} and within x minutes from walking can be seen in the below table.")
@@ -454,7 +460,7 @@ def final_summary() -> None:
     # stacked histogram of duration difference for feasible drive, non-feasible drive, and transit trips
     bigger_markdown("Below, a stacked histogram detailing the travel time difference distributions for drive trips that can feasibly shift to transit, drive trips that can't shift, and observed transit trips can be seen. NOTE: due to the need to filter out trips with no valid transit trip (and thus no applicable transit duration), there are no infeasible drive trips within this histogram.")
     
-    st.plotly_chart(stacked_shift_histogram(df[(~df["transit_rerouting_missing"])&(df["transit_duration_rerouted"]>0)&(df["transit_duration_rerouted"]<1440)], Mode.TRANSIT, "transit_duration_rerouted", f"{st.session_state.phase}_transit_shift", st.session_state.phase))
+    st.plotly_chart(stacked_shift_histogram(df[(~df["transit_rerouting_missing"])&(df["transit_duration_rerouted"]>0)&(df["transit_duration_rerouted"]<1440)], Mode.TRANSIT, "transit_duration_rerouted", f"{st.session_state.phase}_transit_shift", st.session_state.phase), use_container_width=True)
     
     # get df of the % of trips/vmt that are within x minutes of transit
     bigger_markdown(f"The % of car trips and VMT that are {st.session_state.phase} and within x minutes from transit can be seen in the below table.")
@@ -543,7 +549,7 @@ def final_summary() -> None:
     bigger_markdown(r"Below, the distribution of the duration difference between the best non-car mode and car for shifted trips is shown")
     fig1 = total_shift_histogram(df, st.session_state.phase)
     df["min_alt_mode_minus_car_duration"] = (df["min_feasible_alt_mode_duration"] - df["car_duration_rerouted"])
-    st.plotly_chart(fig1)
+    st.plotly_chart(fig1, use_container_width=True)
     
     # table for fastest alternative mode being within x minutes of driving
     bigger_markdown(f"The % of car trips and VMT that are {st.session_state.phase} and within x minutes from the fastest alternative mode can be seen in the below table.")
@@ -599,7 +605,7 @@ def final_summary() -> None:
                 )
     )
     fig2.update_geos(fitbounds="locations", visible=False)
-    st.plotly_chart(fig2)
+    st.plotly_chart(fig2, use_container_width=True)
     
     # map of % of trips in each community regino that can shift competitively when considering the fastest alternative mode
     
@@ -636,7 +642,7 @@ def final_summary() -> None:
                 height=500
     )
     fig3.update_geos(fitbounds="locations", visible=False)
-    st.plotly_chart(fig3)
+    st.plotly_chart(fig3, use_container_width=True)
     
     # display various raw metrics regarding shifts/other indicators
     st.header("Raw metrics")
@@ -713,7 +719,7 @@ def final_summary() -> None:
         yaxis_title=dict(text=f"Vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
         showlegend=False
     )
-    st.plotly_chart(fig4)
+    st.plotly_chart(fig4, use_container_width=True)
     
     # ability to shift by trip purpose (usually destination purpose unless destination is home, then origin purpose -- this is done in the intiialization step)
     bigger_markdown(r"Below, the % of vehicle trips that can shift when segmented by trip purpose are shown.")
@@ -743,7 +749,7 @@ def final_summary() -> None:
         legend=dict(font=dict(size=16)),
         showlegend=False
     )
-    st.plotly_chart(fig5)
+    st.plotly_chart(fig5, use_container_width=True)
     
     # ability to shift by person type (adult, student, etc.)
     bigger_markdown(r"Below, the % of vehicle trips that can shift when segmented by person type are shown.")
@@ -773,7 +779,7 @@ def final_summary() -> None:
         legend=dict(font=dict(size=16)),
         showlegend=False
     )
-    st.plotly_chart(fig6)
+    st.plotly_chart(fig6, use_container_width=True)
     
     # ability to shift by gender
     bigger_markdown(r"Below, the % of trips that can shift when segmented by gender are shown.")
@@ -801,7 +807,7 @@ def final_summary() -> None:
         legend=dict(font=dict(size=16)),
         showlegend=False
     )
-    st.plotly_chart(fig7)
+    st.plotly_chart(fig7, use_container_width=True)
     
     # ability to shift by recorded TBI wave (either 1/2)
     bigger_markdown(r"Below, the % of trips that can shift when segmented by TBI wave is shown.")
@@ -829,7 +835,7 @@ def final_summary() -> None:
         legend=dict(font=dict(size=16)),
         showlegend=False
     )
-    st.plotly_chart(fig8)
+    st.plotly_chart(fig8, use_container_width=True)
     
     # various metrics for tour-level shifts that are possible
     st.header("Tour-level shifts")
@@ -889,22 +895,28 @@ def show_step() -> None:
     # title the page by the step name
     st.title(curr.get_name())
     
-    # in_scenario = False
-    # scenario_name = st.session_state.scenarios[curr.get_mode()]
-    # if scenario_name != "default":
-    #     scenario = handler["scenarios"][curr.get_mode()][scenario_name]
-    #     mapping = {value: key for key, value in scenario["mappings"].items()}
+    in_scenario = False
+    scenario_name = st.session_state.scenarios[curr.get_mode()]
+    if scenario_name != "default":
+
+        scenario = handler["scenarios"][curr.get_mode()][scenario_name]
+        mapping = {value: key for key, value in scenario["mappings"].items()}
+
+        print(set(handler[f"{st.session_state.phase}_steps"][st.session_state.step].values()))
+        print(len(set(mapping.keys()).intersection(set(handler[f"{st.session_state.phase}_steps"][st.session_state.step].values()))))
         
-    #     if len(set(mapping.keys()).intersection(set(curr.get_default_cols()))) != 0:
-    #         in_scenario = True
+        if len(set(mapping.keys()).intersection(set(handler[f"{st.session_state.phase}_steps"][st.session_state.step].values()))) != 0:
+            in_scenario = True
             
-    # if in_scenario:
-    #     if scenario_name not in st.session_state.step_class_scenario_dict:
-    #         st.session_state.step_class_scenario_dict[scenario_name] = getattr(st.session_state.overall_step, curr.__class__)(
-    #             st.session_state.df, 
-    #             column=f"{curr.get_mode()}_{scenario_name}_{mapping[curr.get_default_cols()]}"
-    #         )
-    #     scenario_class: steps.BaseStep = st.session_state.step_class_scenario_dict[scenario_name]
+    if in_scenario:
+        if scenario_name not in st.session_state.step_class_scenario_dict:
+            st.session_state.step_class_scenario_dict[scenario_name] = getattr(st.session_state.overall_step, st.session_state.step)(
+                st.session_state.df, 
+                create_scenario_input(st.session_state.step, scenario_name, st.session_state.phase, curr.get_mode()),
+                scenario=True
+            )
+            
+        scenario_class: steps.BaseStep = st.session_state.step_class_scenario_dict[scenario_name]
             
     
     # if the step we are at is continuous, have settings for setting the cutoff/choosing between pct/raw selection/a blurb for the equivalent opposite cutoff
@@ -921,30 +933,30 @@ def show_step() -> None:
             logging.exception(f"Something went worng with the cutoff mode enum: {curr.get_cutoff_mode()}")
             raise RuntimeError("something went wrong")
         
-        # if in_scenario:
-        #     scenario_class.set_cutoff_mode(curr.get_cutoff_mode())
-        #     scenario_class.set_cutoff(curr.get_cutoff())
+        if in_scenario:
+            scenario_class.set_cutoff_mode(curr.get_cutoff_mode())
+            scenario_class.set_cutoff(curr.get_cutoff())
         
     
     # button to dsiable the current step
     if st.sidebar.button("Disable step", use_container_width=True):
         curr.disable()
-        # if in_scenario:
-        #     scenario_class.disable()
+        if in_scenario:
+            scenario_class.disable()
         
         
     # button to apply (& show the entire narrative of the current step); otherwise, just have a blurb on the current step/how to run it
     if st.sidebar.button("Apply step", use_container_width=True):
         curr.apply_step()
-        # if in_scenario:
-        #     scenario_class.apply_step()
-        #     col1, col2 = st.columns(2)
-        #     with col1:
-        #         curr.show_step_streamlit()
-        #     with col2:
-        #         scenario_class.show_step_streamlit()
-        # else:
-        curr.show_step_streamlit()
+        if in_scenario:
+            scenario_class.apply_step()
+            col1, col2 = st.columns(2, gap="medium")
+            with col1:
+                curr.show_step_streamlit()
+            with col2:
+                scenario_class.show_step_streamlit()
+        else:
+            curr.show_step_streamlit()
         
     else:
         st.header("Click the apply step button once the desired settings have been set or click disable to disable the step.")
@@ -1036,6 +1048,7 @@ def run() -> None:
     
 # main serving function of strealit application
 if __name__ == "__main__":
+    st.set_page_config(layout="wide")
     # hacky function to allow for bigger font sizes
     st.markdown(
         """

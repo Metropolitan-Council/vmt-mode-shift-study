@@ -26,7 +26,7 @@ class BaseStep(ABC):
     This class serves as the base class for all other steps. It contains instance variables/methods shared by all children.
     """
     
-    def __init__(self, df: pd.DataFrame, name: str, mode: Mode, overall_step: Phase):
+    def __init__(self, df: pd.DataFrame, name: str, mode: Mode, overall_step: Phase, scenario: bool):
         """Initializer of the base class.
 
         Args:
@@ -39,11 +39,17 @@ class BaseStep(ABC):
         self.name = name
         self.mode = mode
         self.overall_step = overall_step
+        
+        self.prefix = ""
+        if scenario:
+            self.prefix = "scenario_"
+            
         # snapshot of what the mode shift column looked like before this step was ran
         # used to allow the disabling of steps and the reversion of the dataframe back to what it was originally
-        self.prev = pd.to_numeric(self.df[f"{self.overall_step}_{mode}_shift"]).copy()
+        self.prev = pd.to_numeric(self.df[f"{self.prefix}{self.overall_step}_{mode}_shift"]).copy()
         
         self.previous_run = None  # the summary statistics of the last run of the program
+        
     
     @abstractmethod
     def get_summary_statistics(self):
@@ -69,12 +75,12 @@ class BaseStep(ABC):
             expression (pd.Series): A boolean column such that if a row is True, it is unable to shift feasibly/with likelihood
         """
         # reset column to the snapshot taken before the step
-        self.df.loc[:, f"{self.overall_step}_{self.mode}_shift"] = self.prev
+        self.df.loc[:, f"{self.prefix}{self.overall_step}_{self.mode}_shift"] = self.prev
         
         # reset this step's column, apply it, and update the mode shift column accordingly
         self.df.loc[:, self.name] = True
         self.df.loc[expression, self.name] = False
-        self.df.loc[expression, f"{self.overall_step}_{self.mode}_shift"] = False
+        self.df.loc[expression, f"{self.prefix}{self.overall_step}_{self.mode}_shift"] = False
     
     def get_step_statistics(self):
         """
@@ -89,11 +95,11 @@ class BaseStep(ABC):
         
         # % feasible/likely shifts before/after this step
         percent_shifts_before = self.df[(self.df['mode']==Mode.CAR) & (self.prev)]["vehicle_trips"].sum() / self.df[self.df['mode']==Mode.CAR]["vehicle_trips"].sum() * 100
-        percent_shifts_after = self.df[(self.df['mode']==Mode.CAR) & (self.df[f'{self.overall_step}_{self.mode}_shift'])]["vehicle_trips"].sum() / self.df[self.df['mode']==Mode.CAR]["vehicle_trips"].sum() * 100
+        percent_shifts_after = self.df[(self.df['mode']==Mode.CAR) & (self.df[f'{self.prefix}{self.overall_step}_{self.mode}_shift'])]["vehicle_trips"].sum() / self.df[self.df['mode']==Mode.CAR]["vehicle_trips"].sum() * 100
         
         # VMT before/after this step
         prev_vmt = self.df[(self.df["mode"] == Mode.CAR) & (self.prev)]["vmt"].sum()
-        after_vmt = self.df[(self.df["mode"] == Mode.CAR) & self.df[f"{self.overall_step}_{self.mode}_shift"]]["vmt"].sum()
+        after_vmt = self.df[(self.df["mode"] == Mode.CAR) & self.df[f"{self.prefix}{self.overall_step}_{self.mode}_shift"]]["vmt"].sum()
         
         return ((percent_shifts_before, percent_shifts_after), (prev_vmt, after_vmt), (abs_car_percent, abs_vmt_percent))
     
@@ -146,7 +152,7 @@ class BaseStep(ABC):
         This function disables the current step. 
         """
         # reset overall mode shift column to snapshot
-        self.df.loc[:, f"{self.overall_step}_{self.mode}_shift"] = self.prev
+        self.df.loc[:, f"{self.prefix}{self.overall_step}_{self.mode}_shift"] = self.prev
         
         # reset step column name & previous run
         self.df.loc[:, self.name] = True
@@ -253,10 +259,10 @@ class BaseStep(ABC):
         if type(fig) == tuple:  # normal matplotlib fig, ax
             slots[0].pyplot(fig[0])
         else:  # plotly chart
-            slots[0].plotly_chart(fig)
+            slots[0].plotly_chart(fig, use_container_width=True)
             
         slots[1].markdown(self.get_summary_statistics().to_html(escape=False) + "<br>", unsafe_allow_html=True)
-        slots[2].plotly_chart(self.get_map())
+        slots[2].plotly_chart(self.get_map(), use_container_width=True)
         
     def get_previous_run(self):
         """
@@ -320,11 +326,22 @@ class BaseStep(ABC):
     def validate_inputs(self, inputs: Dict[str, str], col_name: str):
         """This function validates that this step's process of creating the column that will be used is valid--i.e., it won't cause a downstream error.
         """
+        scenario_cols = set()
+        def get_scenario_cols(curr):
+            for key in curr.keys():
+                print(key, curr[key])
+                if key == "mappings" and type(curr[key]) == dict:
+                    scenario_cols.update(curr[key].keys())
+                elif type(curr[key]) == dict:
+                    get_scenario_cols(curr[key])
+                    
+        get_scenario_cols(handler["scenarios"])
+
         for field in inputs.values():
-            if field not in handler["mappings"].keys():
+            if field not in handler["mappings"].keys() and field not in scenario_cols:
                 raise RuntimeError("Specified mapping does not reference a valid input column of the data")
             
-        if col_name in handler["mappings"].keys():
+        if col_name in handler["mappings"].keys() or col_name in scenario_cols:
             raise RuntimeError("Target column will overwrite an input column of the data")
     
 
@@ -346,7 +363,7 @@ class ContinuousStep(BaseStep):
             overall_step (Phase): the overall step this step pertains to (feasible/probable)
             units (str): the units of raw cutoffs of this step
         """
-        super().__init__(df, name, mode, overall_step)  # call the parent constructor for these
+        super().__init__(df, name, mode, overall_step, scenario)  # call the parent constructor for these
         self.cutoff = cutoff
         self.cutoff_mode = CutoffMode.PCT
         self.column_name = column_name
@@ -356,7 +373,7 @@ class ContinuousStep(BaseStep):
             self.name = self.name + "_scenario"
             self.column_name = self.column_name + "_scenario"
         
-        super().create_step_col(inputs, column_name)
+        super().create_step_col(inputs, self.column_name)
     
     @staticmethod
     def process_inputs(inputs: Dict[str, pd.Series]) -> pd.Series:
@@ -488,13 +505,13 @@ class ContinuousStep(BaseStep):
 class CategoricalStep(BaseStep):
     
     def __init__(self, df: pd.DataFrame, name: str, inputs: Dict[str, str], mode: Mode, phase: Phase, scenario: bool):
-        super().__init__(df, name, mode, phase)
+        super().__init__(df, name, mode, phase, scenario)
         
         if scenario:
             self.name = self.name + "_scenario"
             self.column_name = self.column_name + "_scenario"
         
-        super().create_step_col(inputs, name)
+        super().create_step_col(inputs, self.name)
     
     def apply_step(self, expression: pd.Series) -> None:
         logging.info(f"Running through the logic and visualization of categorical step {self.name}")
@@ -502,8 +519,8 @@ class CategoricalStep(BaseStep):
         # set previous run to 1 (no cutoffs) and apply the expression directly since this is a true/false thing
         # do this since calling the super will create a redundant column that matches directly to this step's internal column
         self.previous_run = 1
-        self.df.loc[:, f"{self.overall_step}_{self.mode}_shift"] = self.prev
-        self.df.loc[expression, f"{self.overall_step}_{self.mode}_shift"] = False
+        self.df.loc[:, f"{self.prefix}{self.overall_step}_{self.mode}_shift"] = self.prev
+        self.df.loc[expression, f"{self.prefix}{self.overall_step}_{self.mode}_shift"] = False
         
     def is_continuous(self):
         # categorical steps are never continuous

@@ -88,7 +88,7 @@ class WalkPurposeStep(CategoricalStep):
             
         slots[0].pyplot(self.get_summary_figure()[0])
         slots[1].dataframe(self.get_summary_statistics())
-        slots[2].plotly_chart(self.get_map())
+        slots[2].plotly_chart(self.get_map(), use_container_width=True)
         
 class BikePurposeStep(CategoricalStep):
     
@@ -164,7 +164,7 @@ class BikePurposeStep(CategoricalStep):
             
         slots[0].pyplot(self.get_summary_figure()[0])
         slots[1].dataframe(self.get_summary_statistics())
-        slots[2].plotly_chart(self.get_map())
+        slots[2].plotly_chart(self.get_map(), use_container_width=True)
         
 class TransitPurposeStep(CategoricalStep):
     
@@ -240,4 +240,4 @@ class TransitPurposeStep(CategoricalStep):
             
         slots[0].pyplot(self.get_summary_figure()[0])
         slots[1].dataframe(self.get_summary_statistics())
-        slots[2].plotly_chart(self.get_map())
+        slots[2].plotly_chart(self.get_map(), use_container_width=True)

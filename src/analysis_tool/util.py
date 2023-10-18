@@ -6,7 +6,7 @@ import streamlit as st
 import plotly.graph_objects as go
 import plotly.express as px
 import logging
-from typing import List
+from typing import List, Dict, Set
 
 from steps.enums import Mode, Phase
 from settings import handler
@@ -314,3 +314,31 @@ def validate_input(df: pd.DataFrame):
         if column not in columns_to_check:
             logging.exception("Input dataframe does not have all required columns (see config.yml for all columns necessary)")
             raise RuntimeError("Input dataframe is not fully specified")
+        
+def create_scenario_input(step: str, scenario: str, phase: Phase, mode: Mode) -> Dict[str, str]:
+    """
+    This function takes in a step, a scenario, and the current phase/mode and transforms the original
+    input settings for the steps to incorporate the new scenario columns, referencing the 
+    config.yaml settings to do so.
+
+    Args:
+        step (str): the current step name
+        scenario (str): the current scenario name
+        phase (Phase): the current phase
+        mode (Mode): the current mode
+
+    Returns:
+        Dict[str, str]: a new valid input for a step using any new columns where possible
+    """
+    inputs: Dict[str, str] = handler[f"{phase}_steps"][step]
+    replacements: Dict[str, str] = {val: key for key, val in handler["scenarios"][str(mode)][scenario]["mappings"].items()}
+    out = dict()
+    
+    for key, val in inputs.items():
+        if val in replacements:
+            out[key] = replacements[val]
+        else:
+            out[key] = val
+
+    return out
+
