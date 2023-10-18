@@ -451,14 +451,14 @@ def process_walk_scenario(scenario_name: str, scenario_df: pd.DataFrame, df: pd.
     scenario_df["trip_id"] = scenario_df["trip_id"].astype("str")
     
     # convert to be in line with mapping units
-    scenario_df[f"walk_scenario_{scenario_name}_duration_rerouted"] = scenario_df["duration_seconds"] / 60
-    scenario_df[f"walk_scenario_{scenario_name}_distance_rerouted"] = scenario_df["distance_meters"] * MILES_PER_METER
+    scenario_df[f"scenario_{scenario_name}_duration_rerouted"] = scenario_df["duration_seconds"] / 60
+    scenario_df[f"scenario_{scenario_name}_distance_rerouted"] = scenario_df["distance_meters"] * MILES_PER_METER
 
     scenario_df = scenario_df.set_index("trip_id").reindex(df["trip_id"].astype(str))
     
-    df[f"walk_scenario_{scenario_name}_distance_rerouted"] = scenario_df[f"walk_scenario_{scenario_name}_distance_rerouted"].round().astype("Int32").values
-    df[f"walk_scenario_{scenario_name}_duration_rerouted"] = scenario_df[f"walk_scenario_{scenario_name}_duration_rerouted"].round().astype("Int32").values
-    df[f"walk_scenario_{scenario_name}_rerouting_missing"] = scenario_df[f"walk_scenario_{scenario_name}_distance_rerouted"].isna().astype("bool").values
+    df[f"scenario_{scenario_name}_distance_rerouted"] = scenario_df[f"scenario_{scenario_name}_distance_rerouted"].round().astype("Int32").values
+    df[f"scenario_{scenario_name}_duration_rerouted"] = scenario_df[f"scenario_{scenario_name}_duration_rerouted"].round().astype("Int32").values
+    df[f"scenario_{scenario_name}_rerouting_missing"] = scenario_df[f"scenario_{scenario_name}_distance_rerouted"].isna().astype("bool").values
     
 def process_bike_scenario(scenario_name: str, scenario_df: pd.DataFrame, df: pd.DataFrame):
     """
@@ -471,24 +471,24 @@ def process_bike_scenario(scenario_name: str, scenario_df: pd.DataFrame, df: pd.
         df (pd.DataFrame): an alias to the overall dataframe
     """
     # convert to be in line with mapping units
-    scenario_df[f"bike_scenario_{scenario_name}_duration_rerouted"] = scenario_df["duration_seconds"] / 60
-    scenario_df[f"bike_scenario_{scenario_name}_distance_rerouted"] = scenario_df["distance_meters"] * MILES_PER_METER
-    scenario_df[f"bike_scenario_{scenario_name}_distance_lts_1_rerouted"] = scenario_df["distance_meters_1"] * MILES_PER_METER
-    scenario_df[f"bike_scenario_{scenario_name}_distance_lts_2_rerouted"] = scenario_df["distance_meters_2"] * MILES_PER_METER
-    scenario_df[f"bike_scenario_{scenario_name}_distance_lts_3_rerouted"] = scenario_df["distance_meters_3"] * MILES_PER_METER
-    scenario_df[f"bike_scenario_{scenario_name}_distance_lts_4_rerouted"] = scenario_df["distance_meters_4"] * MILES_PER_METER
+    scenario_df[f"scenario_{scenario_name}_duration_rerouted"] = scenario_df["duration_seconds"] / 60
+    scenario_df[f"scenario_{scenario_name}_distance_rerouted"] = scenario_df["distance_meters"] * MILES_PER_METER
+    scenario_df[f"scenario_{scenario_name}_distance_lts_1_rerouted"] = scenario_df["distance_meters_1"] * MILES_PER_METER
+    scenario_df[f"scenario_{scenario_name}_distance_lts_2_rerouted"] = scenario_df["distance_meters_2"] * MILES_PER_METER
+    scenario_df[f"scenario_{scenario_name}_distance_lts_3_rerouted"] = scenario_df["distance_meters_3"] * MILES_PER_METER
+    scenario_df[f"scenario_{scenario_name}_distance_lts_4_rerouted"] = scenario_df["distance_meters_4"] * MILES_PER_METER
     
     scenario_df = scenario_df.set_index("trip_id").reindex(df["trip_id"].astype(str))
     
-    df[f"bike_scenario_{scenario_name}_distance_rerouted"] = scenario_df[f"bike_scenario_{scenario_name}_distance_rerouted"].round().astype("Int32").values
-    df[f"bike_scenario_{scenario_name}_duration_rerouted"] = scenario_df[f"bike_scenario_{scenario_name}_duration_rerouted"].round().astype("Int32").values
+    df[f"scenario_{scenario_name}_distance_rerouted"] = scenario_df[f"scenario_{scenario_name}_distance_rerouted"].round().astype("Int32").values
+    df[f"scenario_{scenario_name}_duration_rerouted"] = scenario_df[f"scenario_{scenario_name}_duration_rerouted"].round().astype("Int32").values
     
-    df[f"bike_scenario_{scenario_name}_distance_lts_1_rerouted"] = scenario_df[f"bike_scenario_{scenario_name}_distance_lts_1_rerouted"].round().astype("Int32").values
-    df[f"bike_scenario_{scenario_name}_distance_lts_2_rerouted"] = scenario_df[f"bike_scenario_{scenario_name}_distance_lts_2_rerouted"].round().astype("Int32").values
-    df[f"bike_scenario_{scenario_name}_distance_lts_3_rerouted"] = scenario_df[f"bike_scenario_{scenario_name}_distance_lts_3_rerouted"].round().astype("Int32").values
-    df[f"bike_scenario_{scenario_name}_distance_lts_4_rerouted"] = scenario_df[f"bike_scenario_{scenario_name}_distance_lts_4_rerouted"].round().astype("Int32").values
+    df[f"scenario_{scenario_name}_distance_lts_1_rerouted"] = scenario_df[f"scenario_{scenario_name}_distance_lts_1_rerouted"].round().astype("Int32").values
+    df[f"scenario_{scenario_name}_distance_lts_2_rerouted"] = scenario_df[f"scenario_{scenario_name}_distance_lts_2_rerouted"].round().astype("Int32").values
+    df[f"scenario_{scenario_name}_distance_lts_3_rerouted"] = scenario_df[f"scenario_{scenario_name}_distance_lts_3_rerouted"].round().astype("Int32").values
+    df[f"scenario_{scenario_name}_distance_lts_4_rerouted"] = scenario_df[f"scenario_{scenario_name}_distance_lts_4_rerouted"].round().astype("Int32").values
     
-    df[f"bike_scenario_{scenario_name}_rerouting_missing"] = scenario_df[f"bike_scenario_{scenario_name}_distance_rerouted"].isna().astype("bool").values
+    df[f"scenario_{scenario_name}_rerouting_missing"] = scenario_df[f"scenario_{scenario_name}_distance_rerouted"].isna().astype("bool").values
     
 def process_transit_scenario(scenario_name: str, scenario_df: pd.DataFrame, df: pd.DataFrame):
     """
@@ -503,20 +503,20 @@ def process_transit_scenario(scenario_name: str, scenario_df: pd.DataFrame, df: 
     """
     scenario_df = transit_cleanup(scenario_df)
     
-    scenario_df[f"transit_scenario_{scenario_name}_distance_rerouted"] = scenario_df["length"] * MILES_PER_METER
-    scenario_df[f"transit_scenario_{scenario_name}_access_length_rerouted"] = scenario_df["access_length"] * MILES_PER_METER
-    scenario_df[f"transit_scenario_{scenario_name}_duration_rerouted"] = scenario_df["duration"]
-    scenario_df[f"transit_scenario_{scenario_name}_num_transfers_rerouted"] = scenario_df["num_transfers"] 
-    scenario_df[f"transit_scenario_{scenario_name}_nontransit_duration"] = scenario_df["non_transit_duration"]
+    scenario_df[f"scenario_{scenario_name}_distance_rerouted"] = scenario_df["length"] * MILES_PER_METER
+    scenario_df[f"scenario_{scenario_name}_access_length_rerouted"] = scenario_df["access_length"] * MILES_PER_METER
+    scenario_df[f"scenario_{scenario_name}_duration_rerouted"] = scenario_df["duration"]
+    scenario_df[f"scenario_{scenario_name}_num_transfers_rerouted"] = scenario_df["num_transfers"] 
+    scenario_df[f"scenario_{scenario_name}_nontransit_duration"] = scenario_df["non_transit_duration"]
     
     scenario_df = scenario_df.set_index("trip_id").reindex(df["trip_id"].astype(str))
     
-    df[f"transit_scenario_{scenario_name}_distance_rerouted"] = scenario_df[f"transit_scenario_{scenario_name}_distance_rerouted"].round().astype("Int16").values
-    df[f"transit_scenario_{scenario_name}_duration_rerouted"] = scenario_df[f"transit_scenario_{scenario_name}_duration_rerouted"].round().astype("Int16").values
-    df[f"transit_scenario_{scenario_name}_access_length_rerouted"] = scenario_df[f"transit_scenario_{scenario_name}_access_length_rerouted"].round().astype("Int16").values
-    df[f"transit_scenario_{scenario_name}_num_transfers_rerouted"] = scenario_df[f"transit_scenario_{scenario_name}_num_transfers_rerouted"].astype("Int8").values
-    df[f"transit_scenario_{scenario_name}_num_transfers_rerouted"] = scenario_df[f"transit_scenario_{scenario_name}_num_transfers_rerouted"].astype("Int8").values
-    df[f"transit_scenario_{scenario_name}_rerouting_missing"] = scenario_df[f"transit_scenario_{scenario_name}_distance_rerouted"].isna().astype("bool").values
+    df[f"scenario_{scenario_name}_distance_rerouted"] = scenario_df[f"scenario_{scenario_name}_distance_rerouted"].round().astype("Int16").values
+    df[f"scenario_{scenario_name}_duration_rerouted"] = scenario_df[f"scenario_{scenario_name}_duration_rerouted"].round().astype("Int16").values
+    df[f"scenario_{scenario_name}_access_length_rerouted"] = scenario_df[f"scenario_{scenario_name}_access_length_rerouted"].round().astype("Int16").values
+    df[f"scenario_{scenario_name}_num_transfers_rerouted"] = scenario_df[f"scenario_{scenario_name}_num_transfers_rerouted"].astype("Int8").values
+    df[f"scenario_{scenario_name}_num_transfers_rerouted"] = scenario_df[f"scenario_{scenario_name}_num_transfers_rerouted"].astype("Int8").values
+    df[f"scenario_{scenario_name}_rerouting_missing"] = scenario_df[f"scenario_{scenario_name}_distance_rerouted"].isna().astype("bool").values
     
     
 

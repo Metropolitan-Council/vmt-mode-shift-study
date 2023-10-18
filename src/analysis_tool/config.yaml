@@ -64,7 +64,7 @@ fixed_purposes: ["Work", "Work-related", "Escort", "School", "School-related"]
 unlikely_purposes: ["Escort", "Shop"]
 
 build: False  # whether we are currently building to docker/streamlit; disables initialization/keyring
-force_reinitialize: False  # whether to rebuild the input file (including scenarios)
+force_reinitialize: True  # whether to rebuild the input file (including scenarios)
 # save_result: False
 
 # assumed to be in data/ directory
@@ -175,15 +175,17 @@ scenarios:
     bike:
         default:  # name of the scenario (for internal use)
           description: "Base Scenario"  # description of scenario
-          mappings:  # mappings of new columns, as imported in the initialize script -> old columns they should replace; these should be compatible in terms of units
+          # mappings of new columns, as imported in the initialize script -> old columns they should replace; these should be compatible in terms of units
+          # these mapping columns should have have "scenario" within them as a substring
+          mappings:  
           file_path:  # file path to the rerouting
         best_bike:
           description: "Improve all streets to best bike LTS"
           mappings: 
-            bike_scenario_best_bike_distance_lts_3_rerouted: bike_distance_lts_3_rerouted
-            bike_scenario_best_bike_distance_lts_4_rerouted: bike_distance_lts_4_rerouted
-            bike_scenario_best_bike_distance_rerouted: bike_distance_rerouted
-            bike_scenario_best_bike_duration_rerouted: bike_duration_rerouted
+            scenario_best_bike_distance_lts_3_rerouted: bike_distance_lts_3_rerouted
+            scenario_best_bike_distance_lts_4_rerouted: bike_distance_lts_4_rerouted
+            scenario_best_bike_distance_rerouted: bike_distance_rerouted
+            scenario_best_bike_duration_rerouted: bike_duration_rerouted
           file_path: "/Data_Processed/geodata/bike-scenario-6df8c.parquet"
     transit:
         default:
@@ -193,9 +195,9 @@ scenarios:
         double_transit:
           description: "Double frequency of all transit routes"
           mappings:
-            transit_scenario_double_transit_duration_rerouted: transit_duration_rerouted
-            transit_scenario_double_transit_distance_rerouted: transit_distance_rerouted
-            transit_scenario_double_transit_rerouting_missing: transit_rerouting_missing
+            scenario_double_transit_duration_rerouted: transit_duration_rerouted
+            scenario_double_transit_distance_rerouted: transit_distance_rerouted
+            scenario_double_transit_rerouting_missing: transit_rerouting_missing
           file_path: "/Data_Processed/geodata/transit-scenario-93d71.parquet"
     walk:
         default:
@@ -206,8 +208,8 @@ scenarios:
           description: "Improve all streets best bike LTS"
           key: trip_id
           mappings:
-            walk_scenario_best_walk_duration_rerouted: walk_duration_rerouted
-            walk_scenario_best_walk_distance_rerouted: walk_distance_meters
+            scenario_best_walk_duration_rerouted: walk_duration_rerouted
+            scenario_best_walk_distance_rerouted: walk_distance_meters
           file_path: "/Data_Processed/geodata/walk-scenario-a37e1.parquet"
     car:
         default:
