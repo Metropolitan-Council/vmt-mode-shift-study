@@ -3,7 +3,7 @@ cycleway,shared,Generally won't allow cars anyhow
 footway,shared,
 living_street,shared,
 motorway,freeway,
-motorway_link,freeway,Speed cap will generally be nonbinding
+motorway_link,major,
 path,shared,
 pedestrian,shared,
 primary,major,

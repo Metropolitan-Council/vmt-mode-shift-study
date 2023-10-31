@@ -9,6 +9,7 @@
 -- to get it to pick up the proper SQLite version.
 -- Note: This will be horrendously slow without the proper indices in the database (tens of hours or more), whereas with the
 --   proper indices it takes less than a minute on my laptop.
+-- Set the SPEED_CAP_DATABASE variable to a database from area_for_way.jl to cap highway speeds.
 
 api_version = 4
 
@@ -23,6 +24,7 @@ Utils = require("lualib/utils")
 Measure = require("lualib/measure")
 sqlite3 = require("lsqlite3")
 MPH_TO_MS = 1609 / 3600
+MPH_TO_KMH = 1.609
 
 
 function setup()
@@ -68,6 +70,19 @@ function setup()
       $tgtlat + 0.000001 > n2.lat AND $tgtlat - 0.000001 < n2.lat AND
       $tgtlon + 0.000001 > n2.lon AND $tgtlon - 0.000001 < n2.lon;
   ]]), "SQL query preparation failed")
+
+  -- If speed capping was requested (for NACTO speed scenario), load that database as well
+  local SPEED_CAP = os.getenv("SPEED_CAP_DATABASE")
+  local speed_cap_db = nil
+  local speed_cap_query = nil
+  if (SPEED_CAP) then
+    print("Capping speeds based on database " .. SPEED_CAP)
+    speed_cap_db = sqlite3.open(SPEED_CAP, sqlite3.OPEN_READONLY)
+    speed_cap_query = assert(
+      speed_cap_db:prepare("SELECT speed_cap_mph FROM way_speeds WHERE way_id = $way"),
+      "SQL speed cap query preparation failed"
+    )
+  end
 
   return {
     properties = {
@@ -380,8 +395,9 @@ function setup()
     },
 
     speed_db = speed_db,
-    speed_query = speed_query
-
+    speed_query = speed_query,
+    speed_cap_db = speed_cap_db,
+    speed_cap_query = speed_cap_query
   }
 end
 
@@ -425,6 +441,53 @@ function process_node(profile, node, result, relations)
 
   -- check if node is a traffic light
   result.traffic_lights = TrafficSignal.get_value(node)
+end
+
+-- Cap speeds if desired
+-- Note that we are capping the _StreetLight_ speeds, not the OSRM default speeds
+function set_speed_cap(profile, way, result, data)
+  if (profile.speed_cap_db and result.forward_mode ~= mode.inaccessible and result.backward_mode ~= mode.inaccessible and
+      -- https://www.osm.org/way/616358326 - elevator marked with access:yes. Won't affect routing as it won't be connected to anything.
+      -- Several other elevators have the same marking.
+      way:get_value_by_key("highway") ~= "elevator" and
+      -- similar for corridors, e.g. https://osm.org/way/622442893#map=19/44.97024/-93.27864
+      way:get_value_by_key("highway") ~= "corridor"
+    ) then
+    -- get the speed from SQLite
+    profile.speed_cap_query:bind_names({way=way:id()})
+  
+    local stat = profile.speed_cap_query:step()
+    if stat == sqlite3.DONE then
+      error("Did not find a speed cap entry for way " .. way:id() .. " (accessible: " .. tostring(result.forward_mode ~= mode.inaccessible) .. ")")
+    elseif stat == sqlite3.ROW then
+      local speed_mph = profile.speed_cap_query:get_value(0)
+  
+      -- make sure there was just one row
+      if profile.speed_cap_query:step() ~= sqlite3.DONE then
+        print("WARN: Way ID " .. way:id() .." has multiple results (or other SQLite error)")
+      end
+  
+      if speed_mph == nil then
+        error("WARN: Way id " .. way:id() .. " has null speed")
+      else
+        -- OSM tagged maxspeeds are scaled down by this factor
+        speed_mph = speed_mph * profile.speed_reduction
+        if result.forward_mode ~= mode.inaccessible then
+          result.forward_speed = speed_mph * MPH_TO_KMH
+          result.forward_rate = speed_mph * MPH_TO_MS
+        end
+
+        if result.backward_mode ~= mode.inaccessible then
+          result.backward_speed = speed_mph * MPH_TO_KMH
+          result.backward_rate = speed_mph * MPH_TO_MS
+        end
+      end
+    else
+      error("Unexpected status from SQLite")
+    end
+  
+    profile.speed_cap_query:reset()
+  end
 end
 
 function process_way(profile, way, result, relations)
@@ -496,6 +559,7 @@ function process_way(profile, way, result, relations)
     WayHandlers.maxspeed,
     WayHandlers.surface,
     WayHandlers.penalties,
+    set_speed_cap,
 
     -- compute class labels
     WayHandlers.classes,
@@ -597,8 +661,14 @@ function process_segment(profile, segment)
       -- someone didn't listen to Edgar Dijkstra
     else
       -- TODO assuming distance is in meters, duration and weight in seconds
-      segment.duration = segment.distance / (speed_mph * MPH_TO_MS)
-      segment.weight = segment.duration
+      local duration = segment.distance / (speed_mph * MPH_TO_MS)
+
+      -- if we are speed capping, only set traffic if it makes the segment slower
+      if (profile.speed_cap_db == nil) or (duration > segment.duration) then
+        -- We are not speed capping, or this segment is slower than the speed cap
+        segment.duration = duration
+        segment.weight = duration
+      end
     end
   else
     error("Unexpected status from SQLite")
