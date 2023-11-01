@@ -22,7 +22,7 @@ def convert_to_minutes(temp: str) -> float:
     """
     return int(temp[0:2]) * 60 + int(temp[3:5]) + int(temp[6:8]) / 60
 
-def get_num_cold_starts(depart_time: List[str], leg_durations: 'np.ndarray[float]', modes: List[str]) -> int:
+def get_num_cold_starts(depart_time: List[str], leg_durations: 'np.ndarray[float]', modes: 'np.ndarray[Mode]') -> int:
     """This is a function that calculates the number of cold starts there will be in a given linked trip.
 
     Args:

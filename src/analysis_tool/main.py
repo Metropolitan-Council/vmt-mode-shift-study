@@ -5,6 +5,7 @@ import numpy as np
 import inspect
 import matplotlib.pyplot as plt
 import seaborn as sns
+from typing import Dict
 
 import steps
 from settings import handler, get_communities
@@ -336,59 +337,22 @@ def setup_vars(phase: Phase) -> None:
     # turn off the summary screen (want to show the normal step screen right now)
     st.session_state["summary_screen"] = False
     
-def final_summary() -> None:
+def show_final_summary(df: pd.DataFrame, step_class_dict: Dict[str, steps.BaseStep], label: str="") -> None:
     """
-    This function generates the final summary for the visualization tool. 
+    This function generates the final summary for the visualization tool given a dataframe and a step class dict that the dataframe
+    followed. 
     """
-    
-    """
-    TODO: need to somehow interleave scenario steps with non-scenario steps
-
-    Raises:
-        RuntimeError: _description_
-    """
-    
-    # define the actions we can do at this point
-    st.sidebar.header("Actions")
-    
-    # button to allow shift to feasible step; only possible if currently in feasible and probable not disabled
-    if st.session_state.phase == Phase.FEASIBLE:
-        if st.sidebar.button("Move to probable step"):
-            logging.info("Moving to probable step")
-            st.session_state.summary_screen = False
-            st.session_state.start_screen_probable = True
-            st.experimental_rerun()
-    
-    # save reference to underlying df for ease of typing
-    df: pd.DataFrame = st.session_state.df
-    
-    # rerun current phase from step selection 
-    if st.sidebar.button("Rerun visualization tool phase"):
-        logging.info(f"Rerunning current ({st.session_state.phase}) phase of the tool")
-        
-        # turn off the summary screen and turn on the desired start screen and refresh
-        st.session_state.summary_screen = False
-        if st.session_state.phase == Phase.FEASIBLE:
-            st.session_state.start_screen_feasible = True
-        elif st.session_state.phase == Phase.PROBABLE:
-            st.session_state.start_screen_probable = True
-        st.experimental_rerun()
-        
-    # currently not supported to go back all the way--can just refresh to do so
-    if st.sidebar.button("Start visualization tool from beginning", disabled=True):
-        pass
-    
-    # button to save final df/percentiles we used to disk; not available if in build mode
+    # df.to_parquet(f"output/fdsa{label}.parquet")
     if not handler["build"]:
-        if st.sidebar.button("Save current result to csv"):
+        if st.sidebar.button(f"Save current result ({label}) to csv"):
             with st.spinner("Exporting dataframe and percentiles"):
                 df.to_csv(f"output/{st.session_state.phase}_trips.csv", index=False)
                 f = open(f"output/{st.session_state.phase}_percentiles.json", "w")
-                f.write(str({step_name: st.session_state.step_class_dict[st.session_state.step].get_cutoff() for step_name, step_class in st.session_state.step_class_dict.items()}))
+                f.write(str({step_name: step_class_dict[st.session_state.step].get_cutoff() for step_name, step_class in step_class_dict.items()}))
                 f.close()
             
     # calculate overall shift ability -- can shift to at least one mode
-    df.loc[:, f"{st.session_state.phase}_shift"] = (
+    df[f"{st.session_state.phase}_shift"] = (
         df[f"{st.session_state.phase}_transit_shift"] | 
         df[f"{st.session_state.phase}_walk_shift"] | 
         df[f"{st.session_state.phase}_bike_shift"]
@@ -408,13 +372,13 @@ def final_summary() -> None:
     total_trips = df[df["mode"] == Mode.CAR]["vehicle_trips"].sum()
     
     # tell the % of people that can shift to any mode and to individual modes
-    bigger_markdown(f"Overall, <strong>{len(st.session_state.step_class_dict)}</strong> steps were run, and, accounting for these restrictions, <strong>{df[(df[f'{st.session_state.phase}_shift']) & (df['mode'] == Mode.CAR)]['vehicle_trips'].sum() / total_trips * 100:.1f}%</strong> of all trips could shift {adjective} from car to some non-car mode. When considering individual mode shifts, <strong>{df[(df[f'{st.session_state.phase}_transit_shift']) & (df['mode'] == Mode.CAR)]['vehicle_trips'].sum() / total_trips * 100:.1f}%</strong> of trips could shift {adjective} to transit, <strong>{df[(df[f'{st.session_state.phase}_walk_shift']) & (df['mode'] == Mode.CAR)]['vehicle_trips'].sum() / total_trips * 100:.1f}%</strong> to bike, and <strong>{df[(df[f'{st.session_state.phase}_bike_shift']) & (df['mode'] == Mode.CAR)]['vehicle_trips'].sum() / total_trips * 100:.1f}%</strong> to bike.")
+    bigger_markdown(f"Overall, <strong>{len(step_class_dict)}</strong> steps were run, and, accounting for these restrictions, <strong>{df[(df[f'{st.session_state.phase}_shift']) & (df['mode'] == Mode.CAR)]['vehicle_trips'].sum() / total_trips * 100:.1f}%</strong> of all trips could shift {adjective} from car to some non-car mode. When considering individual mode shifts, <strong>{df[(df[f'{st.session_state.phase}_transit_shift']) & (df['mode'] == Mode.CAR)]['vehicle_trips'].sum() / total_trips * 100:.1f}%</strong> of trips could shift {adjective} to transit, <strong>{df[(df[f'{st.session_state.phase}_walk_shift']) & (df['mode'] == Mode.CAR)]['vehicle_trips'].sum() / total_trips * 100:.1f}%</strong> to walk, and <strong>{df[(df[f'{st.session_state.phase}_bike_shift']) & (df['mode'] == Mode.CAR)]['vehicle_trips'].sum() / total_trips * 100:.1f}%</strong> to bike.")
     
     # record of settings for all steps that were run
     bigger_markdown("Below are the steps that were run and their settings (1 for categoricals indicates that it was run).")
     settings = {}
     # iterate over saved step class objects
-    for name, step_class in st.session_state.step_class_dict.items():
+    for name, step_class in step_class_dict.items():
         # last run
         prev = step_class.get_previous_run()
         # don't show if it was disabled/never run
@@ -437,7 +401,7 @@ def final_summary() -> None:
     
     # get % trips and vmt for each walk step and for overall shifts to walking
     bigger_markdown(r"Below, a table detailing processed steps and the % of car trips and VMT that meet those constraints can be seen.")
-    st.table(get_summary_df(df, st.session_state.step_class_dict.values(), Mode.WALK, f"{st.session_state.phase}_walk_shift", st.session_state.phase))
+    st.table(get_summary_df(df, step_class_dict.values(), Mode.WALK, f"{st.session_state.phase}_walk_shift", st.session_state.phase))
         
     # stacked histogram of duration difference for feasible drive, non-feasible drive, and walk trips
     bigger_markdown("Below, a stacked histogram detailing the travel time difference distributions for drive trips that can feasibly shift to walk, drive trips that can't shift, and observed walk trips can be seen.")
@@ -453,7 +417,7 @@ def final_summary() -> None:
     
     # get % trips and vmt for each walk step and for overall shifts to biking
     bigger_markdown(r"Below, a table detailing processed steps and the % of car trips and VMT that meet those constraints can be seen.")
-    st.table(get_summary_df(df, st.session_state.step_class_dict.values(), Mode.BIKE, f"{st.session_state.phase}_bike_shift", st.session_state.phase))
+    st.table(get_summary_df(df, step_class_dict.values(), Mode.BIKE, f"{st.session_state.phase}_bike_shift", st.session_state.phase))
         
     # stacked histogram of duration difference for feasible drive, non-feasible drive, and bike trips
     bigger_markdown("Below, a stacked histogram detailing the travel time difference distributions for drive trips that can feasibly shift to biking, drive trips that can't shift, and observed biking trips can be seen.")
@@ -469,7 +433,7 @@ def final_summary() -> None:
     
     # get % trips and vmt for each transit step and for overall shifts to transit
     bigger_markdown(r"Below, a table detailing processed steps and the % of car trips and VMT that meet those constraints can be seen.")
-    st.table(get_summary_df(df, st.session_state.step_class_dict.values(), Mode.TRANSIT, f"{st.session_state.phase}_transit_shift", st.session_state.phase))
+    st.table(get_summary_df(df, step_class_dict.values(), Mode.TRANSIT, f"{st.session_state.phase}_transit_shift", st.session_state.phase))
         
     # stacked histogram of duration difference for feasible drive, non-feasible drive, and transit trips
     bigger_markdown("Below, a stacked histogram detailing the travel time difference distributions for drive trips that can feasibly shift to transit, drive trips that can't shift, and observed transit trips can be seen. NOTE: due to the need to filter out trips with no valid transit trip (and thus no applicable transit duration), there are no infeasible drive trips within this histogram.")
@@ -897,7 +861,45 @@ def final_summary() -> None:
     
     bigger_markdown(f"We consider a tour-level shift possible if every component trip can also shift {adjective}.")
     st.table(tour_df)
+    
+def final_summary() -> None:
+    
+    # define the actions we can do at this point
+    st.sidebar.header("Actions")
+    
+    # button to allow shift to feasible step; only possible if currently in feasible and probable not disabled
+    if st.session_state.phase == Phase.FEASIBLE:
+        if st.sidebar.button("Move to probable step"):
+            logging.info("Moving to probable step")
+            st.session_state.summary_screen = False
+            st.session_state.start_screen_probable = True
+            st.experimental_rerun()
+    
+    # rerun current phase from step selection 
+    if st.sidebar.button("Rerun visualization tool phase"):
+        logging.info(f"Rerunning current ({st.session_state.phase}) phase of the tool")
         
+        # turn off the summary screen and turn on the desired start screen and refresh
+        st.session_state.summary_screen = False
+        if st.session_state.phase == Phase.FEASIBLE:
+            st.session_state.start_screen_feasible = True
+        elif st.session_state.phase == Phase.PROBABLE:
+            st.session_state.start_screen_probable = True
+        st.experimental_rerun()
+        
+    # currently not supported to go back all the way--can just refresh to do so
+    if st.sidebar.button("Start visualization tool from beginning", disabled=True):
+        pass
+                
+    if st.session_state.have_scenarios:
+        col1, col2 = st.columns(2, gap="medium")
+        with col1:
+            show_final_summary(st.session_state.df, st.session_state.step_class_dict, "base")
+        with col2:
+            show_final_summary(st.session_state.sdf, st.session_state.step_class_scenario_dict, "scenario")
+    else:
+        show_final_summary(st.session_state.df, st.session_state.step_class_dict)
+    
     
 def show_step() -> None:
     """
@@ -1035,10 +1037,7 @@ def run() -> None:
                 st.session_state.step_class_scenario_dict[option] = create_scenario_step(option)
             # otherwise just create the base one
             else:
-                st.session_state.step_class_dict[option] = getattr(st.session_state.overall_step, option)(
-                    st.session_state.df, 
-                    handler[f"{st.session_state.phase}_steps"][option]
-                )
+                st.session_state.step_class_dict[option] = create_base_step(option)
             st.session_state.id += 10
             # st.experimental_rerun()
             
