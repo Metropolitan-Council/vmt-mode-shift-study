@@ -214,7 +214,7 @@ def start_screen_probable() -> None:
     # NOTE: like with feasible steps, this can also be buggy sometimes
     st.session_state["probable_steps"] = st.multiselect("Choose the probable steps to run", handler["probable_steps"])
 
-def setup_df() -> 0:
+def setup_df() -> None:
     """
     This function reads in/sets up the input dataframe for the visualization tool.
     """
@@ -922,6 +922,7 @@ def show_step() -> None:
     if curr.is_continuous():
         # only allow setting cutoff if not in an actual scenario (raw doesn't make sense)
         if not cur_scenario:
+            # TODO: possibly try to allow desynced cutoff configuration?
             curr.set_cutoff_mode(st.sidebar.radio("Choose how to set the cutoff", (CutoffMode.PCT, CutoffMode.RAW), key=st.session_state.id))
             
             # synchronize the cutoff modes
