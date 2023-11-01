@@ -326,7 +326,13 @@ def setup_vars(phase: Phase) -> None:
     # if we have scenarios
     if st.session_state.have_scenarios:
         # make a copy of the main df for scenario purposes
-        st.session_state["sdf"] = st.session_state["df"].copy()
+        if phase != Phase.PROBABLE:
+            st.session_state["sdf"] = st.session_state["df"].copy()
+        else:
+            st.session_state.sdf[f'{phase}_{Mode.WALK}_shift'] = True
+            st.session_state.sdf[f'{phase}_{Mode.BIKE}_shift'] = True
+            st.session_state.sdf[f'{phase}_{Mode.TRANSIT}_shift'] = True
+            st.session_state.sdf[f'{phase}_shift'] = True
         
         # record down scenario classes in a dict
         st.session_state["step_class_scenario_dict"] = dict()
