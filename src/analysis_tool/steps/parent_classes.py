@@ -329,7 +329,6 @@ class BaseStep(ABC):
         scenario_cols = set()
         def get_scenario_cols(curr):
             for key in curr.keys():
-                print(key, curr[key])
                 if key == "mappings" and type(curr[key]) == dict:
                     scenario_cols.update(curr[key].keys())
                 elif type(curr[key]) == dict:

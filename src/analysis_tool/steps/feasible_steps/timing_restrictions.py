@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import streamlit as st
 import inspect
-from typing import List, Dict
+from typing import List, Dict, Any
 
 from steps.parent_classes import *
 from steps.figure_lib import *
@@ -13,6 +13,25 @@ from settings import handler, get_data
 
 fixed_purposes = set(handler["fixed_purposes"])
 
+from multiprocessing import Pool, cpu_count
+
+def applyParallel(dfGrouped, func: Dict[Any, Any]) -> pd.DataFrame:
+    """This function parallelizes an apply function on a groupby object using a thread pool.
+    
+    The ret_list is a list of dictionaries that represent columns in the final dataframe.
+
+    Args:
+        dfGrouped (groupby object): the groupby object
+        func (Dict): apply function that accepts one parameter and returns a dictionary
+
+    Returns:
+        pd.DataFrame: result of apply on groupby object
+    """
+    with Pool(cpu_count()) as p:
+        ret_list = p.map(func, [(name, group) for name, group in dfGrouped])
+    return pd.DataFrame(ret_list)
+
+# helper functions for evaluating timing
 def is_in_set(a, b):
     return [x in b for x in a]
 
@@ -28,11 +47,20 @@ def over_cutoff(x, cutoff: int):
 def convert_to_minutes(temp: str) -> float:
     return int(temp[0:2]) * 60 + int(temp[3:5]) + int(temp[6:8]) / 60
 
+def wrapper(x):
+    name, group = x
+    return {
+        "wave": name[0],
+        "person_id": name[1],
+        "travel_date": name[2],
+        "feasible": evaluate_feasible_timing(len(group), list(group["depart_time"]), group["duration"].values, list(group["d_purpose_category"]), list(group["o_purpose_category"]), group["alt_duration"].values)
+    }
+
 def evaluate_timing(df: pd.DataFrame, alt_mode_times: np.ndarray[float]):
     temp = df.copy()
     temp["alt_duration"] = alt_mode_times
     with st.spinner("Running timing logic"):
-        return temp.groupby(["wave", "person_id", "travel_date"]).apply(lambda x: evaluate_feasible_timing(len(x), list(x["depart_time"]), x["duration"].values, list(x["d_purpose_category"]), list(x["o_purpose_category"]), x["alt_duration"].values))
+        return applyParallel(temp.groupby(["wave", "person_id", "travel_date"]), wrapper)
 
 def evaluate_feasible_timing(chunk_len: int, depart_time: List[str], leg_durations: 'np.ndarray[float]', d_purpose: List[str], o_purpose: List[str], alt_durations: List[float]):
     # if there is only an inbound and outbound trip, don't need to worry about timing
@@ -88,6 +116,24 @@ def evaluate_feasible_timing(chunk_len: int, depart_time: List[str], leg_duratio
     # feasible if nothing is weird
     return True
 
+def process_timing_inputs(inputs: Dict[str, pd.Series]) -> pd.Series:
+    """This is a wrapper for processing any feasible timing input
+
+    Args:
+        inputs (Dict[str, pd.Series]): the input definition for the step
+
+    Returns:
+        pd.Series: the timing result
+    """
+    df = get_data()
+    temp = np.where(inputs["na_col"], 9999999, inputs["duration"])
+    feasible_timing = evaluate_timing(df, temp)
+    
+    temp = df[["wave", "person_id", "travel_date"]].copy()
+    temp = temp.reset_index().merge(feasible_timing, on=["wave", "person_id", "travel_date"], how="left").set_index("index")
+    
+    return temp["feasible"]
+
 
 class WalkTimingStep(CategoricalStep):
     
@@ -110,16 +156,7 @@ class WalkTimingStep(CategoricalStep):
         
     @staticmethod
     def process_inputs(inputs: Dict[str, pd.Series]) -> pd.Series:
-        df = get_data()
-        temp = np.where(inputs["na_col"], 9999999, inputs["duration"])
-        feasible_walking = evaluate_timing(df, temp)
-        
-        feasible_walking = feasible_walking.reset_index().rename(columns={0: "res"})
-        
-        temp = df[["wave", "person_id", "travel_date"]].copy()
-        temp = temp.reset_index().merge(feasible_walking, on=["wave", "person_id", "travel_date"], how="left").set_index("index")
-        
-        return temp["res"]
+        return process_timing_inputs(inputs)
         
     def get_summary_statistics(self):
         return show_value_counts(self.df, [[x, self.name] for x in [self.mode, Mode.CAR]])
@@ -178,16 +215,7 @@ class TransitTimingStep(CategoricalStep):
         
     @staticmethod
     def process_inputs(inputs: Dict[str, pd.Series]) -> pd.Series:
-        df = get_data()
-        temp = np.where(inputs["na_col"], 9999999, inputs["duration"])
-        feasible_transit = evaluate_timing(df, temp)
-        
-        feasible_transit = feasible_transit.reset_index().rename(columns={0: "res"})
-        
-        temp = df[["wave", "person_id", "travel_date"]].copy()
-        temp = temp.reset_index().merge(feasible_transit, on=["wave", "person_id", "travel_date"], how="left").set_index("index")
-        
-        return temp["res"]
+        return process_timing_inputs(inputs)
         
     def get_summary_statistics(self):
         return show_value_counts(self.df, [[x, self.name] for x in [self.mode, Mode.CAR]])
@@ -247,16 +275,7 @@ class BikeTimingStep(CategoricalStep):
         
     @staticmethod
     def process_inputs(inputs: Dict[str, pd.Series]) -> pd.Series:
-        df = get_data()
-        temp = np.where(inputs["na_col"], 9999999, inputs["duration"])
-        feasible_biking = evaluate_timing(df, temp)
-        
-        feasible_biking = feasible_biking.reset_index().rename(columns={0: "res"})
-        
-        temp = df[["wave", "person_id", "travel_date"]].copy()
-        temp = temp.reset_index().merge(feasible_biking, on=["wave", "person_id", "travel_date"], how="left").set_index("index")
-        
-        return temp["res"]
+        return process_timing_inputs(inputs)
         
     def get_summary_statistics(self):
         return show_value_counts(self.df, [[x, self.name] for x in [self.mode, Mode.CAR]])
