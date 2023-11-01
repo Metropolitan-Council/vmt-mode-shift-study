@@ -12,8 +12,12 @@ from typing import List, Dict
 
 class WalkDistanceStep(ContinuousStep):
     
-    def __init__(self, df: pd.DataFrame, inputs: Dict[str, str], cutoff: float=0.95, scenario: bool=False):
-        super().__init__(df, "feasible_walking_dist", inputs, Mode.WALK, cutoff, "step_walk_distance_rerouted", Phase.FEASIBLE, "miles", scenario)
+    def __init__(self, df: pd.DataFrame, inputs: Dict[str, str], cutoff: float=0.95):
+        super().__init__(df, "feasible_walking_dist", inputs, Mode.WALK, cutoff, "step_walk_distance_rerouted", Phase.FEASIBLE, "miles")
+        
+    @staticmethod
+    def get_mode() -> Mode:
+        return Mode.WALK
     
     def get_summary_statistics(self):
         return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct(), column_names=["Walk distance in miles if walking chosen (observed walk trips)", "Walk distance in miles if walking chosen (observed car trips)"])
@@ -74,8 +78,12 @@ class WalkDistanceStep(ContinuousStep):
     
 class BikeDistanceStep(ContinuousStep):
     
-    def __init__(self, df: pd.DataFrame, inputs: Dict[str, str], cutoff: float=0.95, scenario: bool=False):
-        super().__init__(df, "feasible_biking_dist", inputs, Mode.BIKE, cutoff, "step_bike_distance_rerouted", Phase.FEASIBLE, "miles", scenario)
+    def __init__(self, df: pd.DataFrame, inputs: Dict[str, str], cutoff: float=0.95):
+        super().__init__(df, "feasible_biking_dist", inputs, Mode.BIKE, cutoff, "step_bike_distance_rerouted", Phase.FEASIBLE, "miles")
+        
+    @staticmethod
+    def get_mode() -> Mode:
+        return Mode.BIKE
     
     def get_summary_statistics(self):
         return show_summaries(self.df, modes=[[x, self.column_name] for x in [self.mode, Mode.CAR]], percentile=self.get_cutoff_pct(), column_names=["Bike distance in miles if biking chosen (observed bike trips)", "Bike distance in miles if biking chosen (observed car trips)"])

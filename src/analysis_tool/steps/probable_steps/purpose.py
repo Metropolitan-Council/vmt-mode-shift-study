@@ -16,8 +16,8 @@ from settings import handler
 
 class WalkPurposeStep(CategoricalStep):
     
-    def __init__(self, df: pd.DataFrame, inputs: Dict[str, str], scenario: bool=False):
-        super().__init__(df, "likely_walk_purpose", inputs, Mode.WALK, Phase.PROBABLE, scenario)
+    def __init__(self, df: pd.DataFrame, inputs: Dict[str, str]):
+        super().__init__(df, "likely_walk_purpose", inputs, Mode.WALK, Phase.PROBABLE)
         
         # df["purpose_cleaned"] = df["d_purpose_category"]
         # df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["School", "School-related"]), "School", df["purpose_cleaned"])
@@ -27,6 +27,10 @@ class WalkPurposeStep(CategoricalStep):
         # df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Missing: Non-response", "Missing: Skip logic", "Not imputable"]), "Missing", df["purpose_cleaned"])
         
         # self.df.loc[:, self.name] = ~self.df["purpose_cleaned"].isin(handler["unlikely_purposes"])
+        
+    @staticmethod
+    def get_mode() -> Mode:
+        return Mode.WALK
         
     @staticmethod
     def process_inputs(inputs: Dict[str, pd.Series]) -> pd.Series:
@@ -92,8 +96,8 @@ class WalkPurposeStep(CategoricalStep):
         
 class BikePurposeStep(CategoricalStep):
     
-    def __init__(self, df: pd.DataFrame, inputs: Dict[str, pd.Series], scenario: bool=False):
-        super().__init__(df, "likely_bike_purpose", inputs, Mode.BIKE, Phase.PROBABLE, scenario)
+    def __init__(self, df: pd.DataFrame, inputs: Dict[str, pd.Series]):
+        super().__init__(df, "likely_bike_purpose", inputs, Mode.BIKE, Phase.PROBABLE)
         
         # df["purpose_cleaned"] = df["d_purpose_category"]
         # df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["School", "School-related"]), "School", df["purpose_cleaned"])
@@ -103,6 +107,10 @@ class BikePurposeStep(CategoricalStep):
         # df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Missing: Non-response", "Missing: Skip logic", "Not imputable"]), "Missing", df["purpose_cleaned"])
         
         # self.df.loc[:, self.name] = ~self.df["purpose_cleaned"].isin(handler["unlikely_purposes"])
+        
+    @staticmethod
+    def get_mode() -> Mode:
+        return Mode.BIKE
         
     @staticmethod
     def process_inputs(inputs: Dict[str, pd.Series]) -> pd.Series:
@@ -168,8 +176,8 @@ class BikePurposeStep(CategoricalStep):
         
 class TransitPurposeStep(CategoricalStep):
     
-    def __init__(self, df: pd.DataFrame, inputs: Dict[str, pd.Series], scenario: bool=False):
-        super().__init__(df, "likely_transit_purpose", inputs, Mode.TRANSIT, Phase.PROBABLE, scenario)
+    def __init__(self, df: pd.DataFrame, inputs: Dict[str, pd.Series]):
+        super().__init__(df, "likely_transit_purpose", inputs, Mode.TRANSIT, Phase.PROBABLE)
         
         # df["purpose_cleaned"] = df["d_purpose_category"]
         # df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["School", "School-related"]), "School", df["purpose_cleaned"])
@@ -179,6 +187,10 @@ class TransitPurposeStep(CategoricalStep):
         # df["purpose_cleaned"] = np.where(df["purpose_cleaned"].isin(["Missing: Non-response", "Missing: Skip logic", "Not imputable"]), "Missing", df["purpose_cleaned"])
         
         # self.df.loc[:, self.name] = ~self.df["purpose_cleaned"].isin(handler["unlikely_purposes"])
+        
+    @staticmethod
+    def get_mode() -> Mode:
+        return Mode.TRANSIT
         
     @staticmethod
     def process_inputs(inputs: Dict[str, pd.Series]) -> pd.Series:

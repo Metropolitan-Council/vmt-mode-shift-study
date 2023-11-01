@@ -11,8 +11,12 @@ import inspect
 
 class BikeSnowDepthStep(ContinuousStep):
     
-    def __init__(self, df: pd.DataFrame, inputs: Dict[str, str], cutoff=0.95, scenario=False):
-        super().__init__(df, "feasible_bike_snow_depth", inputs, Mode.BIKE, cutoff, "step_snow_depth", Phase.FEASIBLE, "mm", scenario)
+    def __init__(self, df: pd.DataFrame, inputs: Dict[str, str], cutoff=0.95):
+        super().__init__(df, "feasible_bike_snow_depth", inputs, Mode.BIKE, cutoff, "step_snow_depth", Phase.FEASIBLE, "mm")
+        
+    @staticmethod
+    def get_mode() -> Mode:
+        return Mode.BIKE
     
     def get_summary_statistics(self):
         return show_summaries(self.df, modes=[[x, self.column_name] for x in Mode.get_all()], percentile=self.get_cutoff_pct(), column_names=["Snow depth in mm during trip day (observed bike trips)", "Snow depth in mm during trip day (observed car trips)"])
@@ -73,8 +77,12 @@ class BikeSnowDepthStep(ContinuousStep):
     
 class BikeHighLTSDistStep(ContinuousStep):
     
-    def __init__(self, df: pd.DataFrame, inputs: Dict[str, str], cutoff=0.95, scenario=False):
-        super().__init__(df, "feasible_bike_high_lts_dist", inputs, Mode.BIKE, cutoff, "step_high_lts_biking_pct", Phase.FEASIBLE, f"proportion high LTS", scenario)
+    def __init__(self, df: pd.DataFrame, inputs: Dict[str, str], cutoff=0.95):
+        super().__init__(df, "feasible_bike_high_lts_dist", inputs, Mode.BIKE, cutoff, "step_high_lts_biking_pct", Phase.FEASIBLE, f"proportion high LTS")
+        
+    @staticmethod
+    def get_mode() -> Mode:
+        return Mode.BIKE
             
     @staticmethod
     def process_inputs(inputs: Dict[str, pd.Series]) -> pd.Series:

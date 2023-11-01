@@ -10,8 +10,12 @@ from typing import List, Dict
 
 class WalkPrecipitationStep(ContinuousStep):
     
-    def __init__(self, df: pd.DataFrame, inputs: Dict[str, pd.Series], cutoff: float=0, scenario: bool=False):
-        super().__init__(df, "likely_walk_precipitation", Mode.WALK, cutoff, "precipitation", Phase.PROBABLE, "1/10 mm", scenario)
+    def __init__(self, df: pd.DataFrame, inputs: Dict[str, pd.Series], cutoff: float=0):
+        super().__init__(df, "likely_walk_precipitation", inputs, Mode.WALK, cutoff, "precipitation", Phase.PROBABLE, "1/10 mm")
+        
+    @staticmethod
+    def get_mode() -> Mode:
+        return Mode.WALK
     
     def get_summary_statistics(self):
         return show_summaries(self.df, modes=[[x, self.column_name] for x in Mode.get_all()], percentile=self.get_cutoff_pct(), column_names=["Precipitation in 1/10 mm on travel day if walking chosen (observed walk trips)", "Precipitation in 1/10 mm on travel day if walking chosen (observed car trips)"])
@@ -51,8 +55,12 @@ class WalkPrecipitationStep(ContinuousStep):
     
 class BikePrecipitationStep(ContinuousStep):
     
-    def __init__(self, df: pd.DataFrame, inputs: Dict[str, pd.Series], cutoff: float=0, scenario: bool=False):
-        super().__init__(df, "likely_bike_precipitation", inputs, Mode.BIKE, cutoff, "precipitation", Phase.PROBABLE, "1/10 mm", scenario)
+    def __init__(self, df: pd.DataFrame, inputs: Dict[str, pd.Series], cutoff: float=0):
+        super().__init__(df, "likely_bike_precipitation", inputs, Mode.BIKE, cutoff, "precipitation", Phase.PROBABLE, "1/10 mm")
+        
+    @staticmethod
+    def get_mode() -> Mode:
+        return Mode.BIKE
     
     def get_summary_statistics(self):
         return show_summaries(self.df, modes=[[x, self.column_name] for x in Mode.get_all()], percentile=self.get_cutoff_pct(), column_names=["Precipitation in 1/10 mm on travel day if biking chosen (observed bike trips)", "Precipitation in 1/10 mm on travel day if biking chosen (observed car trips)"])
@@ -92,8 +100,12 @@ class BikePrecipitationStep(ContinuousStep):
     
 class WalkTemperatureStep(ContinuousStep):
     
-    def __init__(self, df: pd.DataFrame, inputs: Dict[str, pd.Series], cutoff: float=0, scenario: bool=False):
-        super().__init__(df, "likely_walk_temperature", inputs, Mode.WALK, cutoff, "temperature", Phase.PROBABLE, "1/10 C", scenario)
+    def __init__(self, df: pd.DataFrame, inputs: Dict[str, pd.Series], cutoff: float=0):
+        super().__init__(df, "likely_walk_temperature", inputs, Mode.WALK, cutoff, "temperature", Phase.PROBABLE, "1/10 C")
+        
+    @staticmethod
+    def get_mode() -> Mode:
+        return Mode.WALK
     
     def get_summary_statistics(self):
         return show_summaries(self.df, modes=[[x, self.column_name] for x in Mode.get_all()], percentile=self.get_cutoff_pct(), column_names=["Temperature in 1/10 C on travel day if walking chosen (observed walk trips)", "Temperature in 1/10 C on travel day if walking chosen (observed car trips)"])
@@ -135,8 +147,12 @@ class WalkTemperatureStep(ContinuousStep):
     
 class BikeTemperatureStep(ContinuousStep):
     
-    def __init__(self, df: pd.DataFrame, inputs: Dict[str, pd.Series], cutoff: float=0, scenario: bool=False):
-        super().__init__(df, "likely_bike_temperature", inputs, Mode.BIKE, cutoff, "temperature", Phase.PROBABLE, "1/10 C", scenario)
+    def __init__(self, df: pd.DataFrame, inputs: Dict[str, pd.Series], cutoff: float=0):
+        super().__init__(df, "likely_bike_temperature", inputs, Mode.BIKE, cutoff, "temperature", Phase.PROBABLE, "1/10 C")
+        
+    @staticmethod
+    def get_mode() -> Mode:
+        return Mode.BIKE
     
     def get_summary_statistics(self):
         return show_summaries(self.df, modes=[[x, self.column_name] for x in Mode.get_all()], percentile=self.get_cutoff_pct(), column_names=["Temperature in 1/10 C on travel day if biking chosen (observed bike trips)", "Temperature in 1/10 C on travel day if biking chosen (observed car trips)"])

@@ -137,8 +137,8 @@ def process_timing_inputs(inputs: Dict[str, pd.Series]) -> pd.Series:
 
 class WalkTimingStep(CategoricalStep):
     
-    def __init__(self, df: pd.DataFrame, inputs: Dict[str, str], scenario=False):
-        super().__init__(df, "feasible_walk_timing", inputs, Mode.WALK, Phase.FEASIBLE, scenario)
+    def __init__(self, df: pd.DataFrame, inputs: Dict[str, str]):
+        super().__init__(df, "feasible_walk_timing", inputs, Mode.WALK, Phase.FEASIBLE)
         
         # make the name distinct if we are at a scenario
         # if scenario:
@@ -153,6 +153,10 @@ class WalkTimingStep(CategoricalStep):
         # temp = temp.reset_index().merge(feasible_walking, on=["wave", "person_id", "travel_date"], how="left").set_index("index")
         
         # df[self.name] = temp[self.name]
+        
+    @staticmethod
+    def get_mode() -> Mode:
+        return Mode.WALK
         
     @staticmethod
     def process_inputs(inputs: Dict[str, pd.Series]) -> pd.Series:
@@ -196,8 +200,8 @@ class WalkTimingStep(CategoricalStep):
         
 class TransitTimingStep(CategoricalStep):
     
-    def __init__(self, df: pd.DataFrame, inputs: Dict[str, str], scenario=False):
-        super().__init__(df, "feasible_transit_timing", inputs, Mode.TRANSIT, Phase.FEASIBLE, scenario)
+    def __init__(self, df: pd.DataFrame, inputs: Dict[str, str]):
+        super().__init__(df, "feasible_transit_timing", inputs, Mode.TRANSIT, Phase.FEASIBLE)
         
         # make the name distinct if we are at a scenario
         # if scenario:
@@ -212,6 +216,10 @@ class TransitTimingStep(CategoricalStep):
         # temp = temp.reset_index().merge(feasible_transit, on=["wave", "person_id", "travel_date"], how="left").set_index("index")
         
         # df[self.name] = temp[self.name]
+        
+    @staticmethod
+    def get_mode() -> Mode:
+        return Mode.WALK
         
     @staticmethod
     def process_inputs(inputs: Dict[str, pd.Series]) -> pd.Series:
@@ -255,8 +263,8 @@ class TransitTimingStep(CategoricalStep):
         
 class BikeTimingStep(CategoricalStep):
     
-    def __init__(self, df: pd.DataFrame, inputs: Dict[str, str], scenario=False):
-        super().__init__(df, "feasible_bike_timing", inputs, Mode.BIKE, Phase.FEASIBLE, scenario)
+    def __init__(self, df: pd.DataFrame, inputs: Dict[str, str]):
+        super().__init__(df, "feasible_bike_timing", inputs, Mode.BIKE, Phase.FEASIBLE)
         
         # make the name distinct if we are at a scenario
         # if scenario:
@@ -272,6 +280,10 @@ class BikeTimingStep(CategoricalStep):
         # temp = temp.reset_index().merge(feasible_biking, on=["wave", "person_id", "travel_date"], how="left").set_index("index")
         
         # df[self.name] = temp[self.name]
+        
+    @staticmethod
+    def get_mode() -> Mode:
+        return Mode.BIKE
         
     @staticmethod
     def process_inputs(inputs: Dict[str, pd.Series]) -> pd.Series:

@@ -76,6 +76,10 @@ class WalkTimingStep(CategoricalStep):
         
         df[self.name] = temp[self.name]
         
+    @staticmethod
+    def get_mode() -> Mode:
+        return Mode.WALK
+        
     def get_summary_statistics(self):
         return show_value_counts(self.df, [[x, self.name] for x in [self.mode, Mode.CAR]])
     
@@ -128,6 +132,10 @@ class BikeTimingStep(CategoricalStep):
         
         df[self.name] = temp[self.name]
         
+    @staticmethod
+    def get_mode() -> Mode:
+        return Mode.BIKE
+        
     def get_summary_statistics(self):
         return show_value_counts(self.df, [[x, self.name] for x in [self.mode, Mode.CAR]])
     
@@ -179,6 +187,10 @@ class TransitTimingStep(CategoricalStep):
         temp = temp.reset_index().merge(probable_transit, on=["wave", "person_id", "travel_date"], how="left").set_index("index")
         
         df[self.name] = temp[self.name]
+        
+    @staticmethod
+    def get_mode() -> Mode:
+        return Mode.TRANSIT
         
     def get_summary_statistics(self):
         return show_value_counts(self.df, [[x, self.name] for x in [self.mode, Mode.CAR]])

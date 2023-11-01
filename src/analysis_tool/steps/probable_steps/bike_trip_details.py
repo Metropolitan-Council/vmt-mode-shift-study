@@ -10,11 +10,15 @@ import inspect
     
 class BikeHighLTSDistStep(ContinuousStep):
     
-    def __init__(self, df: pd.DataFrame, inputs: Dict[str, str], cutoff: float=0.01, scenario: bool=False):
-        super().__init__(df, "probable_bike_high_lts_dist", inputs, Mode.BIKE, cutoff, "high_lts_dist", Phase.PROBABLE, "meters", scenario)
+    def __init__(self, df: pd.DataFrame, inputs: Dict[str, str], cutoff: float=0.01):
+        super().__init__(df, "probable_bike_high_lts_dist", inputs, Mode.BIKE, cutoff, "high_lts_dist", Phase.PROBABLE, "meters")
         
         # df.loc[:, "high_lts_dist"] = df["bike_distance_lts_3_rerouted"] + df["bike_distance_lts_4_rerouted"]
         # df.loc[:, "high_lts_biking_pct"] = df["high_lts_dist"] / df["bike_distance_rerouted"]
+        
+    @staticmethod
+    def get_mode() -> Mode:
+        return Mode.BIKE
         
     @staticmethod
     def process_inputs(inputs: Dict[str, pd.Series]) -> pd.Series:

@@ -40,19 +40,22 @@ def get_num_cold_starts(depart_time: List[str], leg_durations: 'np.ndarray[float
     leg_starts = (leg_starts - ref) % 1440
     # calculate end times relative to the start times using the duration category
     leg_ends = leg_starts + leg_durations
+
+    cold_starts = int(np.any(modes == Mode.CAR))
+    cold_starts += ((modes == Mode.CAR) * (leg_starts - leg_ends > 15))[1:].sum()
     
-    cold_starts = 0
-    prev_end = -1
-    # iterate over all trips in a complete tour
-    for i in range(len(leg_starts)):
-        # if the current leg mode i car
-        if modes[i] == Mode.CAR:
-            # if there wasn't a previous or the difference between the end of the last car trip and the beginning of this car trip is more than 15 minutes, it is a cold start
-            if prev_end == -1 or leg_starts[i] - leg_ends[i] > 15:
-                cold_starts += 1
-            # update previous end of car trip
-            prev_end = leg_ends[i]
-    return cold_starts            
+    return cold_starts
+    
+    # # iterate over all trips in a complete tour
+    # for i in range(len(leg_starts)):
+    #     # if the current leg mode i car
+    #     if modes[i] == Mode.CAR:
+    #         # if there wasn't a previous or the difference between the end of the last car trip and the beginning of this car trip is more than 15 minutes, it is a cold start
+    #         if prev_end == -1 or leg_starts[i] - leg_ends[i] > 15:
+    #             cold_starts += 1
+    #         # update previous end of car trip
+    #         prev_end = leg_ends[i]
+    # return cold_starts            
 
 def add_value_labels(ax, spacing=5):
     """Add labels to the end of each bar in a bar chart.
@@ -315,7 +318,7 @@ def validate_input(df: pd.DataFrame):
             logging.exception("Input dataframe does not have all required columns (see config.yml for all columns necessary)")
             raise RuntimeError("Input dataframe is not fully specified")
         
-def create_scenario_input(step: str, scenario: str, phase: Phase, mode: Mode) -> Dict[str, str]:
+def create_scenario_input(step: str, scenario: str, phase: Phase) -> Dict[str, str]:
     """
     This function takes in a step, a scenario, and the current phase/mode and transforms the original
     input settings for the steps to incorporate the new scenario columns, referencing the 
@@ -331,7 +334,7 @@ def create_scenario_input(step: str, scenario: str, phase: Phase, mode: Mode) ->
         Dict[str, str]: a new valid input for a step using any new columns where possible
     """
     inputs: Dict[str, str] = handler[f"{phase}_steps"][step]
-    replacements: Dict[str, str] = {val: key for key, val in handler["scenarios"][str(mode)][scenario]["mappings"].items()}
+    replacements: Dict[str, str] = {val: key for key, val in handler["scenarios"][str(getattr(st.session_state.overall_step, step).get_mode())][scenario]["mappings"].items()}
     out = dict()
     
     for key, val in inputs.items():
@@ -342,3 +345,37 @@ def create_scenario_input(step: str, scenario: str, phase: Phase, mode: Mode) ->
 
     return out
 
+def in_scenario(mode, phase, step, scenarios):
+    scenario_name = scenarios[mode]
+    if scenario_name != "default":
+
+        scenario = handler["scenarios"][mode][scenario_name]
+        mapping = {value: key for key, value in scenario["mappings"].items()}
+        
+        if len(set(mapping.keys()).intersection(set(handler[f"{phase}_steps"][step].values()))) != 0:
+            return True
+
+    return False
+
+def create_base_step(option: str):
+    return getattr(st.session_state.overall_step, option)(
+        st.session_state.df, 
+        handler[f"{st.session_state.phase}_steps"][option]
+    )
+    
+def create_scenario_step(option: str):
+    obj = getattr(st.session_state.overall_step, option)
+    scenario_name = st.session_state.scenarios[obj.get_mode()]
+            
+    if in_scenario(obj.get_mode(), st.session_state.phase, st.session_state.step, st.session_state.scenarios):
+        scenario_class = obj(
+            st.session_state.sdf, 
+            create_scenario_input(st.session_state.step, scenario_name, st.session_state.phase)
+        )
+    else:
+        scenario_class = obj(
+            st.session_state.sdf, 
+            handler[f"{st.session_state.phase}_steps"][option]
+        )
+    
+    return scenario_class

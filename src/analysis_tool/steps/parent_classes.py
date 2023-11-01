@@ -26,7 +26,7 @@ class BaseStep(ABC):
     This class serves as the base class for all other steps. It contains instance variables/methods shared by all children.
     """
     
-    def __init__(self, df: pd.DataFrame, name: str, mode: Mode, overall_step: Phase, scenario: bool):
+    def __init__(self, df: pd.DataFrame, name: str, mode: Mode, overall_step: Phase):
         """Initializer of the base class.
 
         Args:
@@ -39,14 +39,10 @@ class BaseStep(ABC):
         self.name = name
         self.mode = mode
         self.overall_step = overall_step
-        
-        self.prefix = ""
-        if scenario:
-            self.prefix = "scenario_"
             
         # snapshot of what the mode shift column looked like before this step was ran
         # used to allow the disabling of steps and the reversion of the dataframe back to what it was originally
-        self.prev = pd.to_numeric(self.df[f"{self.prefix}{self.overall_step}_{mode}_shift"]).copy()
+        self.prev = pd.to_numeric(self.df[f"{self.overall_step}_{mode}_shift"]).copy()
         
         self.previous_run = None  # the summary statistics of the last run of the program
         
@@ -75,12 +71,12 @@ class BaseStep(ABC):
             expression (pd.Series): A boolean column such that if a row is True, it is unable to shift feasibly/with likelihood
         """
         # reset column to the snapshot taken before the step
-        self.df.loc[:, f"{self.prefix}{self.overall_step}_{self.mode}_shift"] = self.prev
+        self.df.loc[:, f"{self.overall_step}_{self.mode}_shift"] = self.prev
         
         # reset this step's column, apply it, and update the mode shift column accordingly
         self.df.loc[:, self.name] = True
         self.df.loc[expression, self.name] = False
-        self.df.loc[expression, f"{self.prefix}{self.overall_step}_{self.mode}_shift"] = False
+        self.df.loc[expression, f"{self.overall_step}_{self.mode}_shift"] = False
     
     def get_step_statistics(self):
         """
@@ -95,11 +91,11 @@ class BaseStep(ABC):
         
         # % feasible/likely shifts before/after this step
         percent_shifts_before = self.df[(self.df['mode']==Mode.CAR) & (self.prev)]["vehicle_trips"].sum() / self.df[self.df['mode']==Mode.CAR]["vehicle_trips"].sum() * 100
-        percent_shifts_after = self.df[(self.df['mode']==Mode.CAR) & (self.df[f'{self.prefix}{self.overall_step}_{self.mode}_shift'])]["vehicle_trips"].sum() / self.df[self.df['mode']==Mode.CAR]["vehicle_trips"].sum() * 100
+        percent_shifts_after = self.df[(self.df['mode']==Mode.CAR) & (self.df[f'{self.overall_step}_{self.mode}_shift'])]["vehicle_trips"].sum() / self.df[self.df['mode']==Mode.CAR]["vehicle_trips"].sum() * 100
         
         # VMT before/after this step
         prev_vmt = self.df[(self.df["mode"] == Mode.CAR) & (self.prev)]["vmt"].sum()
-        after_vmt = self.df[(self.df["mode"] == Mode.CAR) & self.df[f"{self.prefix}{self.overall_step}_{self.mode}_shift"]]["vmt"].sum()
+        after_vmt = self.df[(self.df["mode"] == Mode.CAR) & self.df[f"{self.overall_step}_{self.mode}_shift"]]["vmt"].sum()
         
         return ((percent_shifts_before, percent_shifts_after), (prev_vmt, after_vmt), (abs_car_percent, abs_vmt_percent))
     
@@ -152,7 +148,7 @@ class BaseStep(ABC):
         This function disables the current step. 
         """
         # reset overall mode shift column to snapshot
-        self.df.loc[:, f"{self.prefix}{self.overall_step}_{self.mode}_shift"] = self.prev
+        self.df.loc[:, f"{self.overall_step}_{self.mode}_shift"] = self.prev
         
         # reset step column name & previous run
         self.df.loc[:, self.name] = True
@@ -273,14 +269,16 @@ class BaseStep(ABC):
         """
         return self.previous_run
     
-    def get_mode(self) -> Mode:
+    @staticmethod
+    @abstractmethod
+    def get_mode() -> Mode:
         """
         This function returns the mode this step applies to.
 
         Returns:
             Mode: the mode this function applies to
         """
-        return self.mode
+        raise NotImplementedError("This function needs to be overwritten")
     
     @abstractmethod
     def get_desc(self) -> str:
@@ -349,7 +347,7 @@ class ContinuousStep(BaseStep):
     This class is one part of the first level of specialization of the base class, inheriting from it. It is the parent for all steps that are continuous in nature.
     """
     
-    def __init__(self, df: pd.DataFrame, name: str, inputs: Dict[str, str], mode: Mode, cutoff: float, column_name: str, overall_step: Phase, units: str, scenario: bool):
+    def __init__(self, df: pd.DataFrame, name: str, inputs: Dict[str, str], mode: Mode, cutoff: float, column_name: str, overall_step: Phase, units: str):
         """
         Initializes the continuous step base class
 
@@ -362,15 +360,11 @@ class ContinuousStep(BaseStep):
             overall_step (Phase): the overall step this step pertains to (feasible/probable)
             units (str): the units of raw cutoffs of this step
         """
-        super().__init__(df, name, mode, overall_step, scenario)  # call the parent constructor for these
+        super().__init__(df, name, mode, overall_step)  # call the parent constructor for these
         self.cutoff = cutoff
         self.cutoff_mode = CutoffMode.PCT
         self.column_name = column_name
         self.units = units
-        
-        if scenario:
-            self.name = self.name + "_scenario"
-            self.column_name = self.column_name + "_scenario"
         
         super().create_step_col(inputs, self.column_name)
     
@@ -503,12 +497,8 @@ class ContinuousStep(BaseStep):
 
 class CategoricalStep(BaseStep):
     
-    def __init__(self, df: pd.DataFrame, name: str, inputs: Dict[str, str], mode: Mode, phase: Phase, scenario: bool):
-        super().__init__(df, name, mode, phase, scenario)
-        
-        if scenario:
-            self.name = self.name + "_scenario"
-            self.column_name = self.column_name + "_scenario"
+    def __init__(self, df: pd.DataFrame, name: str, inputs: Dict[str, str], mode: Mode, phase: Phase):
+        super().__init__(df, name, mode, phase)
         
         super().create_step_col(inputs, self.name)
     
@@ -518,8 +508,8 @@ class CategoricalStep(BaseStep):
         # set previous run to 1 (no cutoffs) and apply the expression directly since this is a true/false thing
         # do this since calling the super will create a redundant column that matches directly to this step's internal column
         self.previous_run = 1
-        self.df.loc[:, f"{self.prefix}{self.overall_step}_{self.mode}_shift"] = self.prev
-        self.df.loc[expression, f"{self.prefix}{self.overall_step}_{self.mode}_shift"] = False
+        self.df.loc[:, f"{self.overall_step}_{self.mode}_shift"] = self.prev
+        self.df.loc[expression, f"{self.overall_step}_{self.mode}_shift"] = False
         
     def is_continuous(self):
         # categorical steps are never continuous

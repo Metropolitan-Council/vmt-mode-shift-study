@@ -9,7 +9,7 @@ import seaborn as sns
 import steps
 from settings import handler, get_communities
 from steps.enums import *
-from util import get_num_cold_starts, stacked_shift_histogram, total_shift_histogram, get_summary_df, get_duration_diff_df, bigger_markdown, validate_input, create_scenario_input
+from util import get_num_cold_starts, stacked_shift_histogram, total_shift_histogram, get_summary_df, get_duration_diff_df, bigger_markdown, validate_input, create_scenario_input, in_scenario, create_base_step, create_scenario_step
 import json
 import logging
 
@@ -281,6 +281,7 @@ def setup_vars(phase: Phase) -> None:
     # if we are in the probable phase, make df the subset of trips that can feasibly shift, according to the probable phase logic
     if phase == Phase.PROBABLE:
         st.session_state["df"] = st.session_state.df.loc[st.session_state.df["feasible_shift"], :].copy()
+        st.session_state["sdf"] = st.session_state.sdf.loc[st.session_state.sdf["feasible_shift"], :].copy()
 
     # have a handy short-hand alias for the session state dataframe variable
     df: pd.DataFrame = st.session_state.df
@@ -291,12 +292,9 @@ def setup_vars(phase: Phase) -> None:
     df[f'{phase}_{Mode.TRANSIT}_shift'] = True
     df[f'{phase}_shift'] = True
     
+    # helper boolean for whether there is some scenario selected
+    # if so, we need to mirror the base pipeline in the scenarios
     st.session_state.have_scenarios = (len(set(st.session_state["scenarios"].values())) != 1)
-    if st.session_state.have_scenarios:
-        df[f'scenario_{phase}_{Mode.WALK}_shift'] = True
-        df[f'scenario_{phase}_{Mode.BIKE}_shift'] = True
-        df[f'scenario_{phase}_{Mode.TRANSIT}_shift'] = True
-        df[f'scenario_{phase}_shift'] = True
     
     # change the current phase stored in session state
     st.session_state["phase"] = phase
@@ -319,14 +317,22 @@ def setup_vars(phase: Phase) -> None:
     
     # create a dictionary for storing initialized step class objects and store the first step within it already
     st.session_state["step_class_dict"] = dict()
-    st.session_state["step_class_scenario_dict"] = dict()
     st.session_state["step_class_dict"][st.session_state.step] = getattr(st.session_state.overall_step, st.session_state.step)(
         st.session_state.df,
         handler[f"{phase}_steps"][st.session_state.step]
     )
     
+    # if we have scenarios
+    if st.session_state.have_scenarios:
+        # make a copy of the main df for scenario purposes
+        st.session_state["sdf"] = st.session_state["df"].copy()
+        
+        # record down scenario classes in a dict
+        st.session_state["step_class_scenario_dict"] = dict()
+        st.session_state["step_class_scenario_dict"][st.session_state.step] = create_scenario_step(st.session_state.step)
+    
     # store the current step class (as an alias to the stored one in the dictionary)
-    st.session_state["step_class"] = st.session_state["step_class_dict"][st.session_state.step]
+    # st.session_state["step_class"] = st.session_state["step_class_dict"][st.session_state.step]
     # turn off the summary screen (want to show the normal step screen right now)
     st.session_state["summary_screen"] = False
     
@@ -378,7 +384,7 @@ def final_summary() -> None:
             with st.spinner("Exporting dataframe and percentiles"):
                 df.to_csv(f"output/{st.session_state.phase}_trips.csv", index=False)
                 f = open(f"output/{st.session_state.phase}_percentiles.json", "w")
-                f.write(str({step_name: step_class.get_cutoff() for step_name, step_class in st.session_state.step_class_dict.items()}))
+                f.write(str({step_name: st.session_state.step_class_dict[st.session_state.step].get_cutoff() for step_name, step_class in st.session_state.step_class_dict.items()}))
                 f.close()
             
     # calculate overall shift ability -- can shift to at least one mode
@@ -899,82 +905,84 @@ def show_step() -> None:
     """
     
     # get an alias to the current step for easy reference later
-    curr: steps.parent_classes.BaseStep = st.session_state["step_class"]
+    curr: steps.BaseStep = st.session_state.step_class_dict[st.session_state.step]
     # title the page by the step name
     st.title(curr.get_name())
-    
-    in_scenario = False
-    scenario_name = st.session_state.scenarios[curr.get_mode()]
-    if scenario_name != "default":
-
-        scenario = handler["scenarios"][curr.get_mode()][scenario_name]
-        mapping = {value: key for key, value in scenario["mappings"].items()}
         
-        if len(set(mapping.keys()).intersection(set(handler[f"{st.session_state.phase}_steps"][st.session_state.step].values()))) != 0:
-            in_scenario = True
-            
-    if in_scenario:
-        if scenario_name not in st.session_state.step_class_scenario_dict:
-            st.session_state.step_class_scenario_dict[scenario_name] = getattr(st.session_state.overall_step, st.session_state.step)(
-                st.session_state.df, 
-                create_scenario_input(st.session_state.step, scenario_name, st.session_state.phase, curr.get_mode()),
-                scenario=True
-            )
-            
-        scenario_class: steps.BaseStep = st.session_state.step_class_scenario_dict[scenario_name]
-            
+    # if we have scenarios, get the scenario class from the scenario dict
+    if st.session_state.have_scenarios:
+        scenario_class: steps.BaseStep = st.session_state.step_class_scenario_dict[st.session_state.step]
+        
+    # determine whether we are actually in a scenario (and need to split into columns)
+    cur_scenario = in_scenario(curr.get_mode(), st.session_state.phase, st.session_state.step, st.session_state.scenarios)
     
     # if the step we are at is continuous, have settings for setting the cutoff/choosing between pct/raw selection/a blurb for the equivalent opposite cutoff
     if curr.is_continuous():
-        curr.set_cutoff_mode(st.sidebar.radio("Choose how to set the cutoff", (CutoffMode.PCT, CutoffMode.RAW), key=st.session_state.id))
+        # only allow setting cutoff if not in an actual scenario (raw doesn't make sense)
+        if not cur_scenario:
+            curr.set_cutoff_mode(st.sidebar.radio("Choose how to set the cutoff", (CutoffMode.PCT, CutoffMode.RAW), key=st.session_state.id))
+            
+            # synchronize the cutoff modes
+            if st.session_state.have_scenarios:
+                scenario_class.set_cutoff_mode(curr.get_cutoff_mode())
+            
         if curr.get_cutoff_mode() == CutoffMode.PCT:
             curr.set_cutoff(st.sidebar.slider("Select a value:", 0.0, 1.0, 0.95, 0.01, key=st.session_state.id + 1))
+            
+            # synchronize the cutoffs if possible
+            if st.session_state.have_scenarios:
+                scenario_class.set_cutoff(curr.get_cutoff())
+            
             st.sidebar.markdown(f"Cutoff equivalent: {curr.get_cutoff_equivalent():.1f} {curr.get_units()}")
+            
+            # if in a scenario, show the scenario cutoff equivalent too
+            if cur_scenario:
+                st.sidebar.markdown(f"Cutoff equivalent (scenario): {scenario_class.get_cutoff_equivalent():.1f} {curr.get_units()}")
         elif curr.get_cutoff_mode() == CutoffMode.RAW:
             extrema = curr.get_extrema()
+            
             curr.set_cutoff(st.sidebar.slider("Select a value:", float(extrema[0]), float(extrema[1]), float(extrema[1]), float((extrema[1] - extrema[0]) / 100), format=f"%0.1f {curr.get_units()}", key=st.session_state.id + 2))
+            
+            # synchronize the raw cutoffs if there is a scenario to do so
+            if st.session_state.have_scenarios:
+                scenario_class.set_cutoff(curr.get_cutoff())
+            
             st.sidebar.markdown(f"Cutoff equivalent: {curr.get_cutoff_equivalent():.1f} percentile")
         else:
             logging.exception(f"Something went worng with the cutoff mode enum: {curr.get_cutoff_mode()}")
             raise RuntimeError("something went wrong")
-        
-        if in_scenario:
-            scenario_class.set_cutoff_mode(curr.get_cutoff_mode())
-            scenario_class.set_cutoff(curr.get_cutoff())
-        
     
     # button to dsiable the current step
     if st.sidebar.button("Disable step", use_container_width=True):
         curr.disable()
-        if in_scenario:
+        
+        # synchronize the disables
+        if st.session_state.have_scenarios:
             scenario_class.disable()
         
         
     # button to apply (& show the entire narrative of the current step); otherwise, just have a blurb on the current step/how to run it
     if st.sidebar.button("Apply step", use_container_width=True):
         curr.apply_step()
-        if in_scenario:
+        
+        # apply step if there is a scenario object
+        if st.session_state.have_scenarios:
             scenario_class.apply_step()
+            
+        # if we are currently in a scenario, split into columns to display both
+        if cur_scenario:
             col1, col2 = st.columns(2, gap="medium")
             with col1:
                 curr.show_step_streamlit()
             with col2:
                 scenario_class.show_step_streamlit()
+        # otherwise just show the base one (covers both of them even if have_scenarios is True)
         else:
             curr.show_step_streamlit()
         
     else:
         st.header("Click the apply step button once the desired settings have been set or click disable to disable the step.")
         bigger_markdown(curr.get_desc())
-        
-    if not in_scenario and st.session_state.have_scenarios:
-        # TODO: add some way to "trace" through the steps even if there are no scenarios to run through
-        # idea 1: just amke a coyp of everything and run through it alongside it -- downside more latency even though nothing displayed
-        # idea 2: add another layer of specialization for steps that are scenarios in name but just copy everything
-        # idea 3: create a dummy "scenario" class objects and copy all of the state in the current step over every iteration
-        # this needs to be done before a reasonable final sumamry can be made
-        pass
-    
 
 def run() -> None:
     """
@@ -1020,11 +1028,17 @@ def run() -> None:
         # otherwise, create it from scratch
         else:
             logging.info("Creating the new step for the first time")
-            st.session_state.step_class_dict[option] = getattr(st.session_state.overall_step, option)(
-                st.session_state.df, 
-                handler[f"{st.session_state.phase}_steps"][option]
-            )
-            st.session_state.step_class = st.session_state.step_class_dict[option]
+
+            # if we have scenarios, we need to create a class object for both the base/scenario pipelines
+            if st.session_state.have_scenarios:
+                st.session_state.step_class_dict[option] = create_base_step(option)
+                st.session_state.step_class_scenario_dict[option] = create_scenario_step(option)
+            # otherwise just create the base one
+            else:
+                st.session_state.step_class_dict[option] = getattr(st.session_state.overall_step, option)(
+                    st.session_state.df, 
+                    handler[f"{st.session_state.phase}_steps"][option]
+                )
             st.session_state.id += 10
             # st.experimental_rerun()
             
