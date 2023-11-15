@@ -11,7 +11,7 @@ from collections import defaultdict
 import steps
 from settings import handler, get_communities
 from steps.enums import *
-from util import get_num_cold_starts, stacked_shift_histogram, total_shift_histogram, get_summary_df, get_duration_diff_df, bigger_markdown, validate_input, create_scenario_input, in_scenario, create_base_step, create_scenario_step, show_previous_runs
+from util import get_cold_starts_df, stacked_shift_histogram, total_shift_histogram, get_summary_df, get_duration_diff_df, bigger_markdown, validate_input, create_scenario_input, in_scenario, create_base_step, create_scenario_step, show_previous_runs
 import json
 import logging
 
@@ -106,7 +106,7 @@ def start_screen_feasible() -> None:
         logging.info("Beginning tool with all steps")
         
         # set feasible steps to all defined feasible steps
-        st.session_state["feasible_steps"] = handler["feasible_steps"]
+        st.session_state["feasible_steps"] = list(handler["feasible_steps"])
         
         # setup variables/toggle start screen feasible off and refresh
         if "phase" not in st.session_state or st.session_state.phase != Phase.FEASIBLE:
@@ -344,14 +344,14 @@ def setup_vars(phase: Phase) -> None:
     # turn off the summary screen (want to show the normal step screen right now)
     st.session_state["summary_screen"] = False
     
-def show_final_summary(df: pd.DataFrame, step_class_dict: Dict[str, steps.BaseStep], label: str="") -> None:
+def show_final_summary(df: pd.DataFrame, step_class_dict: Dict[str, steps.BaseStep]) -> None:
     """
     This function generates the final summary for the visualization tool given a dataframe and a step class dict that the dataframe
     followed. 
     """
     # df.to_parquet(f"output/fdsa{label}.parquet")
     if not handler["build"]:
-        if st.sidebar.button(f"Save current result ({label}) to csv"):
+        if st.sidebar.button(f"Save current result to csv"):
             with st.spinner("Exporting dataframe and percentiles"):
                 df.to_csv(f"output/{st.session_state.phase}_trips.csv", index=False)
                 f = open(f"output/{st.session_state.phase}_percentiles.json", "w")
@@ -661,8 +661,12 @@ def show_final_summary(df: pd.DataFrame, step_class_dict: Dict[str, steps.BaseSt
     
     # run cold start logic (this takes a bit, hence the spinner) to see cold starts before/after shifts
     with st.spinner("Running cold start logic"):
-        before_cold_starts = df[df["mode"] == Mode.CAR].groupby(["wave", "person_id", "travel_date"]).apply(lambda x: get_num_cold_starts(list(x["depart_time"]), x["duration"].values, list(x["mode"]))).sum()
-        after_cold_starts = df[(df['mode'] == Mode.CAR) & (~df[f'{st.session_state.phase}_shift'])].groupby(['wave', 'person_id', 'travel_date']).apply(lambda x: get_num_cold_starts(list(x["depart_time"]), x["duration"].values, list(x["mode"]))).sum()
+        cold_starts_df = get_cold_starts_df(df[df["mode"] == Mode.CAR])
+        print(cold_starts_df)
+        
+        before_cold_starts = cold_starts_df["num_cold_starts"].sum()
+        after_cold_starts = cold_starts_df[cold_starts_df["person_id"].isin(df[(df['mode'] == Mode.CAR) & (~df[f'{st.session_state.phase}_shift'])]["person_id"])]["num_cold_starts"].sum()
+
         if (~df[f"{st.session_state.phase}_shift"]).sum() == 0:
             after_cold_starts = 0
         

@@ -6,7 +6,9 @@ import streamlit as st
 import plotly.graph_objects as go
 import plotly.express as px
 import logging
-from typing import List, Dict, Set
+from typing import List, Dict, Set, Any
+from multiprocessing import cpu_count, Pool
+from scipy.ndimage import shift
 
 from steps.enums import Mode, Phase, CutoffMode
 from settings import handler
@@ -22,7 +24,39 @@ def convert_to_minutes(temp: str) -> float:
     """
     return int(temp[0:2]) * 60 + int(temp[3:5]) + int(temp[6:8]) / 60
 
-def get_num_cold_starts(depart_time: List[str], leg_durations: 'np.ndarray[float]', modes: 'np.ndarray[Mode]') -> int:
+def applyParallel(dfGrouped, func: Dict[Any, Any]) -> pd.DataFrame:
+    """This function parallelizes an apply function on a groupby object using a thread pool.
+    
+    The ret_list is a list of dictionaries that represent columns in the final dataframe.
+
+    Args:
+        dfGrouped (groupby object): the groupby object
+        func (Dict): apply function that accepts one parameter and returns a dictionary
+
+    Returns:
+        pd.DataFrame: result of apply on groupby object
+    """
+    with Pool(cpu_count()) as p:
+        ret_list = p.map(func, [(name, group) for name, group in dfGrouped])
+    return pd.DataFrame(ret_list)
+
+def get_cold_starts_df(df): 
+    
+    with Pool(cpu_count()) as p:
+        ret_list = p.map(cold_starts_wrapper, [(name, group) for name, group in df.groupby(["wave", "person_id", "travel_date"])])
+        
+    return pd.DataFrame(ret_list)
+
+def cold_starts_wrapper(x):
+    name, group = x
+    return {
+        "wave": name[0],
+        "person_id": name[1],
+        "travel_date": name[2],
+        "num_cold_starts": get_num_cold_starts_trip(list(group["depart_time"]), group["duration"].values, list(group["mode"]))
+    }
+
+def get_num_cold_starts_trip(depart_time: List[str], leg_durations: 'np.ndarray[float]', modes: 'np.ndarray[Mode]') -> int:
     """This is a function that calculates the number of cold starts there will be in a given linked trip.
 
     Args:
@@ -40,11 +74,19 @@ def get_num_cold_starts(depart_time: List[str], leg_durations: 'np.ndarray[float
     leg_starts = (leg_starts - ref) % 1440
     # calculate end times relative to the start times using the duration category
     leg_ends = leg_starts + leg_durations
-
-    cold_starts = int(np.any(modes == Mode.CAR))
-    cold_starts += ((modes == Mode.CAR) * (leg_starts - leg_ends > 15))[1:].sum()
     
-    return cold_starts
+    cold_starts = 0
+    prev_end = -1
+    # iterate over all trips in a complete tour
+    for i in range(len(leg_starts)):
+        # if the current leg mode i car
+        if modes[i] == Mode.CAR:
+            # if there wasn't a previous or the difference between the end of the last car trip and the beginning of this car trip is more than 15 minutes, it is a cold start
+            if prev_end == -1 or leg_starts[i] - leg_ends[i - 1] > 15:
+                cold_starts += 1
+            # update previous end of car trip
+            prev_end = leg_ends[i]
+    return cold_starts            
     
     # # iterate over all trips in a complete tour
     # for i in range(len(leg_starts)):
