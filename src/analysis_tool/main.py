@@ -6,11 +6,12 @@ import inspect
 import matplotlib.pyplot as plt
 import seaborn as sns
 from typing import Dict
+from collections import defaultdict
 
 import steps
 from settings import handler, get_communities
 from steps.enums import *
-from util import get_num_cold_starts, stacked_shift_histogram, total_shift_histogram, get_summary_df, get_duration_diff_df, bigger_markdown, validate_input, create_scenario_input, in_scenario, create_base_step, create_scenario_step
+from util import get_num_cold_starts, stacked_shift_histogram, total_shift_histogram, get_summary_df, get_duration_diff_df, bigger_markdown, validate_input, create_scenario_input, in_scenario, create_base_step, create_scenario_step, show_previous_runs
 import json
 import logging
 
@@ -923,40 +924,43 @@ def show_step() -> None:
         
     # determine whether we are actually in a scenario (and need to split into columns)
     cur_scenario = in_scenario(curr.get_mode(), st.session_state.phase, st.session_state.step, st.session_state.scenarios)
-    
-    # if the step we are at is continuous, have settings for setting the cutoff/choosing between pct/raw selection/a blurb for the equivalent opposite cutoff
+        
     if curr.is_continuous():
-        # only allow setting cutoff if not in an actual scenario (raw doesn't make sense)
-        if not cur_scenario:
-            # TODO: possibly try to allow desynced cutoff configuration?
-            curr.set_cutoff_mode(st.sidebar.radio("Choose how to set the cutoff", (CutoffMode.PCT, CutoffMode.RAW), key=st.session_state.id))
+        curr.set_cutoff_mode(st.sidebar.radio("Choose how to set the cutoff", (CutoffMode.PCT, CutoffMode.RAW), key=st.session_state.id))
             
-            # synchronize the cutoff modes
-            if st.session_state.have_scenarios:
-                scenario_class.set_cutoff_mode(curr.get_cutoff_mode())
+        # synchronize the cutoff modes
+        if st.session_state.have_scenarios:
+            scenario_class.set_cutoff_mode(curr.get_cutoff_mode())
             
+        # percentile cutoff mode handler
         if curr.get_cutoff_mode() == CutoffMode.PCT:
+            # handle base scenario things
             curr.set_cutoff(st.sidebar.slider("Select a value:", 0.0, 1.0, 0.95, 0.01, key=st.session_state.id + 1))
-            
-            # synchronize the cutoffs if possible
-            if st.session_state.have_scenarios:
-                scenario_class.set_cutoff(curr.get_cutoff())
-            
             st.sidebar.markdown(f"Cutoff equivalent: {curr.get_cutoff_equivalent():.1f} {curr.get_units()}")
             
-            # if in a scenario, show the scenario cutoff equivalent too
+            # if in scenario, allow the cutoff to be set separately
             if cur_scenario:
-                st.sidebar.markdown(f"Cutoff equivalent (scenario): {scenario_class.get_cutoff_equivalent():.1f} {curr.get_units()}")
+                scenario_class.set_cutoff(st.sidebar.slider("Select a scenario value:", 0.0, 1.0, 0.95, 0.01, key=st.session_state.id + 3))
+                st.sidebar.markdown(f"Scenario cutoff equivalent: {scenario_class.get_cutoff_equivalent():.1f} {scenario_class.get_units()}")
+            # synchronize the cutoffs if possible
+            elif st.session_state.have_scenarios:
+                scenario_class.set_cutoff(curr.get_cutoff())
+        # repeat the previous logic but with raw cutoffs now -- only difference is in ranges of allowed cutoffs
         elif curr.get_cutoff_mode() == CutoffMode.RAW:
             extrema = curr.get_extrema()
             
             curr.set_cutoff(st.sidebar.slider("Select a value:", float(extrema[0]), float(extrema[1]), float(extrema[1]), float((extrema[1] - extrema[0]) / 100), format=f"%0.1f {curr.get_units()}", key=st.session_state.id + 2))
+            st.sidebar.markdown(f"Cutoff equivalent: {curr.get_cutoff_equivalent():.1f} percentile")
             
+            # if in scenario, allow the cutoff to be set separately
+            if cur_scenario:
+                scenario_extrema = scenario_class.get_extrema()
+                scenario_class.set_cutoff(st.sidebar.slider("Select a scenario value:", float(scenario_extrema[0]), float(scenario_extrema[1]), float(scenario_extrema[1]), float((scenario_extrema[1] - scenario_extrema[0]) / 100), format=f"%0.1f {scenario_class.get_units()}", key=st.session_state.id + 4))
+                st.sidebar.markdown(f"Scenario cutoff equivalent: {scenario_class.get_cutoff_equivalent():.1f} percentile")
             # synchronize the raw cutoffs if there is a scenario to do so
-            if st.session_state.have_scenarios:
+            elif st.session_state.have_scenarios:
                 scenario_class.set_cutoff(curr.get_cutoff())
             
-            st.sidebar.markdown(f"Cutoff equivalent: {curr.get_cutoff_equivalent():.1f} percentile")
         else:
             logging.exception(f"Something went worng with the cutoff mode enum: {curr.get_cutoff_mode()}")
             raise RuntimeError("something went wrong")
@@ -1052,26 +1056,12 @@ def run() -> None:
     show_step()
     
     # create a dropdown showing the steps that have already been run & their associated cutoffs
-    d = {}
+    d = defaultdict(lambda: dict())
     
-    # iterate over all steps in the dictionary
-    for name, step in st.session_state.step_class_dict.items():
-        # if the step has a previous run, means it has been ran and only process it if this is true
-        if step.get_previous_run() != None:
-            prev = step.get_previous_run()
-            
-            # if continuous, show with percentile/units as necessary
-            if step.is_continuous():
-                if prev[1] == CutoffMode.PCT:
-                    d[name] = f"{prev[0] * 100:.0f}th pct"
-                elif prev[1] == CutoffMode.RAW:
-                    d[name] = f"{prev[0]:.1f} {step.get_units()}"
-                else:
-                    logging.exception(f"Something went wrong with the cutoff mode enum: {prev[1]}")
-                    raise RuntimeError("Something went wrong with the cutoff mode enum")
-            # otherwise, just show 1
-            else:
-                d[name] = "1 (categorical)"
+    show_previous_runs(st.session_state.step_class_dict, "base", d)
+    
+    if st.session_state.have_scenarios:
+        show_previous_runs(st.session_state.step_class_scenario_dict, "scenario", d)
     
     with st.sidebar.expander("See previously run steps"):
         st.write(d)

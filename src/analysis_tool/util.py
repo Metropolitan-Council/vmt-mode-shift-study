@@ -8,7 +8,7 @@ import plotly.express as px
 import logging
 from typing import List, Dict, Set
 
-from steps.enums import Mode, Phase
+from steps.enums import Mode, Phase, CutoffMode
 from settings import handler
 
 def convert_to_minutes(temp: str) -> float:
@@ -379,3 +379,21 @@ def create_scenario_step(option: str):
         )
     
     return scenario_class
+
+def show_previous_runs(step_dict, category, d):
+    for name, step in step_dict.items():
+        # if the step has a previous run, means it has been ran and only process it if this is true
+        if step.get_previous_run() != None:
+            prev = step.get_previous_run()
+            
+            if step.is_continuous():
+                if prev[1] == CutoffMode.PCT:
+                    d[name][category] = f"{prev[2]:.1f} {step.get_units()} ({prev[0] * 100:.0f}th pct)"
+                elif prev[1] == CutoffMode.RAW:
+                    d[name][category] = f"{prev[0]:.1f} {step.get_units()} ({prev[3] * 100:.0f}th pct)"
+                else:
+                    logging.exception(f"Something went wrong with the cutoff mode enum: {prev[1]}")
+                    raise RuntimeError("Something went wrong with the cutoff mode enum")
+            # otherwise, just show 1
+            else:
+                d[name][category] = "1 (categorical)"

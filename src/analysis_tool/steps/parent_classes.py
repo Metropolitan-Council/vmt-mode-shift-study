@@ -403,7 +403,7 @@ class ContinuousStep(BaseStep):
         logging.info(f"Running through the logic and visualization of continuous step {self.name}")
         
         # save the previous run here (with cutoffs), then apply the expression like previously
-        self.previous_run = (self.cutoff, self.cutoff_mode)
+        self.previous_run = (self.cutoff, self.cutoff_mode, self.get_cutoff_equivalent(), self.get_cutoff_pct())
         super().apply_step(expression)
         
     def get_cutoff_mode(self) -> CutoffMode:
