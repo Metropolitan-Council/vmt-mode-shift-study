@@ -187,6 +187,14 @@ scenarios:
             scenario_best_bike_distance_rerouted: bike_distance_rerouted
             scenario_best_bike_duration_rerouted: bike_duration_rerouted
           file_path: "/Data_Processed/geodata/bike-scenario-6df8c.parquet"
+        ebike:
+          description: "Take ebikes into consideration"
+          mappings:
+            scenario_best_bike_distance_lts_3_rerouted: bike_distance_lts_3_rerouted
+            scenario_best_bike_distance_lts_4_rerouted: bike_distance_lts_4_rerouted
+            scenario_best_bike_distance_rerouted: bike_distance_rerouted
+            scenario_best_bike_duration_rerouted: bike_duration_rerouted
+          file_path: "/Data_Processed/geodata/bike-ebike-8a1a0-1.parquet"
     transit:
         default:
           description: "Base Scenario"
@@ -205,7 +213,7 @@ scenarios:
           mappings:
           file_path:
         best_walk:
-          description: "Improve all streets best bike LTS"
+          description: "Walk scenario"
           key: trip_id
           mappings:
             scenario_best_walk_duration_rerouted: walk_duration_rerouted
@@ -216,6 +224,11 @@ scenarios:
           description: "Base Scenario"
           mappings:
           file_path:
+        # car_scenario:
+        #   description: "Car Scenario"
+        #   mappings:
+
+        #   file_path: ""
 
 cold_start_threshold: 15
 
