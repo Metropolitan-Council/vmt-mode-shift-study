@@ -224,11 +224,12 @@ scenarios:
           description: "Base Scenario"
           mappings:
           file_path:
-        # car_scenario:
-        #   description: "Car Scenario"
-        #   mappings:
-
-        #   file_path: ""
+        car_scenario:
+          description: "Car Scenario"
+          mappings:
+            scenario_car_scenario_duration_rerouted: car_duration_rerouted
+            scenario_car_scenario_distance_rerouted: car_distance_rerouted
+          file_path: "/Data_Processed/geodata/car_scenario/car_scenario_nogeom.parquet"
 
 cold_start_threshold: 15
 

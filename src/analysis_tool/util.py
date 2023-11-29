@@ -360,6 +360,17 @@ def validate_input(df: pd.DataFrame):
             logging.exception("Input dataframe does not have all required columns (see config.yml for all columns necessary)")
             raise RuntimeError("Input dataframe is not fully specified")
         
+def create_sdf(df: pd.DataFrame, scenarios: Dict[str, str]) -> pd.DataFrame:
+    sdf = df.copy()
+    print(scenarios)
+    for mode, scenario in scenarios.items():
+        if scenario != "default":
+            mappings = handler["scenarios"][mode][scenario]["mappings"]
+            for scenario_col, col in mappings.items():
+                sdf[col] = sdf[scenario_col].copy()
+                
+    return sdf
+        
 def create_scenario_input(step: str, scenario: str, phase: Phase) -> Dict[str, str]:
     """
     This function takes in a step, a scenario, and the current phase/mode and transforms the original
@@ -409,16 +420,16 @@ def create_scenario_step(option: str):
     obj = getattr(st.session_state.overall_step, option)
     scenario_name = st.session_state.scenarios[obj.get_mode()]
             
-    if in_scenario(obj.get_mode(), st.session_state.phase, st.session_state.step, st.session_state.scenarios):
-        scenario_class = obj(
-            st.session_state.sdf, 
-            create_scenario_input(st.session_state.step, scenario_name, st.session_state.phase)
-        )
-    else:
-        scenario_class = obj(
-            st.session_state.sdf, 
-            handler[f"{st.session_state.phase}_steps"][option]
-        )
+    # if in_scenario(obj.get_mode(), st.session_state.phase, st.session_state.step, st.session_state.scenarios):
+    #     scenario_class = obj(
+    #         st.session_state.sdf, 
+    #         create_scenario_input(st.session_state.step, scenario_name, st.session_state.phase)
+    #     )
+    # else:
+    scenario_class = obj(
+        st.session_state.sdf, 
+        handler[f"{st.session_state.phase}_steps"][option]
+    )
     
     return scenario_class
 

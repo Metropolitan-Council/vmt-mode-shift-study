@@ -26,6 +26,31 @@ from settings import handler
 dir = keyring.get_password("msp", "vmt_reduction_dir")
 MILES_PER_METER = 0.000621371
 
+# # helper function for querying from the car rerouting file
+def get_car_data(row, field, car_df):
+    hour = int(row["arrive_time"][0:2])
+    sunday = row["travel_dow"] == "Sunday"
+    saturday = row["travel_dow"] == "Saturday"
+    if sunday:
+        query = "sundays_"
+    elif saturday:
+        query = "saturdays_"
+    else:
+        query = "weekdays_"
+    
+    if hour >= 0 and hour <= 5:
+        query += "0-6"
+    elif hour >= 20 and hour <= 23:
+        query += "20-24"
+    else:
+        query += str(hour) + "-" + str(hour + 1)
+
+    if (query, row["trip_id"]) not in car_df.index:
+        print(row["trip_id"])
+        return np.nan
+
+    return car_df.loc[(query, row["trip_id"])][field]
+
 def clean_mode_names(df: pd.DataFrame) -> None:
     """
     This function standardizes the mode names based on the defined mode enum in-place.
@@ -352,35 +377,6 @@ def prepare_data(df: pd.DataFrame, data_dir: str) -> pd.DataFrame:
         bike = add_mode_to_column_name(bike, 'bike')
         transit_grouped = add_mode_to_column_name(transit_grouped, 'transit')
         
-        # # helper function for querying from the car rerouting file
-        # def get_car_data(row, field):
-        #     hour = int(row["arrive_time"][0:2])
-        #     sunday = row["travel_dow"] == "Sunday"
-        #     saturday = row["travel_dow"] == "Saturday"
-        #     if sunday:
-        #         query = "sundays"
-        #     elif saturday:
-        #         query = "saturdays_"
-        #     else:
-        #         query = "weekdays_"
-            
-        #     if hour >= 0 and hour <= 5:
-        #         query += "0-6"
-        #     elif hour >= 20 and hour <= 23:
-        #         query += "20-24"
-        #     else:
-        #         query += str(hour) + "-" + str(hour + 1)
-
-        #     if (query, row["trip_id"]) not in car.index:
-        #         print(row["trip_id"])
-        #         return np.nan
-
-        #     return car.loc[(query, row["trip_id"])][field]
-        
-        # missing one trip for some reason; gets car duration/distance using the above helper function
-        # df["car_duration_seconds"] = df.apply(lambda x: get_car_data(x, "car_duration_seconds"), axis=1)
-        # df["car_distance_meters"] = df.apply(lambda x: get_car_data(x, "car_distance_meters"), axis=1)
-        
         # merge in rerouted files
         df = df.merge(walk, left_on="trip_id", right_on="walk_trip_id", how="left")
         df = df.merge(bike, left_on="trip_id", right_on="bike_trip_id", how="left")
@@ -518,7 +514,17 @@ def process_transit_scenario(scenario_name: str, scenario_df: pd.DataFrame, df: 
     df[f"scenario_{scenario_name}_num_transfers_rerouted"] = scenario_df[f"scenario_{scenario_name}_num_transfers_rerouted"].astype("Int8").values
     df[f"scenario_{scenario_name}_rerouting_missing"] = scenario_df[f"scenario_{scenario_name}_distance_rerouted"].isna().astype("bool").values
     
+def process_car_scenario(scenario_name: str, scenario_df: pd.DataFrame, df: pd.DataFrame):
+    scenario_df[f"scenario_{scenario_name}_duration_rerouted"] = scenario_df["duration_seconds"] / 60
+    scenario_df[f"scenario_{scenario_name}_distance_rerouted"] = scenario_df["distance_meters"] * MILES_PER_METER
     
+    df[f"scenario_{scenario_name}_duration_rerouted"] = df.apply(
+        lambda x: get_car_data(x, f"scenario_{scenario_name}_duration_rerouted", scenario_df), axis=1
+    ).round().astype("Int16").values
+    
+    df[f"scenario_{scenario_name}_distance_rerouted"] = df.apply(
+        lambda x: get_car_data(x, f"scenario_{scenario_name}_distance_rerouted", scenario_df), axis=1
+    ).round().astype("Int16").values
 
 def add_scenarios(df: pd.DataFrame):
     logging.info("Adding scenarios to the dataframe")
@@ -559,7 +565,7 @@ def add_scenarios(df: pd.DataFrame):
             elif mode == Mode.TRANSIT:
                 process_transit_scenario(scenario, scenario_df, df)
             elif mode == Mode.CAR:
-                pass
+                process_car_scenario(scenario, scenario_df, df)
             else:
                 raise RuntimeError("Something went wrong with the mode enum")
             

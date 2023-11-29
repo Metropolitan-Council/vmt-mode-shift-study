@@ -11,7 +11,7 @@ from collections import defaultdict
 import steps
 from settings import handler, get_communities
 from steps.enums import *
-from util import get_cold_starts_df, stacked_shift_histogram, total_shift_histogram, get_summary_df, get_duration_diff_df, bigger_markdown, validate_input, create_scenario_input, in_scenario, create_base_step, create_scenario_step, show_previous_runs
+from util import get_cold_starts_df, stacked_shift_histogram, total_shift_histogram, get_summary_df, get_duration_diff_df, bigger_markdown, validate_input, create_scenario_input, in_scenario, create_base_step, create_scenario_step, show_previous_runs, create_sdf
 import json
 import logging
 
@@ -328,7 +328,9 @@ def setup_vars(phase: Phase) -> None:
     if st.session_state.have_scenarios:
         # make a copy of the main df for scenario purposes
         if phase != Phase.PROBABLE:
-            st.session_state["sdf"] = st.session_state["df"].copy()
+            # st.session_state["sdf"] = st.session_state["df"].copy()
+            st.session_state["sdf"] = create_sdf(df, st.session_state.scenarios)
+            
         else:
             st.session_state.sdf[f'{phase}_{Mode.WALK}_shift'] = True
             st.session_state.sdf[f'{phase}_{Mode.BIKE}_shift'] = True
@@ -344,7 +346,7 @@ def setup_vars(phase: Phase) -> None:
     # turn off the summary screen (want to show the normal step screen right now)
     st.session_state["summary_screen"] = False
     
-def show_final_summary(df: pd.DataFrame, step_class_dict: Dict[str, steps.BaseStep]) -> None:
+def show_final_summary(df: pd.DataFrame, step_class_dict: Dict[str, steps.BaseStep], aliases: Dict[str, str]=dict()) -> None:
     """
     This function generates the final summary for the visualization tool given a dataframe and a step class dict that the dataframe
     followed. 
