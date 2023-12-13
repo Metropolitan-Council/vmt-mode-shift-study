@@ -1,6 +1,6 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.9.3"
+julia_version = "1.9.4"
 manifest_format = "2.0"
 project_hash = "a3417c3c0db01968e9637818b3f1381d37e2bb67"
 
@@ -753,12 +753,12 @@ uuid = "4af54fe1-eca0-43a8-85a7-787d91b784e3"
 [[deps.LibCURL]]
 deps = ["LibCURL_jll", "MozillaCACerts_jll"]
 uuid = "b27032c2-a3e7-50c8-80cd-2d36dbcbfd21"
-version = "0.6.3"
+version = "0.6.4"
 
 [[deps.LibCURL_jll]]
 deps = ["Artifacts", "LibSSH2_jll", "Libdl", "MbedTLS_jll", "Zlib_jll", "nghttp2_jll"]
 uuid = "deac9b47-8bc7-5906-a0fe-35ac56dc84c0"
-version = "7.84.0+0"
+version = "8.4.0+0"
 
 [[deps.LibGEOS]]
 deps = ["CEnum", "Extents", "GEOS_jll", "GeoInterface", "GeoInterfaceRecipes"]
@@ -779,7 +779,7 @@ version = "14.3.0+1"
 [[deps.LibSSH2_jll]]
 deps = ["Artifacts", "Libdl", "MbedTLS_jll"]
 uuid = "29816b5a-b9ab-546f-933c-edad1886dfa8"
-version = "1.10.2+0"
+version = "1.11.0+1"
 
 [[deps.LibSpatialIndex]]
 deps = ["LibSpatialIndex_jll"]
@@ -788,8 +788,8 @@ uuid = "f19c2e90-9d16-5f2d-a2a7-af3fb29e4907"
 version = "0.2.0"
 
 [[deps.LibSpatialIndex_jll]]
-deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-path = "/Users/mwbc/.julia/dev/LibSpatialIndex_jll"
+deps = ["Artifacts", "JLLWrappers", "Libdl"]
+git-tree-sha1 = "02b8b311ac2725faa3cca5aa3137ca5a9e878479"
 uuid = "00e98e2a-4326-5239-88cb-15dcbe1c18d0"
 version = "1.9.3+0"
 
@@ -988,8 +988,8 @@ uuid = "ca575930-c2e3-43a9-ace4-1e988b2c1908"
 version = "1.2.0"
 
 [[deps.OSRM]]
-deps = ["ArchGDAL", "ArgParse", "Dates", "EnumX", "Geodesy", "Logging", "Mmap", "Revise", "Tar", "ThreadsX"]
-path = "/Users/mwbc/.julia/dev/OSRM"
+deps = ["ArchGDAL", "EnumX", "Geodesy", "Revise", "ThreadsX"]
+git-tree-sha1 = "934b3dce0ae042ad365fd2142da442768dc5e393"
 uuid = "b59920ca-ae83-47b1-a52c-d6d89e4b4b86"
 version = "0.2.0"
 
@@ -1855,7 +1855,7 @@ version = "1.4.9+0"
 [[deps.nghttp2_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "8e850ede-7688-5339-a07c-302acd2aaf8d"
-version = "1.48.0+0"
+version = "1.52.0+1"
 
 [[deps.p7zip_jll]]
 deps = ["Artifacts", "Libdl"]
