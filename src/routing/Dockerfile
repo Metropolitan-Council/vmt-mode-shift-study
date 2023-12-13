@@ -25,20 +25,27 @@ RUN apt-get update; apt-get install -y clang build-essential unzip cmake pkg-con
 ENV CXX=clang++
 ENV CC=clang
 
+# We want to run Julia etc as a non-privileged user for security
+RUN useradd -mU vmt
+USER vmt
+
 # currently we have to build off a branch of OSRM, until https://github.com/Project-OSRM/osrm-backend/pull/6658
 # is merged.
-RUN (curl -L -o osrm.zip https://codeload.github.com/mattwigway/osrm-backend/zip/refs/heads/process-segment-flags && \
+RUN cd &&\
+    curl -L -o osrm.zip https://codeload.github.com/mattwigway/osrm-backend/zip/refs/heads/process-segment-flags && \
     unzip osrm.zip && \
     cd osrm-backend-process-segment-flags && \
     #patch < ../osrm-array-bounds.patch && \
     mkdir build && \
     cd build && \
     cmake -DBUILD_SHARED_LIBS=ON .. && \
-    cmake --build . -j8 && \
-    cmake --build . --target install && \
-    cd ../.. && \
+    cmake --build . -j8
+USER root
+RUN cd ~vmt/osrm-backend-process-segment-flags/build && cmake --build . --target install
+USER vmt
+RUN cd && \
     rm -rf osrm-backend-process-segment-flags &&\
-    rm osrm.zip)
+    rm osrm.zip
 
 ###########################
 # Setup Julia environment #
@@ -47,8 +54,7 @@ RUN (curl -L -o osrm.zip https://codeload.github.com/mattwigway/osrm-backend/zip
 # We install all required Julia packages into the global environment in the container. We do
 # not need separate Julia environments, since the container is only used for routing.
 
-RUN echo foo
-COPY Manifest.toml /root/.julia/environments/v1.9/Manifest.toml
+COPY --chown=vmt:vmt Manifest.toml /home/vmt/.julia/environments/v1.9/Manifest.toml
 
 # OSRM.jl is not currently available in the Julia General registry, because the OSRM binary is not
 # packaged as part of the Julia package manager yet.  
@@ -60,12 +66,16 @@ RUN julia -e 'using Pkg; Pkg.Registry.add("General"); Pkg.Registry.add(RegistryS
 
 # This C++ shim enables OSRM.jl to call OSRM. We make sure we are using the shim that goes with the version of OSRM.jl in use
 # by using the source within the Julia installation directory.
-RUN cd "$(julia -e 'import OSRM; print(dirname(dirname(pathof(OSRM))))')/cxx" && \
+# Store the directory so we can access when it comes time to make install
+RUN julia -e 'import OSRM; print(joinpath(dirname(dirname(pathof(OSRM))), "cxx"))' > ~vmt/cxxloc.txt
+RUN cd "$(cat ~vmt/cxxloc.txt)" && \
     mkdir build && \
     cd build && \
     cmake .. && \
-    cmake --build . && \
-    cmake --build . --target install
+    cmake --build .
+USER root
+RUN cd "$(cat ~vmt/cxxloc.txt)/build" && cmake --build . --target install
+RUN rm ~vmt/cxxloc.txt
 
 ###############################
 # Rebuild shared library path #
@@ -73,6 +83,9 @@ RUN cd "$(julia -e 'import OSRM; print(dirname(dirname(pathof(OSRM))))')/cxx" &&
 
 # This is needed so that the osrm-* executables can find the relevant OSRM shared libraries
 RUN ldconfig
+
+USER vmt
+WORKDIR /home/vmt
 
 ENTRYPOINT [ "/bin/bash", "-c" ]
 CMD [ "bash" ]
