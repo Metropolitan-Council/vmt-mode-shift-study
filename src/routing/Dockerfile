@@ -67,5 +67,12 @@ RUN cd "$(julia -e 'import OSRM; print(dirname(dirname(pathof(OSRM))))')/cxx" &&
     cmake --build . && \
     cmake --build . --target install
 
+###############################
+# Rebuild shared library path #
+###############################
+
+# This is needed so that the osrm-* executables can find the relevant OSRM shared libraries
+RUN ldconfig
+
 ENTRYPOINT [ "/bin/bash", "-c" ]
 CMD [ "bash" ]
