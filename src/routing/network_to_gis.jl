@@ -19,7 +19,8 @@ function main(raw_args)
 
     args = parse_args(raw_args, s)
 
-    result = Vector{@NamedTuple{id::Int64, name::String, ref::String, lts::Int32, weight::Int32, duration::Int32, distance::Float32, oneway::Bool, speed_mph::Float64, geom::Any}}()
+    result = Vector{@NamedTuple{id::Int64, name::String, ref::String, lts::Int32, weight::Int32, duration::Int32, distance::Float32, oneway::Bool,
+        speed_mph::Float64, fr_node::Int64, to_node::Int64, geom::Any}}()
 
     toolchain::OSRMToolchain = OSRMToolchain(args["network"])
 
@@ -51,8 +52,10 @@ function main(raw_args)
         # distance in meters, duration in deciseconds, convert to mph
         speed_mph = distance / (duration / 10) * 3600 / 1609
 
+        nodes = OSRM.Toolchain.get_node_ids(node)
+
         push!(result, (id=i, name=something(name.name, ""), ref=something(name.ref, ""), lts=lts, weight=weight.weight, duration=duration,
-            distance=distance, oneway=weight.oneway, speed_mph=speed_mph, geom=geom))
+            distance=distance, oneway=weight.oneway, speed_mph=speed_mph, fr_node=first(nodes), to_node=last(nodes), geom=geom))
     end
 
     GeoDataFrames.write(args["output"], result; driver=args["driver"], geom_columns=(:geom,), crs=GeoFormatTypes.EPSG(4326))
