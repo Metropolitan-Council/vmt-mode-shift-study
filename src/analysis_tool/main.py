@@ -9,7 +9,7 @@ from typing import Dict
 from collections import defaultdict
 
 import steps
-from settings import handler, get_communities
+from settings import handler, scenario, get_communities
 from steps.enums import *
 from util import get_cold_starts_df, stacked_shift_histogram, total_shift_histogram, get_summary_df, get_duration_diff_df, bigger_markdown, validate_input, create_scenario_input, in_scenario, create_base_step, create_scenario_step, show_previous_runs, create_sdf
 import json
@@ -127,7 +127,7 @@ def start_screen_feasible() -> None:
     st.session_state["feasible_steps"] = st.multiselect("Choose the feasible steps to run", handler["feasible_steps"])
     
     st.markdown("***")
-    
+    # overriding this scenario approach to use separate files instead. 
     # create the scenario picker; scenarios are persisted throughout the entire application
     bigger_markdown("Choose the scenarios to run for each mode. Choosing 'default' will not run any scenarios for the mode.")
     col1, col2, col3, col4 = st.columns(4)
@@ -237,20 +237,20 @@ def setup_df() -> None:
         logging.info("Rebuilding data from raw inputs")
         
         # read in data & pipe it through the cleaning function
-        raw = pd.read_csv(drive_data_dir + handler["input_tbi_file"], usecols=handler["keep_columns"])
+        raw = pd.read_csv(drive_data_dir + scenario["input_tbi_file"], usecols=handler["keep_columns"])
         df = prepare_data(raw, drive_data_dir)
     # otherwise, we are not reinitialization -- read in precleaned files
     else:
         logging.info("Attempting to read in pre-cleaned data files")
         
-        # try to read in file specified as tbi_file_name (supporting parquet/csv)
+        # try to read in file specified as saved_tbi_file (supporting parquet/csv)
         try:
-            if handler["tbi_file_name"].split(".")[-1] == "parquet":
+            if scenario["saved_tbi_file"].split(".")[-1] == "parquet":
                 logging.info("Reading in the specified parquet file")
-                df = pd.read_parquet("data/" + handler["tbi_file_name"])
-            elif handler["tbi_file_name"].split(".")[-1] == "csv":
+                df = pd.read_parquet(scenario["saved_tbi_file"])
+            elif scenario["saved_tbi_file"].split(".")[-1] == "csv":
                 logging.info("Reading in the specified csv file")
-                df = pd.read_csv("data/" + handler["tbi_file_name"])
+                df = pd.read_csv(scenario["saved_tbi_file"])
             
         # if we cannot read the input, try rebuilding, but if we are in build mode, raise an exception
         except Exception as e:
@@ -259,7 +259,7 @@ def setup_df() -> None:
                 logging.exception("Unable to rebuild data in build mode")
                 raise e
             logging.info("Attempting to rebuild inputs manually from scratch")
-            raw = pd.read_csv(drive_data_dir + handler["input_tbi_file"], usecols=handler["keep_columns"])
+            raw = pd.read_csv(drive_data_dir + scenario["input_tbi_file"], usecols=handler["keep_columns"])
 
             df = prepare_data(raw, drive_data_dir)
         
@@ -540,6 +540,7 @@ def show_final_summary(df: pd.DataFrame, step_class_dict: Dict[str, steps.BaseSt
     
     # table for fastest alternative mode being within x minutes of driving
     bigger_markdown(f"The % of car trips and VMT that are {st.session_state.phase} and within x minutes from the fastest alternative mode can be seen in the below table.")
+    df["min_alt_mode_minus_car_duration"] = (df["min_feasible_alt_mode_duration"] - df["car_duration_seconds_adj"]) / 60
     duration_diff_df = pd.DataFrame(index=[r"% of Car Trips", r"% of VMT"])
     duration_diff_df["Fastest mode is within 5 minutes of driving"] = [
         f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"]) & (df["min_alt_mode_minus_car_duration"] <= 5)]["vehicle_trips"].sum() / df[(df["mode"] == Mode.CAR)]["vehicle_trips"].sum() * 100: .1f}%',
@@ -619,7 +620,7 @@ def show_final_summary(df: pd.DataFrame, step_class_dict: Dict[str, steps.BaseSt
     )
     fig3.update_layout(margin=dict(l=0, r=0, b=0, t=40),
                 title=dict(
-                    text="Proportion of person trips in CTUs that can competitively shift to a non-car mode",
+                    text="Proportion of vehicle trips in CTUs that can competitively shift to a non-car mode",
                     font=dict(size=18),
                     x=0.4,
                     y=0.98,
@@ -692,13 +693,15 @@ def show_final_summary(df: pd.DataFrame, step_class_dict: Dict[str, steps.BaseSt
     # creat the barplot
     fig4 = px.bar(income_pct[income_pct[f"{st.session_state.phase}_shift"]], 
                   x='income_cleaned', 
-                  y='vehicle_trips', 
-                  color='percent_vehicle_trips', 
-                  labels={'percent_vehicle_trips':'Percent of vehicle trips'}, 
+                  y='percent_vehicle_trips', 
+                  color='vehicle_trips', 
+                  range_color=(0, 2000000), 
+                  labels={'percent_vehicle_trips':'Percent of vehicle trips', 
+                          'vehicle_trips': 'Total vehicle trips'},
                   category_orders = dict(income_cleaned=["Under $25,000", "$25,000-$49,999","$50,000-$74,999","$75,000-$99,999","$100,000-$149,999", "$150,000 or more","na"]))
     fig4.update_layout(
         title={
-            'text': 'Vehicle trips that can shift modes by income group',
+            'text': 'Percent of vehicle trips that can shift modes by income group',
             'font': dict(
                 size=18
             ),
@@ -707,7 +710,7 @@ def show_final_summary(df: pd.DataFrame, step_class_dict: Dict[str, steps.BaseSt
             'y': 0.9
         },
         xaxis_title=dict(text="Income group", font=dict(size=16)),
-        yaxis_title=dict(text=f"Vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
+        yaxis_title=dict(text=f"Percent of vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
         showlegend=False
     )
     st.plotly_chart(fig4, use_container_width=True)
@@ -720,14 +723,15 @@ def show_final_summary(df: pd.DataFrame, step_class_dict: Dict[str, steps.BaseSt
     
     fig5 = px.bar(purpose_pct[purpose_pct[f"{st.session_state.phase}_shift"]], 
                   x='purpose_cleaned', 
-                  y='vehicle_trips', 
-                  color='percent_vehicle_trips', 
-                  labels={'percent_vehicle_trips':'Percent of vehicle trips'}, 
-                  category_orders = dict(purpose_cleaned=["Work", "School", "Escort", "Shop", "Errand", "Meal", "Social/Recreation", "Other"]),
-                  color_discrete_sequence=px.colors.qualitative.G10[:8])
+                  y='percent_vehicle_trips', 
+                  color='vehicle_trips', 
+                  range_color=(0, 2000000), 
+                  labels={'percent_vehicle_trips':'Percent of vehicle trips', 
+                          'vehicle_trips': 'Total vehicle trips'},
+                  category_orders = dict(purpose_cleaned=["Work", "School", "Escort", "Shop", "Errand", "Meal", "Social/Recreation", "Other"]))
     fig5.update_layout(
         title={
-            'text': 'Vehicle trips that can shift mode by trip purpose',
+            'text': 'Percent of vehicle trips that can shift mode by trip purpose',
             'font': dict(
                 size=18
             ),
@@ -736,7 +740,7 @@ def show_final_summary(df: pd.DataFrame, step_class_dict: Dict[str, steps.BaseSt
             'y': 0.9
         },
         xaxis_title=dict(text="Trip Purpose", font=dict(size=16)),
-        yaxis_title=dict(text=f"Vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
+        yaxis_title=dict(text=f"Percent of vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
         legend=dict(font=dict(size=16)),
         showlegend=False
     )
@@ -750,14 +754,15 @@ def show_final_summary(df: pd.DataFrame, step_class_dict: Dict[str, steps.BaseSt
     
     fig6 = px.bar(person_pct[person_pct[f"{st.session_state.phase}_shift"]], 
                   x='person_type', 
-                  y='vehicle_trips', 
-                  color='percent_vehicle_trips', 
-                  labels={'percent_vehicle_trips':'Percent of vehicle trips'}, 
-                  category_orders = dict(person_type=["Working adult with kids", "Working adult without kids", "Non-working adult with kids","Non-working adult without kids","Retired","College student","Child"]),
-                  color_discrete_sequence=px.colors.qualitative.G10[:7])
+                  y='percent_vehicle_trips', 
+                  color='vehicle_trips', 
+                  range_color=(0, 3000000), 
+                  labels={'percent_vehicle_trips':'Percent of vehicle trips', 
+                          'vehicle_trips': 'Total vehicle trips'},
+                  category_orders = dict(person_type=["Working adult with kids", "Working adult without kids", "Non-working adult with kids","Non-working adult without kids","Retired","College student","Child"]))
     fig6.update_layout(
         title={
-            'text': 'Vehicle trips that can shift mode by person type',
+            'text': 'Percent of vehicle trips that can shift mode by person type',
             'font': dict(
                 size=18
             ),
@@ -766,7 +771,7 @@ def show_final_summary(df: pd.DataFrame, step_class_dict: Dict[str, steps.BaseSt
             'y': 0.9
         },
         xaxis_title=dict(text="Person type", font=dict(size=16)),
-        yaxis_title=dict(text=f"Vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
+        yaxis_title=dict(text=f"Percent of vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
         legend=dict(font=dict(size=16)),
         showlegend=False
     )
@@ -780,12 +785,14 @@ def show_final_summary(df: pd.DataFrame, step_class_dict: Dict[str, steps.BaseSt
     
     fig7 = px.bar(gender_pct[gender_pct[f"{st.session_state.phase}_shift"]], 
                   x='gender_cleaned', 
-                  y='vehicle_trips', 
-                  color='percent_vehicle_trips',
-                  labels={'percent_vehicle_trips':'Percent of vehicle trips'})
+                  y='percent_vehicle_trips', 
+                  color='vehicle_trips', 
+                  range_color=(0, 5000000), 
+                  labels={'percent_vehicle_trips':'Percent of vehicle trips', 
+                          'vehicle_trips': 'Total vehicle trips'})
     fig7.update_layout(
         title={
-            'text': 'Vehicle trips that can shift mode by gender',
+            'text': 'Percent of vehicle trips that can shift mode by gender',
             'font': dict(
                 size=18
             ),
@@ -794,7 +801,7 @@ def show_final_summary(df: pd.DataFrame, step_class_dict: Dict[str, steps.BaseSt
             'y': 0.9
         },
         xaxis_title=dict(text="Gender", font=dict(size=16)),
-        yaxis_title=dict(text=f"Vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
+        yaxis_title=dict(text=f"Percent of vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
         legend=dict(font=dict(size=16)),
         showlegend=False
     )
@@ -808,9 +815,11 @@ def show_final_summary(df: pd.DataFrame, step_class_dict: Dict[str, steps.BaseSt
     
     fig8 = px.bar(wave_pct[wave_pct[f"{st.session_state.phase}_shift"]], 
                   x='wave', 
-                  y='vehicle_trips', 
-                  color='percent_vehicle_trips',
-                  labels={'percent_vehicle_trips':'Percent of vehicle trips'})
+                  y='percent_vehicle_trips', 
+                  color='vehicle_trips',
+                  range_color=(0, 5000000), 
+                  labels={'percent_vehicle_trips':'Percent of vehicle trips', 
+                          'vehicle_trips': 'Total vehicle trips'})
     fig8.update_layout(
         title={
             'text': 'Percent of vehicle trips that can shift mode by TBI wave',
@@ -822,7 +831,7 @@ def show_final_summary(df: pd.DataFrame, step_class_dict: Dict[str, steps.BaseSt
             'y': 0.9
         },
         xaxis_title=dict(text="Wave", font=dict(size=16)),
-        yaxis_title=dict(text=f"Vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
+        yaxis_title=dict(text=f"Percent of vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
         legend=dict(font=dict(size=16)),
         showlegend=False
     )

@@ -51,6 +51,34 @@ def get_car_data(row, field, car_df):
 
     return car_df.loc[(query, row["trip_id"])][field]
 
+dir = keyring.get_password("msp", "vmt_reduction_dir")
+MILES_PER_METER = 0.000621371
+
+# # helper function for querying from the car rerouting file
+def get_car_data(row, field, car_df):
+    hour = int(row["arrive_time"][0:2])
+    sunday = row["travel_dow"] == "Sunday"
+    saturday = row["travel_dow"] == "Saturday"
+    if sunday:
+        query = "sundays_"
+    elif saturday:
+        query = "saturdays_"
+    else:
+        query = "weekdays_"
+    
+    if hour >= 0 and hour <= 5:
+        query += "0-6"
+    elif hour >= 20 and hour <= 23:
+        query += "20-24"
+    else:
+        query += str(hour) + "-" + str(hour + 1)
+
+    if (query, row["trip_id"]) not in car_df.index:
+        print(row["trip_id"])
+        return np.nan
+
+    return car_df.loc[(query, row["trip_id"])][field]
+
 def clean_mode_names(df: pd.DataFrame) -> None:
     """
     This function standardizes the mode names based on the defined mode enum in-place.
@@ -104,25 +132,38 @@ def transit_cleanup(transit) -> pd.DataFrame:
     transit["start_time_dt"] = pd.to_datetime(transit["start_time"])
     transit["end_time_dt"] = pd.to_datetime(transit["end_time"])
     
-    transit["num_transfers"] = (transit["leg_type"] == "TransitRouter.transfer") # temporary field to calculate number of transfers
-    transit["non_transit_duration"] = (transit["leg_type"].isin(["TransitRouter.access", "TransitRouter.egress"])) * (transit["end_time_dt"] - transit["start_time_dt"]).apply(lambda x: x.seconds / 60) # non-transit time (access and egress)
-    
     # project to US equidistant projection to calculate lengths of paths (in meters)
     # https://spatialreference.org/ref/esri/usa-contiguous-equidistant-conic/
     transit.crs = "EPSG:4326"
-    transit = transit.to_crs("EPSG:32615")
+    transit = transit.to_crs("EPSG:32615")    
     
+    transit["num_transfers"] = (transit["leg_type"] == "TransitRouter.transfer") # temporary field to calculate number of transfers
+    transit["num_boardings"] = (transit["leg_type"] == "TransitRouter.transit") # temporary field to verify that a boarding happens
+    
+    transit["access_dist_mi"] = np.where(transit['leg_type'] == 'TransitRouter.access', transit["distance_meters"] / 1609.34, 0)
+    transit["egress_dist_mi"] = np.where(transit['leg_type'] == 'TransitRouter.egress', transit["distance_meters"] / 1609.34, 0)
+        
     # create a gdf for linked trips
     agg_fns = {
+        "trip_id": "first",
         "leg_index": "count",
         "start_time": "first",
         "end_time": "last",
+        "origin_stop_id": "first", # throw away
+        "origin_stop_name": "first",
+        "destination_stop_id": "first",
+        "destination_stop_name": "first",
+        "route_id": "first", 
+        "route_short_name": "first",
+        "route_long_name": "first",
+        "route_type": "first", 
+        "leg_type": "first", # end throw away
         "start_time_dt": "first",
         "end_time_dt": "last",
-        "length": "sum",
-        "access_length": "first",
-        "num_transfers": "sum",
-        "non_transit_duration": "sum"
+        "access_dist_mi": "sum",
+        "egress_dist_mi": "sum",
+        "num_transfers": "sum", 
+        "num_boardings": "sum"
     }
     
     # branching logic for whether we need to calculate distances ourselves based on projection
@@ -135,10 +176,43 @@ def transit_cleanup(transit) -> pd.DataFrame:
         
     # group transit (which are initially unlinked trips) into linked trips
     transit_grouped = transit.dissolve(by="trip_id", aggfunc=agg_fns) # merges geometries in addition to aggregating the rest of the columns
-    transit_grouped["duration"] = (transit_grouped["end_time_dt"] - transit_grouped["start_time_dt"]).apply(lambda x: x.seconds / 60)
+    transit_grouped["non_wait_duration"] = (transit_grouped["end_time_dt"] - transit_grouped["start_time_dt"]).apply(lambda x: x.seconds / 60)
 
     # return the grouped transit dataframe 
-    return transit_grouped.reset_index()[["trip_id", "duration", "access_length", "num_transfers", "non_transit_duration", "length"]]
+    return transit_grouped[["trip_id", "start_time_dt", "end_time_dt", "non_wait_duration", "access_dist_mi", "egress_dist_mi", "num_transfers", "num_boardings"]]
+
+def time_diff(row): 
+    """
+    Given a row of a dataframe, calculates and returns the transit wait time. 
+    """
+    
+    # for work, we so you arrive at work on time
+    if row['d_purpose_category']=="Work":
+        wait_time = (row['arrive_time_dt'] - row['transit_end_time_dt']).seconds / 60
+    else:
+        wait_time = (row['transit_start_time_dt'] - row['depart_time_dt']).seconds / 60
+    
+    # we allow trips to depart up to 5 minutes early or arrive up to 5 minutes late
+    # if it saves at least 15 minutes of travel time.  Therefore, some calculated 
+    # wait times are offset
+    if wait_time >= 1435: 
+        wait_time = 1440-wait_time
+        
+    return wait_time
+
+def add_transit_wait_time(df: pd.DataFrame) -> None: 
+    """
+    The router provides a transit_start_time and transit_end_time based on when you have to leave to catch the bus. 
+    If someone leaves earlier than that based on their schedule, this method countsthe difference between the 
+    desired departure time and the required departure time as waiting time.  It then includes the waiting time in the 
+    transit duration. 
+    """
+
+    df["depart_time_dt"] = pd.to_datetime(df['depart_time'], format="%H:%M:%S")
+    df["arrive_time_dt"] = pd.to_datetime(df['arrive_time'], format="%H:%M:%S")
+    df["transit_wait_time"] = df.apply(time_diff, axis=1)
+    df["transit_duration"] = df["transit_non_wait_duration"] + df["transit_wait_time"]
+    
 
 def merge_transit_trip_details(df: pd.DataFrame, data_dir: str) -> None:
     """
@@ -311,8 +385,8 @@ def round_off_columns(df: pd.DataFrame) -> None:
     df["bike_distance_meters_4"] = df["bike_distance_meters_4"].round()
     
     df["transit_duration"] = df["transit_duration"].round()
-    df["transit_length"] = df["transit_length"].round()
-    df["transit_access_length"] = df["transit_access_length"].round()
+    df["transit_access_dist_mi"] = df["transit_access_dist_mi"].round(2)
+    df["transit_egress_dist_mi"] = df["transit_egress_dist_mi"].round(2)
     
 # make it so that it only runs once
 @st.cache_data()
@@ -382,6 +456,10 @@ def prepare_data(df: pd.DataFrame, data_dir: str) -> pd.DataFrame:
         df = df.merge(bike, left_on="trip_id", right_on="bike_trip_id", how="left")
         df = df.merge(transit_grouped, left_on="trip_id", right_on="transit_trip_id", how="left")
         df = df.merge(car, left_on="trip_id", right_on="car_trip_id", how="left")
+        
+        # the routes record when you have to leave to catch the bus, not when you want to leave
+        # the difference becomes the wait time
+        add_transit_wait_time(df)
         
         # merge in estimated transit trip details
         merge_transit_trip_details(df, data_dir)

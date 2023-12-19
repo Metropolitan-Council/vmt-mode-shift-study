@@ -174,7 +174,10 @@ def stacked_shift_histogram(df: pd.DataFrame, mode: Mode, mode_duration: str, mo
     
     # create the stacked histogram
     fig = px.histogram(view, x="curr", y="person_trips", histfunc="sum", color="Category", barmode="stack", range_x=[-20,120],
-                       color_discrete_sequence=plotly_colors)
+                       color_discrete_sequence=plotly_colors, 
+                       category_orders = dict(Category=[f"Drive Trips - Not {phase} to Switch",
+                                                        f"Drive Trips - {phase} to Switch", 
+                                                        f"{mode.capitalize()} Trips"]))
     fig.update_layout(
         title=dict(
             text=f"Stacked histogram of duration difference<br>between equivalent {mode} and driving trips",

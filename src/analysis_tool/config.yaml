@@ -1,4 +1,4 @@
-﻿# format of defining new steps:
+# format of defining new steps:
 # name: the name of the step
 # inputs: a dictionary mapping the things that the step needs (on the left) to the actual column satisfying that (on the right)
 # transformation (optional): the function to apply to the inputs as the actual input to the step
