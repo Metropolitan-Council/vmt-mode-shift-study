@@ -446,7 +446,7 @@ end
 -- Cap speeds if desired
 -- Note that we are capping the _StreetLight_ speeds, not the OSRM default speeds
 function set_speed_cap(profile, way, result, data)
-  if (profile.speed_cap_db and result.forward_mode ~= mode.inaccessible and result.backward_mode ~= mode.inaccessible and
+  if (profile.speed_cap_db and (result.forward_mode ~= mode.inaccessible or result.backward_mode ~= mode.inaccessible) and
       -- https://www.osm.org/way/616358326 - elevator marked with access:yes. Won't affect routing as it won't be connected to anything.
       -- Several other elevators have the same marking.
       way:get_value_by_key("highway") ~= "elevator" and
