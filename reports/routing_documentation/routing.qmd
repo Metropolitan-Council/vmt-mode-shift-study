@@ -88,31 +88,17 @@ Then, you need to install the C++ shim library to allow Julia to communicate wit
 
 The difficult part is now over; you just need to install the Julia packages needed for routing. This can be done by running `julia --project` in this directory, and then typing `]instantiate` to install the dependencies.
 
-## Building the network
+## Street routing
 
-For all of the following steps, if you built the code locally instead of using podman, any place where a command starts with `julia`, replace it with `julia --project`. This is because in the podman container the dependencies are installed in the global environment (since the container is single-purpose, there is no need for multiple Julia environments). When running locally, you may have multiple julia environments for different projects.
+OSRM requires the original `analysis-area.osm.pbf` to be processed into a network, using a "profile" that assigns weights based on mode. We use custom profiles for all routing, to account for safety, congestion, etc. The profiles are in the `src/routing/profiles` directory, and the source OSM data is in the shared folder under `2-Re-Routing Analysis/OSM/analysis-area.osm.pbf`. For performance, I recommend copying the OSM data to `~/local` in the Podman image. I do _not_ recommend copying the profiles; by leaving them in the repository we ensure any changes are picked up, and they are small enough that read performance does not matter.
+
+For all of the following steps, if you built the code locally instead of using podman, you will need to set the environment variable `JULIA_PROJECT=path/to/src/routing/`. This is because in the podman container the dependencies are installed in the global environment (since the container is single-purpose, there is no need for multiple Julia environments). When running locally, you may have multiple julia environments for different projects. This is not necessary when running in podman.
 
 I recommend storing the networks in `~/local/networks` - go ahead and create that directory. The commands below assume your working directory is `~/code/src/routing`
 
-### Street network
+### Auto routing
 
-OSRM requires the original `analysis-area.osm.pbf` to be processed into a network, using a "profile" that assigns weights. The profiles are in the `src/routing/profiles` directory, and the source OSM data is in the shared folder under `2-Re-Routing Analysis/OSM/analysis-area.osm.pbf`. For performance, I recommend copying the OSM data to `~/local` in the Podman image. I do _not_ recommend copying the profiles; by leaving them in the repository we ensure any changes are picked up, and they are small enough that read performance does not matter.
-
-#### Elevation data
-
-For bicycling and walking, routing accounts for elevation differences. In order to do this properly, we need elevation data. We use 1/3 arc-second (~10m) resolution data from the USGS 3D Elevation Program. OSRM will interpolate between the points in the raster, so the resolution is not quite as bad as it sounds.
-
-First, we need to download the data. The script `download_elevation_data.jl` will download all of the GeoTIFF files for the analysis area (each covers one square degree). The script takes one argument, which is the output directory to save the elevation data in. The data requires about 30-35GB of space for all processing to take place.
-
-    download_elevation_data.jl path
-
-Once the elevation data files are downloaded, several more steps need to happen. They need to be combined into a single file for the analysis area, they need to be reprojected from NAD83 (used by USGS) to WGS84 (used by OSM/OSRM), and they need to be converted to the text-based grid format OSRM requires. OSRM additionally requires that all raster data be integers, so that needs to be done. To minimize rounding errors, we also convert the elevations to millimeters above mean sea level. The shell script `prepare_elevation_data.sh` handles these steps. Since this is a shell script, it will only run on macOS or Linux; if you are using Windows and not using podman, I recommend installing the Windows Subsystem for Linux. You will need it to run OSRM anyhow. You pass in the path to directory you downloaded the elevation to. This will create three new files: combined.tif, which is a GeoTIFF combining all of the elevation tiles into a single dataset; final.asc, which is the OSRM-format raster grid, and final_header.asc, which contains information about the spatial extent of the file. This spatial extent should match the variables declared at the top of `profiles/elevation.lua`.
-
-The processed elevation data is in the shared folder, so you should only need to do this if you are downloading new/updated elevation data.
-
-## Auto Routing
-
-### Building the networks
+#### Baseline
 
 Auto routing is different from the other street routing modes because it is time dependent (due to congestion).
 
@@ -128,13 +114,17 @@ Use the following command to build the car traffic networks.
 
 This will create a bunch of networks called `car_<period>` in `~/local/networks` - one for each time period.
 
-### Doing the routing
-
 Likewise, we must do the routing for each of the car networks. The bash script `route_car_baseline.sh` will do this.
 
-### Speed cap scenario
+    bash route_car_baseline.sh ~/data/Data_Processed/ ~/local/networks/ ~/local/output
 
-In the car speed scenario, we cap StreetLight speeds with [NACTO recommendations](https://nacto.org/publication/city-limits/the-right-speed-limits/). The recommendations require some speed studies, so we simplify further, using the following speed table
+This will create files containing every trip routed for each time period in `~/local/output`, tagged with the most recent git commit hash to avoid version confusion (though if you have local modifications you have not yet committed, that may still cause some confusion). These can then be copied to `~/data/Data_Processed/geodata` for further analysis outside the podman container. I recommend keeping the output inside the Podman volume and moving/copying it out, rather than writing directly to the shared folder, for several reasons. This prevents overwriting previous results if a routing run fails, 
+
+There is a Jupyter notebook that can then be used to combine these files into a single file containing the record for each car trip at the time it was observed. The output of OSRM does not contain any terminal time; adding terminal time is necessary for the OSRM results to approximate the TBI results (and is a better reflection of the real world as well).
+
+#### Speed cap scenario
+
+In the car speed scenario, we cap StreetLight speeds with [NACTO recommendations](https://nacto.org/publication/city-limits/the-right-speed-limits/). The recommendations require some speed studies, so we simplify further, using the speeds in @tab-speeds. Since these are maximum speeds, we multiply by 0.8 to approximate an average speed; this is the same multiplication factor used by OSRM out of the box to scale OSM-provided maximum speeds.
 
 |                     | Urban    | Suburban | Rural |
 |---------------------|----------|----------|-------|
@@ -142,6 +132,8 @@ In the car speed scenario, we cap StreetLight speeds with [NACTO recommendations
 | Minor streets       | 20       |  20      | 20    |
 | Major streets       | 25       |  35      | 35    |
 | Freeways            | 55       |  55      | 65    |
+
+: Speeds for different road types in different environments {#tab-speeds}
 
 We map OpenStreetMap `highway` tags to street types using the `src/routing/car_speed_scenario/highway_types.csv` file; the template for this file (listing all highway tags) is generated by the Julia script `extract_highway_tags.jl`. This maps each highway tag to a street type. The Urban/Suburban/Rural designation is created based on the Minneapolis 2040 neighborhood types provided, and mapped as follows:
 
@@ -167,14 +159,33 @@ This will create files containing every trip routed for each time period in `~/l
 
 The speed scenario significantly reduces speeds on major arterials throughout the region, as shown in @fig-speed-central and @fig-speed-regional. A small number of roads show increased speed, because NACTO guidelines are actually higher than the OSRM defaults for a few types of roads; they are a small enough part of the network this is not expected to materially influence results. Note that the significant reductions on large interchanges are because motorway links are designated as "major" roads rather than freeways, because they often serve as the transition between freeways and major roads. This does mean that freeway-to-freeway interchanges may have lower-than-expected speeds, but they also make up a small portion of any trip.
 
+<!-- these maps were created in QGIS, using the QGIS project file in the 2-Re-Routing Analysis/Networks directory -->
+
 ![Speed changes due to the NACTO speed caps, central part of the region](fig/speed_scenario_central.png){#fig-speed-central fig-alt="Map showing how much speed was reduced by the speed scenario, weekdays, 8-9 AM. There were significant reductions on arterials and freeways. Local streets mostly stay about the same. A small number of roads show increases."}
 
 ![Speed changes due to the NACTO speed caps, regional part of the region](fig/speed_scenario_regional.png){#fig-speed-regional fig-alt="Map showing how much speed was reduced by the speed scenario across the region, weekdays, 8-9 AM. The grid of rural highways show significant reductions in speed."}
 
+### Walk routing {#sec-walk}
 
-## Converting the street network to GIS format
+#### Elevation data {#sec-elevation}
 
-For debugging, it's useful to convert the street network to GIS format. The `network_to_gis.jl` script does this. You can run it like this:
+For bicycling and walking, routing accounts for elevation differences. In order to do this properly, we need elevation data. We use 1/3 arc-second (~10m) resolution data from the USGS 3D Elevation Program. OSRM will interpolate between the points in the raster, so the resolution is not quite as bad as it sounds. We have also set our OSRM profiles up to assume that bridges and tunnels are level (due to technical limitations, we treat them as level even if the endpoints are not at the same elevation).
+
+First, we need to download the data. The script `download_elevation_data.jl` will download all of the GeoTIFF files for the analysis area (each covers one square degree). The script takes one argument, which is the output directory to save the elevation data in. The data requires about 30-35GB of space for all processing to take place.
+
+    julia download_elevation_data.jl path
+
+Once the elevation data files are downloaded, several more steps need to happen. They need to be combined into a single file for the analysis area, they need to be reprojected from NAD83 (used by USGS) to WGS84 (used by OSM/OSRM), and they need to be converted to the text-based grid format OSRM requires. OSRM additionally requires that all raster data be integers, so that needs to be done. To minimize rounding errors, we also convert the elevations to millimeters above mean sea level. The shell script `prepare_elevation_data.sh` handles these steps. Since this is a shell script, it will only run on macOS or Linux; if you are using Windows and not using podman, I recommend installing the Windows Subsystem for Linux. You will need it to run OSRM anyhow. You pass in the path to directory you downloaded the elevation to. This will create three new files: combined.tif, which is a GeoTIFF combining all of the elevation tiles into a single dataset; final.asc, which is the OSRM-format raster grid, and final_header.asc, which contains information about the spatial extent of the file. This spatial extent should match the variables declared at the top of `profiles/elevation.lua`.
+
+The processed elevation data is in the shared folder, so you should only need to do this if you are downloading new/updated elevation data.
+
+### Bicycle routing
+
+As with walking, you will need elevation data for bicycle routing; see @sec-elevation.
+
+### Converting street networks to GIS format
+
+For debugging and visualization, it's useful to convert the street network to GIS format. The `network_to_gis.jl` script does this. You can run it like this:
 
     julia network_to_gis.jl ~/local/networks/network_name/network_name.osrm ~/local/networks/network_name.gpkg
 
@@ -192,12 +203,14 @@ For the car networks, there are quite a few. The `combine_car_networks.jl` scrip
 
 The resulting file will have columns for the speed for each of the networks provided on the command line.
 
+## Transit routing
+
+For transit routing, we use the [TransitRouter.jl](https://github.com/mattwigway/TransitRouter.jl) package, and 2019 (pre-pandemic) GTFS for Metro Transit and MVTA. We use OSRM and the walking profile described in @sec-walk. This does present an inconsistency, as the walk weighting is based on a generalized cost, but when the transit vehicle comes is based only on clock time. So if you left your home at 8:00, and took a 10-minute safe walk to a bus stop, but the bus left at 8:08, you would miss it. There might have been a five-minute dangerous (or less safe/pleasant) walk avaiable as well, so we would consider the trip impossible even if it were technically not. However, the alternative is that we assume people stop considering safety the closer they get to the transit departure time. While this is probably somewhat behaviorally accurate, since we're looking at mode shift potential and not behavior today, we prefer to treat this trip as inaccessible rather than find the more dangerous path.
 
 
 
 
-
-
+## OLD NOTES
 
 #### Environment variables
 
