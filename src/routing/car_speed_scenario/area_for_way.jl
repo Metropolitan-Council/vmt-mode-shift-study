@@ -1,4 +1,6 @@
-# This script processes an OSM file and extracts all unique highway tags, and writes them out as an SQLite database
+# This script processes an OSM file and creates an SQLite database with the NACTO speed cap for each
+# way in the file, based on the road type (derived from the highway tag using the mappings in highway_types.csv)
+# and the location based on the Minneapolis 2040 land use designations.
 
 using CSV, DataFrames, OpenStreetMapPBF, Logging, EnumX, GeoDataFrames, DBInterface, SQLite, LibSpatialIndex, ArchGDAL
 import GeoFormatTypes as GFT
