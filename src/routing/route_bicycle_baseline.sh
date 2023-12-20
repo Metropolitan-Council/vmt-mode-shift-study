@@ -14,11 +14,11 @@ routing="$(dirname "$0")"
 # get the git commit hash
 COMMIT_HASH=$(cd "$routing"; git rev-parse HEAD | head -c 5)
 
-OUT_FILE="${OUT_DIR}/bike-lts-${COMMIT_HASH}.parquet"
-SEGMENTS_FILE="${OUT_DIR}/bike-lts-${COMMIT_HASH}-segments.parquet"
+OUT_FILE="${OUT_DIR}/bike-baseline-${COMMIT_HASH}.parquet"
+SEGMENTS_FILE="${OUT_DIR}/bike-baseline-${COMMIT_HASH}-segments.parquet"
 
-if [ ! -e "$OUT_FILE" -o -e "$SEGMENTS_FILE" ]; then
+if [ -e "$OUT_FILE" -o -e "$SEGMENTS_FILE" ]; then
     echo "Output files already exist!"
 else
-    julia --project="$routing" -t auto "${routing}/route.jl" "${TBI_DIR}/tbi_cleaned.csv" "${NET_DIR}/bike-lts/bike-lts.osrm" "$OUT_FILE" --bike-lts "$SEGMENTS_FILE"
+    julia --project="$routing" -t auto "${routing}/route.jl" "${TBI_DIR}/tbi_cleaned.csv" "${NET_DIR}/bike-baseline/bike-baseline.osrm" "$OUT_FILE" --bike-lts "$SEGMENTS_FILE"
 fi

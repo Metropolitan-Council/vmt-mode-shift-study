@@ -1,6 +1,7 @@
 ---
 title: Routing User Manual
 author: Matt Bhagat-Conway
+bibliography: ../bibliography.bib
 ---
 
 ## Setting up the environment
@@ -96,6 +97,8 @@ For all of the following steps, if you built the code locally instead of using p
 
 I recommend storing the networks in `~/local/networks` - go ahead and create that directory. The commands below assume your working directory is `~/code/src/routing`
 
+For replicability, there are short shell scripts to build and route each network/scenario. These make sure that the exact options and files used are consistent, and take only the directory names where data is stored and output should be placed. This ensures we always use the same files and networks for the same outputs. The build scripts all call `build_street_network.sh` which in turn calls OSRM to build the street networks. The routing scripts all call `route.jl` which does the actual routing.
+
 ### Auto routing
 
 #### Baseline
@@ -165,23 +168,81 @@ The speed scenario significantly reduces speeds on major arterials throughout th
 
 ![Speed changes due to the NACTO speed caps, regional part of the region](fig/speed_scenario_regional.png){#fig-speed-regional fig-alt="Map showing how much speed was reduced by the speed scenario across the region, weekdays, 8-9 AM. The grid of rural highways show significant reductions in speed."}
 
-### Walk routing {#sec-walk}
+### Walking and bicycle routing {#sec-walkbike}
+
+The walk profile is based primarily on travel time and safety. @hardy_accessibility_2019 develop a set of equivalent speeds to adjust the value of pedestrian infrastructure based on quality, shown in @tab-pedspeed. We use these penalties to adjust the routing _weights_ but not the speeds, as people don't actually walk slower on poorer facilities (likely the opposite). We find the minimum weight path based on these weights, but still calculate speed without regard to roadway quality.
+
+| Functional class         | Lanes | Has sidewalk | Vehicle speed | Pedestrian speed | Weight penalty |
+|--------------------------|-------|--------------|---------------|------------------|----------------|
+| Any                      | Any   | Yes          | > 55 mph      | 1.5 mph          | 2              |
+| Any                      | 6+    | Yes          | <= 55 mph     | 2.4 mph          | 1.25           |
+| Freeway/major highway    | 4--5  | Yes          | <= 55 mph     | 2.4 mph          | 1.25           |
+| Major arterial           | 4--5  | Yes          | <= 55 mph     | 2.4 mph          | 1.25           |
+| Minor arterial/collector | 4--5  | Yes          | 41-55 mph     | 2.4 mph          | 1.25           |
+| Minor arterial/collector | 4--5  | Yes          | <= 40 mph     | 2.7 mph          | 1.11           |
+| Local                    | 4--5  | Yes          | 41-55 mph     | 2.4 mph          | 1.25           |
+| Local                    | 4--5  | Yes          | 31-40 mph     | 2.7 mph          | 1.11           |
+| Local                    | 4--5  | Yes          | <= 30 mph     | 3.0 mph          | 1
+| Freeway/major highway    | <= 3  | Yes          | <= 55 mph     | 2.4 mph          | 1.25           |
+| Major arterial           | <= 3  | Yes          | 31-55 mph     | 2.4 mph          | 1.25           |
+| Major arterial           | <= 3  | Yes          | <= 30 mph     | 2.7 mph          | 1.11           |
+| Minor arterial/collector | <= 3  | Yes          | 41-55 mph     | 2.4 mph          | 1.25           |
+| Minor arterial/collector | <= 3  | Yes          | <= 40 mph     | 2.7 mph          | 1.11           |
+| Local                    | <= 3  | Yes          | 41-55 mph     | 2.4 mph          | 1.25           |
+| Local                    | <= 3  | Yes          | 31-40 mph     | 2.7 mph          | 1.11           |
+| Local                    | <= 3  | Yes          | <= 30 mph     | 3.0 mph          | 1
+| Any                      | 4+    | No/Unknown   | Any           | 1.5 mph          | 2              |
+| Any                      | <= 3  | No/Unknown   | > 30 mph      | 1.5 mph          | 2              |
+| Freeway/major highway    | <= 3  | No/Unknown   | <= 30 mph     | 1.5 mph          | 2              |
+| Major arterial           | <= 3  | No/Unknown   | <= 30 mph     | 2.4 mph          | 1.25           |
+| Minor arterial/collector | <= 3  | No/Unknown   | <= 30 mph     | 2.4 mph          | 1.25           |
+| Local                    | <= 3  | No/Unknown   | <= 30 mph     | 2.4 mph          | 1.25           |
+| Off-street               | N/A   | N/A          | N/A           | 3.0 mph          | 1              |
+
+: Speed and weight adjustments for varying quality of pedestrian facilities [@hardy_accessibility_2019] {#tab-pedspeed}
 
 #### Elevation data {#sec-elevation}
 
-For bicycling and walking, routing accounts for elevation differences. In order to do this properly, we need elevation data. We use 1/3 arc-second (~10m) resolution data from the USGS 3D Elevation Program. OSRM will interpolate between the points in the raster, so the resolution is not quite as bad as it sounds. We have also set our OSRM profiles up to assume that bridges and tunnels are level (due to technical limitations, we treat them as level even if the endpoints are not at the same elevation).
+For bicycling and walking, routing accounts for elevation differences. In order to do this properly, we need elevation data. We use 1/3 arc-second (~10m) resolution data from the USGS 3D Elevation Program. OSRM will interpolate between the points in the raster, so the resolution is not quite as bad as it sounds. We have also set our OSRM profiles up to assume that bridges and tunnels are level (due to technical limitations, we treat them as level even if the endpoints are not at the same elevation). The processed elevation data is available in our shared folder, under `2-Re-Routing Analysis/Elevation`. You can copy the `final.asc` file on your podman local drive. If you want to download new elevation data, follow the steps below; otherwise just use that file.
 
-First, we need to download the data. The script `download_elevation_data.jl` will download all of the GeoTIFF files for the analysis area (each covers one square degree). The script takes one argument, which is the output directory to save the elevation data in. The data requires about 30-35GB of space for all processing to take place.
+The script `download_elevation_data.jl` will download all of the GeoTIFF files for the analysis area (each covers one square degree). The script takes one argument, which is the output directory to save the elevation data in. The data requires about 30-35GB of space for all processing to take place.
 
     julia download_elevation_data.jl path
 
-Once the elevation data files are downloaded, several more steps need to happen. They need to be combined into a single file for the analysis area, they need to be reprojected from NAD83 (used by USGS) to WGS84 (used by OSM/OSRM), and they need to be converted to the text-based grid format OSRM requires. OSRM additionally requires that all raster data be integers, so that needs to be done. To minimize rounding errors, we also convert the elevations to millimeters above mean sea level. The shell script `prepare_elevation_data.sh` handles these steps. Since this is a shell script, it will only run on macOS or Linux; if you are using Windows and not using podman, I recommend installing the Windows Subsystem for Linux. You will need it to run OSRM anyhow. You pass in the path to directory you downloaded the elevation to. This will create three new files: combined.tif, which is a GeoTIFF combining all of the elevation tiles into a single dataset; final.asc, which is the OSRM-format raster grid, and final_header.asc, which contains information about the spatial extent of the file. This spatial extent should match the variables declared at the top of `profiles/elevation.lua`.
+Once the elevation data files are downloaded, several more steps need to happen. They need to be combined into a single file for the analysis area, they need to be reprojected from NAD83 (used by USGS) to WGS84 (used by OSM/OSRM), and they need to be converted to the text-based grid format OSRM requires. OSRM additionally requires that all raster data be integers, so that needs to be done. To minimize rounding errors, we also convert the elevations to millimeters above mean sea level. The shell script `prepare_elevation_data.sh` handles these steps, with the same path specified in the previous command:
 
-The processed elevation data is in the shared folder, so you should only need to do this if you are downloading new/updated elevation data.
+    bash prepare_elevation_data.sh path
 
-### Bicycle routing
+Since this is a shell script, it will only run on macOS or Linux; if you are using Windows and not using podman, I recommend installing the Windows Subsystem for Linux. You will need it to run OSRM anyhow. You pass in the path to directory you downloaded the elevation to. This will create three new files: combined.tif, which is a GeoTIFF combining all of the elevation tiles into a single dataset; final.asc, which is the OSRM-format raster grid, and final_header.asc, which contains information about the spatial extent of the file. This spatial extent should match the variables declared at the top of `profiles/elevation.lua`.
 
-As with walking, you will need elevation data for bicycle routing; see @sec-elevation.
+#### Building the network
+
+When building the bicycling and walking networks, the path to `final.asc` will need to be specified in the environment variable `ELEVATION_FILE`. Both profiles also refer to the car profile to get information about roads for assessing safety, so `SPEED_DATABASE` must be set as well (and `SPEED_COLUMN`, but that is set automatically in the build scripts). There is a build script for each of the networks: the walk and bike baseline, one walk scenario, one bike scenario (All streets treated as LTS1), and an ebike scenario. The ebike scenario builds off the bike scenario-so not only are all streets treated as LTS1, speeds are 13% faster,[^bikelts] and there is no slope avoidance.
+
+    SPEED_DATABASE=~/local/streetlight_data.db ELEVATION_FILE=~/local/elevation/final.asc bash build_walk_baseline_network.sh ~/local/analysis-area.osm.pbf ~/local/networks/
+    SPEED_DATABASE=~/local/streetlight_data.db ELEVATION_FILE=~/local/elevation/final.asc bash build_walk_scenario_network.sh ~/local/analysis-area.osm.pbf ~/local/networks/
+    SPEED_DATABASE=~/local/streetlight_data.db ELEVATION_FILE=~/local/elevation/final.asc bash build_bicycle_baseline_network.sh ~/local/analysis-area.osm.pbf ~/local/networks/
+    SPEED_DATABASE=~/local/streetlight_data.db ELEVATION_FILE=~/local/elevation/final.asc bash build_bicycle_ebike_network.sh ~/local/analysis-area.osm.pbf ~/local/networks/
+    SPEED_DATABASE=~/local/streetlight_data.db ELEVATION_FILE=~/local/elevation/final.asc bash build_bicycle_all_lts1_network.sh ~/local/analysis-area.osm.pbf ~/local/networks/
+
+
+You will see quite a bit of output warning about streets that are steeper than the [allegedly steepest street in the world](https://en.wikipedia.org/wiki/Baldwin_Street). When a segment is steeper than 35%, we assume it is bad data and set the slope to 0%. Some of these are dirt paths, etc, which may actually be steeper, but may also be artifacts of the low resolution of the elevation data (e.g. due to a saddle point that occurs between two measurements).
+
+There are separate profiles for the walk baseline and walk scenario. The three bicycle networks are all built using the same profile, with different environment variables to control their behavior. These details are handled in each of the build scripts.
+
+[^bikelts]: This estimate of 13% faster is based on several articles. @schleinitz_german_2017 found a mean speed increase of 13.7%; @fishman_ebikes_2016 review articles from China and Prtugal and find increases of 10-15%, and @baptista_onroad_2015 find an increase of 13% in Lisbon.
+
+#### Running the analysis
+
+You can then do the routing for the pedestrian and bicycle networks using the following scripts, which take arguments for the folder where the TBI is stored, where the networks are stored, and where the output should be written.
+
+    bash route_walk_baseline.sh ~/data/Data_Processed/ ~/local/networks/ ~/local/output
+    bash route_walk_scenario.sh ~/data/Data_Processed/ ~/local/networks/ ~/local/output
+    bash route_bicycle_baseline.sh ~/data/Data_Processed/ ~/local/networks/ ~/local/output
+    bash route_bicycle_all_lts.sh ~/data/Data_Processed/ ~/local/networks/ ~/local/output
+    bash route_bicycle_ebike.sh ~/data/Data_Processed/ ~/local/networks/ ~/local/output
+
+The output will be stored in a GeoParquet file called `<mode>-<scenario>-<git commit hash>.parquet`, e.g. `walk-baseline-f2802.parquet`. The bike scenarios will also have a GeoParquet file ending in `-segments.parquet` which divides the bike trips up into segments by LTS.
 
 ### Converting street networks to GIS format
 
@@ -203,11 +264,72 @@ For the car networks, there are quite a few. The `combine_car_networks.jl` scrip
 
 The resulting file will have columns for the speed for each of the networks provided on the command line.
 
+## Automated testing of street networks
+
 ## Transit routing
 
-For transit routing, we use the [TransitRouter.jl](https://github.com/mattwigway/TransitRouter.jl) package, and 2019 (pre-pandemic) GTFS for Metro Transit and MVTA. We use OSRM and the walking profile described in @sec-walk. This does present an inconsistency, as the walk weighting is based on a generalized cost, but when the transit vehicle comes is based only on clock time. So if you left your home at 8:00, and took a 10-minute safe walk to a bus stop, but the bus left at 8:08, you would miss it. There might have been a five-minute dangerous (or less safe/pleasant) walk avaiable as well, so we would consider the trip impossible even if it were technically not. However, the alternative is that we assume people stop considering safety the closer they get to the transit departure time. While this is probably somewhat behaviorally accurate, since we're looking at mode shift potential and not behavior today, we prefer to treat this trip as inaccessible rather than find the more dangerous path.
+For transit routing, we use the [TransitRouter.jl](https://github.com/mattwigway/TransitRouter.jl) package, and 2019 (pre-pandemic) GTFS for Metro Transit and MVTA. 
 
+The transit network is somewhat different than the other networks, in that is is time-dependent (the car networks are not time-dependent, we just use a different network depending on time of day). The differences between access at different times can be stark; leaving one minute later might make you hours later to your destination if your trip involves an infrequent bus. We use the range-RAPTOR algorithm [@delling_roundbased_2015] to find latest-departure-given-earliest-arrival paths. There are often multiple options that arrive at the destination at the same time, because they are different ways to access the same vehicle. The latest-departure-given-earliest-arrival is whichever one departs latest; this is the path we use. This is subject to a few constraints; notably, we require at least 1 minute of waiting for each transfer. Furthermore, if the latest possible departure time is more than two hours after the requested time, it is still guaranteed that we will find an earliest arrival trip, but it is not guaranteed that we will find the one with the latest departure; see @bhagat-conway_earliest_2023 for more information. This also means waiting time at the initial boarding is "compressed" out of the trip. TODO add some information about how this is handled in the analysis step.
 
+We use OSRM and the walking profile described in @sec-walk. This does present an inconsistency, as the walk weighting is based on a generalized cost, but when the transit vehicle comes is based only on clock time. So if you left your home at 8:00, and took a 10-minute safe walk to a bus stop, but the bus left at 8:08, you would miss it. There might have been a five-minute dangerous (or less safe/pleasant) walk avaiable as well, so we would consider the trip impossible even if it were technically not. However, the alternative is that we assume people stop considering safety the closer they get to the transit departure time. While this is probably somewhat behaviorally accurate, since we're looking at mode shift potential and not behavior today, we prefer to treat this trip as inaccessible rather than find the more dangerous path.
+
+For most trips, we route "forward" - that is, we constrain the departure time. For some trips, we route in "reverse," constraining the destination of the trip. This is based on the trip purpose priority, listed below:
+
+1. Medical visit (e.g., doctor, dentist)
+1. Errand with appointment (e.g., haircut, accountant)
+1. Errand with appointment (e.g., haircut)
+1. K-12 school
+1. Attend K-12 school
+1. Daycare or preschool
+1. Attend daycare or preschool
+1. College/university
+1. Attend college/university
+1. Other education-related (e.g., field trip)
+1. Attend other education-related activity (e.g., field trip)
+1. Attend vocational education class
+1. Other type of class (e.g., cooking class)
+1. Attend other type of class (e.g., cooking class)
+1. Primary workplace
+1. Work-related activity (e.g., meeting, delivery, worksite)
+1. Went to work-related activity (e.g., meeting, delivery, worksite)
+1. Other work-related
+1. _All others_
+
+Whichever end has the higher priority is the end that is constrained - so a trip from home to work would be constrained at work, while a trip from a medical visit to work is constrained at the medical visit. Note that pickup and dropoff are not on this list. If it is desired to add them, this can be done by editing the `CONSTRAINED_TRIP_PURPOSE_PECKING_ORDER` variable in `route.jl`.
+
+We assume that even constrained trip purposes have some flexibility. We allow violating the constraint by up to five minutes iff it makes the trip at least 15 minutes better; this is controlled by the variables `HOW_MUCH_A_TRIP_CAN_VIOLATE_REQUESTED_DEPARTURE_ARRIVAL_TIME_WHEN_ALTERNATE_TRIP_ARRIVES_EARLIER_SECONDS` and `HOW_MUCH_EARLIER_TRIP_MUST_ARRIVE_OR_DEPART_TO_VIOLATE_REQUESTED_ARRIVAL_DEPARTURE_TIME_SECONDS` at the top of `route.jl`.
+
+To ensure all trips are routed during the validity period of the GTFS files in use, we change the date of each trip to be the same day of the week, during the week of 2019-10-20. So, for instance, a trip that actually took place on Tuesday, August 6, 2019, will be routed as if it took place on Tuesday, October 22, 2019. This should generally be correct but does not account for special schedules that may be in effect on holidays.
+
+TransitRouter.jl supports overnight routing. For instance, if a trip starts on Tuesday but cannot be completed except by waiting for a vehicle from the Wednesday, we will find the trip using the service on Wednesday. This is most relevant for trips that occur late at night, but applies to all trips---so some trips will have excessive wait times---for instance, a trip leaving Tuesday afternoon, waiting all night, and taking a one-way morning peak bus the next day. In particular, TransitRouter.jl allows transfers between vehicles running on different service days, so will find a trip that takes a bus departing 11:30 PM on Tuesday and transferring to a bus running at 1:00 AM on Wednesday. Transfers can also happen in the other direction; for instance, a trip that starts on a Wednesday bus at 12:30 AM might transfer to the tail end of a run of a bus that started on Tuesday and is thus finishing out the Tuesday service day. This overnight routing feature is not present in most routing software, but is critical for a subset of overnight trips that cross midnight.
+
+The first step to running the transit routing is to build a transit network based on our GTFS, as well as the OSRM walking baseline network (used to calculate transfer times). You can build that network like this:
+
+    bash build_transit_network.sh --osrm-network ~/local/networks/walk-baseline/walk-baseline.osrm -t 2413.5 ~/local/networks/transit.trjl ~/"data/2-Re-Routing Analysis/GTFS/metro_transit_2019-10-16.zip" ~/"data/2-Re-Routing Analysis/GTFS/mvta-transitfeeds_com-20190903.zip"
+
+This creates a transit network in `~/local/networks/transit.trjl` based on 2019 Metro Transit and MVTA GTFS. It uses OSRM to find transfers through the street network based on the walk baseline network created above, with a maximum transfer distance of 2,413.5 m (1.5 miles). During building, you will see several error messages about nonexistent shapes; this is an issue with the GTFS, but it only affects the visualization of routes so can be safely ignored.
+
+To do the routing, you can run
+
+    julia -t auto route.jl ~/data/Data_Processed/tbi_cleaned.csv ~/local/networks/walk-baseline/walk-baseline.osrm ~/local/output/transit.parquet --transit-network ~/local/networks/transit.trjl
+
+The `route.jl` script has a number of options for transit, notably
+
+- `--max-access-distance-meters`, `--max-egress-distance-meters`
+    - These control the maximum distance to walk to or from transit (default 2413.5 m)
+- `--max-rides`
+    - This controls the maximum number of rides (i.e. number of transfers plus one), default 3.
+
+The RAPTOR algorithm output is optimal in terms of travel time. If you want to place a more stringent limit on number of transfers or access/egress distance, you need to re-run the algorithm with those constraints, not simply filter the output. For instance, the fastest trip may require a transfer, but there may be a slower trip that would be found instead if the transfers were limited. Similarly, limiting transfer distance requires rebuilding the network _and_ re-doing the routing.
+
+The output file is still GeoParquet format, but the structure is a bit different. Instead of one record per trip, there is one record per leg, indexed by `trip_id` and ordered by `leg_index`. Instead of durations, date-times for the start and end of each leg are presented.
+
+Transit routing is significantly slower than other modes; expect it to take several hours.
+
+During routing, you will likely see a number of error messages that say something like "Distance returned by distance_matrix (2375) does not match that returned by route (2534.9), for access stop 01499 from origin LatLon(lat=redacted°, lon=redacted°)". This is because a two-stage process is used to create the transit routes. First, nearby stops are found using the OSRM distance matrix function. Then, geometry is found using the OSRM route function. Occasionally, the length of the geometry does not match the distance from the distance matrix. This is related to OSRM internals, and we have not solved it at this juncture, but discrepancies are generally small.
+
+You will also see a few messages that say something like "Trip ID [XX] has no options meeting constraints; requested departure time 2019-10-25T07:23:26, options found departing: 2019-10-25T07:22:04." This indicates that the router was unable to find a trip matching the origin or destination time constraint, but was able to find an option by relaxing that constraint slightly. The difference in times should be no more than five minutes (see above).
 
 
 ## OLD NOTES

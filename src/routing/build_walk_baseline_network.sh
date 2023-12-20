@@ -8,9 +8,9 @@ set -ex
 OSM="$1"
 OUTDIR="$2"
 
-PROFILE="$(dirname "$0")/profiles/bicycle_lts.lua"
+PROFILE="$(dirname "$0")/profiles/foot_lts.lua"
 
 export SPEED_COLUMN="saturdays_6-7"
-export BIKE_SCENARIO="baseline"
+unset SPEED_CAP_DATABASE
 
-bash build_street_network.sh "$OSM" "$PROFILE" "${OUTDIR}/bike-baseline"
+bash build_street_network.sh "$OSM" "$PROFILE" "${OUTDIR}/walk-baseline"
