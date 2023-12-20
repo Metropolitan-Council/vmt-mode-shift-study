@@ -331,68 +331,14 @@ During routing, you will likely see a number of error messages that say somethin
 
 You will also see a few messages that say something like "Trip ID [XX] has no options meeting constraints; requested departure time 2019-10-25T07:23:26, options found departing: 2019-10-25T07:22:04." This indicates that the router was unable to find a trip matching the origin or destination time constraint, but was able to find an option by relaxing that constraint slightly. The difference in times should be no more than five minutes (see above).
 
+### Transit scenario
 
-## OLD NOTES
+The transit scenario is that we double frequency on all routes. The GTFS files are coded with actual timetables, not frequency entries, so we need to create new GTFS files with new trips. We do this by duplicating each trip and inserting it halfway between the original trip and the next trip on the route. This means that changes in run time over the course of the day well be reflected in the output. 
 
-#### Environment variables
+More precisely, for each route-direction, we first find the most common stop (i.e. the stop that is served by the most trips on that service day by that route and direction). Generally there will be ties; the one that occurs first in the pattern is used as the "reference stop". Most of the time, this will be a stop that is common to all patterns. The script will warn about the few cases where it is not (why this is important is discussed below).
 
-The profiles expect three environment variables to be set: `SPEED_DATABASE`, the path to the SQLite speed database (see below), `SPEED_COLUMN`, the column in the database to use for congestion information, and `ELEVATION_FILE`, the path to the `final.asc` file created by the elevation step above.
+Then, we identify the first time each trip departs the reference stop, and sort trips by this time. We use the reference stop rather than the time at the first stop, because the first stop may be very different on different trips; if there is a short-turn, for example, a trip that logical person would call "later" may leave the first stop _of that trip_ earlier.
 
-#### Building the network
+Then, we duplicate each trip and shift it forward in time so that it passes the reference stop half way between the time of the original trip and the next trip on the route-direction. If there is no next trip on the route-direction (i.e. it is the last trip of the day), or if the trip does not pass the reference stop, it is not duplicated but is passed through into the output unmodified.
 
-I used these commands, putting my networks in `~/vmt-networks/<network_name>` and using the default installation location for OSRM profiles:
-
-    bash build_street_network.sh /path/to/analysis-area.osm.pbf profiles/foot_lts.lua ~/vmt-networks/walk-lts
-    bash build_street_network.sh /path/to/analysis-area.osm.pbf profiles/bicycle_lts.lua ~/vmt-networks/bike-lts
-
-These will take a few minutes to run.
-
-
-
-This will build all of the networks, one for each time period.
-
-### Transit network
-
-The `build_transit_network.sh` file builds the transit network from GTFS and the walking street network (used to find transfers). Run it like this, assuming networks are again in `~/vmt-networks`. This will build a file `transit.trjl` with the transit data in it. 2413.5 specifies a 1.5-mile maximum transfer distance
-
-    bash build_transit_network.sh --osrm-network ~/vmt-networks/walk/walk.osrm -t 2413.5 ~/vmt-networks/transit.trjl /path/to/gtfs.zip
-
-_Note:_ If you get an error about not being able to find `libosrmjl.so`, it means either (1) OSRM.jl wasn't installed correctly (see above) or, more likely, (2) `libosrmjl.[so|dylib]` is not in your library path. Look for `libosrmjl.[so|dylib]` and then add the directory it's in to your LD_LIBRARY_PATH. It's most likely in `/usr/local/lib` which is not part of the default search path on WSL.
-
-    export LD_LIBRARY_PATH="/directory/containing/libosrmjl:${LD_LIBRARY_PATH}"
-
-## Doing the routing
-
-### Street routing
-
-To perform street routing, use the `route.jl` script like so, from within this directory (to run from elsewhere, use `--project=/path/to/this/directory`). Replace car with whatever network/mode you're using. If you run into the couldn't find `libosrmjl.so` error, follow the steps above under "Transit network". The `git rev-parse` portion of the command line inserts the latest commit ID into the output file name so we can track what version of the code produced what output.
-
-    julia -t auto --project route.jl /path/to/tbi_merged.csv ~/vmt-networks/walk/walk.osrm /path/to/output-$(git rev-parse --short 6 HEAD).gpkg
-
-You can change the output format to any GDAL/OGR supported format with the `--output-driver` option. I used GeoPackage because GeoJSON is unwieldy with this large of a dataset. `-t auto` uses as many threads as your CPU has cores to speed up the routing. On my machine, routing all of the TBI trips by car takes 1 minute 11 seconds, and several minutes to write the output. If you're using Windows Subsystem for Linux, you should store the output within WSL, not in `/mnt/c/...` as access to Windows volumes is very slow in WSL. You can move the file to `/mnt/c/` after it's written if you need access to it from Windows.
-
-Add `--bike-lts` to include statistics about bicycle level of traffic stress.
-
-#### Car congestion
-
-Car congestion uses a set of many networks. Since routing is so fast, we just route every trip using congestion data from every time period. You can run this similarly to how the network build was run:
-
-    (
-        export SPEED_DATABASE="/path/to/streetlight_data.db";
-        echo ".schema stl_congestion_data_2019" | 
-        sqlite3 "$SPEED_DATABASE" | 
-        grep REAL |
-        sed -E 's/^ +"([^"]+).*$/\1/' |
-        xargs -n 1 -Icol env julia -t auto --project route.jl /path/to/tbi_merged.csv ~/vmt-networks/car_col/car_col.osrm /path/to/car_col.parquet
-    )
-
-### Transit routing
-
-To perform transit routing, simply add `--transit path/to/transit.trjl` to the `route.jl` command line. It is still necessary to pass an OSRM network as well - this is used to find access and egress to/from transit. You can also add `--max-rides` to limit the number of rides that can be taken.
-
-    julia -t auto --project route.jl --transit /path/to/transit.trjl /path/to/tbi_merged.csv ~/vmt-networks/car/car.osrm /path/to/output.gpkg
-
-Transit routing is slower; this takes about 10 minutes on my machine, again with a significant amount of time to write the result to disk.
-
-
-
+This process is handled by the script `prepare_transit_scenario.py`, which takes arguments for input and output GTFS. It reads the input GTFS, applies the algorithm, and writes the output GTFS. We applied this script to both the Metro Transit and MVTA GTFS files separately. We then build a new network with the modified GTFS files, and do the transit routing again.
