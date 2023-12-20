@@ -470,8 +470,6 @@ function process_segment(profile, segment)
       segment.weight = segment.weight + segment.weight * proportion_sloped
       --print("Weight is " .. segment.weight)
     --end
-  else
-    print("Skipping elevation on non-startpoint (bridge/tunnel)")
   end
 end
 
