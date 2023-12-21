@@ -1,0 +1,21 @@
+project:
+  type: book
+
+book:
+  title: Routing for the VMT Reduction Mode Shift project
+  author: Matt Bhagat-Conway
+  chapters:
+    - index.qmd
+    - calibration.qmd
+    - transit_scenario_qc.qmd
+
+bibliography: ../bibliography.bib
+
+execute:
+    eval: true
+    echo: true
+    output: true
+format:
+    html:
+        toc: true
+        toc-location: left

@@ -1,0 +1,15 @@
+# This cell sets the file names for the different modes/scenarios - it can be updated to use
+# newer versions of the data
+car:
+  baseline: car_congestion_1d39c/car_congestion.parquet
+  scenario: car_scenario_f2802.parquet
+bike:
+  baseline: bike-lts-37721.parquet
+  all_lts1: bike-all-lts1-37721.parquet
+  ebike: bike-ebike-8a1a0-1.parquet
+walk:
+  baseline: walk-trips-1d39c.parquet
+  scenario: walk-scenario-a37e1.parquet
+transit:
+  baseline: transit-trips-45d51.parquet
+  scenario: transit-scenario-0277d.parquet

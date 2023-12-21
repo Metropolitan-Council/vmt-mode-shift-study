@@ -1,0 +1,15 @@
+# Routing QC
+
+This document collects a number of quality checks done on the routing results into one place, so they can be easily viewed in one place and re-run on new data. It is separate from the routing methods report, because it contains details of some specific routed trips, and thus distribution must be limited.
+
+This report was rendered with routing results from the following files:
+
+```{python}
+#| echo: false
+import yaml
+import pprint
+
+# quarto always renders in file's working directory
+with open("input_files.yml") as fls:
+    pprint.pprint(yaml.safe_load(fls))
+```
