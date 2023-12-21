@@ -22,9 +22,16 @@ format:
 import pandas as pd
 import geopandas as gpd
 import matplotlib.pyplot as plt
-from os.path import join
+from os.path import join, abspath, dirname
+import sys
 import keyring
 import numpy as np
+import zipfile
+
+# this makes it so we can import gtfsutil from src/routing/transit_scenario
+sys.path.append(join(dirname(dirname(dirname(abspath(__file__)))), "src", "routing", "transit-scenario"))
+
+import gtfsutil
 
 # This is used to avoid hard-coding directories. 
 # To set the directory, use the command prompt or a notebook you don't check in.  run:
@@ -355,7 +362,7 @@ The first step to running the transit routing is to build a transit network base
 
     bash build_transit_network.sh --osrm-network ~/local/networks/walk-baseline/walk-baseline.osrm -t 2413.5 ~/local/networks/transit.trjl ~/"data/2-Re-Routing Analysis/GTFS/metro_transit_2019-10-16.zip" ~/"data/2-Re-Routing Analysis/GTFS/mvta-transitfeeds_com-20190903.zip"
 
-This creates a transit network in `~/local/networks/transit.trjl` based on 2019 Metro Transit and MVTA GTFS. It uses OSRM to find transfers through the street network based on the walk baseline network created above, with a maximum transfer distance of 2,413.5 m (1.5 miles). During building, you will see several error messages about nonexistent shapes; this is an issue with the GTFS, but it only affects the visualization of routes so can be safely ignored.
+This creates a transit network in `~/local/networks/transit.trjl` based on 2019 Metro Transit and MVTA GTFS. It uses OSRM to find transfers through the street network based on the walk baseline network created above, with a maximum transfer distance of 2,413.5 m (1.5 miles). During building, you will see several error messages about nonexistent shapes; this is an issue with the GTFS, but it only affects the visualization of routes so can be safely ignored. You will also see errors about stops being out of order on their shapes; this similarly only affects visualization and can be ignored.
 
 To do the routing, you can run
 
@@ -388,9 +395,34 @@ Then, we identify the first time each trip departs the reference stop, and sort 
 
 Then, we duplicate each trip and shift it forward in time so that it passes the reference stop half way between the time of the original trip and the next trip on the route-direction. If there is no next trip on the route-direction (i.e. it is the last trip of the day), or if the trip does not pass the reference stop, it is not duplicated but is passed through into the output unmodified.
 
+The result of this is shown in @fig-transit-marey, for the Eastbound 94 bus. This time-space or Marey plot shows the original trips in blue, with the new trips interleaved between them. In the morning and evening, when frequences were already high, they have become even higher. In the midday, when a run previously ran every 30 minutes, they now run every 15. This bus has fairly consistent travel times all day, but each new trip is an exact duplicate of the previous trip, so changes in travel time over the course of the day are handled as well.
+
+```{python}
+#| include: false
+orig = gtfsutil.read_gtfs(join(data_dir, "2-Re-Routing Analysis", "GTFS", "metro_transit_2019-10-16.zip"))
+mod = gtfsutil.read_gtfs(join(data_dir, "2-Re-Routing Analysis", "GTFS", "metro_transit_2019-10-16-scenario.zip"))
+```
+
+```{python}
+#| label: fig-transit-marey
+#| fig-cap: The Monday schedule of the eastbound Metro Transit route 5, with original trips shown in blue and trips in the scenario shown in red.
+#| fig-alt: A plot with stops along the eastbound 94 bus on the y axis and time of day on the x axis. Each trip in the original GTFS is represented, with new trips from the scenario interleaved evenly between each pair.
+gtfsutil.marey_plot("94-112", 0, 20191021, orig, mod)
+
+```
+
+A key limitation of this algorithm is handling of short turns. For instance, Route 62 alternates between a full length run and a short turn. The algorithm will duplicate each trip in between the original trip and the next trip, which means two short turns in a row will be followed by two full-length runs in a row, in the simple case of a 1:1 alternation (@fig-r62). The schedule a human would create would alternate between each type of run rather than having two of each, but that would require moving some of the original runs as well, rather than just adding trips. For example, if short turns ran at 11:00 and 12:00, and full length runs at 11:30 and 12:30, doubling frequency would ideally result in short turns at 11:00, 11:30, and 12:00, and full length runs at 11:15 and 11:45; this would require rescheduling the existing 11:30 full length run, potentially breaking timed transfers further down the line.
+
+```{python}
+#| label: fig-r62
+#| fig-cap: The Monday schedule of the northbound Metro Transit route 62, with original trips shown in blue and trips in the scenario shown in red.
+#| fig-alt: A plot with stops along the eastbound 62 bus on the y axis and time of day on the x axis. Each trip in the original GTFS is represented, with new trips from the scenario interleaved evenly between each pair. There are full length runs and short turns which alternate in the original GTFS, but which now have a 2:2 alternation pattern instead of 1:1.
+gtfsutil.marey_plot("62-112", 0, 20191021, orig, mod)
+```
+
 This process is handled by the script `prepare_transit_scenario.py`, which takes arguments for input and output GTFS. It reads the input GTFS, applies the algorithm, and writes the output GTFS. We applied this script to both the Metro Transit and MVTA GTFS files separately. We then build a new network with the modified GTFS files, and do the transit routing again.
 
-### Calibration
+## Calibration
 
 To ensure our routing is reflective of reality, we check the routed travel times for trips of each mode against the observed travel time of trips by that mode in the TBI.
 
