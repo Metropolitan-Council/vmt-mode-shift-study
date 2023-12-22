@@ -1,0 +1,12 @@
+[deps]
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+DataFramesMeta = "1313f7d8-7da2-5740-9ea0-a2ca25f37964"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+Gadfly = "c91e804a-d5a3-530f-b6f0-dfbca275c004"
+IJulia = "7073ff75-c697-5162-941a-fcdaad2a7d2a"
+Parquet = "626c502c-15b0-58ad-a749-f091afb673ae"
+PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
+Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"

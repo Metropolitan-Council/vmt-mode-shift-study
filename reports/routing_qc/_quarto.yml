@@ -7,6 +7,7 @@ book:
   chapters:
     - index.qmd
     - calibration.qmd
+    - transit_baseline_qc.qmd
     - transit_scenario_qc.qmd
 
 bibliography: ../bibliography.bib

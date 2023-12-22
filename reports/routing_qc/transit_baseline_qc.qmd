@@ -166,7 +166,7 @@ This trip allegedly took only three minutes to travel 1.5 km as the crow flies (
 
 ## Trip [1975579403001]
 
-This trip departed at 5:50 and arrived at 6:20, but has a recorded duration of only 11 minutes. This is present in the raw TBI data, it's not a result of the UKY/UNC cleaning process. I'm not sure how that was calculated. The routed trip is 56 minutes, and claims it used an express bus. No trips board at the 46th St & I-35W bus station. I am working on figuring out why.
+This trip departed at 5:50 and arrived at 6:20, but has a recorded duration of only 11 minutes. This is present in the raw TBI data, it's not a result of the UKY/UNC cleaning process. I'm not sure how that was calculated. The routed trip is 56 minutes, and claims it used an express bus. I suspect they used the 535, which departs 46th St at 5:32 and 6:02. This is an arrive-by trip, and the 6:02 does not get to the destination quite quick enough to arrive by 6:20. The router does find the 5:32 trip, but it is not the latest-departure-given-earliest-arrival trip.
 
 ## Trip [1952944101002]
 
