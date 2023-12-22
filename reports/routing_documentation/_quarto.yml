@@ -6,8 +6,6 @@ book:
   author: Matt Bhagat-Conway
   chapters:
     - index.qmd
-    - running.qmd
-    - calibration.qmd
     - references.qmd
 
 bibliography: ../bibliography.bib

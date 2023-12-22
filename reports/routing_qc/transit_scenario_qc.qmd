@@ -3,12 +3,16 @@
 jupyter: julia-1.9
 ---
 
+# Transit Scenario QC
+
 This checks a couple of assumptions about the transit scenario results, notably:
 
 1. Every trip in the baseline should be possible in the scenario as well.
 2. Unlike the bike and walk scenarios, the transit scenario should be strictly better---all the existing trips remain in the network, and have just been duplicated. Travel time may get longer on some trips, but arrival time should always be the same or earlier.
 3. Due to the [structure of the range-RAPTOR algorithm](https://projects.indicatrix.org/range-raptor-transfer-compression/), trips that have the same arrival time should leave at the same time or later in the scenario, even if the scenario adds an earlier-departure option. The optimization gives latest departure given earliest arrival trips.
 4. Some of the trips should have gotten better (the theoretical number is ill-defined, see below.)
+
+For historical reasons, these checks are written in Julia, while the other checks are written in Python.
 
 
 ```{julia}
@@ -134,9 +138,9 @@ trips_that_dont_leave_later = trips[.!(
 
 # print it out
 println("Baseline: ")
-print_trip(baseline[baseline.trip_id .∈ trips_that_dont_leave_later])
+print_trip(baseline[baseline.trip_id .∈ Ref(trips_that_dont_leave_later), :])
 println("Scenario:")
-print_trip(scenario[scenario.trip_id .∈ trips_that_dont_leave_later])
+print_trip(scenario[scenario.trip_id .∈ Ref(trips_that_dont_leave_later), :])
 ```
 
 For arrive-by (reverse routed) trips, they should depart at the same time or later, with a 60 second tolerance for OSRM nondeterminism.

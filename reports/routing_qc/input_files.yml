@@ -6,7 +6,8 @@ car:
 bike:
   baseline: bike-lts-37721.parquet
   all_lts1: bike-all-lts1-37721.parquet
-  ebike: bike-ebike-8a1a0-1.parquet
+  # not using the -1 version because it doesn't have geometries (?)
+  ebike: bike-ebike-8a1a0.parquet
 walk:
   baseline: walk-trips-1d39c.parquet
   scenario: walk-scenario-a37e1.parquet
