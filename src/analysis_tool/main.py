@@ -18,7 +18,7 @@ import logging
 # do conditional imports based on whether we are in build mode
 # keyring/initialization is not necessary in build mode amd breaks things
 try:
-    from initialize import prepare_data, anonymize, add_scenarios
+    # from initialize import prepare_data, anonymize, add_scenarios
     import keyring
 except ImportError as e:
     logging.error("Unable to import keyring/prepare_data; if this is occurring and the program is not in build mode, something is wrong")
@@ -35,6 +35,8 @@ def run_all(phase: Phase) -> None:
     """
     This function is the helper for running all selected steps in a given phase.
     """
+    
+    raise NotImplementedError("Deprecated in favor of fast mode.")
     
     # setup df if not done yet
     if "df" not in st.session_state:
@@ -114,13 +116,15 @@ def start_screen_feasible() -> None:
         st.session_state.start_screen_feasible = False
         st.experimental_rerun()
         
-    # run all selected steps automatically
-    if st.sidebar.button("Run all selected steps"):
-        logging.info("Running through all steps automatically")
+    st.session_state.fast_mode = st.sidebar.checkbox("Fast rendering mode")
         
-        # toggle start screen & call the run all function for feasible
-        st.session_state.start_screen_feasible = False
-        run_all(Phase.FEASIBLE)
+    # # run all selected steps automatically
+    # if st.sidebar.button("Run all selected steps"):
+    #     logging.info("Running through all steps automatically")
+        
+    #     # toggle start screen & call the run all function for feasible
+    #     st.session_state.start_screen_feasible = False
+    #     run_all(Phase.FEASIBLE)
         
     # create the multiselect to choose steps
     # NOTE: this can sometimes be buggy if you don't click off the multiselect before running it, as the session state sometimes takes a bit to fully respond to user input
@@ -203,13 +207,15 @@ def start_screen_probable() -> None:
         st.session_state.start_screen_probable = False
         st.experimental_rerun()
         
-    # run through all selected steps automatically
-    if st.sidebar.button("Run all selected steps"):
-        logging.info("Running through all steps automatically")
+    # # run through all selected steps automatically
+    # if st.sidebar.button("Run all selected steps"):
+    #     logging.info("Running through all steps automatically")
         
-        # toggle off this start screen & call the run all function with the probable phase
-        st.session_state.start_screen_probable = False
-        run_all(Phase.PROBABLE)
+    #     # toggle off this start screen & call the run all function with the probable phase
+    #     st.session_state.start_screen_probable = False
+    #     run_all(Phase.PROBABLE)
+    
+    st.session_state.fast_mode = st.sidebar.checkbox("Fast rendering mode")
         
     # create the multiselect to choose the probable steps to run
     # NOTE: like with feasible steps, this can also be buggy sometimes
@@ -232,8 +238,8 @@ def setup_df() -> None:
     if not handler["build"]:
         drive_data_dir = keyring.get_password('msp', 'vmt_reduction_dir')
         
-    # if we are forcing reinitialization and we are not in build mode, reinitialize
-    if handler["force_reinitialize"] and not handler["build"]:
+    # if we are forcing reinitialization and we are not in build mode, reinitialize - -disabled
+    if False and handler["force_reinitialize"] and not handler["build"]:
         logging.info("Rebuilding data from raw inputs")
         
         # read in data & pipe it through the cleaning function
@@ -245,26 +251,28 @@ def setup_df() -> None:
         
         # try to read in file specified as saved_tbi_file (supporting parquet/csv)
         try:
-            if handler["saved_tbi_file"].split(".")[-1] == "parquet":
+            if handler["tbi_file_name"].split(".")[-1] == "parquet":
                 logging.info("Reading in the specified parquet file")
-                df = pd.read_parquet(handler["saved_tbi_file"])
-            elif handler["saved_tbi_file"].split(".")[-1] == "csv":
+                df = pd.read_parquet(handler["tbi_file_name"])
+            elif handler["tbi_file_name"].split(".")[-1] == "csv":
                 logging.info("Reading in the specified csv file")
-                df = pd.read_csv(handler["saved_tbi_file"])
+                df = pd.read_csv(handler["tbi_file_name"])
             
         # if we cannot read the input, try rebuilding, but if we are in build mode, raise an exception
         except Exception as e:
             logging.info(f"Something has gone wrong reading in the pre-cleaned data files: {e}")
-            if handler["build"]:
-                logging.exception("Unable to rebuild data in build mode")
-                raise e
-            logging.info("Attempting to rebuild inputs manually from scratch")
-            raw = pd.read_csv(drive_data_dir + handler["input_tbi_file"], usecols=handler["keep_columns"])
+            # if handler["build"]:
+            #     logging.exception("Unable to rebuild data in build mode")
+            #     raise e
+            # logging.info("Attempting to rebuild inputs manually from scratch")
+            # raw = pd.read_csv(drive_data_dir + handler["input_tbi_file"], usecols=handler["keep_columns"])
 
-            df = prepare_data(raw, drive_data_dir)
+            # df = prepare_data(raw, drive_data_dir)
+            raise e
         
     # store the generated df into a session state variable
     logging.info("Setting up the data inputs has succeeded")
+    logging.info("NOTE: if the input data is not up-to-date with the most recent initialization schema, it could cause downstream errors.")
     st.session_state["df"] = df
     
     # validate dataframe -- useful for changes to schema that requires rebuilding
@@ -346,19 +354,12 @@ def setup_vars(phase: Phase) -> None:
     # turn off the summary screen (want to show the normal step screen right now)
     st.session_state["summary_screen"] = False
     
-def show_final_summary(df: pd.DataFrame, step_class_dict: Dict[str, steps.BaseStep], aliases: Dict[str, str]=dict()) -> None:
+def show_final_summary(df: pd.DataFrame, step_class_dict: Dict[str, steps.BaseStep]) -> None:
     """
     This function generates the final summary for the visualization tool given a dataframe and a step class dict that the dataframe
     followed. 
     """
     # df.to_parquet(f"output/fdsa{label}.parquet")
-    if not handler["build"]:
-        if st.sidebar.button(f"Save current result to csv"):
-            with st.spinner("Exporting dataframe and percentiles"):
-                df.to_csv(f"output/{st.session_state.phase}_trips.csv", index=False)
-                f = open(f"output/{st.session_state.phase}_percentiles.json", "w")
-                f.write(str({step_name: step_class_dict[st.session_state.step].get_cutoff() for step_name, step_class in step_class_dict.items()}))
-                f.close()
             
     # calculate overall shift ability -- can shift to at least one mode
     df[f"{st.session_state.phase}_shift"] = (
@@ -916,12 +917,19 @@ def final_summary() -> None:
     if st.session_state.have_scenarios:
         col1, col2 = st.columns(2, gap="medium")
         with col1:
-            show_final_summary(st.session_state.df, st.session_state.step_class_dict, "base")
+            show_final_summary(st.session_state.df, st.session_state.step_class_dict)
         with col2:
-            show_final_summary(st.session_state.sdf, st.session_state.step_class_scenario_dict, "scenario")
+            show_final_summary(st.session_state.sdf, st.session_state.step_class_scenario_dict)
+            
     else:
         show_final_summary(st.session_state.df, st.session_state.step_class_dict)
-    
+        
+    if not handler["build"]:
+        if st.sidebar.button(f"Save current result to csv"):
+            with st.spinner("Exporting dataframe and percentiles"):
+                st.session_state.df.to_csv(f"output/{st.session_state.phase}_trips.csv", index=False)
+                if st.session_state.have_scenarios:
+                    st.session_state.sdf.to_csv(f"output/{st.session_state.phase}_trips_scenario.csv", index=False)
     
 def show_step() -> None:
     """
@@ -996,17 +1004,20 @@ def show_step() -> None:
         # apply step if there is a scenario object
         if st.session_state.have_scenarios:
             scenario_class.apply_step()
-            
-        # if we are currently in a scenario, split into columns to display both
-        if cur_scenario:
-            col1, col2 = st.columns(2, gap="medium")
-            with col1:
+
+        if not st.session_state.fast_mode:
+            # if we are currently in a scenario, split into columns to display both
+            if cur_scenario:
+                col1, col2 = st.columns(2, gap="medium")
+                with col1:
+                    curr.show_step_streamlit()
+                with col2:
+                    scenario_class.show_step_streamlit()
+            # otherwise just show the base one (covers both of them even if have_scenarios is True)
+            else:
                 curr.show_step_streamlit()
-            with col2:
-                scenario_class.show_step_streamlit()
-        # otherwise just show the base one (covers both of them even if have_scenarios is True)
         else:
-            curr.show_step_streamlit()
+            bigger_markdown("Step applied")
         
     else:
         st.header("Click the apply step button once the desired settings have been set or click disable to disable the step.")

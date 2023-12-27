@@ -6,6 +6,7 @@ The code/cleanup here will be dependent on the exact types of data used in the T
 This is the only place of the tool where non-standardized column names should be used; after cleanup, the column names should be standardized according to the schema outlined in the config.yml. New columns can still be created/referenced within the tool, but they will not persist. 
 """
 
+raise RuntimeError("In-streamlit data generation no longer supported--run the jupyter notebook instead.")
 
 import numpy as np
 import pandas as pd
