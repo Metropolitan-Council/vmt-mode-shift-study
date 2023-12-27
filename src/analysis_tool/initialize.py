@@ -158,6 +158,7 @@ def transit_cleanup(transit) -> pd.DataFrame:
         "route_long_name": "first",
         "route_type": "first", 
         "leg_type": "first", # end throw away
+        "length": "sum",
         "start_time_dt": "first",
         "end_time_dt": "last",
         "access_dist_mi": "sum",
@@ -172,14 +173,12 @@ def transit_cleanup(transit) -> pd.DataFrame:
     else:
         transit["length"] = transit.length
         
-    transit["access_length"] = transit["length"]
-        
     # group transit (which are initially unlinked trips) into linked trips
     transit_grouped = transit.dissolve(by="trip_id", aggfunc=agg_fns) # merges geometries in addition to aggregating the rest of the columns
     transit_grouped["non_wait_duration"] = (transit_grouped["end_time_dt"] - transit_grouped["start_time_dt"]).apply(lambda x: x.seconds / 60)
 
     # return the grouped transit dataframe 
-    return transit_grouped[["trip_id", "start_time_dt", "end_time_dt", "non_wait_duration", "access_dist_mi", "egress_dist_mi", "num_transfers", "num_boardings"]]
+    return transit_grouped[["trip_id", "start_time_dt", "end_time_dt", "non_wait_duration", "access_dist_mi", "egress_dist_mi", "num_transfers", "num_boardings", "length"]]
 
 def time_diff(row): 
     """
@@ -504,7 +503,6 @@ def prepare_data(df: pd.DataFrame, data_dir: str) -> pd.DataFrame:
         df["bike_rerouting_missing"] = df["bike_distance_meters"].isna()
         
         df["transit_length"] = df["transit_length"] * MILES_PER_METER
-        df["transit_access_length"] = df["transit_access_length"] * MILES_PER_METER
         df["transit_rerouting_missing"] = df["transit_duration"].isna()
         
         add_scenarios(df)
@@ -578,7 +576,6 @@ def process_transit_scenario(scenario_name: str, scenario_df: pd.DataFrame, df: 
     scenario_df = transit_cleanup(scenario_df)
     
     scenario_df[f"scenario_{scenario_name}_distance_rerouted"] = scenario_df["length"] * MILES_PER_METER
-    scenario_df[f"scenario_{scenario_name}_access_length_rerouted"] = scenario_df["access_length"] * MILES_PER_METER
     scenario_df[f"scenario_{scenario_name}_duration_rerouted"] = scenario_df["duration"]
     scenario_df[f"scenario_{scenario_name}_num_transfers_rerouted"] = scenario_df["num_transfers"] 
     scenario_df[f"scenario_{scenario_name}_nontransit_duration"] = scenario_df["non_transit_duration"]
@@ -587,7 +584,6 @@ def process_transit_scenario(scenario_name: str, scenario_df: pd.DataFrame, df: 
     
     df[f"scenario_{scenario_name}_distance_rerouted"] = scenario_df[f"scenario_{scenario_name}_distance_rerouted"].round().astype("Int16").values
     df[f"scenario_{scenario_name}_duration_rerouted"] = scenario_df[f"scenario_{scenario_name}_duration_rerouted"].round().astype("Int16").values
-    df[f"scenario_{scenario_name}_access_length_rerouted"] = scenario_df[f"scenario_{scenario_name}_access_length_rerouted"].round().astype("Int16").values
     df[f"scenario_{scenario_name}_num_transfers_rerouted"] = scenario_df[f"scenario_{scenario_name}_num_transfers_rerouted"].astype("Int8").values
     df[f"scenario_{scenario_name}_num_transfers_rerouted"] = scenario_df[f"scenario_{scenario_name}_num_transfers_rerouted"].astype("Int8").values
     df[f"scenario_{scenario_name}_rerouting_missing"] = scenario_df[f"scenario_{scenario_name}_distance_rerouted"].isna().astype("bool").values

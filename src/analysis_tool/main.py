@@ -9,7 +9,7 @@ from typing import Dict
 from collections import defaultdict
 
 import steps
-from settings import handler, scenario, get_communities
+from settings import handler, get_communities
 from steps.enums import *
 from util import get_cold_starts_df, stacked_shift_histogram, total_shift_histogram, get_summary_df, get_duration_diff_df, bigger_markdown, validate_input, create_scenario_input, in_scenario, create_base_step, create_scenario_step, show_previous_runs, create_sdf
 import json
@@ -237,7 +237,7 @@ def setup_df() -> None:
         logging.info("Rebuilding data from raw inputs")
         
         # read in data & pipe it through the cleaning function
-        raw = pd.read_csv(drive_data_dir + scenario["input_tbi_file"], usecols=handler["keep_columns"])
+        raw = pd.read_csv(drive_data_dir + handler["input_tbi_file"], usecols=handler["keep_columns"])
         df = prepare_data(raw, drive_data_dir)
     # otherwise, we are not reinitialization -- read in precleaned files
     else:
@@ -245,12 +245,12 @@ def setup_df() -> None:
         
         # try to read in file specified as saved_tbi_file (supporting parquet/csv)
         try:
-            if scenario["saved_tbi_file"].split(".")[-1] == "parquet":
+            if handler["saved_tbi_file"].split(".")[-1] == "parquet":
                 logging.info("Reading in the specified parquet file")
-                df = pd.read_parquet(scenario["saved_tbi_file"])
-            elif scenario["saved_tbi_file"].split(".")[-1] == "csv":
+                df = pd.read_parquet(handler["saved_tbi_file"])
+            elif handler["saved_tbi_file"].split(".")[-1] == "csv":
                 logging.info("Reading in the specified csv file")
-                df = pd.read_csv(scenario["saved_tbi_file"])
+                df = pd.read_csv(handler["saved_tbi_file"])
             
         # if we cannot read the input, try rebuilding, but if we are in build mode, raise an exception
         except Exception as e:
@@ -259,7 +259,7 @@ def setup_df() -> None:
                 logging.exception("Unable to rebuild data in build mode")
                 raise e
             logging.info("Attempting to rebuild inputs manually from scratch")
-            raw = pd.read_csv(drive_data_dir + scenario["input_tbi_file"], usecols=handler["keep_columns"])
+            raw = pd.read_csv(drive_data_dir + handler["input_tbi_file"], usecols=handler["keep_columns"])
 
             df = prepare_data(raw, drive_data_dir)
         

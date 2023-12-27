@@ -64,7 +64,7 @@ fixed_purposes: ["Work", "Work-related", "Escort", "School", "School-related"]
 unlikely_purposes: ["Escort", "Shop"]
 
 build: False  # whether we are currently building to docker/streamlit; disables initialization/keyring
-force_reinitialize: False  # whether to rebuild the input file (including scenarios)
+force_reinitialize: True  # whether to rebuild the input file (including scenarios)
 # save_result: False
 
 # assumed to be in data/ directory
@@ -159,9 +159,13 @@ mappings:
     transit_duration_rerouted: transit_duration  # column representing the rerouted transit duration in minutes (numerical)
     transit_rerouting_missing: transit_rerouting_missing  # column representing the column has an associated transit rerouting (0/1)
     transit_distance_rerouted: transit_length  # column representing the distance of the transit trip in miles (currently unused)
-    transit_access_length_rerouted: transit_access_length  # column representing the rerouted access length of the transit trip in miles (currently unused)
+    transit_access_dist_mi_rerouted: transit_access_dist_mi  # column representing the rerouted access length of the transit trip in miles (currently unused)
+    transit_egress_dist_mi_rerouted: transit_egress_dist_mi
     transit_num_transfers_rerouted: transit_num_transfers  # column representing the number of transfers in a transit trip
-    transit_nontransit_duration_rerouted: transit_non_transit_duration  # column representing the non-transit duration (e.g., walk to stop) in minutes (currently unused)
+    transit_num_boardings_rerouted: transit_num_boardings
+    transit_non_wait_duration_rerouted: transit_non_wait_duration  # column representing the non-transit duration (e.g., walk to stop) in minutes (currently unused)
+    transit_wait_time_rerouted: transit_wait_time
+
 
     # derived columns
     transit_access_length: est_observed_transit_access_dist  # column representing the access length (to get to a stop) in miles for transit trips (currently unused)
