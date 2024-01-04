@@ -3,8 +3,7 @@ import pandas as pd
 import plotly.express as px
 import numpy as np
 import inspect
-import matplotlib.pyplot as plt
-import seaborn as sns
+import time
 from typing import Dict
 from collections import defaultdict
 
@@ -353,7 +352,7 @@ def setup_vars(phase: Phase) -> None:
     # st.session_state["step_class"] = st.session_state["step_class_dict"][st.session_state.step]
     # turn off the summary screen (want to show the normal step screen right now)
     st.session_state["summary_screen"] = False
-    
+
 def show_final_summary(df: pd.DataFrame, step_class_dict: Dict[str, steps.BaseStep]) -> None:
     """
     This function generates the final summary for the visualization tool given a dataframe and a step class dict that the dataframe
@@ -446,7 +445,7 @@ def show_final_summary(df: pd.DataFrame, step_class_dict: Dict[str, steps.BaseSt
     st.table(get_summary_df(df, step_class_dict.values(), Mode.TRANSIT, f"{st.session_state.phase}_transit_shift", st.session_state.phase))
         
     # stacked histogram of duration difference for feasible drive, non-feasible drive, and transit trips
-    bigger_markdown("Below, a stacked histogram detailing the travel time difference distributions for drive trips that can feasibly shift to transit, drive trips that can't shift, and observed transit trips can be seen. NOTE: due to the need to filter out trips with no valid transit trip (and thus no applicable transit duration), there are no infeasible drive trips within this histogram.")
+    bigger_markdown("Below, a stacked histogram detailing the travel time difference distributions for drive trips that can feasibly shift to transit, drive trips that can't shift, and observed transit trips can be seen.")
     
     st.plotly_chart(stacked_shift_histogram(df[(~df["transit_rerouting_missing"])&(df["transit_duration_rerouted"]>0)&(df["transit_duration_rerouted"]<1440)], Mode.TRANSIT, "transit_duration_rerouted", f"{st.session_state.phase}_transit_shift", st.session_state.phase), use_container_width=True)
     
@@ -666,7 +665,6 @@ def show_final_summary(df: pd.DataFrame, step_class_dict: Dict[str, steps.BaseSt
     # run cold start logic (this takes a bit, hence the spinner) to see cold starts before/after shifts
     with st.spinner("Running cold start logic"):
         cold_starts_df = get_cold_starts_df(df[df["mode"] == Mode.CAR])
-        print(cold_starts_df)
         
         before_cold_starts = cold_starts_df["num_cold_starts"].sum()
         after_cold_starts = cold_starts_df[cold_starts_df["person_id"].isin(df[(df['mode'] == Mode.CAR) & (~df[f'{st.session_state.phase}_shift'])]["person_id"])]["num_cold_starts"].sum()
@@ -913,23 +911,32 @@ def final_summary() -> None:
     # currently not supported to go back all the way--can just refresh to do so
     if st.sidebar.button("Start visualization tool from beginning", disabled=True):
         pass
-                
-    if st.session_state.have_scenarios:
-        col1, col2 = st.columns(2, gap="medium")
-        with col1:
-            show_final_summary(st.session_state.df, st.session_state.step_class_dict)
-        with col2:
-            show_final_summary(st.session_state.sdf, st.session_state.step_class_scenario_dict)
-            
-    else:
-        show_final_summary(st.session_state.df, st.session_state.step_class_dict)
-        
+    
+    summary_button = st.sidebar.empty()
+    
     if not handler["build"]:
-        if st.sidebar.button(f"Save current result to csv"):
+        save_results = st.sidebar.checkbox("Save results to parquet (after data displayed)")
+                    
+    if summary_button.button("Show summary", use_container_width=True):
+        if st.session_state.have_scenarios:
+            col1, col2 = st.columns(2, gap="medium")
+            with col1:
+                show_final_summary(st.session_state.df, st.session_state.step_class_dict)
+            with col2:
+                show_final_summary(st.session_state.sdf, st.session_state.step_class_scenario_dict)
+                
+        else:
+            show_final_summary(st.session_state.df, st.session_state.step_class_dict)
+            
+        if not handler["build"] and save_results:
             with st.spinner("Exporting dataframe and percentiles"):
-                st.session_state.df.to_csv(f"output/{st.session_state.phase}_trips.csv", index=False)
+                logging.info("Exporting to parquet files")
+                st.session_state.df.to_parquet(f"output/{st.session_state.phase}_trips_{time.time_ns()}.parquet", index=False)
                 if st.session_state.have_scenarios:
-                    st.session_state.sdf.to_csv(f"output/{st.session_state.phase}_trips_scenario.csv", index=False)
+                    st.session_state.sdf.to_parquet(f"output/{st.session_state.phase}_trips_scenario_{time.time_ns()}.parquet", index=False)
+    else:
+        bigger_markdown("Click show summary button to display all figures.")
+        
     
 def show_step() -> None:
     """

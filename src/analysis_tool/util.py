@@ -7,8 +7,8 @@ import plotly.graph_objects as go
 import plotly.express as px
 import logging
 from typing import List, Dict, Set, Any
-from multiprocessing import cpu_count, Pool
-from scipy.ndimage import shift
+from multiprocessing import cpu_count
+from multiprocessing.pool import ThreadPool
 
 from steps.enums import Mode, Phase, CutoffMode
 from settings import handler
@@ -36,13 +36,13 @@ def applyParallel(dfGrouped, func: Dict[Any, Any]) -> pd.DataFrame:
     Returns:
         pd.DataFrame: result of apply on groupby object
     """
-    with Pool(cpu_count()) as p:
+    with ThreadPool(cpu_count()) as p:
         ret_list = p.map(func, [(name, group) for name, group in dfGrouped])
     return pd.DataFrame(ret_list)
 
 def get_cold_starts_df(df): 
     
-    with Pool(cpu_count()) as p:
+    with ThreadPool(cpu_count()) as p:
         ret_list = p.map(cold_starts_wrapper, [(name, group) for name, group in df.groupby(["wave", "person_id", "travel_date"])])
         
     return pd.DataFrame(ret_list)
@@ -152,6 +152,7 @@ def stacked_shift_histogram(df: pd.DataFrame, mode: Mode, mode_duration: str, mo
     Returns:
         go.Figure: The plotly stacked shift histogram (pre-formatted)
     """
+    
     # create temp columns for duration difference & categories (mode trips, drive shifts that can shift, and drive shifts that can't)
     df.loc[:, "curr"] = (df[mode_duration] - df["car_duration_seconds_adj"] / 60)
     df.loc[:, "Category"] = "na"
@@ -165,7 +166,7 @@ def stacked_shift_histogram(df: pd.DataFrame, mode: Mode, mode_duration: str, mo
     # map each category to a different color
     colors_dict = {
         f"{mode.capitalize()} Trips": "#FF2B2B",
-        f"Drive Trips - {phase} to Switch": "#83C9FF",
+        f"Drive Trips - {phase.capitalize()} to Switch": "#83C9FF",
         f"Drive Trips - Not {phase} to Switch": "#0068C9"
     }
     
@@ -175,7 +176,7 @@ def stacked_shift_histogram(df: pd.DataFrame, mode: Mode, mode_duration: str, mo
     # create the stacked histogram
     fig = px.histogram(view, x="curr", y="person_trips", histfunc="sum", color="Category", barmode="stack", range_x=[-20,120],
                        color_discrete_sequence=plotly_colors, 
-                       category_orders = dict(Category=[f"Drive Trips - Not {phase} to Switch",
+                       category_orders = dict(Category=[f"Drive Trips - Not {phase.capitalize()} to Switch",
                                                         f"Drive Trips - {phase} to Switch", 
                                                         f"{mode.capitalize()} Trips"]))
     fig.update_layout(
