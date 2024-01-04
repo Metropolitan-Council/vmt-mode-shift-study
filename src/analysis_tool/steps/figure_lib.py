@@ -162,6 +162,10 @@ def plot_density_plotly(df: pd.DataFrame, alt_mode: str, column: str, cutoff: fl
                                             xref="paper",
                                             yref="paper"))
     
+    fig.update_layout(
+        hovermode=False
+    )
+    
     return fig
 
 def plot_multi_barplot(df: pd.DataFrame, x: str, y: str, figsize=(7, 5), order=None):

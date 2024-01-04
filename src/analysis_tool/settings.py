@@ -13,9 +13,9 @@ with open("config.yaml", "r", encoding="utf-8") as stream:
 @st.cache_data()
 def get_data() -> pd.DataFrame():
     if handler["tbi_file_name"].split(".")[-1] == "parquet":
-        df = pd.read_parquet("data/" + handler["tbi_file_name"])
+        df = pd.read_parquet(handler["tbi_file_name"])
     elif handler["tbi_file_name"].split(".")[-1] == "csv":
-        df = pd.read_csv("data/" + handler["tbi_file_name"])
+        df = pd.read_csv(handler["tbi_file_name"])
     else:
         raise RuntimeError()
     

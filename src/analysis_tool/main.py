@@ -313,10 +313,10 @@ def setup_vars(phase: Phase) -> None:
     # if no steps were selected, indexing to 0 is impossible, and this raises an error
     try:
         if phase == Phase.FEASIBLE:
-            st.session_state["step"] = st.session_state["feasible_steps"][0]
+            st.session_state["step"] = st.session_state.option = st.session_state["feasible_steps"][0]
             st.session_state["overall_step"] = steps.feasible_steps
         elif phase == Phase.PROBABLE:
-            st.session_state["step"] = st.session_state["probable_steps"][0]
+            st.session_state["step"] = st.session_state.option = st.session_state["probable_steps"][0]
             st.session_state["overall_step"] = steps.probable_steps
         else:
             logging.exception(f"Something went wrong with the phase enum: {st.session_state.overall_step}")
@@ -1041,9 +1041,19 @@ def run() -> None:
     # have the ability to choose what step to run (with segmentation based on phase)
     # can only go to new steps; TODO: add functionality to save snapshots after each step is left to allow full backtracking
     if st.session_state.phase == Phase.FEASIBLE:
-        option = option_slot.selectbox("Choose the step you want to run. If you move away from the current step, the settings of the current step will be 'locked in' and will be unable to be changed.", [step for step in st.session_state["feasible_steps"] if step not in st.session_state.step_class_dict or step == st.session_state.step or (step in st.session_state.step_class_dict and st.session_state.step_class_dict[step].get_previous_run() == None)])
+        steps = [step for step in st.session_state["feasible_steps"] if step not in st.session_state.step_class_dict or step == st.session_state.step or (step in st.session_state.step_class_dict and st.session_state.step_class_dict[step].get_previous_run() == None)]
+        option = option_slot.selectbox(
+            "Choose the step you want to run. If you move away from the current step, the settings of the current step will be 'locked in' and will be unable to be changed.",
+            steps,
+            index=steps.index(st.session_state.step)
+        )
     elif st.session_state.phase == Phase.PROBABLE:
-        option = option_slot.selectbox("Choose the step you want to run. If you move away from the current step, the settings of the current step will be 'locked in' and will be unable to be changed.", [step for step in st.session_state["probable_steps"] if step not in st.session_state.step_class_dict or step == st.session_state.step or (step in st.session_state.step_class_dict and st.session_state.step_class_dict[step].get_previous_run() == None)])
+        steps = [step for step in st.session_state["feasible_steps"] if step not in st.session_state.step_class_dict or step == st.session_state.step or (step in st.session_state.step_class_dict and st.session_state.step_class_dict[step].get_previous_run() == None)]
+        option = option_slot.selectbox(
+            "Choose the step you want to run. If you move away from the current step, the settings of the current step will be 'locked in' and will be unable to be changed.",
+            steps,
+            index=steps.index(st.session_state.step)
+        )
     else:
         logging.exception(f"something went wrong with the overall step session state variable: {st.session_state.phase}")
         raise RuntimeError("Something went wrong with the overall step session state variable")
@@ -1052,9 +1062,9 @@ def run() -> None:
     if st.sidebar.button("Refresh"):
         logging.info("Refreshing the tool")
         st.experimental_rerun()
-
+        
     # logic if we swithced steps (selected step is not equal to the stored step)
-    if st.session_state.step != option:
+    if option is not None and st.session_state.step != option:
         logging.info(f"Moving to new step {option} from step {st.session_state.step}")
         
         # update current step

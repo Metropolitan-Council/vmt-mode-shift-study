@@ -9,7 +9,7 @@ from steps.figure_lib import *
 
 import sys
 sys.path.append("...")
-from settings import handler, get_data
+from settings import handler
 
 fixed_purposes = set(handler["fixed_purposes"])
 
@@ -48,14 +48,14 @@ def convert_to_minutes(temp: str) -> float:
     return int(temp[0:2]) * 60 + int(temp[3:5]) + int(temp[6:8]) / 60
 
 
-def calculate_available_time(inputs: Dict[str, str]): 
+def calculate_available_time(inputs: Dict[str, pd.Series]): 
     '''
     Determines the available time in minutes without conflicting with an adjacent
     required activity.  Allow up to 5 minutes early/late.  Returns a series
     of the available times in minutes
     '''
     
-    df = get_data()
+    df = pd.DataFrame(inputs)
 
     df['depart_time_dt'] = pd.to_datetime(df['depart_time'], format="%H:%M:%S")
     df['arrive_time_dt'] = pd.to_datetime(df['arrive_time'], format="%H:%M:%S")
@@ -63,8 +63,8 @@ def calculate_available_time(inputs: Dict[str, str]):
     # only constrain mandatory activies
     #df['fixed_depart'] = df['o_purpose_category'].apply(lambda x : x in ['Work', 'School', 'Escort'])
     #df['fixed_arrive'] = df['d_purpose_category'].apply(lambda x : x in ['Work', 'School', 'Escort'])
-    df['fixed_depart'] = df['o_purpose_category'].apply(lambda x : x != 'Home')
-    df['fixed_arrive'] = df['d_purpose_category'].apply(lambda x : x != 'Home')
+    df['fixed_depart'] = df['o_purpose'].apply(lambda x : x != 'Home')
+    df['fixed_arrive'] = df['d_purpose'].apply(lambda x : x != 'Home')
 
     # calculate when I need to be there next    
     df = df.sort_values(['wave','person_id','travel_date','trip_id'])
@@ -79,7 +79,7 @@ def calculate_available_time(inputs: Dict[str, str]):
     # missing values are unconstrained
     df['available_time'] = df['available_time'].fillna(1440) 
     
-    return df['available_time']
+    return df["duration"] <= df['available_time']
 
 
 class WalkTimingStep(CategoricalStep):
@@ -122,7 +122,7 @@ class WalkTimingStep(CategoricalStep):
         return fig, ax
     
     def apply_step(self) -> None:
-        super().apply_step(~self.df[self.name])
+        super().apply_step(self.df[self.name])
         
     def get_text(self) -> List[str]:
         conclusion = super().get_text()
