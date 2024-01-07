@@ -157,8 +157,8 @@ def stacked_shift_histogram(df: pd.DataFrame, mode: Mode, mode_duration: str, mo
     df.loc[:, "curr"] = (df[mode_duration] - df["car_duration_seconds_adj"] / 60)
     df.loc[:, "Category"] = "na"
     df.loc[:, "Category"] = np.where(df["mode"] == mode, f"{mode.capitalize()} Trips", df["Category"])
-    df.loc[:, "Category"] = np.where((df["mode"] == Mode.CAR) & (df[mode_feasible_field]), f"Drive Trips - {phase} to Switch", df["Category"])
-    df.loc[:, "Category"] = np.where((df["mode"] == Mode.CAR) & (~df[mode_feasible_field]), f"Drive Trips - Not {phase} to Switch", df["Category"])
+    df.loc[:, "Category"] = np.where((df["mode"] == Mode.CAR) & (df[mode_feasible_field]), f"Drive Trips - {phase.capitalize()} to switch", df["Category"])
+    df.loc[:, "Category"] = np.where((df["mode"] == Mode.CAR) & (~df[mode_feasible_field]), f"Drive Trips - Not {phase} to switch", df["Category"])
     
     # only consider non-na trips
     view = df[df["Category"] != "na"]
@@ -166,8 +166,8 @@ def stacked_shift_histogram(df: pd.DataFrame, mode: Mode, mode_duration: str, mo
     # map each category to a different color
     colors_dict = {
         f"{mode.capitalize()} Trips": "#FF2B2B",
-        f"Drive Trips - {phase.capitalize()} to Switch": "#83C9FF",
-        f"Drive Trips - Not {phase} to Switch": "#0068C9"
+        f"Drive Trips - {phase.capitalize()} to switch": "#83C9FF",
+        f"Drive Trips - Not {phase} to switch": "#0068C9"
     }
     
     # use mapping to create a color list for plotly
@@ -176,8 +176,8 @@ def stacked_shift_histogram(df: pd.DataFrame, mode: Mode, mode_duration: str, mo
     # create the stacked histogram
     fig = px.histogram(view, x="curr", y="person_trips", histfunc="sum", color="Category", barmode="stack", range_x=[-20,120],
                        color_discrete_sequence=plotly_colors, 
-                       category_orders = dict(Category=[f"Drive Trips - Not {phase.capitalize()} to Switch",
-                                                        f"Drive Trips - {phase} to Switch", 
+                       category_orders = dict(Category=[f"Drive Trips - Not {phase} to switch",
+                                                        f"Drive Trips - {phase.capitalize()} to switch", 
                                                         f"{mode.capitalize()} Trips"]))
     fig.update_layout(
         title=dict(

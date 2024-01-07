@@ -479,13 +479,30 @@ class ContinuousStep(BaseStep):
             return 1
         # if it is already a percentile, do nothing
         if self.cutoff_mode == CutoffMode.PCT:
-            return self.cutoff
+            return min(1, max(self.cutoff, 0))
         # otherwise, use scipy to convert raw to percentile
         elif self.cutoff_mode == CutoffMode.RAW:
-            return stats.percentileofscore(self.df[self.df["mode"] == self.mode][self.column_name], self.cutoff) / 100
+            return min(1, max(0, stats.percentileofscore(self.df[self.df["mode"] == self.mode][self.column_name], self.cutoff) / 100))
         else:
             raise RuntimeError("something went wrong with the cutfof mode enum")
         
+    def get_cutoff_raw(self) -> float:
+        """
+        This function always returns the cutoff of the step in raw (i..e, if the step is in percentile mode, returns the corresponding raw value).
+
+        Returns:
+            float: Raw cutoff (possibly equivalency) of this step
+        """
+        if self.cutoff == -1:
+            return 1
+        
+        if self.cutoff_mode == CutoffMode.PCT:
+            return self.df[self.df["mode"] == self.mode][self.column_name].quantile(self.cutoff)
+        elif self.cutoff_mode == CutoffMode.RAW:
+            return self.cutoff
+        else:
+            raise RuntimeError("something went wrong with the cutfof mode enum")
+            
     def get_extrema(self) -> tuple:
         """
         This function gets the extrema of the raw range of the steps, defined by the 1st percenitle to the 99th percentile of this step's column.

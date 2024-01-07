@@ -10,8 +10,7 @@ from collections import defaultdict
 import steps
 from settings import handler, get_communities
 from steps.enums import *
-from util import get_cold_starts_df, stacked_shift_histogram, total_shift_histogram, get_summary_df, get_duration_diff_df, bigger_markdown, validate_input, create_scenario_input, in_scenario, create_base_step, create_scenario_step, show_previous_runs, create_sdf
-import json
+from util import get_cold_starts_df, stacked_shift_histogram, total_shift_histogram, get_summary_df, get_duration_diff_df, bigger_markdown, validate_input, in_scenario, create_base_step, create_scenario_step, show_previous_runs, create_sdf
 import logging
 
 # do conditional imports based on whether we are in build mode
@@ -950,7 +949,7 @@ def show_step() -> None:
         
     # if we have scenarios, get the scenario class from the scenario dict
     if st.session_state.have_scenarios:
-        scenario_class: steps.BaseStep = st.session_state.step_class_scenario_dict[st.session_state.step]
+        scenario_class: steps.BaseStep = st.session_state.step_class_scenario_dict[st.session_state.step]  
         
     # determine whether we are actually in a scenario (and need to split into columns)
     cur_scenario = in_scenario(curr.get_mode(), st.session_state.phase, st.session_state.step, st.session_state.scenarios)
@@ -970,8 +969,10 @@ def show_step() -> None:
             
             # if in scenario, allow the cutoff to be set separately
             if cur_scenario:
-                scenario_class.set_cutoff(st.sidebar.slider("Select a scenario value:", 0.0, 1.0, 0.95, 0.01, key=st.session_state.id + 3))
-                st.sidebar.markdown(f"Scenario cutoff equivalent: {scenario_class.get_cutoff_equivalent():.1f} {scenario_class.get_units()}")
+                # scenario_class.set_cutoff(st.sidebar.slider("Select a scenario value:", 0.0, 1.0, 0.95, 0.01, key=st.session_state.id + 3))
+                # st.sidebar.markdown(f"Scenario cutoff equivalent: {scenario_class.get_cutoff_equivalent():.1f} {scenario_class.get_units()}")
+                scenario_class.set_cutoff_mode(CutoffMode.RAW)
+                scenario_class.set_cutoff(curr.get_cutoff_raw())
             # synchronize the cutoffs if possible
             elif st.session_state.have_scenarios:
                 scenario_class.set_cutoff(curr.get_cutoff())

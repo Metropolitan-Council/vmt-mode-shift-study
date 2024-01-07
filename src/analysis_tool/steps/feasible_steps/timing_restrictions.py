@@ -122,7 +122,7 @@ class WalkTimingStep(CategoricalStep):
         return fig, ax
     
     def apply_step(self) -> None:
-        super().apply_step(self.df[self.name])
+        super().apply_step(~self.df[self.name])
         
     def get_text(self) -> List[str]:
         conclusion = super().get_text()
