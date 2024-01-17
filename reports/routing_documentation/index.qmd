@@ -344,7 +344,7 @@ To do the routing, you can run
 
 The `route.jl` script has a number of options for transit, notably
 
-- `--max-access-distance-meters`, `--max-egress-distance-meters`
+- `--max-access-distance-meters`, `--max-egress-distance-meters`, `--max-transfer-distance-meters`
     - These control the maximum distance to walk to or from transit (default 2413.5 m)
 - `--max-rides`
     - This controls the maximum number of rides (i.e. number of transfers plus one), default 3.

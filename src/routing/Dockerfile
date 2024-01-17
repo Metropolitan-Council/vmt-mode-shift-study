@@ -9,7 +9,7 @@
 #   podman machine start
 
 # Start with official Docker Julia image, on Debian bookworm
-FROM julia:1.9.4-bookworm
+FROM julia:1.10.0-bookworm
 
 ##############
 # Build OSRM #
@@ -60,7 +60,7 @@ RUN cd && \
 # We install all required Julia packages into the global environment in the container. We do
 # not need separate Julia environments, since the container is only used for routing.
 
-COPY --chown=vmt:vmt Manifest.toml /home/vmt/.julia/environments/v1.9/Manifest.toml
+COPY --chown=vmt:vmt Manifest.toml /home/vmt/.julia/environments/v1.10/Manifest.toml
 
 # OSRM.jl is not currently available in the Julia General registry, because the OSRM binary is not
 # packaged as part of the Julia package manager yet.  

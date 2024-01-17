@@ -112,6 +112,10 @@ s = ArgParseSettings()
         help = "Maximum egress distance to transit (meters)"
         arg_type = Float64
         default = DEFAULT_MAX_EGRESS_DIST_METERS
+    "--max-transfer-distance-meters"
+        help = "Maximum transfer distance (meters)"
+        arg_type = Float64
+        default = DEFAULT_MAX_ACCESS_DIST_METERS
 end
 
 # Try to check that the path is not inside the git repository. Won't work if you've
@@ -300,7 +304,7 @@ end
 #TODO automated test
 select_representative_date(date) = Dates.tonext(x -> dayofweek(x) == dayofweek(date), REPRESENTATIVE_WEEK)
 
-function do_transit_route(net, osrm, max_rides, max_access_dist_meters, max_egress_dist_meters, include_geometry, data_itr, n_rows)
+function do_transit_route(net, osrm, max_rides, max_access_dist_meters, max_egress_dist_meters, max_transfer_distance_meters, include_geometry, data_itr, n_rows)
     # uncomment for single-thread debugging
     #map(enumerate(data_itr)) do (i, row)
 
@@ -328,6 +332,7 @@ function do_transit_route(net, osrm, max_rides, max_access_dist_meters, max_egre
 
             # handle overnight trips
             # I'm assuming that row.travel_date is the date the trip _started_
+            # TODO trips that start after midnight!
             if row.arrive_time < row.depart_time
                 arrive_datetime += Day(1)
             end
@@ -345,6 +350,7 @@ function do_transit_route(net, osrm, max_rides, max_access_dist_meters, max_egre
                 HOW_MUCH_A_TRIP_CAN_VIOLATE_REQUESTED_DEPARTURE_ARRIVAL_TIME_WHEN_ALTERNATE_TRIP_ARRIVES_EARLIER_SECONDS,
                 max_access_distance_meters=max_access_dist_meters,
                 max_egress_distance_meters=max_egress_dist_meters,
+                max_transfer_distance_meters=max_transfer_distance_meters,
                 max_rides=max_rides,
                 reverse_search=true,
                 max_reverse_search_duration=RANGE_RAPTOR_MAX_REVERSE_TIME
@@ -396,6 +402,7 @@ function do_transit_route(net, osrm, max_rides, max_access_dist_meters, max_egre
                 RANGE_RAPTOR_BURN_IN_PERIOD_SECONDS + HOW_MUCH_A_TRIP_CAN_VIOLATE_REQUESTED_DEPARTURE_ARRIVAL_TIME_WHEN_ALTERNATE_TRIP_ARRIVES_EARLIER_SECONDS,
                 max_access_distance_meters=max_access_dist_meters,
                 max_egress_distance_meters=max_egress_dist_meters,
+                max_transfer_distance_meters=max_transfer_distance_meters,
                 max_rides=max_rides
             )[1]
 
@@ -562,7 +569,7 @@ function main(args)
 
     if transit
         time = @elapsed result = do_transit_route(transit_network, osrm, args["max-rides"], args["max-access-distance-meters"], args["max-egress-distance-meters"],
-            !args["no-geometry"], Tables.namedtupleiterator(data), nrow(data))
+            args["max-transfer-distance-meters"], !args["no-geometry"], Tables.namedtupleiterator(data), nrow(data))
     else
         time = @elapsed result = do_street_route(osrm, Tables.namedtupleiterator(data), nrow(data), !isnothing(args["bike-lts"]))
     end
