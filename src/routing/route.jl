@@ -116,6 +116,9 @@ s = ArgParseSettings()
         help = "Maximum transfer distance (meters)"
         arg_type = Float64
         default = DEFAULT_MAX_ACCESS_DIST_METERS
+    "--dump-paths"
+        help = "Print out _all_ paths found by the range-RAPTOR algorithm, for debugging. Only works in combination with --trip"
+        action = :store_true        
 end
 
 # Try to check that the path is not inside the git repository. Won't work if you've
@@ -304,7 +307,37 @@ end
 #TODO automated test
 select_representative_date(date) = Dates.tonext(x -> dayofweek(x) == dayofweek(date), REPRESENTATIVE_WEEK)
 
-function do_transit_route(net, osrm, max_rides, max_access_dist_meters, max_egress_dist_meters, max_transfer_distance_meters, include_geometry, data_itr, n_rows)
+route_name(route) = "$(ismissing(route.route_short_name) ? "" : route.route_short_name) $(ismissing(route.route_long_name) ? "" : route.route_long_name)"
+
+function Base.show(io::IO, leg::TransitRouter.Leg)
+    print(io, "$(leg.start_time)-$(leg.end_time): ")
+    if leg.type == TransitRouter.access
+        println(io, "access leg to stop $(leg.destination_stop.stop_name) ($(leg.distance_meters)m)")
+    elseif leg.type == TransitRouter.egress
+        println(io, "egress leg from stop $(leg.origin_stop.stop_name) ($(leg.distance_meters)m)")
+    elseif leg.type == TransitRouter.transfer
+        println(io, "transfer leg from stop $(leg.origin_stop.stop_name) to stop $(leg.destination_stop.stop_name) ($(leg.distance_meters)m)")
+    elseif leg.type == TransitRouter.transit
+        println(io, "transit leg from stop $(leg.origin_stop.stop_name) to stop $(leg.destination_stop.stop_name) via route $(route_name(leg.route))")
+    end
+end
+
+function log_paths(trip_id, paths)
+    io = IOBuffer()
+
+    println(io, "Trip $trip_id: $(length(paths)) paths")
+    for (i, path) in enumerate(paths)
+        println(io, "Path $i / $(length(paths))")
+        for leg in path
+            show(io, leg)
+        end
+        println(io, "")
+    end
+
+    @info String(take!(io))
+end
+
+function do_transit_route(net, osrm, max_rides, max_access_dist_meters, max_egress_dist_meters, max_transfer_distance_meters, include_geometry, data_itr, n_rows, dump_paths)
     # uncomment for single-thread debugging
     #map(enumerate(data_itr)) do (i, row)
 
@@ -356,6 +389,10 @@ function do_transit_route(net, osrm, max_rides, max_access_dist_meters, max_egre
                 max_reverse_search_duration=RANGE_RAPTOR_MAX_REVERSE_TIME
             )[1]  # just one destination
 
+            if dump_paths
+                log_paths(row.trip_id, all_paths)
+            end
+
             if isempty(all_paths)
                 nothing
             else
@@ -386,6 +423,7 @@ function do_transit_route(net, osrm, max_rides, max_access_dist_meters, max_egre
                 best
             end
         else
+            ## forward search
             depart_datetime = DateTime(
                 date,
                 row.depart_time
@@ -406,6 +444,10 @@ function do_transit_route(net, osrm, max_rides, max_access_dist_meters, max_egre
                 max_rides=max_rides
             )[1]
 
+            if dump_paths
+                log_paths(row.trip_id, all_paths)
+            end
+
             if isempty(all_paths)
                 nothing
             else
@@ -425,9 +467,23 @@ function do_transit_route(net, osrm, max_rides, max_access_dist_meters, max_egre
                     Request departure time: $(depart_datetime)
                     Options found departing: $(join([first(x).start_time for x in all_paths], ", "))
                     """
+
+                    # Note: this means that the trip that departs closest to meeting the constraint is treated as if it
+                    # met the constraint, and is replaced with an earlier departure iff that earlier departure gets you there
+                    # at least 15 minutes earlier. This can cause some minor weirdness when adjusting transfer limits. For instance,
+                    # consider trip [1928211601022] in the TBI. This trip departs a suburban location on a Friday afternoon, and misses
+                    # the last bus. There is Saturday service 2.2km away, and there are two options that run on Friday if you leave <5 minutes
+                    # earlier than the requested departure. With a > 2.2km transfer limit, waiting until Saturday morning
+                    # is the best option meeting the constraints, but the other options of course save much more than 15 minutes, so the earliest
+                    # arrival and departure option of the other options is chosen. With a < 2.2km transfer limit, there is no Saturday option, so there
+                    # are no options meeting constraints. Thus, the later of the two options that run on Friday is treated as the best option meeting
+                    # constraints, and the earlier one is not chosen because it does not improve the arrival time by 15 minutes or more.
                 end
 
                 reverse!(all_paths)
+                # paths are now sorted by descending departure time, so we will consider the one that violates the constraints
+                # least first.
+
                 # This is the earliest arrival given departure at or after the departure time.
                 # note that this may not be the first departure at or after the departure time.
                 # If you could depart at 1:30 and arrive at 2:10 on a one-seat ride
@@ -437,6 +493,9 @@ function do_transit_route(net, osrm, max_rides, max_access_dist_meters, max_egre
                 best = fastest_given_departure_time
 
                 for path in restpaths
+                    # make sure everything is in proper order
+                    @assert first(path).start_time ≤ first(best).start_time
+
                     # if it is enough better than the fastest given departure time,
                     # we consider it.
                     @assert Dates.value(Second(depart_datetime - first(path).start_time)) ≤ HOW_MUCH_A_TRIP_CAN_VIOLATE_REQUESTED_DEPARTURE_ARRIVAL_TIME_WHEN_ALTERNATE_TRIP_ARRIVES_EARLIER_SECONDS
@@ -540,6 +599,11 @@ function main(args)
     data = CSV.read(args["dataset"], DataFrame)
     @info "Read $(nrow(data)) trips"
 
+    # make sure the pecking orders make sense (mostly to catch typos)
+    # Do this before any requested filtering
+    all(CONSTRAINED_PURPOSE_CATEGORY_PECKING_ORDER .∈ Ref(Set(data.d_purpose) ∪ Set(data.o_purpose))) ||
+    error("Some constrained trip purposes do not occur in the TBI!")
+
     if args["limit"] != -1
         data = data[1:min(nrow(data), args["limit"]), :]
         @info "Data truncated to first $(nrow(data)) rows"
@@ -548,6 +612,10 @@ function main(args)
     if !isempty(args["trip"])
         data = data[data.trip_id .∈ Ref(args["trip"]), :]
         @info "Retained $(nrow(data)) rows"
+    end
+
+    if args["dump-paths"] && isempty(args["trip"])
+        error("Steadfastly refusing to dump paths when routing all trips. Re-run with --trip")
     end
 
     @info "Loading OSRM"
@@ -563,13 +631,10 @@ function main(args)
         nothing
     end
 
-    # make sure the pecking orders make sense (mostly to catch typos)
-    all(CONSTRAINED_PURPOSE_CATEGORY_PECKING_ORDER .∈ Ref(Set(data.d_purpose) ∪ Set(data.o_purpose))) ||
-        error("Some constrained trip purposes do not occur in the TBI!")
-
     if transit
         time = @elapsed result = do_transit_route(transit_network, osrm, args["max-rides"], args["max-access-distance-meters"], args["max-egress-distance-meters"],
-            args["max-transfer-distance-meters"], !args["no-geometry"], Tables.namedtupleiterator(data), nrow(data))
+            args["max-transfer-distance-meters"], !args["no-geometry"], Tables.namedtupleiterator(data), nrow(data),
+            args["dump-paths"])
     else
         time = @elapsed result = do_street_route(osrm, Tables.namedtupleiterator(data), nrow(data), !isnothing(args["bike-lts"]))
     end
