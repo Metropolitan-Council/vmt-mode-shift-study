@@ -49,14 +49,14 @@ function setup()
   -- seg_id is selected so that we have it for error messages
   local speed_query = assert(speed_db:prepare([[SELECT DISTINCT c."]] .. SPEED_COLUMN .. [[" AS speed_mph,
       n1.seg_id,
-      CASE n2.way_seqid - n1.way_seqid
+      CASE n2.seg_seqid - n1.seg_seqid
         WHEN 1 THEN 'forward'
         WHEN -1 THEN 'reverse'
       END dir,
       n1.way_id
   FROM stl_nodes_table n1
   INNER JOIN stl_nodes_table n2
-      ON (n1.way_id = n2.way_id AND n1.seg_id = n2.seg_id AND abs(n2.way_seqid - n1.way_seqid) = 1)
+      ON (n1.way_id = n2.way_id AND n1.seg_id = n2.seg_id AND abs(n2.seg_seqid - n1.seg_seqid) = 1)
   LEFT JOIN stl_congestion_data_2019 c
       ON (
           c.seg_id = n1.seg_id AND
