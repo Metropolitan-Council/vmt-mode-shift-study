@@ -196,7 +196,7 @@ The speed scenario significantly reduces speeds on major arterials throughout th
 
 ### Walking and bicycle routing {#sec-walkbike}
 
-The walk profile is based primarily on travel time and safety. @hardy_accessibility_2019 develop a set of equivalent speeds to adjust the value of pedestrian infrastructure based on quality, shown in @tab-pedspeed. We use these penalties to adjust the routing _weights_ but not the speeds, as people don't actually walk slower on poorer facilities (likely the opposite). We find the minimum weight path based on these weights, but still calculate speed without regard to roadway quality.
+The walk profile is based primarily on travel time and safety. @hardy_accessibility_2019 develop a set of equivalent speeds to adjust the value of pedestrian infrastructure based on quality, shown in @tab-pedspeed. We use these penalties to adjust the routing _weights_ but not the speeds, as people don't actually walk slower on poorer facilities (likely the opposite). We find the minimum weight path based on these weights, but still calculate speed without regard to roadway quality. Vehicle speeds are based on OSM maxspeed and OSRM defaults, rather than observed speeds from StreetLight, to match the methodology of @hardy_accessibility_2019 (using speed limits rather than observed speeds) and due to OSRM technical limitations (information about StreetLight speeds is not available at the time pedestrian weights are assigned).
 
 | Functional class         | Lanes | Has sidewalk | Vehicle speed | Pedestrian speed | Weight penalty |
 |--------------------------|-------|--------------|---------------|------------------|----------------|
@@ -291,8 +291,6 @@ For the car networks, there are quite a few. The `combine_car_networks.jl` scrip
     julia combine_car_networks.jl ~/local/networks/car_all.gpkg ~/local/networks/car_*/car_*.gpkg 
 
 The resulting file will have columns for the speed for each of the networks provided on the command line.
-
-## Automated testing of street networks
 
 ## Transit routing
 
