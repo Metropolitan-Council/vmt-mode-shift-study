@@ -19,7 +19,7 @@ function main(raw_args)
 
     args = parse_args(raw_args, s)
 
-    result = Vector{@NamedTuple{id::Int64, name::String, ref::String, lts::Int32, weight::Int32, duration::Int32, distance::Float32, oneway::Bool,
+    result = Vector{@NamedTuple{id::Int64, name::String, ref::String, lts::Int32, pedquality::String, weight::Int32, duration::Int32, distance::Float32, oneway::Bool,
         speed_mph::Float64, fr_node::Int64, to_node::Int64, geom::Any}}()
 
     toolchain::OSRMToolchain = OSRMToolchain(args["network"])
@@ -35,16 +35,19 @@ function main(raw_args)
         geom = ArchGDAL.createlinestring(map(x -> (x.lon, x.lat), get_geometry(toolchain, node)))
 
         ann = toolchain.edge_based_node_annotations[node.annotation_id + 1]
-        lts = -1
-
         name = toolchain.names[ann.name_id ÷ 5 + 1]
 
+        lts = -1
+        pedquality = "none"
         for (i, class) in enumerate(toolchain.class_names)
             if ann.class_data[i]
                 if startswith(class, "lts")
                     # only one lts flag per edge, please
                     lts == -1 || error("Duplicate LTS!")
                     lts = parse(Int32, class[4])
+                elseif startswith(class, "pedqual")
+                    pedquality == "none" || error("Duplicate ped quality!")
+                    pedquality = class[8:end]
                 end
             end
         end
@@ -54,7 +57,8 @@ function main(raw_args)
 
         nodes = get_node_ids(toolchain, node)
 
-        push!(result, (id=i, name=something(name.name, ""), ref=something(name.ref, ""), lts=lts, weight=weight.weight, duration=duration,
+        push!(result, (id=i, name=something(name.name, ""), ref=something(name.ref, ""), lts=lts, pedquality=pedquality,
+            weight=weight.weight, duration=duration,
             distance=distance, oneway=weight.oneway, speed_mph=speed_mph, fr_node=first(nodes), to_node=last(nodes), geom=geom))
     end
 

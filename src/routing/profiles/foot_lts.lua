@@ -58,6 +58,13 @@ function setup()
       }
     },
 
+    classes = Sequence {
+      'pedqualhigh',
+      'pedqualmedium',
+      'pedquallow',
+      'pedqualavail'
+    },
+
     -- Weight multipliers for different qualities, from Hardy et al
     quality_multipliers = {
       high = 1.0,
@@ -432,6 +439,21 @@ function process_way(profile, way, result)
     result.backward_rate = result.backward_speed / multiplier / 3.6
   else
     result.backward_rate = -1
+  end
+
+  -- Store the pedestrian stress class for GIS mapping and testing
+  if multiplier == profile.quality_multipliers.high then
+    result.forward_classes["pedqualhigh"] = true
+    result.backward_classes["pedqualhigh"] = true
+  elseif multiplier == profile.quality_multipliers.medium then
+    result.forward_classes["pedqualmedium"] = true
+    result.backward_classes["pedqualmedium"] = true
+  elseif multiplier == profile.quality_multipliers.low then
+    result.forward_classes["pedquallow"] = true
+    result.backward_classes["pedquallow"] = true
+  elseif multiplier == profile.quality_multipliers.available then
+      result.forward_classes["pedqualavail"] = true
+      result.backward_classes["pedqualavail"] = true
   end
 end
 

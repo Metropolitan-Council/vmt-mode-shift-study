@@ -3,20 +3,18 @@ SEGMENT_TARGET_LENGTH_METERS = 10
 
 function load_elevation ()
     local ELEVATION_FILE = assert(os.getenv("ELEVATION_FILE"), "ELEVATION_FILE environment variable not specified!")
+    local min_lon = -95.000555555994
+    local min_lat = 41.999444440680
     local cell_size = 0.000092592593
-    -- OSRM min and max lons are pixel _centers_, not the actual extent of the
-    -- raster file.
-    local min_lon = -95.000555555994 + cell_size / 2
-    local min_lat = 41.999444440680 + cell_size / 2
     local ncols = 32412
     local nrows = 43212
 
     local raster_source = raster:load(
         ELEVATION_FILE,
         min_lon,
-        min_lon + cell_size * (ncols - 1),
+        min_lon + cell_size * ncols,
         min_lat,
-        min_lat + cell_size * (nrows - 1),
+        min_lat + cell_size * nrows,
         nrows,
         ncols
     )
@@ -127,7 +125,7 @@ function get_proportion_sloped_more_than (rasterData, source, target, distance, 
         if (slope_pct > 35 or slope_pct < -35) then
             print("Warning: street segment is steeper than Baldwin St in Dunedin, NZ (35%). Assuming bad data/no slope, at " .. origin_lat .. ", " .. origin_lon)
         elseif (slope_pct > max_slope_pct) then
-           --print("origin elevation " .. origin_val.datum .. " mm, destination elevation " .. destination_val.datum .. "mm, segment length " .. seg_length .. "m, calculated slope " .. slope_pct .. " at " .. origin_lat .. ", " .. origin_lon .. " to " .. dest_lat .. ", " .. dest_lon)
+            --print("origin elevation " .. origin_val.datum .. " mm, destination elevation " .. destination_val.datum .. "mm, segment length " .. seg_length .. "m, calculated slope " .. slope_pct .. " at " .. origin_lat .. ", " .. origin_lon)
             steep_segments = steep_segments + 1
         end
 
