@@ -45,7 +45,7 @@ function get_ped_qual(indexed_toolchain, fr, to)
     end 
 end
 
-function spot_check_quality_assignment(toolchain)
+function spot_check_quality_assignment(it)
     @testset "Ped quality assignment" begin
         ##################
         ## HAS SIDEWALK ##

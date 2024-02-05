@@ -133,7 +133,7 @@ function main(raw_args)
                 correct += 1
             else
                 incorrect += 1
-                @error "Speeds do not match: expected $(round(expected_speed, digits=2)) kmh, found $(round(actual_speed, digits=2)) kmh, at edge containing nodes $nodes (distance $(round(sum_dists, digits=1))m)"
+                @warn "Speeds do not match: expected $(round(expected_speed, digits=2)) kmh, found $(round(actual_speed, digits=2)) kmh, at edge containing nodes $nodes (distance $(round(sum_dists, digits=1))m)"
             end
         else
             missng += 1
@@ -149,7 +149,6 @@ function main(raw_args)
     Plots.xlabel!("Expected (StreetLight) - actual (OSRM) (kmh)")
     Plots.savefig(isnothing(args["nacto-cap"]) ? "speed_baseline_comparison.png" : "speed_scenario_comparison.png")
 
-    println(histogram(speed_differences, title="Expected (StreetLight) - actual (OSRM) (kmh)", nbins=60, vertical=true))
     println("Minimum: $(round(minimum(speed_differences), sigdigits=3))")
     println("Maximum: $(round(maximum(speed_differences), sigdigits=3))")
     for pctile in [0.05, 0.5, 1, 2.5, 5, 25, 50, 75, 95, 97.5, 99, 99.5, 99.95]

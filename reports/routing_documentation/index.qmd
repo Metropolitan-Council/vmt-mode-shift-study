@@ -257,7 +257,7 @@ We use the Acessibility Observatory methodology for assigning LTS, but still use
 
 #### Elevation data {#sec-elevation}
 
-For bicycling and walking, routing accounts for elevation differences. In order to do this properly, we need elevation data. We use 1/3 arc-second (~10m) resolution data from the USGS 3D Elevation Program. OSRM will interpolate between the points in the raster, so the resolution is not quite as bad as it sounds. We have also set our OSRM profiles up to assume that bridges and tunnels are level (due to technical limitations, we treat them as level even if the endpoints are not at the same elevation). The processed elevation data is available in our shared folder, under `2-Re-Routing Analysis/Elevation`. You can copy the `final.asc` file on your podman local drive. If you want to download new elevation data, follow the steps below; otherwise just use that file.
+For bicycling and walking, routing accounts for elevation differences. In order to do this properly, we need elevation data. We use 1/3 arc-second (~10m) resolution data from the USGS 3D Elevation Program. OSRM will interpolate between the points in the raster, so the resolution is not quite as bad as it sounds. We have also set our OSRM profiles up to assume that bridges and tunnels are level (due to technical limitations, we treat them as level even if the endpoints are not at the same elevation). The processed elevation data is available in our shared folder, under `2-Re-Routing Analysis/Elevation`. You can copy the `final.asc` file on your podman local drive. I also recommend copying `combined.tif` which is a GeoTIFF version, needed for automated network tests (see below). If you want to download new elevation data, follow the steps below; otherwise just use those files.
 
 The script `download_elevation_data.jl` will download all of the GeoTIFF files for the analysis area (each covers one square degree). The script takes one argument, which is the output directory to save the elevation data in. The data requires about 30-35GB of space for all processing to take place.
 
@@ -422,10 +422,93 @@ gtfsutil.marey_plot("62-112", 0, 20191021, orig, mod)
 
 This process is handled by the script `prepare_transit_scenario.py`, which takes arguments for input and output GTFS. It reads the input GTFS, applies the algorithm, and writes the output GTFS. We applied this script to both the Metro Transit and MVTA GTFS files separately. We then build a new network with the modified GTFS files, and do the transit routing again.
 
+## Automated network testing
+
+There are three scripts in the `src/routing/network_check` folder that verify assumptions about the baseline bike, walk, and car networks, as well as the car scenario network. It is advisable to re-run these in the Podman VM every time a change is made to the profile.
+
+### `test_bicycle.jl`
+
+The `test_bicycle.jl` script does several tests on the `bike-baseline` network. It needs arguments for the network to check and the elevation GeoTIFF (not ASCII) file, e.g.:
+
+    julia test_bicycle.jl ~/local/networks/bike-baseline/bike-baseline.osrm ~/local/elevation/combined.tif 
+
+1. It spot-checks a number of ways (one matching each LTS assignment rule) to ensure that they have LTSs assigned correctly. (note: if OSM data are updated, some tests may fail if the checked ways now have different LTS.) Assuming these tests pass, you will see this output:
+    ```
+    Test Summary:  | Pass  Total  Time
+    LTS Assignment |   91     91  0.2s
+    ```
+1. It spot-checks (currently only one) complete route to ensure that routing does not avoid driveways (as it initially did). Assuming this test passes, you will see this output:
+    ```
+    Test Summary:        | Pass  Total  Time
+    Beaudry Meadows Park |    1      1  1.0s
+    ```
+1. It plots the average routing weight per meter by LTS (below) to ensure that weights vary as expected. The two distinct modes for LTS 1 are caused by locations where walking bikes is required by law even though it is comfortable to bike on that street. There should be a slight increase from LTS 1 to 2, and then a significant jump to LTS 3/4 where we require walking bikes. It saves the plot as `lts_weights.svg` in the working directory.
+
+    ![Mean weight per meter, by LTS, bikes](fig/lts_weights.svg)
+
+1. It plots the average weight per meter by elevation gain per meter, to show that weights increase as expected with steepness. This should be a roughly linear trend. We treat 1 m vertically equivalent to 25 m horizontally, so weights should double at 0.04 m vertically per horizontal meter, which they do. Weights start from different points, as some streets require walking bikes. We use the walking profile for this, which has its own differential weighting by pedestrian environment. Some weights do not vary by steepness---these are bridges and tunnels, which are considered to always be level. This plot is saved as `elevation_check_bike.png`.
+
+    ![Weights by elevation, bikes](fig/elevation_check_bike.png)
+
+
+### `test_ped_baseline.jl`
+
+This script is very similar to the bicycle test script, but for the ped network. It does the following things:
+
+1. It checks one way from each pedestrian quality category, to ensure pedestrian quality is assigned correctly. If so, you will see output like this:
+    Test Summary:          | Pass  Total  Time
+    Ped quality assignment |   17     17  0.1s
+1. It plots the average routing weight per meter by pedestrian quality, to ensure worse streets have higher weights, and saves the result as `ped_quality_weights.svg`.
+    
+    ![Weights by pedestrian quality](fig/ped_quality_weights.svg)
+
+1. It plots the average routing weight by percentage of the street segment that exceeds 10% grade (this is the only place where we apply added weights for elevation gain, as walking up mild slopes is much easier than biking up them), and saves the result as. As with bikes, some segments are unaffected by elevation, because they are bridges or tunnels. You will note in the figure below that this is not as clean as one might expect, with quite a bit of variation in weights especially at the high end (80-90% steep). This is partly due to quantization errors when OSRM rounds weights to integers on short segments, but is in large part due to slight misalignments between OSM and elevation data near the corners of the graph due to an OSRM bug (see Errata). In any case, this affects a relatively small proportion of the network, so is not expected to materially influence results.
+
+    ![Pedestrian weights by steepness](fig/ped_elevation_weights.svg)
+
+### `test_car_traffic.jl`
+
+This script checks OSRM edges against speeds in the StreetLight database, to ensure speeds match. They will not match perfectly due to rounding of durations to 0.1 second increments for each node-to-node segment from OSM; while this does not bias results on average, some ways may have a fairly large deviation due to chance. The script is run with the path to one of the car networks, the path to the StreetLight database, and the column to use for speeds in the StreetLight database. It only checks ways that have StreetLight information, not ways that use OSRM default speeds.
+
+The script outputs three things:
+
+1. Warnings for edges where the OSRM speed deviates from the StreetLight speed by more than expected amount due to rounding. Most of these are due to ways being coded backwards in the StreetLight data; see Errata. In the weekdays_7-8 network, this affects less than 1000 edges out of two million, so is not expected to materially affect results.
+1. Summary statistics of deviations of each edge from the expected speed, including the rounding errors discussed above:
+    
+    ```
+    Minimum: -84.2
+    Maximum: 96.0
+    Percentile 0.05: -30.6
+    Percentile 0.5: -7.97
+    Percentile 1.0: -4.62
+    Percentile 2.5: -2.14
+    Percentile 5.0: -1.16
+    Percentile 25.0: -0.194
+    Percentile 50.0: 0.000719
+    Percentile 75.0: 0.198
+    Percentile 95.0: 1.14
+    Percentile 97.5: 2.04
+    Percentile 99.0: 4.32
+    Percentile 99.5: 7.27
+    Percentile 99.95: 39.1
+    ```
+
+1. A histogram of differences between StreetLight and OSRM speeds, again including rounding errors, saved as `speed_baseline_comparison.png`.
+
+    ![Histogram of differences between StreetLight and OSRM speeds, Weekdays, 7-8](fig/speed_baseline_comparison.png)
+
+It is also possible to run this for the car scenario by passing `--nacto-cap path/to/speed_cap_database.db`, which will produce a histogram titled `speed_scenario_comparison.png`
+
+    ![Histogram of differences between StreetLight/NACTO and OSRM speeds, scenario, Weekdays, 7-8](fig/speed_scenario_comparison.png)
+
+Note: to make this run faster, creating an auxiliary index beyond those used for routing in the streetlight database is recommended, by running this code at an SQLite prompt:
+
+    CREATE INDEX stl_nodes_table_node_id_idx ON stl_nodes_table (node_id);
+
 ## Errata
 
 Several minor issues have been discovered after the results were compiled. These are documented here.
 
 1. Some ways are backwards in the StreetLight data (i.e. the segment contains a way, but the nodes are in the opposite order in the segment as the way). These are often short (e.g. a short way in between two longer opposite-direction ones combined into a segment), and there are only 590 ways in the entire dataset that exhibit this problem. For these ways, congestion data from the opposite direction was used. For future runs, this is corrected by commit 15d0364.
-1. Elevations may not perfectly horizontally align with OSM data. OSRM requires [specifying the extents of the elevation data when loading it](https://github.com/Project-OSRM/osrm-backend/wiki/Integrating-third-party-raster-data#data-format), but it appears there is a [bug in OSRM which means it is misinterpreting these extents by 0.5 pixels](https://github.com/Project-OSRM/osrm-backend/issues/6780)—or about 5m in our data. The error will be greatest (i.e. closest to 5m * sqrt(2) ~= 7m) at the corners of the network, and smallest (close to zero) near the center where bicycling and walking are most practical anyhow. I am awaiting a response from OSRM developers to confirm this issue. I believe the changes in commit 3af0507 will work around the issue, though this should be reverted if the issue is fixed upstream.
+1. Elevations may not perfectly horizontally align with OSM data. OSRM requires [specifying the extents of the elevation data when loading it](https://github.com/Project-OSRM/osrm-backend/wiki/Integrating-third-party-raster-data#data-format), but it appears there is a [bug in OSRM which means it is misinterpreting these extents by 0.5 pixels](https://github.com/Project-OSRM/osrm-backend/issues/6780)—or about 5m in our data. The error will be greatest (i.e. closest to 5m * sqrt(2) ~= 7m) at the corners of the network, and smallest (close to zero) near the center where bicycling and walking are most practical anyhow. I am awaiting a response from OSRM developers to confirm this issue. I believe the changes in commit 3af0507 will work around the issue, but this was reverted in `6941b0` to avoid relying on OSRM internals and guessing how OSRM will interpret extents.
 1. Non-residential high-speed (>25 mph, either explicit or implicit) shared bike lanes that are tagged `cycleway:left=shared_lane` or `cycleway:right=shared_lane` are treated as if there were no bike infrastructure (unless they have actual bike lanes in the opposite direction)—which is probably not too far off from reality. This likely does not affect routing very much, as these would be treated as LTS 3 if they were handled as shared lanes, and most would be categorized as LTS 3 by the remaining logic anyhow.
