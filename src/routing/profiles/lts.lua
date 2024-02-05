@@ -34,7 +34,7 @@ function LTS.lts_for_way(profile, way)
   -- crossings are LTS 1
   if highway == "crossing" then return 1 end
 
-  -- footpaths are LTS 1
+  -- footpaths are LTS 1 - speed/dismount handled by OSRM code
   if highway == "footway" or highway == "pedestrian" then return 1 end
 
   -- restricted access facilities that allow bikes (allow bikes taken care of by OSRM)
@@ -53,7 +53,6 @@ function LTS.lts_for_way(profile, way)
   local cycleway_right = way:get_value_by_key("cycleway:right")
   if highway == "cycleway" or cycleway == "track" or cycleway_left == "track" or
     cycleway_right == "track" or cycleway == "opposite_track" or cycleway_left == "opposite_track" or cycleway_right == "opposite_track" then
-      -- TODO cycleway:left=opposite_track etc
       return 1
   end
 
@@ -69,6 +68,8 @@ function LTS.lts_for_way(profile, way)
   -- TODO what about residential high-speed shared lanes? seems to not be covered in the LTS methodology
   if cycleway == "shared_lane" and highway ~= "residential" then return 3 end
 
+  -- Note that AO also includes cycleway[:left,:right]="opposite" here but the OSM wiki says that is for cases
+  -- where two way travel is allowed on a oneway street but there is not a contraflow lane
   if cycleway == "lane" or cycleway_right == "lane" or cycleway_left == "lane" or
     cycleway == "opposite_lane" or cycleway_right == "opposite_lane" or cycleway_left == "opposite_lane" then
       assert(lanes_each_way == nil or lanes_each_way > 0, lanes_each_way and "invalid lanes_each_way value " .. lanes_each_way .. " at way " .. way:id())
