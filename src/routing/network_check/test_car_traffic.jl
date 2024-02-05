@@ -1,29 +1,58 @@
 # This contains automated tests for the baseline car network, to ensure that speeds are applied correctly
+# It compares expected vs actual speeds for all edges that have streetlight entries.
+# OSRM rounds segment-level times to deciseconds (0.1 second), which can cause significant speed
+# deviations on short and fast links. This script identifies edges that deviate from the StreetLight predicted
+# travel time by more than 0.05 * (number of nodes - 1) + 0.01 * (length in meters); the first term is how much the
+# quantization of each node-to-node segment could change travel times, and the second term accounts for rounding errors
+# in unit conversion and distance calculation.
 
 import OSRM.Toolchain: OSRMToolchain, get_node_ids, get_geometry 
 import OSRM: OSRMInstance, route
-using Test, Geodesy, SQLite, DBInterface, StatsBase, UnicodePlots
+import GeoFormatTypes as GFT
+using Test, Geodesy, SQLite, DBInterface, StatsBase, Plots, ArgParse, LibSpatialIndex, GeoDataFrames,
+    ArchGDAL, DataFrames, CSV
+
+const UTM = GFT.EPSG(26915)
+const WGS84 = GFT.EPSG(4326)
 
 include("util.jl")
 
-function get_speed(stmt, fr, to)::Union{Nothing, Float64}
+function get_speed(stmt, fr, to)::Tuple{Union{Nothing, Float64}, Int64}
     res = DBInterface.execute(stmt, (fr, to))
     if isempty(res)
-        return nothing
+        return nothing, -1
     else
-        return first(res).speed::Float64
+        row = first(res)
+        return (row.speed::Float64, row.way_id::Int64)
     end
 end
 
-function main(network, streetlight_db, column)
-    toolchain = OSRMToolchain(network)
+get_nacto_speed(stmt, way)::Float64 = convert(Float64, first(DBInterface.execute(stmt, (way,))).speed_cap_mph)
 
-    conn = SQLite.DB(streetlight_db)
+function main(raw_args)
+    s = ArgParseSettings()
+    @add_arg_table! s begin
+        "network"
+            help = "OSRM network file"
+        "streetlight_db"
+            help = "StreetLight database"
+        "column"
+            help = "Which speed column (period) to use from the StreetLight database"
+        "--nacto-cap"
+            help = "Apply NACTO caps (pass in path to database containing speed caps)"
+            metavar = "SPEED_CAP_DB"
+    end
+
+    args = parse_args(raw_args, s)
+
+    toolchain = OSRMToolchain(args["network"])
+
+    conn = SQLite.DB(args["streetlight_db"])
     stmt = SQLite.Stmt(conn, """
-        SELECT DISTINCT "$column" AS speed
+        SELECT DISTINCT "$(args["column"])" AS speed, n1.way_id AS way_id
             FROM stl_congestion_data_2019 c
             LEFT JOIN stl_nodes_table n1 ON (c.seg_id = n1.seg_id)
-            LEFT JOIN stl_nodes_table n2 ON (c.seg_id = n2.seg_id AND ABS(n1.seg_seqid - n2.seg_seqid) = 1)
+            LEFT JOIN stl_nodes_table n2 ON (c.seg_id = n2.seg_id AND n1.way_id = n2.way_id AND ABS(n1.seg_seqid - n2.seg_seqid) = 1)
 
         WHERE n1.node_id = ?
         AND n2.node_id = ?
@@ -32,6 +61,16 @@ function main(network, streetlight_db, column)
             WHEN -1 THEN 'reverse'
         END
     """)
+
+    nacto_db = nothing
+    nacto_stmt = nothing
+    if !isnothing(args["nacto-cap"])
+        nacto_db = SQLite.DB(args["nacto-cap"])
+        nacto_stmt = SQLite.Stmt(nacto_db, "SELECT speed_cap_mph FROM way_speeds WHERE way_id = ?")
+    else
+        nothing
+    end
+
  
     correct = 0
     incorrect = 0
@@ -49,12 +88,29 @@ function main(network, streetlight_db, column)
         sum_dists = zero(Float64)
         geom = get_geometry(toolchain, edge)::Vector{LatLon{Float64}}
         nodes = get_node_ids(toolchain, edge)::Vector{Int64}
+        prev_way_id = -1
+        way_id = -1
+        nacto_speed = zero(Float64)
         for (n1, p1, n2, p2) in zip(nodes[begin:end-1], geom[begin:end-1], nodes[begin+1:end], geom[begin+1:end])
-            speed = get_speed(stmt, n1, n2)
+            speed, way_id = get_speed(stmt, n1, n2)
+
             if isnothing(speed)
                 this_edge_incomplete = true
                 break
             else
+                # nacto speeds may also vary within an edge if two ways were put together because the did not intersect
+                # with anything else; OSRM will use the average speed. Additionally, caps are applied to each segment, not the
+                # entire way, so it is possible to have a situation where part of an edge is capped and part is not because
+                # the cap is non-binding in part of the way
+                if !isnothing(args["nacto-cap"])
+                    if way_id != prev_way_id
+                        nacto_speed = get_nacto_speed(nacto_stmt, way_id)
+                        prev_way_id = way_id
+                    end
+
+                    speed = min(speed, nacto_speed * 0.8)
+                end
+
                 dist = euclidean_distance(p1, p2)::Float64
                 sum_w_speeds += speed * dist
                 sum_dists += dist
@@ -84,9 +140,14 @@ function main(network, streetlight_db, column)
         end
     end
 
-    @info "$correct edges had correct speed information"
-    @info "$incorrect edges had incorrect speed information"
+    @info "$correct edges had expected speed information"
+    @info "$incorrect edges had unexpected speed information"
     @info "$missng edges had missing speed information"
+
+
+    histogram(speed_differences, bins=60)
+    Plots.xlabel!("Expected (StreetLight) - actual (OSRM) (kmh)")
+    Plots.savefig(isnothing(args["nacto-cap"]) ? "speed_baseline_comparison.png" : "speed_scenario_comparison.png")
 
     println(histogram(speed_differences, title="Expected (StreetLight) - actual (OSRM) (kmh)", nbins=60, vertical=true))
     println("Minimum: $(round(minimum(speed_differences), sigdigits=3))")
@@ -96,4 +157,4 @@ function main(network, streetlight_db, column)
     end
 end
 
-main(ARGS...)
+main(ARGS)
