@@ -11,6 +11,7 @@ book:
     - bike_scenario_qc.qmd
     - transit_baseline_qc.qmd
     - transit_scenario_qc.qmd
+    - car_scenario_qc.qmd
 
 bibliography: ../bibliography.bib
 
@@ -22,3 +23,4 @@ format:
     html:
         toc: true
         toc-location: left
+        embed-resources: true

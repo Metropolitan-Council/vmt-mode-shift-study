@@ -1,0 +1,52 @@
+# Car Scenario QC
+
+In the car scenario, we set the speed on every street to 80% of the NACTO recommended speed limit (unless it was already operating below that level as determined by StreetLight data). This should make most car trips longer in duration, although some short trips on local facilities may get faster as the NACTO caps are actually higher than the OSRM defaults for some local streets.
+
+```{python}
+import pandas as pd
+import geopandas as gpd
+import matplotlib.pyplot as plt
+from os.path import join, abspath, dirname
+import keyring
+import numpy as np
+import yaml
+
+# This is used to avoid hard-coding directories. 
+# To set the directory, use the command prompt or a notebook you don't check in.  run:
+# import keyring
+# keyring.set_password("msp", "vmt_reduction_dir", <directory>)
+
+# get base path for data
+data_dir = keyring.get_password("msp", "vmt_reduction_dir")
+
+with open("input_files.yml") as fls:
+    input_files = yaml.safe_load(fls)
+```
+
+## Load data
+
+```{python}
+baseline = gpd.read_parquet(join(data_dir, "Data_Processed", "geodata", input_files["car"]["baseline"]))
+scenario = gpd.read_parquet(join(data_dir, "Data_Processed", "geodata", input_files["car"]["scenario"]))
+car_all = baseline.merge(scenario, how="left", on="trip_id", suffixes=("_baseline", "_scenario"))
+```
+
+## Plot duration differences
+
+Most should be greater than one.
+
+```{python}
+plt.hist((car_all.duration_seconds_scenario - car_all.duration_seconds_baseline) / 60, bins=100)
+plt.xlabel("Increase in travel time (minutes)")
+```
+
+## Look at the distance for ones that got shorter
+
+These should mostly be short, as local roads are where this can occur. We filter to a decrease of at least 30 seconds to avoid OSRM instabilities when rebuilding the network.
+
+```{python}
+decr = car_all[car_all.duration_seconds_scenario < car_all.duration_seconds_baseline - 30]
+plt.hist(decr.distance_meters_baseline / 1000, bins=20)
+plt.xlabel("Trip distance, baseline, km")
+plt.ylabel(f"Number of trips (total={len(decr)})")
+```
