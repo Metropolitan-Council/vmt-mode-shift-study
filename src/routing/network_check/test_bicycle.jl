@@ -380,30 +380,26 @@ function plot_weights_by_elevation(toolchain, elev_file)
         if eidx % 10000 == 0
             @info "Processed $eidx edges"
         end
+        
+        elev_gain_m = zero(Float64)
 
-        # only applying to LTS 1/2 as 3/4 uses walking profile
-        if get_lts(toolchain, eidx) <= 2
-            elev_gain_m = zero(Float64)
-            incomplete = false
+        geom = get_geometry(toolchain, ebn)::Vector{LatLon{Float64}}
+        for (p1, p2) in zip(geom[1:end-1], geom[2:end])
+            start_elev_mm = get_elev(raster, p1.lat, p1.lon)
+            end_elev_mm = get_elev(raster, p2.lat, p2.lon)
+            slope_pct = (end_elev_mm - start_elev_mm) / 1000 / euclidean_distance(p1, p2) * 100
 
-            geom = get_geometry(toolchain, ebn)::Vector{LatLon{Float64}}
-            for (p1, p2) in zip(geom[1:end-1], geom[2:end])
-                start_elev_mm = get_elev(raster, p1.lat, p1.lon)
-                end_elev_mm = get_elev(raster, p2.lat, p2.lon)
-                slope_pct = (end_elev_mm - start_elev_mm) / 1000 / euclidean_distance(p1, p2) * 100
-
-                @assert !isnothing(start_elev_mm) && !isnothing(end_elev_mm)
-                
-                # slopes over 35% are ignored as likely bad data
-                if end_elev_mm > start_elev_mm && slope_pct < 35
-                    elev_gain_m += (end_elev_mm - start_elev_mm) / 1000
-                end
+            @assert !isnothing(start_elev_mm) && !isnothing(end_elev_mm)
+            
+            # slopes over 35% are ignored as likely bad data
+            if end_elev_mm > start_elev_mm && slope_pct < 35
+                elev_gain_m += (end_elev_mm - start_elev_mm) / 1000
             end
-
-            push!(weight_per_meter, toolchain.edge_based_node_weights[eidx].weight / toolchain.edge_based_node_distances[eidx])
-            push!(elev_gains_m, elev_gain_m / toolchain.edge_based_node_distances[eidx])
-            push!(eids, eidx)
         end
+
+        push!(weight_per_meter, toolchain.edge_based_node_weights[eidx].weight / toolchain.edge_based_node_distances[eidx])
+        push!(elev_gains_m, elev_gain_m / toolchain.edge_based_node_distances[eidx])
+        push!(eids, eidx)
     end
 
     sel = toolchain.edge_based_node_distances[eids] .> 0.5
