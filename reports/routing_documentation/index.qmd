@@ -196,7 +196,27 @@ The speed scenario significantly reduces speeds on major arterials throughout th
 
 ### Walking and bicycle routing {#sec-walkbike}
 
-The walk profile is based primarily on travel time and safety. @hardy_accessibility_2019 develop a set of equivalent speeds to adjust the value of pedestrian infrastructure based on quality, shown in @tab-pedspeed. We use these penalties to adjust the routing _weights_ but not the speeds, as people don't actually walk slower on poorer facilities (likely the opposite). We find the minimum weight path based on these weights, but still calculate speed without regard to roadway quality. Vehicle speeds are based on OSM maxspeed and OSRM defaults, rather than observed speeds from StreetLight, to match the methodology of @hardy_accessibility_2019 (using speed limits rather than observed speeds) and due to OSRM technical limitations (information about StreetLight speeds is not available at the time pedestrian weights are assigned).
+The walk profile is based primarily on travel time and safety. @hardy_accessibility_2019 develop a set of equivalent speeds to adjust the value of pedestrian infrastructure based on quality, shown in @tab-pedspeed. We use these penalties to adjust the routing _weights_ but not the speeds, as people don't actually walk slower on poorer facilities (likely the opposite). We find the minimum weight path based on these weights, but still calculate speed without regard to roadway quality. Vehicle speeds are based on OSM maxspeed and OSRM defaults, rather than observed speeds from StreetLight, to match the methodology of @hardy_accessibility_2019 (using speed limits rather than observed speeds) and due to OSRM technical limitations (information about StreetLight speeds is not available at the time pedestrian weights are assigned). For ways that do not have specified max speeds in OpenStreetMap, we use the OSRM default speeds for these ways (@tab-osrmspeed). Note that these are intended to represent average speeds, rather than max speeds—but traffic often moves faster than posted maximum speeds anyhow.
+
+| OSM type        | Speed (km/h) | Speed (mph) |
+| motorway        | 90           | 56          |
+| motorway_link   | 45           | 28          |
+| trunk           | 85           | 53          |
+| trunk_link      | 40           | 25          |
+| primary         | 65           | 40          |
+| primary_link    | 30           | 19          |
+| secondary       | 55           | 34          |
+| secondary_link  | 25           | 16          |
+| tertiary        | 40           | 25          |
+| tertiary_link   | 20           | 12          |
+| unclassified    | 25           | 16          |
+| residential     | 25           | 16          |
+| living_street   | 10           | 6           |
+| service         | 15           | 9           |
+
+: OSRM default speeds {#tab-osrmspeed}
+
+We use the number of lanes on the OSM way where the sidewalk is tagged; there is no straightforward method to look at lanes on other ways. This has two implications: first, on a dual carriageway, the number of lanes on the segment where the person is walking would be considered (e.g., a three-lane-each-way dual carriageway is treated as two three-lane one-way streets). When sidewalks are mapped as separate ways from roads, they are treated as off-street paths. If the number of lanes is not specified in OSM, we assume one lane each way (or just one lane on a one-way street).
 
 | Functional class         | Lanes | Has sidewalk | Vehicle speed | Pedestrian speed | Weight penalty |
 |--------------------------|-------|--------------|---------------|------------------|----------------|
@@ -220,12 +240,20 @@ The walk profile is based primarily on travel time and safety. @hardy_accessibil
 | Any                      | 4+    | No/Unknown   | Any           | 1.5 mph          | 2              |
 | Any                      | <= 3  | No/Unknown   | > 30 mph      | 1.5 mph          | 2              |
 | Freeway/major highway    | <= 3  | No/Unknown   | <= 30 mph     | 1.5 mph          | 2              |
-| Major arterial           | <= 3  | No/Unknown   | <= 30 mph     | 2.4 mph          | 1.25           |
-| Minor arterial/collector | <= 3  | No/Unknown   | <= 30 mph     | 2.4 mph          | 1.25           |
-| Local                    | <= 3  | No/Unknown   | <= 30 mph     | 2.4 mph          | 1.25           |
+| Major arterial           | <= 3  | No/Unknown   | <= 30 mph     | 2.7 mph          | 1.11           |
+| Minor arterial/collector | <= 3  | No/Unknown   | <= 30 mph     | 2.7 mph          | 1.11           |
+| Local                    | <= 3  | No/Unknown   | <= 30 mph     | 2.7 mph          | 1.11           |
 | Off-street               | N/A   | N/A          | N/A           | 3.0 mph          | 1              |
 
 : Speed and weight adjustments for varying quality of pedestrian facilities [@hardy_accessibility_2019] {#tab-pedspeed}
+
+For bicycle routing, we assign an estimated Level of Traffic Stress (LTS) based on OpenStreetMap tags, using a methodology derived from that used by the [Accessibility Observatory](https://github.com/AccessibilityObservatory/AOBikeLTS/blob/main/LTS_assignment.py). We only allow biking on LTS 1 and 2 streets, witha  10% speed and weight penalty for LTS 2. On LTS 3 and 4 streets, we require walking bikes, using the speeds derived from the walking profile (though we still use the same elevation avoidance weighting as if you were biking, because pushing a bike up a hill is no fun).
+
+Both their methodology and ours assign a single LTS per way, rather than one per direction. This means that roads with bike lanes in one direction but not the other may be used for routing in both directions. Unfortunately, solving this would be fairly difficult as OpenStreetMap historically had confusion between which side of the road the bike lane was physically on and its direction, and much data likely still exhibits this confusion.
+
+Shared lanes are processed before actual lanes, in both our methodology and the source Accessibility Observatory methodology, and we assign the same LTS to both directions of a way. This means that streets that have both bike lanes and sharrows in opposite directions are treated as if they had sharrows, not lanes (e.g. way 6038532).
+
+We use the Acessibility Observatory methodology for assigning LTS, but still use OSRM base/default settings for determining whether a way is permitted for routing. For instance, the Accessibility Observatory assigns LTS values for trunk roads, but OSRM treats trunk roads as not bikable unless explicitly tagged as such in the data.
 
 #### Elevation data {#sec-elevation}
 
@@ -270,8 +298,6 @@ You can then do the routing for the pedestrian and bicycle networks using the fo
 
 The output will be stored in a GeoParquet file called `<mode>-<scenario>-<git commit hash>.parquet`, e.g. `walk-baseline-f2802.parquet`. The bike scenarios will also have a GeoParquet file ending in `-segments.parquet` which divides the bike trips up into segments by LTS.
 
-
-
 ### Converting street networks to GIS format
 
 For debugging and visualization, it's useful to convert the street network to GIS format. The `network_to_gis.jl` script does this. You can run it like this:
@@ -291,6 +317,8 @@ For the car networks, there are quite a few. The `combine_car_networks.jl` scrip
     julia combine_car_networks.jl ~/local/networks/car_all.gpkg ~/local/networks/car_*/car_*.gpkg 
 
 The resulting file will have columns for the speed for each of the networks provided on the command line.
+
+Bicycle and pedestrian networks will contain LTS and pedestrian quality columns for debugging.
 
 ## Transit routing
 
@@ -393,3 +421,11 @@ gtfsutil.marey_plot("62-112", 0, 20191021, orig, mod)
 ```
 
 This process is handled by the script `prepare_transit_scenario.py`, which takes arguments for input and output GTFS. It reads the input GTFS, applies the algorithm, and writes the output GTFS. We applied this script to both the Metro Transit and MVTA GTFS files separately. We then build a new network with the modified GTFS files, and do the transit routing again.
+
+## Errata
+
+Several minor issues have been discovered after the results were compiled. These are documented here.
+
+1. Some ways are backwards in the StreetLight data (i.e. the segment contains a way, but the nodes are in the opposite order in the segment as the way). These are often short (e.g. a short way in between two longer opposite-direction ones combined into a segment), and there are only 590 ways in the entire dataset that exhibit this problem. For these ways, congestion data from the opposite direction was used. For future runs, this is corrected by commit 15d0364.
+1. Elevations may not perfectly horizontally align with OSM data. OSRM requires [specifying the extents of the elevation data when loading it](https://github.com/Project-OSRM/osrm-backend/wiki/Integrating-third-party-raster-data#data-format), but it appears there is a [bug in OSRM which means it is misinterpreting these extents by 0.5 pixels](https://github.com/Project-OSRM/osrm-backend/issues/6780)—or about 5m in our data. The error will be greatest (i.e. closest to 5m * sqrt(2) ~= 7m) at the corners of the network, and smallest (close to zero) near the center where bicycling and walking are most practical anyhow. I am awaiting a response from OSRM developers to confirm this issue. I believe the changes in commit 3af0507 will work around the issue, though this should be reverted if the issue is fixed upstream.
+1. Non-residential high-speed (>25 mph, either explicit or implicit) shared bike lanes that are tagged `cycleway:left=shared_lane` or `cycleway:right=shared_lane` are treated as if there were no bike infrastructure (unless they have actual bike lanes in the opposite direction)—which is probably not too far off from reality. This likely does not affect routing very much, as these would be treated as LTS 3 if they were handled as shared lanes, and most would be categorized as LTS 3 by the remaining logic anyhow.
