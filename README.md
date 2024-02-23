@@ -7,7 +7,8 @@ Do this to set up your repository/code:
 1. Clone the repository to your local machine. 
 2. Copy the contents of the example directory to a working directory located outside the repository.  
 3. Request access to the data stored on the Teams directory from @gregerhardt and create a path to the data directory. 
-
+4. Follow the install directions below.
+ 
 **It is important that no private data or outputs be stored in the repository.**  See Handling data for details.
 
 This repository is in active development. See the [CONTRIBUTING](CONTRIBUTING.md) page on the right to learn how to contribute 🤝.
@@ -24,16 +25,16 @@ This repository is in active development. See the [CONTRIBUTING](CONTRIBUTING.md
 
 The files here are mostly jupyter notebooks running python.  The installed packages used for development are stored in environment.yml.  You can use `conda` to set up the environment with the right installs:
 
-	conda env create -n msp --file environment.yml
+	conda env create --file environment.yml
 
 Then to activate the environment:
 
-	conda activate msp
+	conda activate vmtmodeenv
 
 If you have difficulties solving pacakges on macOS, try using the Mac-specific environment.
 
-	conda env create -n msp-mac --file mac-environment.yml
-	conda activate msp-mac
+	conda env create --file mac-environment.yml
+	conda activate vmtmodeenv
 
 After installing, if you are on a mac, we need to manually install jupyter notebook:
 
