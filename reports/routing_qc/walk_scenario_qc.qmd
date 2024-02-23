@@ -1,0 +1,181 @@
+# Walk Scenario QC
+
+The walk scenario is quite simple: we just make every street where it is legal to walk the highest class of walking infrastructure (so in the real world, this would be quality sidewalks everywhere). This should not make any trip longer in time or distance. In this section we evaluate that.
+
+```{python}
+#| include: false
+import pandas as pd
+import geopandas as gpd
+import matplotlib.pyplot as plt
+from os.path import join, abspath, dirname
+import keyring
+import numpy as np
+import yaml
+import contextily as cx
+
+# This is used to avoid hard-coding directories. 
+# To set the directory, use the command prompt or a notebook you don't check in.  run:
+# import keyring
+# keyring.set_password("msp", "vmt_reduction_dir", <directory>)
+
+# get base path for data
+data_dir = keyring.get_password("msp", "vmt_reduction_dir")
+
+with open("input_files.yml") as fls:
+    input_files = yaml.safe_load(fls)
+```
+
+## Load data
+
+```{python}
+walk_baseline = gpd.read_parquet(join(data_dir, "Data_Processed", "geodata", input_files["walk"]["baseline"]))
+walk_scenario = gpd.read_parquet(join(data_dir, "Data_Processed", "geodata", input_files["walk"]["scenario"]))
+```
+
+## Changes in weight
+
+Every trip should have the same or lower weight in the scenario---because the scenario only reduces weights, any existing trip will have the same or lower weight, and any alternate path chosen should have a lower weight. We allow a very slight deviation due to rounding, etc.
+
+```{python}
+walk_all = walk_baseline.merge(walk_scenario, how="left", on="trip_id", suffixes=("_baseline", "_scenario"))
+
+assert ((walk_all.weight_baseline - walk_all.weight_scenario) > -1e6).all()
+```
+
+## Changes in duration
+
+The changes in weight are theoretically guaranteed by the algorithm. Duration and distance are not the objective function in the routing, but should generally go down. 
+
+```{python}
+plt.hist((walk_all.duration_seconds_scenario - walk_all.duration_seconds_baseline) / 60, bins=100);
+plt.xlabel("Change in duration (minutes)")
+```
+
+This looks about like we'd expect, but we can check what proportion had better or the same times in the scenario:
+
+```{python}
+inc10s = ((walk_all.duration_seconds_scenario - walk_all.duration_seconds_baseline) > 10).mean()
+inc60s = ((walk_all.duration_seconds_scenario - walk_all.duration_seconds_baseline) > 60).mean()
+print(f"""
+Increase of 10 seconds or more: {inc10s}
+Increase of 60 seconds or more: {inc60s}
+""")
+```
+
+Slightly less than 1% of trips show increases in duration of more than 10 seconds; less than 0.3% show an increase of more than 1 minute. We know this can happen if there is a path that is penalized for being steep, and OSRM finds an alternative flatter but longer path along roads that are high stress in the baseline. This is uncommon, because the slope penalty is pretty mild for walking. We only penalize weight not travel time for slope. So a flatter path might have a lower weight but a longer duration. In any case, this should not cause major increases in duration. We can plot a histogram of just the increases in duration:
+
+```{python}
+diff = (walk_all.duration_seconds_scenario - walk_all.duration_seconds_baseline)
+plt.hist(diff[diff > 0] / 60, bins=100)
+plt.xlabel("Increase in travel time (minutes)");
+```
+
+Unfortunately, there's not an easy way to tell from the OSRM output if the difference was caused by slope changes or not. However, we can plot a few trips to check.
+
+```{python}
+#| include: false
+def plot_trips(base, scen, trip_id):
+    base_sel = base[base.trip_id == trip_id].copy()
+    base_sel["which"] = "Baseline"
+    scen_sel = scen[scen.trip_id == trip_id].copy()
+    scen_sel["which"] = "Scenario"
+
+    new_df = gpd.GeoDataFrame(pd.concat([base_sel, scen_sel], ignore_index=True))
+    ax = new_df.to_crs(3857).plot(column="which", legend=True)
+    cx.add_basemap(ax)
+
+    # fix aspect ratio
+    yl = plt.ylim()
+    xl = plt.xlim()
+    yw = yl[1] - yl[0]
+    xw = xl[1] - xl[0]
+    
+    ar = xw / yw
+
+    if ar > 16/9:
+        newyw = xw * 9/16
+        expand = (newyw - yw) / 2
+        plt.ylim(yl[0] - expand, yl[1] + expand)
+
+    if ar < 4/3:
+        newxw = yw * 4/3
+        expand = (newxw - xw) / 2
+        plt.xlim(xl[0] - expand, xl[1] + expand)
+
+
+
+    plt.xticks([])
+    plt.yticks([])
+    plt.xlabel(
+f"""Change in travel time: {scen_sel.duration_seconds.iloc[0] - base_sel.duration_seconds.iloc[0]:.0f} seconds
+Change in distance: {scen_sel.distance_meters.iloc[0] - base_sel.distance_meters.iloc[0]:.0f} meters""")
+```
+
+```{python}
+#| fig-cap: The trip with the longest increase in duration between the baseline and scenario (about five minutes). In the baseline this trip descends to the Mississippi River to take the safe off-street path, while in the scenario it stay on the bluff on a longer but flatter route.
+plot_trips(walk_baseline, walk_scenario, "[2100983302024]")
+```
+
+The next four trips are very similar. The sixth-largest increase is a very long trip in a relatively flat part of the state, near New Prague, southwest of Minneapolis (@fig-fifthdur). The baseline route follows some lakes, which are presumably associated with some topography. 
+
+```{python}
+#| label: fig-fifthdur
+#| fig-cap: The trip with the sixth-longer increase in duration between the baseline and scenario (about three minutes).
+plot_trips(walk_baseline, walk_scenario, "[1915074703049, 1915074703050]")
+```
+
+There are many more trips after this one with a similar pattern along the Mississippi near St. Paul. The 14th-largest increase uses streets to avoid a likely steep path through a park (@fig-park).
+
+```{python}
+#| label: fig-park
+#| fig-cap: The trip with the fourteenth-longest increase in distance
+plot_trips(walk_baseline, walk_scenario, "[1883755901017]")
+```
+
+## Changes in distance
+
+Distances should also generally decrease with the scenario, and they do:
+
+```{python}
+plt.hist(walk_all.distance_meters_scenario - walk_all.distance_meters_baseline, bins=100)
+plt.xlabel("Change in walking distance, meters")
+```
+
+
+```{python}
+(walk_all.distance_meters_scenario - walk_all.distance_meters_baseline > 10).mean()
+```
+
+About 0.5% of all trips show an increase in distance of more than 10 meters. This can be caused by elevation change avoidance (as above). It can also be caused by trips that were previously routed on gravel paths, which have a weight and speed penalty. They are re-routed onto previously dangerous but faster and longer paved roads. We can plot a histogram of only increases in distance:
+
+```{python}
+diff = (walk_all.distance_meters_scenario - walk_all.distance_meters_baseline)
+plt.hist(diff[diff > 0], bins=100)
+plt.xlabel("Increase in distance (meters)");
+```
+
+As expected, they are mostly short. The largest increase, 2.7 km, is on a long trip near Northfield, MN, that in the baseline primarily uses gravel roads for safety (@fig-northfield). Despite the significant increase in walk distance in the scenario, travel time falls by five minutes due to lessened penalties for traveling on gravel roads.
+
+```{python}
+#| label: fig-northfield
+#| fig-cap: Trip with largest change in travel distance, rerouted from gravel to paved roads, from Northfield to Nerstrand Big Woods State Park
+plot_trips(walk_baseline, walk_scenario, "[1838261901027]")
+```
+
+The next longest change is in a trip traveling northeast from St Croix Falls. In the baseline it uses the gravel Gandy Dancer Trail, and transitions to longer but paved roads in the scenario.
+
+```{python}
+#| label: fig-gandy
+#| fig-cap: Trip with second largest change in travel distance, rerouted from gravel to paved roads, from St Croix Falls traveling northeast
+#| fig-alt: Map showing changed trip, with a 2.4 km increase in travel distance, but a 38 minute decrease in travel time.
+plot_trips(walk_baseline, walk_scenario, "[1838261901027]")
+```
+
+Very small changes may have to do with intersection costs. For instance, this trip in Downtown St. Paul, where sidewalks are mapped separately, transitions from the sidewalk to the street in the scenario (@fig-sidewk); I suspect this is due to the reduced number of street crossings when in the street rather than on the sidewalk (one at each intersection, as opposed to two at a corner). While this is probably not representative of actual behavior, it is also a fairly negligible change.
+
+```{python}
+#| label: fig-sidewk
+#| fig-cap: Trip with minor change in distance and time, downtown St Paul
+#| fig-alt: Map showing changed trip to use streets instead of sidewalks, leading to a 20-second and 20-meter increase in time and distance, respectively
+plot_trips(walk_baseline, walk_scenario, "[1877681601018]")
+```

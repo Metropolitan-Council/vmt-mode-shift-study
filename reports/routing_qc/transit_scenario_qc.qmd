@@ -1,0 +1,188 @@
+---
+# may need to edit this line based on installed Julia kernels/versions
+jupyter: julia-1.9
+---
+
+# Transit Scenario QC
+
+This checks a couple of assumptions about the transit scenario results, notably:
+
+1. Every trip in the baseline should be possible in the scenario as well.
+2. Unlike the bike and walk scenarios, the transit scenario should be strictly better---all the existing trips remain in the network, and have just been duplicated. Travel time may get longer on some trips, but arrival time should always be the same or earlier.
+3. Due to the [structure of the range-RAPTOR algorithm](https://projects.indicatrix.org/range-raptor-transfer-compression/), trips that have the same arrival time should leave at the same time or later in the scenario, even if the scenario adds an earlier-departure option. The optimization gives latest departure given earliest arrival trips.
+4. Some of the trips should have gotten better (the theoretical number is ill-defined, see below.)
+
+For historical reasons, these checks are written in Julia, while the other checks are written in Python.
+
+
+```{julia}
+using Parquet, DataFrames, DataFramesMeta, CSV, Dates, StatsBase, YAML, PyCall
+
+keyring = pyimport_conda("keyring", "keyring")
+DATA_DIR = keyring.get_password("msp", "vmt_reduction_dir")
+input_files = YAML.load_file("input_files.yml")
+
+epochto24h = Time ∘ unix2datetime
+
+function print_trip(legs)
+    for leg in eachrow(legs)
+        if leg.leg_type == "TransitRouter.access"
+            println("Walk $(round(Int64, (leg.end_time - leg.start_time) / 60)) minutes to stop")
+        elseif leg.leg_type == "TransitRouter.transit"
+            println("Board route $(leg.route_short_name) at $(leg.origin_stop_name) at $(epochto24h(leg.start_time)))")
+            println("Disembark route $(leg.route_short_name) at $(leg.destination_stop_name) at $(epochto24h(leg.end_time)))")
+        elseif leg.leg_type == "TransitRouter.egress"
+            println("Walk $(round(Int64, (leg.end_time - leg.start_time) / 60)) minutes to destination")
+        end
+    end
+end;
+```
+
+## Load data
+
+We load the transit baseline and transit scenario.
+
+```{julia}
+baseline = read_parquet(joinpath(DATA_DIR, "Data_Processed", "geodata", input_files["transit"]["baseline"])) |> DataFrame;
+scenario = read_parquet(joinpath(DATA_DIR, "Data_Processed", "geodata", input_files["transit"]["scenario"])) |> DataFrame;
+```
+
+```{julia}
+tbi = CSV.read(joinpath(DATA_DIR, "Data_Processed", "tbi_cleaned.csv"), DataFrame);
+```
+
+```{julia}
+REPRESENTATIVE_WEEK::Date = Date(2019, 10, 19)
+select_representative_date(date) = Dates.tonext(x -> dayofweek(x) == dayofweek(date), REPRESENTATIVE_WEEK)
+tbi.arrive_datetime = DateTime.(select_representative_date.(tbi.travel_date), tbi.arrive_time)
+tbi.depart_datetime = DateTime.(select_representative_date.(tbi.travel_date), tbi.depart_time);
+```
+
+## Check assumptions
+
+### Assumption 1: all trips in the baseline are in the scenario
+
+They may not have the same number of trips (the scenario may have made some trips possible that weren't before, e.g. by catching a new bus that allows you catch the last run of the bus carrying you home), but every baseline trip should be in the scenario.
+```{julia}
+@assert all(baseline.trip_id .∈ Ref(Set(scenario.trip_id)))
+```
+
+### Assumptions 2 and 3: all trips are the same or better
+
+If both baseline and scenario trips arrive at the same time, they should leave at the same time or later. The exception to this is when _both_ trips involve an initial wait longer than two hours, which is the burn-in period we are using. In a forward search, Range-RAPTOR only guarantees that it will find the latest departure given earliest arrival when the second-latest departure is within the burn-in period (see the [edge effects section of this preprint](https://projects.indicatrix.org/range-raptor-transfer-compression/)). Otherwise, it only guarantees earliest arrival, and the departure time is undefined behavior (it will have to do with things like the order of trips in the GTFS, etc.)
+
+It seems there are a few additional trips where the departure moves a little earlier (less than one minute), I suspect this is an inconsistency in OSRM.
+
+```{julia}
+# create table with one record per trip instead of per leg
+summarize_trips(trips) = @chain trips begin
+    groupby(:trip_id)
+    @combine(:start_time = unix2datetime(minimum(:start_time) // 1000), :end_time = unix2datetime(maximum(:end_time // 1000)), :reverse=first(:reverse))
+end
+
+baseline_trips = summarize_trips(baseline)
+scenario_trips = summarize_trips(scenario)
+
+joined_trips = @chain begin 
+    leftjoin(baseline_trips, scenario_trips, on=:trip_id, renamecols=:_baseline=>:_scenario) 
+    leftjoin(tbi, on=:trip_id)
+end
+
+# sanity check: trips that were reverse routed should have been in both scenarios.
+@assert all(joined_trips.reverse_baseline .== joined_trips.reverse_scenario)
+
+trips = joined_trips;
+```
+
+
+For depart-at (forward search) trips, all trips should arrive at the same time or earlier. The one exception is trips that violate the depart-at constraint; violations of up to five minues are allowed if they improve the arrival/departure time by at least 15 minutes. Some trips where violations improved the travel time sufficiently in the baseline may no longer in the scenario, because of a new trip that does meet the constraint, or violates it less.
+
+```{julia}
+# depart-at trips arrival time
+@assert all(
+    # Arrives at the same time or earlier
+    (trips.end_time_scenario .≤ trips.end_time_baseline) .||
+    (
+        # or previously violated constraint
+        (trips.start_time_baseline .< trips.depart_datetime) .&&
+        # and now no longer does, or does less
+        (trips.start_time_scenario .≥ trips.start_time_baseline)) .|| 
+    # or is not a depart at trip
+    (trips.reverse_baseline .== 1)
+)
+```
+
+If they arrive at the same time, they should leave at the same time or later (i.e. you shouldn't have to leave earlier to get the same arrival time). We allow a one-minute tolerance because OSRM travel times are not completely deterministic. There is an exception to this, which is when both the original departure time and the new departure time are more than two hours later than the requested departure time. We have a two-hour "burn in period" in our routing, which means that we are only guaranteed to get the latest-departure-given-earliest-arrival trip if it occurs within the two hours after the requested departure time [see discussion of edge effects in @bhagat-conway_earliest_2023]. Here, we check this.
+
+There is one trip that does not meet this criterion, which is displayed below. This trip uses the MVTA 460, which has an overtaking trip (i.e. one bus passes the one in front of it), both in the original and scenario. The RAPTOR algorithm assumes greedy boarding, so cannot find the optimal trip (get on a later bus to arrive earlier), and when the scenario is applied which overtaking bus is boarded changes.
+
+```{julia}
+# depart-at trips departure time
+# There is one trip that violates this. This trip uses the MVTA 460, and the scenario adds an overtaking trip. Since
+# TransitRouter boards greedily, the new trip that leaves earlier but arrives later is boarded.
+trips_that_dont_leave_later = trips[.!(
+    # they have different end times
+    (trips.end_time_scenario .≠ trips.end_time_baseline) .||
+    # or the departure is the same or later (with some tolerance for what I think is an OSRM issue - investigate further)
+    (trips.start_time_scenario .- trips.start_time_baseline .> -Second(60)) .||
+    # or both the original departure time and the new one are more than 2 hours after the requested time,
+    # in which case the burn in period cannot guarantee a latest departure, only an earliest arrival
+    # (see the paragraph about edge effects in https://projects.indicatrix.org/range-raptor-transfer-compression/)
+    ((trips.start_time_scenario .- trips.depart_datetime .≥ Hour(2)) .&& trips.start_time_baseline .- trips.depart_datetime .≥ Hour(2)) .||
+    # or is not a depart at trip
+    (trips.reverse_baseline .== 1)
+), :trip_id]
+
+# make sure we just have the one
+@assert trips_that_dont_leave_later == ["[1963388201011]"]
+
+# print it out
+println("Baseline: ")
+print_trip(baseline[baseline.trip_id .∈ Ref(trips_that_dont_leave_later), :])
+println("Scenario:")
+print_trip(scenario[scenario.trip_id .∈ Ref(trips_that_dont_leave_later), :])
+```
+
+For arrive-by (reverse routed) trips, they should depart at the same time or later, with a 60 second tolerance for OSRM nondeterminism.
+
+```{julia}
+# arrive-by trips departure time
+@assert all(
+    # leaves at the same time or later (again, with allowance for OSRM issue)
+    (trips.start_time_scenario .- trips.start_time_baseline .> -Second(60)) .||
+    (
+        # or previously violated constraint
+        (trips.end_time_baseline .> trips.arrive_datetime) .&&
+        # and now does not, or violates less
+        (trips.end_time_scenario .< trips.end_time_baseline)
+    ) .||
+    # or is not an arrive-by trip
+    (trips.reverse_baseline .== 0)
+)
+```
+
+If they leave at the same time, they should arrive at the same time or earlier. Reverse searches with Range-RAPTOR do not use a burn in period, and thus guarantee the earliest arrival given latest departure in all cases.
+
+```{julia}
+@assert all(
+    # they do not depart at the same time
+    # TODO ideally we'd have a tolerance for OSRM here, but it's hard to differentiate
+    # between an improved trip that got 30 seconds faster and an OSRM
+    # issue that changed the time by 30 seconds
+    (trips.start_time_scenario .≠ trips.start_time_baseline) .||
+    # or they arrive at the same time or earlier
+    (trips.end_time_scenario .≤ trips.end_time_baseline) .||
+    # or is not an arrive-by trip
+    (trips.reverse_baseline .== 0)
+)
+```
+
+### Assumption 4: A reasonable number of trips got better
+
+```{julia}
+@chain joined_trips begin
+    @with mean(ifelse.(:reverse_baseline .== 0, :end_time_scenario .< :end_time_baseline, :start_time_scenario .> :start_time_baseline))
+end
+```
+
+44% of trips improved. Naively, one might expect 50% of trips to improve, because buses come twice as often. There are a few reasons why the number is actually less than that. First, many trips use multiple vehicles; even if the first vehicle now comes earlier, the second may not. The second is that span of service is not expanded, so trips on the first bus of the day won't change. But probably the main explanation is a flaw in the reasoning that led to the assumption of 50% of trips improving. The assumption that makes is that riders _of a particular vehicle_ depart their origin uniformly randomly between when the previous vehicle on that route ran and when this vehicle runs (assuming zero travel time from origin to the board stop, but the argument generalizes easily). Under this assumption, doubling frequency improves travel time for half the riders---the half that arrived in the first half of the interval between vehicles. However, this assumption breaks down when there are multiple options for travel from the origin to the destination. In this case, the longer the time before the next departure on the given route, the more likely there is to be an alternate path that arrives at the destination sooner. Therefore, less than half of the people on a particular vehicle will have arrived more than half the headway before the departure; the closer the desired departure is to the actual departure, the more likely a rider is to choose that vehicle. See also @stewart_half_2022 for a more extensive discussion of this topic.
