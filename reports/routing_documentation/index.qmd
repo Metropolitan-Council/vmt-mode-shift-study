@@ -199,6 +199,7 @@ The speed scenario significantly reduces speeds on major arterials throughout th
 The walk profile is based primarily on travel time and safety. @hardy_accessibility_2019 develop a set of equivalent speeds to adjust the value of pedestrian infrastructure based on quality, shown in @tab-pedspeed. We use these penalties to adjust the routing _weights_ but not the speeds, as people don't actually walk slower on poorer facilities (likely the opposite). We find the minimum weight path based on these weights, but still calculate speed without regard to roadway quality. Vehicle speeds are based on OSM maxspeed and OSRM defaults, rather than observed speeds from StreetLight, to match the methodology of @hardy_accessibility_2019 (using speed limits rather than observed speeds) and due to OSRM technical limitations (information about StreetLight speeds is not available at the time pedestrian weights are assigned). For ways that do not have specified max speeds in OpenStreetMap, we use the OSRM default speeds for these ways (@tab-osrmspeed). Note that these are intended to represent average speeds, rather than max speeds—but traffic often moves faster than posted maximum speeds anyhow.
 
 | OSM type        | Speed (km/h) | Speed (mph) |
+|-----------------|--------------|-------------|
 | motorway        | 90           | 56          |
 | motorway_link   | 45           | 28          |
 | trunk           | 85           | 53          |
