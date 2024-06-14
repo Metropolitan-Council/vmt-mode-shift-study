@@ -217,6 +217,8 @@ The walk profile is based primarily on travel time and safety. @hardy_accessibil
 
 : OSRM default speeds {#tab-osrmspeed}
 
+Walking on mild hills is not that bad, but very steep hills are unpleasant. We apply a double weight to streets or portions of streets sloped more than 10%.
+
 We use the number of lanes on the OSM way where the sidewalk is tagged; there is no straightforward method to look at lanes on other ways. This has two implications: first, on a dual carriageway, the number of lanes on the segment where the person is walking would be considered (e.g., a three-lane-each-way dual carriageway is treated as two three-lane one-way streets). When sidewalks are mapped as separate ways from roads, they are treated as off-street paths. If the number of lanes is not specified in OSM, we assume one lane each way (or just one lane on a one-way street).
 
 | Functional class         | Lanes | Has sidewalk | Vehicle speed | Pedestrian speed | Weight penalty |
@@ -248,11 +250,13 @@ We use the number of lanes on the OSM way where the sidewalk is tagged; there is
 
 : Speed and weight adjustments for varying quality of pedestrian facilities [@hardy_accessibility_2019] {#tab-pedspeed}
 
-For bicycle routing, we assign an estimated Level of Traffic Stress (LTS) based on OpenStreetMap tags, using a methodology derived from that used by the [Accessibility Observatory](https://github.com/AccessibilityObservatory/AOBikeLTS/blob/main/LTS_assignment.py). We only allow biking on LTS 1 and 2 streets, witha  10% speed and weight penalty for LTS 2. On LTS 3 and 4 streets, we require walking bikes, using the speeds derived from the walking profile (though we still use the same elevation avoidance weighting as if you were biking, because pushing a bike up a hill is no fun).
+For bicycle routing, we assign an estimated Level of Traffic Stress (LTS) based on OpenStreetMap tags, using a methodology derived from that used by the [Accessibility Observatory](https://github.com/AccessibilityObservatory/AOBikeLTS/blob/main/LTS_assignment.py). We only allow biking on LTS 1 and 2 streets, with a 10% speed and weight penalty for LTS 2. On LTS 3 and 4 streets, we require walking bikes, using the speeds derived from the walking profile (though we still use the same elevation avoidance weighting as if you were biking, because pushing a bike up a hill is no fun).
 
 Both their methodology and ours assign a single LTS per way, rather than one per direction. This means that roads with bike lanes in one direction but not the other may be used for routing in both directions. Unfortunately, solving this would be fairly difficult as OpenStreetMap historically had confusion between which side of the road the bike lane was physically on and its direction, and much data likely still exhibits this confusion.
 
 If this methodology were to be applied to more nuanced scenarios than the ones we have used, it would be worth reviewing the methdology to make sure LTS changes in the appropriate direction in response to a scenario. For example, shared lanes are processed before actual lanes, in both our methodology and the source Accessibility Observatory methodology, and we assign the same LTS to both directions of a way. This means that streets that have both bike lanes and sharrows in opposite directions are treated as if they had sharrows, not lanes (e.g. way 6038532)—see also errata bullet 3. Thus, adding a sharrow to a street that has a bike lane in the opposite direction may make LTS go up.
+
+We treat each meter of elevation gain as equivalent to 25 flat meters when biking (or when walking a bike).
 
 We use the Acessibility Observatory methodology for assigning LTS, but still use OSRM base/default settings for determining whether a way is permitted for routing. For instance, the Accessibility Observatory assigns LTS values for trunk roads, but OSRM treats trunk roads as not bikable unless explicitly tagged as such in the data.
 
