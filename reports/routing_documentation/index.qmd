@@ -407,7 +407,8 @@ mod = gtfsutil.read_gtfs(join(data_dir, "2-Re-Routing Analysis", "GTFS", "metro_
 #| label: fig-transit-marey
 #| fig-cap: The Monday schedule of the eastbound Metro Transit route 5, with original trips shown in blue and trips in the scenario shown in red.
 #| fig-alt: A plot with stops along the eastbound 94 bus on the y axis and time of day on the x axis. Each trip in the original GTFS is represented, with new trips from the scenario interleaved evenly between each pair.
-gtfsutil.marey_plot("94-112", 0, 20191021, orig, mod)
+# gde 6.11.2024 - throws an error so leaving out for now
+#gtfsutil.marey_plot("94-112", 0, 20191021, orig, mod)
 
 ```
 
@@ -417,7 +418,8 @@ A key limitation of this algorithm is handling of short turns. For instance, Rou
 #| label: fig-r62
 #| fig-cap: The Monday schedule of the northbound Metro Transit route 62, with original trips shown in blue and trips in the scenario shown in red.
 #| fig-alt: A plot with stops along the eastbound 62 bus on the y axis and time of day on the x axis. Each trip in the original GTFS is represented, with new trips from the scenario interleaved evenly between each pair. There are full length runs and short turns which alternate in the original GTFS, but which now have a 2:2 alternation pattern instead of 1:1.
-gtfsutil.marey_plot("62-112", 0, 20191021, orig, mod)
+# gde 6.11.2024 - throws an error so leaving out for now
+#gtfsutil.marey_plot("62-112", 0, 20191021, orig, mod)
 ```
 
 This process is handled by the script `prepare_transit_scenario.py`, which takes arguments for input and output GTFS. It reads the input GTFS, applies the algorithm, and writes the output GTFS. We applied this script to both the Metro Transit and MVTA GTFS files separately. We then build a new network with the modified GTFS files, and do the transit routing again.
