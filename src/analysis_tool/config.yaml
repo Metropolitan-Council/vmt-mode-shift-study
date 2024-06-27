@@ -95,7 +95,7 @@ cold_start_threshold: 15
 #   This file should be stripped of any personally identifiable information, which would allow it to be 
 #   shared on the cloud for ease of deployment. 
 #       saved_tbi_file: matches the input TBI to the routes, and adds derived columns, must be parqeut or csv
-scenario_to_run: "slow_car"
+scenario_to_run: "base"
 
 scenarios: 
     base:
