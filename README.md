@@ -15,11 +15,13 @@ This repository is in active development. See the [CONTRIBUTING](CONTRIBUTING.md
 
 ## Organization: what's here
 
-* `src`: Source code for main processing scripts. 
-* `example`: Example folder structure for running the scripts. 
-  * `config`: Configurations and run options (i.e. user-set thresholds and rules)
-  * `data`: Placeholder for input data. Only limited publicly available data should be stored here to test the system.  To run with real data, the user should instead point to a data folder on the Teams site.  See handling data. 
-  * `output`: A placeholder for where output data would be written.  This is empty, and output data should be stored locally. 
+* `src` Source code for main tools.  There are two:
+	*  `routing` This tool creates the best car, walk, bike and transit path for each TBI trip. 
+	*  `analysis_tool` The main analysis tool to calculate and summarize the results. 
+* `data_processing` Scripts to process the TBI data.  Run these again if there is a new wave of the TBI. Must be run before the `analysis_tool`.
+* `data_viz` A tool to visualize individual routes and check them for reasonableness.
+* `reports` Several reports documenting the process. 
+
 
 ## Install
 
@@ -31,7 +33,7 @@ Then to activate the environment:
 
 	conda activate vmtmodeenv
 
-If you have difficulties solving pacakges on macOS, try using the Mac-specific environment.
+If you have difficulties solving packages on macOS, try using the Mac-specific environment.
 
 	conda env create --file mac-environment.yml
 	conda activate vmtmodeenv
@@ -84,18 +86,20 @@ Additional documents in VMT Reduction Mode Shift Microsoft Teams/Sharepoint.
 
 Metropolitan Council 
 
-- Ashley Asmus [email](ashley.asmus@metc.state.mn.us) @eroten
-- Liz Roten [email](liz.roten@metc.state.mn.us) @ashleyasmus
-- Eric Lind [email](eric.lind@metrotransit.org) @elindie
-- Jonathan Ehrlich [email](jonathan.ehrlich@metc.state.mn.us) @JonathanEhrlichMC
+- Liz Roten [email](liz.roten@metc.state.mn.us) @eroten
+- Jonathan Ehrlich [email](jonathan.ehrlich@metc.state.mn.us) @JonathanEhrlichMC 
+- Brandon Whited [email](brandon.whited@metc.state.mn.us)
 
-University of Kentucky Team
+Researcher Contacts
 
 - Greg Erhardt [email](greg.erhardt@uky.edu) @gregerhardt
-- Xu Zhang [email](xuzhang_uk@uky.edu) @xzh263
-- Richard Donohue [email](rgdonohue@uky.edu) @rgdonohue
 - Matthew Wigginton Bhagat-Conway [email](mwbc@unc.edu) @mattwigway
 
+Contributors
+- Ashley Asmus @ashleyasmus
+- Eric Lind @elindie
+- Xu Zhang @xzh263
+- Richard Donohue @rgdonohue
 
 ## Code of Conduct
 
