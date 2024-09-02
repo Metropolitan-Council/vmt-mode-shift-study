@@ -126,11 +126,14 @@ def stacked_shift_histogram(df: pd.DataFrame, mode: Mode, mode_duration: str, mo
     plotly_colors = [colors_dict[c] for c in view["Category"].unique()]
     
     # create the stacked histogram
-    fig = px.histogram(view, x="curr", y="person_trips", histfunc="sum", color="Category", barmode="stack", range_x=[-20,120],
+    fig = px.histogram(view, x="curr", y="person_trips", histfunc="sum", color="Category", barmode="stack", range_x=[-15,150],
                        color_discrete_sequence=plotly_colors, 
                        category_orders = dict(Category=[f"Drive Trips - Not {phase} to Switch",
                                                         f"Drive Trips - {phase} to Switch", 
                                                         f"{mode.capitalize()} Trips"]))
+    
+    fig.update_traces(xbins=dict(size=1))
+    
     fig.update_layout(
         title=dict(
             text=f"Stacked histogram of duration difference<br>between equivalent {mode} and driving trips",
@@ -142,9 +145,12 @@ def stacked_shift_histogram(df: pd.DataFrame, mode: Mode, mode_duration: str, mo
             xanchor='center',
         ),
         legend=dict(font=dict(size=16)),
-        xaxis_title=dict(text="Travel Time Difference (Alternative Time - Drive Time, minutes)", font=dict(size=16)),
+        xaxis_title=dict(text=f"Travel Time Difference ({mode} - drive time, minutes)", font=dict(size=16)),
         yaxis_title=dict(text="Person Trips", font=dict(size=16))
     )
+    
+    fig.update_xaxes(tick0=-15, dtick=15, tickfont=dict(size=16), showgrid=True)
+    fig.update_yaxes(tickfont=dict(size=16))
     
     # return figure
     return fig
@@ -182,8 +188,11 @@ def total_shift_histogram(df: pd.DataFrame, phase: Phase) -> go.Figure:
     plotly_colors = [colors_dict[c] for c in view["Category"].unique()]
     
     # create the stacked histogram
-    fig = px.histogram(view, x="curr", y="vehicle_trips", histfunc="sum", color="Category", barmode="stack", range_x=[-20,180],
+    fig = px.histogram(view, x="curr", y="vehicle_trips", histfunc="sum", color="Category", barmode="stack", range_x=[-15,150],
                        color_discrete_sequence=plotly_colors)
+    
+    fig.update_traces(xbins=dict(size=1))
+    
     fig.update_layout(
         title=dict(
             text=f"Stacked histogram of duration difference<br>between fastest feasible alternative and driving",
@@ -194,10 +203,13 @@ def total_shift_histogram(df: pd.DataFrame, phase: Phase) -> go.Figure:
             y=0.95,
             xanchor='center',
         ),
-        legend=dict(font=dict(size=14)),
-        xaxis_title=dict(text="Travel Time Difference (Alternative Time - Drive Time, minutes)", font=dict(size=14)),
-        yaxis_title=dict(text="Vehicle Trips", font=dict(size=14))
+        legend=dict(font=dict(size=16)),
+        xaxis_title=dict(text="Travel Time Difference (alternative - drive time, minutes)", font=dict(size=16)),
+        yaxis_title=dict(text="Vehicle Trips", font=dict(size=16))
     )
+    
+    fig.update_xaxes(tick0=-15, dtick=15, tickfont=dict(size=16), showgrid=True, zeroline=True)
+    fig.update_yaxes(tickfont=dict(size=16), showgrid=True, zeroline=True)
     
     # return figure
     return fig

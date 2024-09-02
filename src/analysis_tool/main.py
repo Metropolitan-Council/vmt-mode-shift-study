@@ -547,7 +547,7 @@ def final_summary() -> None:
     
     # get a dummy communities df with a column for the proportion of people that could shift in an area    
     community_pct = df.groupby(["community",f"{st.session_state.phase}_shift"])[["vehicle_trips"]].sum().reset_index()
-    community_pct['percent_vehicle_trips'] = round(100* community_pct['vehicle_trips'] / community_pct.groupby('community')['vehicle_trips'].transform('sum'),1)
+    community_pct['percent_vehicle_trips'] = community_pct['vehicle_trips'] / community_pct.groupby('community')['vehicle_trips'].transform('sum')
     community_pct.set_index('community', inplace=True)
     values = community_pct[community_pct[f"{st.session_state.phase}_shift"]==1]['percent_vehicle_trips'].fillna(0)
     communities = get_communities()
@@ -574,8 +574,10 @@ def final_summary() -> None:
                     y=0.98,
                     xanchor="center",
                     font=dict(size=18)
-                )
+                ), 
+                legend=dict(font=dict(size=16))
     )
+    fig2.update_coloraxes(colorbar_title=dict(font=dict(size=16)), colorbar_tickfont=dict(size=16), colorbar_tickformat='0%')
     fig2.update_geos(fitbounds="locations", visible=False)
     st.plotly_chart(fig2)
     
@@ -585,7 +587,7 @@ def final_summary() -> None:
     df["competitive_timing"] = df["min_alt_mode_minus_car_duration"] <= 15
     
     community_pct = df.groupby(["community","competitive_timing"])[["vehicle_trips"]].sum().reset_index()
-    community_pct['percent_vehicle_trips'] = round(100* community_pct['vehicle_trips'] / community_pct.groupby('community')['vehicle_trips'].transform('sum'),1)
+    community_pct['percent_vehicle_trips'] = community_pct['vehicle_trips'] / community_pct.groupby('community')['vehicle_trips'].transform('sum')
     community_pct.set_index('community', inplace=True)
     values_competitive = community_pct[community_pct["competitive_timing"]==1]['percent_vehicle_trips'].fillna(0)
     communities[f"Percent of vehicle trips that can shift {adjective}"] = values_competitive
@@ -611,8 +613,10 @@ def final_summary() -> None:
                     xanchor="center"
                 ),
                 width=900, 
-                height=500
+                height=500, 
+                legend=dict(font=dict(size=16))
     )
+    fig3.update_coloraxes(colorbar_title=dict(font=dict(size=16)), colorbar_tickfont=dict(size=16), colorbar_tickformat='0%')
     fig3.update_geos(fitbounds="locations", visible=False)
     st.plotly_chart(fig3)
     
@@ -668,7 +672,7 @@ def final_summary() -> None:
     
     # get the % of vehicle trips in each income group that can shift & reorder the columns into a readable order
     income_pct = df.groupby(["income_cleaned",f"{st.session_state.phase}_shift"])[["vehicle_trips"]].sum().reset_index()
-    income_pct['percent_vehicle_trips'] = round(100* income_pct['vehicle_trips'] / income_pct.groupby('income_cleaned')['vehicle_trips'].transform('sum'),1)
+    income_pct['percent_vehicle_trips'] = income_pct['vehicle_trips'] / income_pct.groupby('income_cleaned')['vehicle_trips'].transform('sum')
     
     # creat the barplot
     fig4 = px.bar(income_pct[income_pct[f"{st.session_state.phase}_shift"]], 
@@ -693,13 +697,16 @@ def final_summary() -> None:
         yaxis_title=dict(text=f"Percent of vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
         showlegend=False
     )
+    fig4.update_xaxes(tickfont=dict(size=16))
+    fig4.update_yaxes(tickfont=dict(size=16), showgrid=True, zeroline=True, tickformat='0%')
+    fig4.update_coloraxes(colorbar_title=dict(font=dict(size=16)), colorbar_tickfont=dict(size=16))
     st.plotly_chart(fig4)
     
     # ability to shift by trip purpose (usually destination purpose unless destination is home, then origin purpose -- this is done in the intiialization step)
     bigger_markdown(r"Below, the % of vehicle trips that can shift when segmented by trip purpose are shown.")
     
     purpose_pct = df.groupby(["purpose_cleaned",f"{st.session_state.phase}_shift"])[["vehicle_trips"]].sum().reset_index()
-    purpose_pct['percent_vehicle_trips'] = round(100* purpose_pct['vehicle_trips'] / purpose_pct.groupby('purpose_cleaned')['vehicle_trips'].transform('sum'),1)
+    purpose_pct['percent_vehicle_trips'] = purpose_pct['vehicle_trips'] / purpose_pct.groupby('purpose_cleaned')['vehicle_trips'].transform('sum')
     
     fig5 = px.bar(purpose_pct[purpose_pct[f"{st.session_state.phase}_shift"]], 
                   x='purpose_cleaned', 
@@ -721,16 +728,18 @@ def final_summary() -> None:
         },
         xaxis_title=dict(text="Trip Purpose", font=dict(size=16)),
         yaxis_title=dict(text=f"Percent of vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
-        legend=dict(font=dict(size=16)),
         showlegend=False
-    )
+    )    
+    fig5.update_xaxes(tickfont=dict(size=16))
+    fig5.update_yaxes(tickfont=dict(size=16), showgrid=True, zeroline=True, tickformat='0%')
+    fig5.update_coloraxes(colorbar_title=dict(font=dict(size=16)), colorbar_tickfont=dict(size=16))
     st.plotly_chart(fig5)
     
     # ability to shift by person type (adult, student, etc.)
     bigger_markdown(r"Below, the % of vehicle trips that can shift when segmented by person type are shown.")
                 
     person_pct = df.groupby(["person_type",f"{st.session_state.phase}_shift"])[["vehicle_trips"]].sum().reset_index()
-    person_pct['percent_vehicle_trips'] = round(100* person_pct['vehicle_trips'] / person_pct.groupby('person_type')['vehicle_trips'].transform('sum'),1)
+    person_pct['percent_vehicle_trips'] = person_pct['vehicle_trips'] / person_pct.groupby('person_type')['vehicle_trips'].transform('sum')
     
     fig6 = px.bar(person_pct[person_pct[f"{st.session_state.phase}_shift"]], 
                   x='person_type', 
@@ -752,16 +761,18 @@ def final_summary() -> None:
         },
         xaxis_title=dict(text="Person type", font=dict(size=16)),
         yaxis_title=dict(text=f"Percent of vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
-        legend=dict(font=dict(size=16)),
         showlegend=False
-    )
+    )    
+    fig6.update_xaxes(tickfont=dict(size=16))
+    fig6.update_yaxes(tickfont=dict(size=16), showgrid=True, zeroline=True, tickformat='0%')
+    fig6.update_coloraxes(colorbar_title=dict(font=dict(size=16)), colorbar_tickfont=dict(size=16))
     st.plotly_chart(fig6)
     
     # ability to shift by gender
     bigger_markdown(r"Below, the % of trips that can shift when segmented by gender are shown.")
                 
     gender_pct = df.groupby(["gender_cleaned",f"{st.session_state.phase}_shift"])[["vehicle_trips"]].sum().reset_index()
-    gender_pct['percent_vehicle_trips'] = round(100* gender_pct['vehicle_trips'] / gender_pct.groupby('gender_cleaned')['vehicle_trips'].transform('sum'),1)
+    gender_pct['percent_vehicle_trips'] = gender_pct['vehicle_trips'] / gender_pct.groupby('gender_cleaned')['vehicle_trips'].transform('sum')
     
     fig7 = px.bar(gender_pct[gender_pct[f"{st.session_state.phase}_shift"]], 
                   x='gender_cleaned', 
@@ -782,16 +793,18 @@ def final_summary() -> None:
         },
         xaxis_title=dict(text="Gender", font=dict(size=16)),
         yaxis_title=dict(text=f"Percent of vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
-        legend=dict(font=dict(size=16)),
         showlegend=False
-    )
+    )    
+    fig7.update_xaxes(tickfont=dict(size=16))
+    fig7.update_yaxes(tickfont=dict(size=16), showgrid=True, zeroline=True, tickformat='0%')
+    fig7.update_coloraxes(colorbar_title=dict(font=dict(size=16)), colorbar_tickfont=dict(size=16))
     st.plotly_chart(fig7)
     
     # ability to shift by recorded TBI wave (either 1/2)
     bigger_markdown(r"Below, the % of trips that can shift when segmented by TBI wave is shown.")
                 
     wave_pct = df.groupby(["wave",f"{st.session_state.phase}_shift"])[["vehicle_trips"]].sum().reset_index()
-    wave_pct['percent_vehicle_trips'] = round(100* wave_pct['vehicle_trips'] / wave_pct.groupby('wave')['vehicle_trips'].transform('sum'),1)
+    wave_pct['percent_vehicle_trips'] = wave_pct['vehicle_trips'] / wave_pct.groupby('wave')['vehicle_trips'].transform('sum')
     
     fig8 = px.bar(wave_pct[wave_pct[f"{st.session_state.phase}_shift"]], 
                   x='wave', 
@@ -812,9 +825,11 @@ def final_summary() -> None:
         },
         xaxis_title=dict(text="Wave", font=dict(size=16)),
         yaxis_title=dict(text=f"Percent of vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
-        legend=dict(font=dict(size=16)),
         showlegend=False
     )
+    fig8.update_xaxes(tickfont=dict(size=16))
+    fig8.update_yaxes(tickfont=dict(size=16), showgrid=True, zeroline=True, tickformat='0%')
+    fig8.update_coloraxes(colorbar_title=dict(font=dict(size=16)), colorbar_tickfont=dict(size=16))
     st.plotly_chart(fig8)
     
     # various metrics for tour-level shifts that are possible
