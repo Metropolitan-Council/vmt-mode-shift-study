@@ -40,7 +40,8 @@ class TransitAccessDistanceStep(ContinuousStep):
                 font=dict(size=16)
             )
         )        
-        fig.update_xaxes(autorange=True)
+        fig.update_xaxes(autorange=True, tickfont=dict(size=16))
+        fig.update_yaxes(tickfont=dict(size=16), showgrid=True, zeroline=True)
         return fig
     
     def apply_step(self):
@@ -116,7 +117,8 @@ class TransitEgressDistanceStep(ContinuousStep):
                 font=dict(size=16)
             )
         )        
-        fig.update_xaxes(autorange=True)
+        fig.update_xaxes(autorange=True, tickfont=dict(size=16))
+        fig.update_yaxes(tickfont=dict(size=16), showgrid=True, zeroline=True)
         return fig
     
     def apply_step(self):
@@ -192,7 +194,8 @@ class TransitWaitTimeStep(ContinuousStep):
                 font=dict(size=16)
             )
         )        
-        fig.update_xaxes(autorange=True)
+        fig.update_xaxes(range=[0, 150], tickfont=dict(size=16))
+        fig.update_yaxes(tickfont=dict(size=16), showgrid=True, zeroline=True)
         return fig
     
     def apply_step(self):

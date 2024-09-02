@@ -45,7 +45,9 @@ class WalkDistanceStep(ContinuousStep):
                 title="Legend",
                 font=dict(size=16)
             )
-        )
+        )        
+        fig.update_xaxes(tickfont=dict(size=16))
+        fig.update_yaxes(tickfont=dict(size=16), showgrid=True, zeroline=True)
         return fig
     
     def apply_step(self) -> None:
@@ -115,6 +117,8 @@ class BikeDistanceStep(ContinuousStep):
                 font=dict(size=16)
             )
         )
+        fig.update_xaxes(tickfont=dict(size=16))
+        fig.update_yaxes(tickfont=dict(size=16), showgrid=True, zeroline=True)
         return fig
     
     def apply_step(self) -> None:

@@ -99,11 +99,11 @@ class BikeHighLTSDistStep(ContinuousStep):
                 y=0.9,
                 xanchor='center',
             ),
-            xaxis_title=dict(
+            yaxis_title=dict(
                 text="Probability Density",
                 font=dict(size=16)
             ),
-            yaxis_title=dict(
+            xaxis_title=dict(
                 text="% High LTS",
                 font=dict(size=16)
             ),
@@ -112,6 +112,8 @@ class BikeHighLTSDistStep(ContinuousStep):
                 font=dict(size=16)
             )
         )
+        fig.update_xaxes(range=[0,1], tickfont=dict(size=16), tickformat='0%')
+        fig.update_yaxes(tickfont=dict(size=16), showgrid=True, zeroline=True)
         return fig
     
     def apply_step(self):
