@@ -559,7 +559,7 @@ def final_summary() -> None:
                          geojson=communities.geometry, 
                          locations=communities.index, 
                          color=f"Percent of vehicle trips that can shift {adjective}", 
-                         range_color=(0, 100), 
+                         range_color=(0, 1), 
                          color_continuous_scale="viridis_r",
                          mapbox_style="carto-positron",
                          center={"lat": 44.9778, "lon": -93.2650},
@@ -599,7 +599,7 @@ def final_summary() -> None:
                          locations=communities.index, 
                          color=f"Percent of vehicle trips that can shift {adjective}",
                          color_continuous_scale="viridis_r", 
-                         range_color=(0, 100),
+                         range_color=(0, 1),
                          mapbox_style="carto-positron",
                          center={"lat": 44.9778, "lon": -93.2650},
                          opacity=0.8
@@ -673,13 +673,15 @@ def final_summary() -> None:
     # get the % of vehicle trips in each income group that can shift & reorder the columns into a readable order
     income_pct = df.groupby(["income_cleaned",f"{st.session_state.phase}_shift"])[["vehicle_trips"]].sum().reset_index()
     income_pct['percent_vehicle_trips'] = income_pct['vehicle_trips'] / income_pct.groupby('income_cleaned')['vehicle_trips'].transform('sum')
+    income_pct = income_pct[income_pct['income_cleaned']!='na']
     
     # creat the barplot
     fig4 = px.bar(income_pct[income_pct[f"{st.session_state.phase}_shift"]], 
                   x='income_cleaned', 
                   y='percent_vehicle_trips', 
                   color='vehicle_trips', 
-                  range_color=(0, 2000000), 
+                  range_color=(0, 2000000),  
+                  range_y=[0,1.1],
                   labels={'percent_vehicle_trips':'Percent of vehicle trips', 
                           'vehicle_trips': 'Total vehicle trips'},
                   category_orders = dict(income_cleaned=["Under $25,000", "$25,000-$49,999","$50,000-$74,999","$75,000-$99,999","$100,000-$149,999", "$150,000 or more","na"]))
@@ -713,6 +715,7 @@ def final_summary() -> None:
                   y='percent_vehicle_trips', 
                   color='vehicle_trips', 
                   range_color=(0, 2000000), 
+                  range_y=[0,1.1], 
                   labels={'percent_vehicle_trips':'Percent of vehicle trips', 
                           'vehicle_trips': 'Total vehicle trips'},
                   category_orders = dict(purpose_cleaned=["Work", "School", "Escort", "Shop", "Errand", "Meal", "Social/Recreation", "Other"]))
@@ -745,7 +748,8 @@ def final_summary() -> None:
                   x='person_type', 
                   y='percent_vehicle_trips', 
                   color='vehicle_trips', 
-                  range_color=(0, 3000000), 
+                  range_color=(0, 3000000),  
+                  range_y=[0,1.1],
                   labels={'percent_vehicle_trips':'Percent of vehicle trips', 
                           'vehicle_trips': 'Total vehicle trips'},
                   category_orders = dict(person_type=["Working adult with kids", "Working adult without kids", "Non-working adult with kids","Non-working adult without kids","Retired","College student","Child"]))
@@ -773,12 +777,14 @@ def final_summary() -> None:
                 
     gender_pct = df.groupby(["gender_cleaned",f"{st.session_state.phase}_shift"])[["vehicle_trips"]].sum().reset_index()
     gender_pct['percent_vehicle_trips'] = gender_pct['vehicle_trips'] / gender_pct.groupby('gender_cleaned')['vehicle_trips'].transform('sum')
+    gender_pct = gender_pct[gender_pct['gender_cleaned']!='Other/Prefer to self-describe']
     
     fig7 = px.bar(gender_pct[gender_pct[f"{st.session_state.phase}_shift"]], 
                   x='gender_cleaned', 
                   y='percent_vehicle_trips', 
                   color='vehicle_trips', 
-                  range_color=(0, 5000000), 
+                  range_color=(0, 5000000),  
+                  range_y=[0,1.1],
                   labels={'percent_vehicle_trips':'Percent of vehicle trips', 
                           'vehicle_trips': 'Total vehicle trips'})
     fig7.update_layout(
@@ -810,7 +816,8 @@ def final_summary() -> None:
                   x='wave', 
                   y='percent_vehicle_trips', 
                   color='vehicle_trips',
-                  range_color=(0, 5000000), 
+                  range_color=(0, 5000000),  
+                  range_y=[0,1.1],
                   labels={'percent_vehicle_trips':'Percent of vehicle trips', 
                           'vehicle_trips': 'Total vehicle trips'})
     fig8.update_layout(
