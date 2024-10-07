@@ -21,4 +21,5 @@ dependencies:
   - jupyter_client
   - jupyter_core
   - pyarrow=11.0.0
+  - timezonefinder=6.5.3
 prefix: /usr/local/Caskroom/miniconda/base/envs/vmtmodeenv
