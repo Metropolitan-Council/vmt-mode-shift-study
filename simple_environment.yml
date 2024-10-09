@@ -14,3 +14,6 @@ dependencies:
   - streamlit=1.22.0
   - pyyaml
   - scipy
+  - timezonefinder=6.5.3
+  - tqdm=4.66.5
+  - suncalc=0.1.3
