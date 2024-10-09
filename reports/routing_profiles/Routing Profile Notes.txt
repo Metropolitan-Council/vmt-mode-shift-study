@@ -17,7 +17,6 @@ Walk
  - Use their weights for weightings paths, but track unweighted travel time and distance. 
  - Slopes over 10% double the travel time (account for that in the travel time). 
  - Walk at 1.35 m/s (3 mph)
- 
  - Optional: Give option to ban by changing weights to infinity. That comes later. 
 
  
