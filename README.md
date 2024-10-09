@@ -107,4 +107,4 @@ Please note that the mode-shift project is released with a [Contributor Code of 
 
 This repository is in active development. See [CONTRIBUTING](CONTRIBUTING.md) learn how to contribute 🤝.
 
-![](logo.png)
+![](logos_combined.png)
