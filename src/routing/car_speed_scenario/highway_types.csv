@@ -1,0 +1,23 @@
+tag,class,comment
+cycleway,shared,Generally won't allow cars anyhow
+footway,shared,
+living_street,shared,
+motorway,freeway,
+motorway_link,major,
+path,shared,
+pedestrian,shared,
+primary,major,
+primary_link,major,
+residential,minor,
+rest_area,minor,
+road,minor,Used when classification is unknown
+secondary,major,
+secondary_link,major,
+service,shared,
+services,shared,Typo?
+tertiary,major,
+tertiary_link,major,
+track,shared,
+trunk,major,
+trunk_link,major,
+unclassified,minor,

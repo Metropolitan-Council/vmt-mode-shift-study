@@ -7,33 +7,36 @@ Do this to set up your repository/code:
 1. Clone the repository to your local machine. 
 2. Copy the contents of the example directory to a working directory located outside the repository.  
 3. Request access to the data stored on the Teams directory from @gregerhardt and create a path to the data directory. 
-
+4. Follow the install directions below.
+ 
 **It is important that no private data or outputs be stored in the repository.**  See Handling data for details.
 
 This repository is in active development. See the [CONTRIBUTING](CONTRIBUTING.md) page on the right to learn how to contribute 🤝.
 
 ## Organization: what's here
 
-* `src`: Source code for main processing scripts. 
-* `example`: Example folder structure for running the scripts. 
-  * `config`: Configurations and run options (i.e. user-set thresholds and rules)
-  * `data`: Placeholder for input data. Only limited publicly available data should be stored here to test the system.  To run with real data, the user should instead point to a data folder on the Teams site.  See handling data. 
-  * `output`: A placeholder for where output data would be written.  This is empty, and output data should be stored locally. 
+* `src` Source code for main tools.  There are two:
+	*  `routing` This tool creates the best car, walk, bike and transit path for each TBI trip. 
+	*  `analysis_tool` The main analysis tool to calculate and summarize the results. 
+* `data_processing` Scripts to process the TBI data.  Run these again if there is a new wave of the TBI. Must be run before the `analysis_tool`.
+* `data_viz` A tool to visualize individual routes and check them for reasonableness.
+* `reports` Several reports documenting the process. 
+
 
 ## Install
 
 The files here are mostly jupyter notebooks running python.  The installed packages used for development are stored in environment.yml.  You can use `conda` to set up the environment with the right installs:
 
-	conda env create -n msp --file environment.yml
+	conda env create --file environment.yml
 
 Then to activate the environment:
 
-	conda activate msp
+	conda activate vmtmodeenv
 
-If you have difficulties solving pacakges on macOS, try using the Mac-specific environment.
+If you have difficulties solving packages on macOS, try using the Mac-specific environment.
 
-	conda env create -n msp-mac --file mac-environment.yml
-	conda activate msp-mac
+	conda env create --file mac-environment.yml
+	conda activate vmtmodeenv
 
 After installing, if you are on a mac, we need to manually install jupyter notebook:
 
@@ -83,18 +86,20 @@ Additional documents in VMT Reduction Mode Shift Microsoft Teams/Sharepoint.
 
 Metropolitan Council 
 
-- Ashley Asmus [email](ashley.asmus@metc.state.mn.us) @eroten
-- Liz Roten [email](liz.roten@metc.state.mn.us) @ashleyasmus
-- Eric Lind [email](eric.lind@metrotransit.org) @elindie
-- Jonathan Ehrlich [email](jonathan.ehrlich@metc.state.mn.us) @JonathanEhrlichMC
+- Liz Roten [email](liz.roten@metc.state.mn.us) @eroten
+- Jonathan Ehrlich [email](jonathan.ehrlich@metc.state.mn.us) @JonathanEhrlichMC 
+- Brandon Whited [email](brandon.whited@metc.state.mn.us)
 
-University of Kentucky Team
+Researcher Contacts
 
 - Greg Erhardt [email](greg.erhardt@uky.edu) @gregerhardt
-- Xu Zhang [email](xuzhang_uk@uky.edu) @xzh263
-- Richard Donohue [email](rgdonohue@uky.edu) @rgdonohue
 - Matthew Wigginton Bhagat-Conway [email](mwbc@unc.edu) @mattwigway
 
+Contributors
+- Ashley Asmus @ashleyasmus
+- Eric Lind @elindie
+- Xu Zhang @xzh263
+- Richard Donohue @rgdonohue
 
 ## Code of Conduct
 
@@ -102,4 +107,4 @@ Please note that the mode-shift project is released with a [Contributor Code of 
 
 This repository is in active development. See [CONTRIBUTING](CONTRIBUTING.md) learn how to contribute 🤝.
 
-![](logo.png)
+![](logos_combined.png)

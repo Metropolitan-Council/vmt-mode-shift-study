@@ -1,0 +1,87 @@
+# Calibration of street routing
+
+```{python}
+#| include: false
+import pandas as pd
+import geopandas as gpd
+import matplotlib.pyplot as plt
+from os.path import join, abspath, dirname
+import sys
+import keyring
+import numpy as np
+import zipfile
+import yaml
+
+# This is used to avoid hard-coding directories. 
+# To set the directory, use the command prompt or a notebook you don't check in.  run:
+# import keyring
+# keyring.set_password("msp", "vmt_reduction_dir", <directory>)
+
+# get base path for data
+data_dir = keyring.get_password("msp", "vmt_reduction_dir")
+
+with open("input_files.yml") as fls:
+    input_files = yaml.safe_load(fls)
+
+tbi = pd.read_csv(data_dir + "/data_processed/tbi_cleaned.csv", low_memory=False)
+```
+
+To ensure our routing is reflective of reality, we check the routed travel times for trips of each mode against the observed travel time of trips by that mode in the TBI.
+
+For autos and bikes, we include terminal times in the analysis. While the actual terminal time calculation in the analysis is more involved,we assume a flat 3 minute terminal time per car trip in this section (i.e. 90 seconds per trip end). With the terminal time included, the median routed auto trip is 2% longer than the corresponding observed trip (@fig-auto-calibration).
+
+```{python}
+#| label: fig-auto-calibration
+#| fig-cap: Ratio of routed to observed travel times by auto, including 3 minutes terminal time
+#| fig-alt: Histogram showing that the median routed auto trip is 2% longer than the corresponding observed trip. There is significant spread between a ratio of zero and two, likely because of day-to-day variations, individual non-optimal route choices, and rounding of arrival/departure times by respondents.
+car_baseline = gpd.read_parquet(join(data_dir, "Data_Processed", "geodata", input_files["car"]["baseline"]))
+car_baseline = car_baseline.merge(tbi, how="left", on="trip_id", validate="1:1")
+observed_car_baseline = car_baseline[car_baseline["mode"] == "Car"].copy()
+
+observed_car_baseline["ratio_routed_to_observed"] = (
+    (observed_car_baseline.duration_seconds / 60 + 3) /
+    observed_car_baseline.duration
+)
+
+plt.hist(np.minimum(observed_car_baseline.ratio_routed_to_observed, 5), bins=50)
+plt.xlabel(f"Ratio of routed to observed time (topcoded at 5)\nmedian: {observed_car_baseline.ratio_routed_to_observed.median():.2f}");
+```
+
+For bikes, a flat two minutes of terminal time is included. The median bike trip is 24% longer than observed (@fig-bike-calibration). However, this is somewhat expected, as the people who are biking now are more confident and faster cyclists, more willing to take more direct but stressful routes, than the cyclist we're modeling.
+
+```{python}
+#| label: fig-bike-calibration
+#| fig-cap: Ratio of routed to observed travel times by bike, including 2 minutes terminal time
+#| fig-alt: Histogram showing that the median routed bike trip is 24% longer than the corresponding observed trip. There is even more spread than there is with autos, likely because there is significant variability in speed and route choice behavior for observed cyclists.
+bike_baseline = gpd.read_parquet(join(data_dir, "Data_Processed", "geodata", input_files["bike"]["baseline"]))
+bike_baseline = bike_baseline.merge(tbi, how="left", on="trip_id", validate="1:1")
+observed_bike_baseline = bike_baseline[bike_baseline["mode"] == "Bike/Scooter"].copy()
+
+observed_bike_baseline["ratio_routed_to_observed"] = (
+    (observed_bike_baseline.duration_seconds / 60 + 2) /
+    observed_bike_baseline.duration
+)
+
+plt.hist(np.minimum(observed_bike_baseline.ratio_routed_to_observed, 5), bins=50)
+plt.xlabel(f"Ratio of routed to observed time (topcoded at 5)\nmedian: {observed_bike_baseline.ratio_routed_to_observed.median():.2f}");
+```
+
+For walking, we do not include any terminal time, as you do not need to access a vehicle, etc. (and presumably tying your shoes is a constant across all modes). The median routed walk trip is 23% faster than the corresponding observed trip (@fig-walk-calibration). This would seem to suggest that our assumed walking speeds or routes may be optimistic, but it may also be because many of the walk trips in the TBI are at least partly for leisure/exercise/recreation and may not take the same path or travel at the same speed they would if they were transportation trips.
+
+```{python}
+#| label: fig-walk-calibration
+#| fig-cap: Ratio of routed to observed travel times by walking, with no terminal time
+#| fig-alt: Histogram showing that the median routed walk trip is 24% longer than the corresponding observed trip. There is even more spread than there is with autos, likely because there is significant variability in speed and route choice behavior for observed cyclists.
+walk_baseline = gpd.read_parquet(join(data_dir, "Data_Processed", "geodata", input_files["walk"]["baseline"]))
+walk_baseline = walk_baseline.merge(tbi, how="left", on="trip_id", validate="1:1")
+observed_walk_baseline = walk_baseline[walk_baseline["mode"] == "Walk"].copy()
+
+observed_walk_baseline["ratio_routed_to_observed"] = (
+    (observed_walk_baseline.duration_seconds / 60) /
+    observed_walk_baseline.duration
+)
+
+plt.hist(np.minimum(observed_walk_baseline.ratio_routed_to_observed, 5), bins=50)
+plt.xlabel(f"Ratio of routed to observed time (topcoded at 5)\nmedian: {observed_walk_baseline.ratio_routed_to_observed.median():.2f}");
+```
+

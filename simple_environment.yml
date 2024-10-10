@@ -1,0 +1,19 @@
+name: gis
+channels:
+  - conda-forge
+dependencies:
+  - geopandas=0.13.0
+  - keyring=23.13.1
+  - matplotlib=3.7.1
+  - numpy=1.24.3
+  - pandas=2.0.2
+  - plotly=5.14.1
+  - pyarrow=9.0.0
+  - python=3.9.15
+  - seaborn=0.12.2
+  - streamlit=1.22.0
+  - pyyaml
+  - scipy
+  - timezonefinder=6.5.3
+  - tqdm=4.66.5
+  - suncalc=0.1.3

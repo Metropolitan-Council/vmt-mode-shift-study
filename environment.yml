@@ -1,7 +1,6 @@
-name: gis
+name: vmtmodeenv
 channels:
   - conda-forge
-  - defaults
 dependencies:
   - affine=2.4.0=pyhd8ed1ab_0
   - anyio=3.6.2=pyhd8ed1ab_0
@@ -72,7 +71,7 @@ dependencies:
   - gdal=3.6.3=py39h3be0312_1
   - geographiclib=1.52=pyhd8ed1ab_0
   - geojson=2.5.0=py_0
-  - geopandas=0.8.2=pyhd8ed1ab_0
+  - geopandas=0.13
   - geopy=2.3.0=pyhd8ed1ab_0
   - geos=3.11.2=h1537add_0
   - geotiff=1.7.1=hb4c6682_7
@@ -99,7 +98,8 @@ dependencies:
   - jedi=0.18.2=pyhd8ed1ab_0
   - jinja2=3.1.2=pyhd8ed1ab_1
   - joblib=1.2.0=pyhd8ed1ab_0
-  - json5=0.9.5=pyh9f0ad1d_0
+  - json5=0.9.5=pyh9f0ad1d_0  
+  - json-c=0.16
   - jsonschema=4.17.3=pyhd8ed1ab_0
   - jupyter=1.0.0=py39hcbf5309_8
   - jupyter-packaging=0.7.12=pyhd8ed1ab_0
@@ -194,7 +194,7 @@ dependencies:
   - orc=1.8.3=hada7b9e_0
   - osmnx=1.0.1=pyhd3deb0d_0
   - packaging=23.0=pyhd8ed1ab_0
-  - pandas=1.5.3=py39h2ba5b7c_0
+  - pandas=2.0
   - pandoc=3.1.1=h57928b3_0
   - pandocfilters=1.5.0=pyhd8ed1ab_0
   - parquet-cpp=1.5.1=2
@@ -206,6 +206,7 @@ dependencies:
   - pixman=0.40.0=h8ffe710_0
   - pkgutil-resolve-name=1.3.10=pyhd8ed1ab_0
   - platformdirs=3.1.1=pyhd8ed1ab_0
+  - plotly=5.14
   - ply=3.11=py_1
   - pooch=1.7.0=pyha770c72_1
   - poppler=23.03.0=h934c637_1
@@ -260,6 +261,7 @@ dependencies:
   - soupsieve=2.3.2.post1=pyhd8ed1ab_0
   - sqlite=3.40.0=hcfcfb64_0
   - stack_data=0.6.2=pyhd8ed1ab_0
+  - streamlit=1.22
   - tbb=2021.8.0=h91493d7_0
   - terminado=0.15.0=py39hcbf5309_0
   - threadpoolctl=3.1.0=pyh8a188c0_0
@@ -287,6 +289,7 @@ dependencies:
   - xorg-libxau=1.0.9=hcd874cb_0
   - xorg-libxdmcp=1.1.3=hcd874cb_0
   - xz=5.2.6=h8d14728_0
+  - yaml=0.2
   - zeromq=4.3.4=h0e60522_1
   - zipp=3.15.0=pyhd8ed1ab_0
   - zlib=1.2.13=hcfcfb64_4

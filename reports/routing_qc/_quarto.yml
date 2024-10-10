@@ -1,0 +1,26 @@
+project:
+  type: book
+
+book:
+  title: "VMT Reduction Mode Shift project: QC Process for the Routing Results"
+  author: Matt Bhagat-Conway
+  chapters:
+    - index.qmd
+    - calibration.qmd
+    - walk_scenario_qc.qmd
+    - bike_scenario_qc.qmd
+    - transit_baseline_qc.qmd
+    - transit_scenario_qc.qmd
+    - car_scenario_qc.qmd
+
+bibliography: ../bibliography.bib
+
+execute:
+    eval: true
+    echo: true
+    output: true
+format:
+    html:
+        toc: true
+        toc-location: left
+        embed-resources: true

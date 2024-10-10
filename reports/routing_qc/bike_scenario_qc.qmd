@@ -1,0 +1,177 @@
+# Bike Scenario QC
+
+There are two bike scenarios, one that makes every street where it is legal to bike LTS 1, and one that builds on that by increasing speeds and eliminating slope penalties to simulate e-bikes. Theoretically, these scenarios should serve only to improve trips, we check that in this QC process.
+
+```{python}
+#| include: false
+import pandas as pd
+import geopandas as gpd
+import matplotlib.pyplot as plt
+from os.path import join, abspath, dirname
+import keyring
+import numpy as np
+import yaml
+import contextily as cx
+
+# This is used to avoid hard-coding directories. 
+# To set the directory, use the command prompt or a notebook you don't check in.  run:
+# import keyring
+# keyring.set_password("msp", "vmt_reduction_dir", <directory>)
+
+# get base path for data
+data_dir = keyring.get_password("msp", "vmt_reduction_dir")
+
+with open("input_files.yml") as fls:
+    input_files = yaml.safe_load(fls)
+```
+
+## Load data
+
+```{python}
+bike_baseline = gpd.read_parquet(join(data_dir, "Data_Processed", "geodata", input_files["bike"]["baseline"]))
+bike_lts1 = gpd.read_parquet(join(data_dir, "Data_Processed", "geodata", input_files["bike"]["all_lts1"]))
+ebike = gpd.read_parquet(join(data_dir, "Data_Processed", "geodata", input_files["bike"]["ebike"]))
+```
+
+## Changes in weight
+
+Every trip should have the same or lower weight in the LTS 1 scenario---because the scenario only reduces weights, any existing trip will have the same or lower weight, and any alternate path chosen should have a lower weight. We allow a very slight deviation due to rounding, etc. Similarly, every trip should have the same or lower weight in the ebike scenario than the LTS 1 scenario.
+
+```{python}
+bike_all = bike_baseline\
+    .merge(bike_lts1, how="left", on="trip_id", suffixes=("_baseline", "_lts1"))\
+    .merge(
+        # manually apply suffixes, pandas won't do it automatically because they
+        # don't conflict with names in previous merge
+        ebike.rename(columns={"weight": "weight_ebike", "distance_meters": "distance_meters_ebike", "duration_seconds": "duration_seconds_ebike"}), how="left", on="trip_id")
+
+assert ((bike_all.weight_baseline - bike_all.weight_lts1) > -1e6).all()
+assert ((bike_all.weight_lts1 - bike_all.weight_ebike) > -1e6).all()
+
+```
+
+## Changes in duration
+
+### LTS 1 Scenario
+
+The changes in weight are theoretically guaranteed by the algorithm. Duration and distance are not the objective function in the routing, but should generally go down. 
+
+```{python}
+plt.hist((bike_all.duration_seconds_lts1 - bike_all.duration_seconds_baseline) / 60, bins=100);
+plt.xlabel("Change in duration, LTS1 vs baseline (minutes)")
+```
+
+This looks about like we'd expect, but we can check what proportion had better or the same times in the scenario:
+
+```{python}
+inc10s = ((bike_all.duration_seconds_lts1 - bike_all.duration_seconds_baseline) > 10).mean()
+inc60s = ((bike_all.duration_seconds_lts1 - bike_all.duration_seconds_baseline) > 60).mean()
+print(f"""
+Increase of 10 seconds or more: {inc10s}
+Increase of 60 seconds or more: {inc60s}
+""")
+```
+
+0.04% of trips show increases in duration of more than 10 seconds; less than 0.004% show an increase of more than 1 minute. I believe this has to do with intersection costs – in our weighting scheme, road crossings are more costly by bike than on foot, and there are some places where LTS was previously high enough that it required walking, and the cruise speed increase from switching to bike here is not enough to outweigh the longer crossing times. The percentage is so small that I have not investigated further.
+
+### E-bike scenario
+
+Relative to the LTS 1 scenario, the e-bike scenario should decrease durations. Speeds on all edges have either increased or stayed the same.
+
+```{python}
+inc10s = ((bike_all.duration_seconds_ebike - bike_all.duration_seconds_lts1) > 10).sum()
+inc60s = ((bike_all.duration_seconds_ebike - bike_all.duration_seconds_lts1) > 60).sum()
+print(f"""
+Increase of 10 seconds or more: {inc10s}
+Increase of 60 seconds or more: {inc60s}
+""")
+```
+
+There are nine trips where durations increased more than 10 seconds in the e-bike scenario, and three where it increased 60 seconds or more. This may be caused by changes in slope weighting-slope weights are removed when bicycling but not when walking bikes, so a longer-time route to avoid walking on a steep slope may become attractive. In any case, there are only three trips with a large increase, and they are all short trips in unusual places (airports and some kind of suburban campus):
+
+```{python}
+#| include: false
+def plot_trips(base, scen, trip_id):
+    base_sel = base[base.trip_id == trip_id].copy()
+    base_sel["which"] = "Baseline"
+    scen_sel = scen[scen.trip_id == trip_id].copy()
+    scen_sel["which"] = "Scenario"
+
+    new_df = gpd.GeoDataFrame(pd.concat([base_sel, scen_sel], ignore_index=True))
+    ax = new_df.to_crs(3857).plot(column="which", legend=True)
+    cx.add_basemap(ax)
+
+    # fix aspect ratio
+    yl = plt.ylim()
+    xl = plt.xlim()
+    yw = yl[1] - yl[0]
+    xw = xl[1] - xl[0]
+    
+    ar = xw / yw
+
+    if ar > 16/9:
+        newyw = xw * 9/16
+        expand = (newyw - yw) / 2
+        plt.ylim(yl[0] - expand, yl[1] + expand)
+
+    if ar < 4/3:
+        newxw = yw * 4/3
+        expand = (newxw - xw) / 2
+        plt.xlim(xl[0] - expand, xl[1] + expand)
+
+
+
+    plt.xticks([])
+    plt.yticks([])
+    plt.xlabel(
+f"""Change in travel time: {scen_sel.duration_seconds.iloc[0] - base_sel.duration_seconds.iloc[0]:.0f} seconds
+Change in distance: {scen_sel.distance_meters.iloc[0] - base_sel.distance_meters.iloc[0]:.0f} meters""")
+```
+
+
+```{python}
+plot_trips(bike_lts1, ebike, "[1897911102002]")
+```
+
+```{python}
+plot_trips(bike_lts1, ebike, "[1946475701022]")
+```
+
+```{python}
+plot_trips(bike_lts1, ebike, "[2122753601004]")
+```
+
+## Changes in distance
+
+### LTS 1 scenario
+
+In the LTS1 scenario, most distances should get shorter. For similar reasons as the walking scenario, some may get longer, because a new flatter path is available (for instance, @fig-bike-ele which is very similar to the walking example). Since the elevation penalties for biking are (ahem) steeper than for walking, this may  This could also happen because a previously-unsafe road avoids walking your bike (in the scenario, we have made everything LTS1 where it is legal to ride; if an area is explicitly tagged as requiring dismount, we still make you walk your bike there).
+
+```{python}
+#| fig-cap: Histogram showing the change in distances between the baseline and LTS 1 scenarios. The vast majority of trips show a decrease, peaking near zero with a long left tail.
+plt.hist((bike_all.distance_meters_lts1 - bike_all.distance_meters_baseline), bins=50)
+plt.xlabel("Change in distance (meters)")
+```
+
+```{python}
+#| label: fig-bike-ele
+#| fig-cap: A bike trip that uses the Mississippi River Trail around downtown Saint Paul in the baseline, but uses a longer, flatter route in the scenario
+plot_trips(bike_baseline, bike_lts1, "[1811711701018]")
+```
+
+A less clear change comes from the trip through St. Louis Park displayed below. This area is relatively flat, so elevation seems unlikely to be the difference. I continue to investigate this trip.
+
+```{python}
+plot_trips(bike_baseline, bike_lts1, "[2200269801002]")
+```
+
+### E-bike scenario
+
+There is not a clear theoretical direction of change for the e-bike scenario; e-bikes might make longer rides to avoid walking bikes more attractive through increased speed, or make shorter, steeper rides more attractive by not avoiding slopes. Indeed, as it turns out, the changes are relatively symmetrical (@fig-ebike-dist).
+
+```{python}
+#| fig-cap: Histogram showing the change in distances between the LTS 1 and ebike scenarios. The mode is near zero, and the distribution does not appear heavily skewed.
+#| label: fig-ebike-dist
+plt.hist((bike_all.distance_meters_ebike - bike_all.distance_meters_lts1), bins=50)
+plt.xlabel("Change in distance (meters)")
+```
