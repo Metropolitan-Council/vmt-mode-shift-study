@@ -10,6 +10,11 @@ Then, you need to install the C++ shim library to allow Julia to communicate wit
 
 The difficult part is now over; you just need to install the Julia packages needed for routing. This can be done by running `julia --project` in this directory, and then typing `]instantiate` to install the dependencies.
 
+If you have difficulty with your registry, install Matt's Public Julia Registry
+
+    ]registry add https://github.com/mattwigway/PublicJuliaRegistry.git
+    ]add OSM
+
 ## Building the network
 
 ### Elevation data
@@ -20,13 +25,21 @@ First, we need to download the data. The script `download_elevation_data.jl` wil
 
     download_elevation_data.jl path
 
-Once the elevation data files are downloaded, several more steps need to happen. They need to be combined into a single file for the analysis area, they need to be reprojected from NAD83 (used by USGS) to WGS84 (used by OSM/OSRM), and they need to be converted to the text-based grid format OSRM requires. OSRM additionally requires that all raster data be integers, so that needs to be done. To minimize rounding errors, we also convert the elevations to millimeters above mean sea level. The shell script `prepare_elevation_data.sh` handles these steps. Since this is a shell script, it will only run on macOS or Linux; if you are using Windows, I recommend installing the Windows Subsystem for Linux. You will need it to run OSRM anyhow. You pass in the path to directory you downloaded the elevation to. This will create three new files: combined.tif, which is a GeoTIFF combining all of the elevation tiles into a single dataset; final.asc, which is the OSRM-format raster grid, and final_header.asc, which contains information about the spatial extent of the file. This spatial extent should match the variables declared at the top of `profiles/elevation.lua`.
+From bash, command is 
+    cd src/routing
+    julia --project download_elevation_data.jl "downloads"
 
-    prepare
+Once the elevation data files are downloaded, several more steps need to happen. They need to be combined into a single file for the analysis area, they need to be reprojected from NAD83 (used by USGS) to WGS84 (used by OSM/OSRM), and they need to be converted to the text-based grid format OSRM requires. OSRM additionally requires that all raster data be integers, so that needs to be done. To minimize rounding errors, we also convert the elevations to millimeters above mean sea level. The shell script `prepare_elevation_data.sh` handles these steps. Since this is a shell script, it will only run on macOS or Linux; if you are using Windows, I recommend installing the Windows Subsystem for Linux. You will need it to run OSRM anyhow. You pass in the path to directory you downloaded the elevation to. 
+
+This will create three new files: combined.tif, which is a GeoTIFF combining all of the elevation tiles into a single dataset; final.asc, which is the OSRM-format raster grid, and final_header.asc, which contains information about the spatial extent of the file. This spatial extent should match the variables declared at the top of `profiles/elevation.lua`.
+
+    bash prepare_elevation_data.sh "downloads"
 
 ### Street network
 
 OSRM requires the original `analysis-area.osm.pbf` to be processed into a network, using a "profile" that assigns weights. Eventually, we will have custom profiles that account for slopes, safety, traffic congestion, and so on, but for now we are using the profiles that ship with OSRM. The `build_network.sh` script will build the network, taking arguments for the path to the network, the path to the profile, and the name of the directory where you want the final network to reside (must not already exist). If you're running under WSL, I recommend keeping you networks within WSL (i.e. not under /mnt/c/...) because symbolic links are used during the network build process.
+
+    bash build_network.sh
 
 #### Environment variables
 
