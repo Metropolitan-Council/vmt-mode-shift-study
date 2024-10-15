@@ -149,3 +149,7 @@ reports/**/*_files
 /.luarc.json
 src/analysis_tool/temp.ipynb
 src/analysis_tool/data/tbi_anonymous.parquet
+
+src/routing/Manifest.toml
+
+cmake_troubleshooting.sh
