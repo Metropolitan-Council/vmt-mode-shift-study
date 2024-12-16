@@ -56,6 +56,10 @@ These will take a few minutes to run.
 
 The `car_traffic` profile expects two environment variables to be set, `SPEED_DATABASE` and `SPEED_COLUMN`, referring to the SQLite database and the column to retrieve speeds from. This will be very slow without the proper indices; create them by running `sqlite3 path/to/speed_database.db < prepare_speed_database.sql`
 
+You will need to install the Lua add-ons, lsqlite3. If you installed sqlite3 using homebrew, add the 
+
+    luarocks install lsqlite3 SQLITE_DIR=/usr/local/opt/sqlite3/ SQLITE_LIBDIR=/usr/local/opt/sqlite3/lib/ SQLITE_INCDIR=/usr/local/opt/sqlite3/include/
+
 Note that the car profile is also used in the foot and bicycle profiles to get car speeds for safety perception, so these variables must be set even when not creating congested networks.
 
 OSRM does have functionality to update speeds on the fly, but we do not use this—instead, we just build separate networks for each time period. Running the network build for all of these time periods can be tedious, but we can automate it like this:
