@@ -56,7 +56,7 @@ These will take a few minutes to run.
 
 The `car_traffic` profile expects two environment variables to be set, `SPEED_DATABASE` and `SPEED_COLUMN`, referring to the SQLite database and the column to retrieve speeds from. This will be very slow without the proper indices; create them by running `sqlite3 path/to/speed_database.db < prepare_speed_database.sql`
 
-You will need to install the Lua add-ons, lsqlite3. If you installed sqlite3 using homebrew, add the 
+You may need to install the Lua add-on lsqlite3. If you installed sqlite3 using homebrew, install using the code below
 
     luarocks install lsqlite3 SQLITE_DIR=/usr/local/opt/sqlite3/ SQLITE_LIBDIR=/usr/local/opt/sqlite3/lib/ SQLITE_INCDIR=/usr/local/opt/sqlite3/include/
 
