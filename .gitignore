@@ -153,3 +153,9 @@ src/analysis_tool/data/tbi_anonymous.parquet
 src/routing/Manifest.toml
 
 cmake_troubleshooting.sh
+
+src/routing/OSM/
+
+src/routing/analysis-area.osm.pbf
+
+src/routing/streetlight_data.db
