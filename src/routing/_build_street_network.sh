@@ -1,5 +1,7 @@
 #!/bin/bash
-# Build the OSRM network based on an OSM file, a profile, and an output directory
+# Build the OSRM network based on an OSM file, a profile, and an output directory.
+# This generally should not be used directly, but rather called from one of the build_*_network.sh
+# scripts which encapsulate the settings needed for any particular network.
 set -ex
 
 OSM_FILE="${1}"
