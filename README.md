@@ -1,19 +1,26 @@
 
-# VMT Reduction and Mode Shift Study
-This repository contains a collection of code supporting the mode shift feasibility study.
+# VMT Reduction and Maximum Mode Shift Study
 
-Do this to set up your repository/code: 
+This study estimates the maximum amount of mode shift possible given existing transportation infrastructure, land use, and travel patterns. Unlike travel forecasting models, this project does not model changes to the transportation system, population size, or where people live, work, shop, and travel. By analyzing the current system, the project estimates the baseline potential for behavioral changes alone to reduce vehicle miles traveled and increase the share of trips made by walking, transit, or biking.
+
+Further details available on [metrocouncil.org](https://metrocouncil.org/Transportation/Performance/Travel-Behavior-Inventory/Data/Maximum-Mode-Shift.aspx)
+
+The final PDF report is available - [VMT Reduction Mode Shift Final Report.pdf](./VMT%20Reduction%20Mode%20Shift%20Final%20Report.pdf)
+
+## Repository details
+
+To set up your repository/code: 
 
 1. Clone the repository to your local machine. 
-2. Copy the contents of the example directory to a working directory located outside the repository.  
-3. Request access to the data stored on the Teams directory from @gregerhardt and create a path to the data directory. 
-4. Follow the install directions below.
+1. Copy the contents of the example directory to a working directory located outside the repository.  
+1. Request access to the data (see Contact section below) and create a path to the data directory. 
+1. Follow the install directions below.
  
+<!-- See the [CONTRIBUTING](CONTRIBUTING.md) page on the right to learn how to contribute 🤝.-->
+
 **It is important that no private data or outputs be stored in the repository.**  See Handling data for details.
 
-This repository is in active development. See the [CONTRIBUTING](CONTRIBUTING.md) page on the right to learn how to contribute 🤝.
-
-## Organization: what's here
+### Organization: what's here
 
 * `src` Source code for main tools.  There are two:
 	*  `routing` This tool creates the best car, walk, bike and transit path for each TBI trip. 
@@ -33,7 +40,7 @@ Then to activate the environment:
 
 	conda activate vmtmodeenv
 
-If you have difficulties solving packages on macOS, try using the Mac-specific environment.
+If you have difficulties solving packages on macOS, try using the Mac-specific environment. You may also need to finesse the 
 
 	conda env create --file mac-environment.yml
 	conda activate vmtmodeenv
@@ -42,7 +49,7 @@ After installing, if you are on a mac, we need to manually install jupyter noteb
 
 	pip install notebook
 
-After installing the packages, you'll use keyring to set the main directory on our shared drive.  This avoids the need to hard-code file names in the scripts:
+After installing the packages, you'll use keyring to set the main directory on our shared drive. See contact information below to get data access. 
 
 	import keyring
 	keyring.set_password("msp", "vmt_reduction_dir", <directory>)
@@ -56,8 +63,8 @@ After installing the packages, you'll use keyring to set the main directory on o
 * Only run the scripts outside the repository to avoid accidentally checking in private data or outputs. 
 * If you are working with a particular data file, add its extension to the .gitignore file. (This is redundant with the practice above, and that's the point.)
 
-Eventually we hope to provide a runable example using synthetic and/or public data. If you think a new dataset should be incorporated, please discuss with the project contacts.
-
+<!-- Eventually we hope to provide a runable example using synthetic and/or public data. If you think a new dataset should be incorporated, please discuss with the project contacts.
+ -->
 ### nbstripout
 
 We want to avoid inadvertently committing any identifiable data to the repository, and one way this could happen would be through outputs in Jupyter Notebooks. To prevent this, we strip all outputs from notebooks before committing. *This needs to be set up on each machine accessing the git repository; this is a git security restriction to prevent arbitrary code execution without user consent when working with an untrusted clone.*
@@ -76,21 +83,21 @@ Please see our [DATA MANAGEMENT PLAN](DATA_MANAGEMENT_PLAN.md)  for further deta
 
 ## Project info
 
-### Management
+<!-- ### Management
 
 [Asana board](https://app.asana.com/0/1203071874148265/board) available to project members.
 
 Additional documents in VMT Reduction Mode Shift Microsoft Teams/Sharepoint.
-
+ -->
 ### Contacts
 
-Metropolitan Council 
+[Metropolitan Council](https://metrocouncil.org/)
 
-- Liz Roten [email](liz.roten@metc.state.mn.us) @eroten
+- Primary contact: Liz Roten [email](liz.roten@metc.state.mn.us) @eroten
 - Jonathan Ehrlich [email](jonathan.ehrlich@metc.state.mn.us) @JonathanEhrlichMC 
-- Brandon Whited [email](brandon.whited@metc.state.mn.us)
+- Brandon Whited [email](brandon.whited@metc.state.mn.us) @Brandon-Whited
 
-Researcher Contacts
+Researchers
 
 - Greg Erhardt [email](greg.erhardt@uky.edu) @gregerhardt
 - Matthew Wigginton Bhagat-Conway [email](mwbc@unc.edu) @mattwigway
@@ -105,6 +112,4 @@ Contributors
 
 Please note that the mode-shift project is released with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md). By contributing to this project, you agree to abide by its terms.
 
-This repository is in active development. See [CONTRIBUTING](CONTRIBUTING.md) learn how to contribute 🤝.
-
-![](logos_combined.png)
+![Metropolitan Council, University of Kentucky, and University of North Carolina at Chapel Hill logos](logos_combined.png)
