@@ -9,18 +9,20 @@ The final PDF report is available - [VMT Reduction Mode Shift Final Report.pdf](
 
 ## Repository details
 
-To set up your repository/code: 
+<!-- To set up your repository/code: 
 
 1. Clone the repository to your local machine. 
 1. Copy the contents of the example directory to a working directory located outside the repository.  
 1. Request access to the data (see Contact section below) and create a path to the data directory. 
-1. Follow the install directions below.
+1. Follow the install directions below. -->
  
 <!-- See the [CONTRIBUTING](CONTRIBUTING.md) page on the right to learn how to contribute 🤝.-->
 
 **It is important that no private data or outputs be stored in the repository.**  See Handling data for details.
 
 ### Organization: what's here
+
+Further details are available in READMEs within each subfolder.
 
 * `src` Source code for main tools.  There are two:
 	*  `routing` This tool creates the best car, walk, bike and transit path for each TBI trip. 
