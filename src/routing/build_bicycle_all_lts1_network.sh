@@ -13,4 +13,4 @@ PROFILE="$(dirname "$0")/profiles/bicycle_lts.lua"
 export SPEED_COLUMN="saturdays_6-7"
 export BIKE_SCENARIO="all-lts1"
 
-bash build_street_network.sh "$OSM" "$PROFILE" "${OUTDIR}/bike-all-lts1"
+bash _build_street_network.sh "$OSM" "$PROFILE" "${OUTDIR}/bike-all-lts1"

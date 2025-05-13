@@ -37,7 +37,7 @@ This will create three new files: combined.tif, which is a GeoTIFF combining all
 
 ### Street network
 
-OSRM requires the original `analysis-area.osm.pbf` to be processed into a network, using a "profile" that assigns weights. Eventually, we will have custom profiles that account for slopes, safety, traffic congestion, and so on, but for now we are using the profiles that ship with OSRM. The `build_street_network.sh` script will build the network, taking arguments for the path to the network, the path to the profile, and the name of the directory where you want the final network to reside (must not already exist). If you're running under WSL, I recommend keeping you networks within WSL (i.e. not under /mnt/c/...) because symbolic links are used during the network build process.
+OSRM requires the original `analysis-area.osm.pbf` to be processed into a network, using a "profile" that assigns weights. Eventually, we will have custom profiles that account for slopes, safety, traffic congestion, and so on, but for now we are using the profiles that ship with OSRM. The `build_*_network.sh` scripts will build the networks, taking arguments for the path to the network and the name of the directory where you want the final network to reside (must not already exist; each network should have its own directory). If you're running under WSL, I recommend keeping you networks within WSL (i.e. not under /mnt/c/...) because symbolic links are used during the network build process.
 
 #### Environment variables
 
@@ -45,10 +45,9 @@ The profiles expect three environment variables to be set: `SPEED_DATABASE`, the
 
 #### Building the network
 
-I used these commands, putting my networks in `~/vmt-networks/<network_name>` and using the default installation location for OSRM profiles:
+I used these commands, putting my networks in `~/vmt-networks/` and using the default installation location for OSRM profiles:
 
-    bash build_street_network.sh /path/to/analysis-area.osm.pbf profiles/foot_lts.lua ~/vmt-networks/walk-lts
-    bash build_street_network.sh /path/to/analysis-area.osm.pbf profiles/bicycle_lts.lua ~/vmt-networks/bike-lts
+    bash build_<network_name>_network.sh /path/to/analysis-area.osm.pbf ~/vmt-networks/
 
 These will take a few minutes to run.
 
@@ -70,7 +69,7 @@ OSRM does have functionality to update speeds on the fly, but we do not use this
             sqlite3 "$SPEED_DATABASE" |
             grep REAL |
             sed -E 's/^ +"([^"]+).*$/\1/' | 
-            xargs -n 1 -Icol env SPEED_COLUMN=col bash build_street_network.sh ~/vmt-networks/analysis-area.osm.pbf profiles/car_traffic.lua ~/vmt-networks/car_col
+            xargs -n 1 -Icol env SPEED_COLUMN=col bash _build_street_network.sh ~/vmt-networks/analysis-area.osm.pbf profiles/car_traffic.lua ~/vmt-networks/car_col
     )
 
 (The parentheses are optional, but create a subshell to avoid polluting the main environment in your shell. `export` is necessary because we need SPEED_DATABASE to be available in the variable expansion after `sqlite3` - otherwise that variable expansion occurs before the variable is set).

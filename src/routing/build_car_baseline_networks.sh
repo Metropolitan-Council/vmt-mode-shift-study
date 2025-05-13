@@ -19,5 +19,5 @@ echo ".schema stl_congestion_data_2019" |
     sqlite3 "$SPEED_DATABASE" |
     grep REAL |
     sed -E 's/^ +"([^"]+).*$/\1/' | 
-    xargs -Icol env SPEED_COLUMN=col bash "$(dirname "$0")/build_street_network.sh" "$OSM" "$PROFILE" "${OUTDIR}/car_baseline_col"
+    xargs -Icol env SPEED_COLUMN=col bash "$(dirname "$0")/_build_street_network.sh" "$OSM" "$PROFILE" "${OUTDIR}/car_baseline_col"
 

@@ -13,4 +13,4 @@ PROFILE="$(dirname "$0")/profiles/foot_lts.lua"
 export SPEED_COLUMN="saturdays_6-7"
 unset SPEED_CAP_DATABASE
 
-bash build_street_network.sh "$OSM" "$PROFILE" "${OUTDIR}/walk-baseline"
+bash _build_street_network.sh "$OSM" "$PROFILE" "${OUTDIR}/walk-baseline"
