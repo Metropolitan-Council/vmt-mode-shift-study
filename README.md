@@ -9,10 +9,6 @@ The final PDF report is available - [VMT Reduction Mode Shift Final Report.pdf](
 
 ## Repository details
 
-**It is important that no private data or outputs be stored in the repository.**  See Handling data for details.
-
-### Organization: what's here
-
 Further details are available in READMEs within each subfolder.
 
 * `src` Source code for main tools.  There are two:
@@ -21,7 +17,6 @@ Further details are available in READMEs within each subfolder.
 * `data_processing` Scripts to process the TBI data.  Run these again if there is a new wave of the TBI. Must be run before the `analysis_tool`.
 * `data_viz` A tool to visualize individual routes and check them for reasonableness.
 * `reports` Several reports documenting the process. 
-
 
 ## Install
 
@@ -48,7 +43,6 @@ After installing the packages, you'll use keyring to set the main directory on o
 	keyring.set_password("msp", "vmt_reduction_dir", <directory>)
 
 
-
 ## Handling data
 
 **Non-private and non-proprietary example data are the only data we store in this GitHub repository.**  The analyses used for this project are based on the Travel Behavior Inventory (TBI) which includes personal information for the respondents, including trip locations. For more information or to request data access, please contact us. 
@@ -61,7 +55,7 @@ Full instructions are [available on the nbstripout site](https://github.com/kyna
 
 ### Data Management Plan
 
-Please see our [DATA MANAGEMENT PLAN](DATA_MANAGEMENT_PLAN.md)  for further details on our data practices for this project. 
+Please see our [DATA MANAGEMENT PLAN](DATA_MANAGEMENT_PLAN.md) for further details on our data practices for this project. 
 
 ## Contacts
 
