@@ -69,6 +69,8 @@ I recommend using this as a failsafe, and using the "Clear All Outputs" menu ite
 
 Please see our [DATA MANAGEMENT PLAN](DATA_MANAGEMENT_PLAN.md)  for further details on our data practices for this project. 
 
+## Contacts
+
 [Metropolitan Council](https://metrocouncil.org/)
 
 - Primary contact: Liz Roten [email](liz.roten@metc.state.mn.us) @eroten
