@@ -3,7 +3,7 @@
 
 This study estimates the maximum amount of mode shift possible given existing transportation infrastructure, land use, and travel patterns. Unlike travel forecasting models, this project does not model changes to the transportation system, population size, or where people live, work, shop, and travel. By analyzing the current system, the project estimates the baseline potential for behavioral changes alone to reduce vehicle miles traveled and increase the share of trips made by walking, transit, or biking.
 
-Further details available on [metrocouncil.org](https://metrocouncil.org/Transportation/Performance/Travel-Behavior-Inventory/Data/Maximum-Mode-Shift.aspx)
+Further details and study conclusions available on [metrocouncil.org](https://metrocouncil.org/Transportation/Performance/Travel-Behavior-Inventory/Data/Maximum-Mode-Shift.aspx)
 
 The final PDF report is available - [VMT Reduction Mode Shift Final Report.pdf](./VMT%20Reduction%20Mode%20Shift%20Final%20Report.pdf)
 
@@ -68,12 +68,6 @@ I recommend using this as a failsafe, and using the "Clear All Outputs" menu ite
 ### Data Management Plan
 
 Please see our [DATA MANAGEMENT PLAN](DATA_MANAGEMENT_PLAN.md)  for further details on our data practices for this project. 
-
-## Related repositories
-
-[metc-tbi-helper](https://github.com/Metropolitan-Council/metc.tbi.helper) and metc-tbi-internal: These repositories create the data objects and .csv files containing the Travel Behavior Inventory (TBI) 2019 and 2021 data.
-
-### Contacts
 
 [Metropolitan Council](https://metrocouncil.org/)
 
