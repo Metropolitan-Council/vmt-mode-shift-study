@@ -9,15 +9,6 @@ The final PDF report is available - [VMT Reduction Mode Shift Final Report.pdf](
 
 ## Repository details
 
-<!-- To set up your repository/code: 
-
-1. Clone the repository to your local machine. 
-1. Copy the contents of the example directory to a working directory located outside the repository.  
-1. Request access to the data (see Contact section below) and create a path to the data directory. 
-1. Follow the install directions below. -->
- 
-<!-- See the [CONTRIBUTING](CONTRIBUTING.md) page on the right to learn how to contribute 🤝.-->
-
 **It is important that no private data or outputs be stored in the repository.**  See Handling data for details.
 
 ### Organization: what's here
@@ -65,8 +56,7 @@ After installing the packages, you'll use keyring to set the main directory on o
 * Only run the scripts outside the repository to avoid accidentally checking in private data or outputs. 
 * If you are working with a particular data file, add its extension to the .gitignore file. (This is redundant with the practice above, and that's the point.)
 
-<!-- Eventually we hope to provide a runable example using synthetic and/or public data. If you think a new dataset should be incorporated, please discuss with the project contacts.
- -->
+
 ### nbstripout
 
 We want to avoid inadvertently committing any identifiable data to the repository, and one way this could happen would be through outputs in Jupyter Notebooks. To prevent this, we strip all outputs from notebooks before committing. *This needs to be set up on each machine accessing the git repository; this is a git security restriction to prevent arbitrary code execution without user consent when working with an untrusted clone.*
@@ -83,14 +73,6 @@ Please see our [DATA MANAGEMENT PLAN](DATA_MANAGEMENT_PLAN.md)  for further deta
 
 [metc-tbi-helper](https://github.com/Metropolitan-Council/metc.tbi.helper) and metc-tbi-internal: These repositories create the data objects and .csv files containing the Travel Behavior Inventory (TBI) 2019 and 2021 data.
 
-## Project info
-
-<!-- ### Management
-
-[Asana board](https://app.asana.com/0/1203071874148265/board) available to project members.
-
-Additional documents in VMT Reduction Mode Shift Microsoft Teams/Sharepoint.
- -->
 ### Contacts
 
 [Metropolitan Council](https://metrocouncil.org/)
