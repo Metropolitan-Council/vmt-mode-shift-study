@@ -1,19 +1,15 @@
 
-# VMT Reduction and Mode Shift Study
-This repository contains a collection of code supporting the mode shift feasibility study.
+# VMT Reduction and Maximum Mode Shift Study
 
-Do this to set up your repository/code: 
+This study estimates the maximum amount of mode shift possible given existing transportation infrastructure, land use, and travel patterns. Unlike travel forecasting models, this project does not model changes to the transportation system, population size, or where people live, work, shop, and travel. By analyzing the current system, the project estimates the baseline potential for behavioral changes alone to reduce vehicle miles traveled and increase the share of trips made by walking, transit, or biking.
 
-1. Clone the repository to your local machine. 
-2. Copy the contents of the example directory to a working directory located outside the repository.  
-3. Request access to the data stored on the Teams directory from @gregerhardt and create a path to the data directory. 
-4. Follow the install directions below.
- 
-**It is important that no private data or outputs be stored in the repository.**  See Handling data for details.
+Further details and study conclusions available on [metrocouncil.org](https://metrocouncil.org/Transportation/Performance/Travel-Behavior-Inventory/Data/Maximum-Mode-Shift.aspx)
 
-This repository is in active development. See the [CONTRIBUTING](CONTRIBUTING.md) page on the right to learn how to contribute 🤝.
+The final PDF report is available - [VMT Reduction Mode Shift Final Report.pdf](./VMT%20Reduction%20Mode%20Shift%20Final%20Report.pdf)
 
-## Organization: what's here
+## Repository details
+
+Further details are available in READMEs within each subfolder.
 
 * `src` Source code for main tools.  There are two:
 	*  `routing` This tool creates the best car, walk, bike and transit path for each TBI trip. 
@@ -21,7 +17,6 @@ This repository is in active development. See the [CONTRIBUTING](CONTRIBUTING.md
 * `data_processing` Scripts to process the TBI data.  Run these again if there is a new wave of the TBI. Must be run before the `analysis_tool`.
 * `data_viz` A tool to visualize individual routes and check them for reasonableness.
 * `reports` Several reports documenting the process. 
-
 
 ## Install
 
@@ -33,7 +28,7 @@ Then to activate the environment:
 
 	conda activate vmtmodeenv
 
-If you have difficulties solving packages on macOS, try using the Mac-specific environment.
+If you have difficulties solving packages on macOS, try using the Mac-specific environment. You may also need to finesse the 
 
 	conda env create --file mac-environment.yml
 	conda activate vmtmodeenv
@@ -42,21 +37,15 @@ After installing, if you are on a mac, we need to manually install jupyter noteb
 
 	pip install notebook
 
-After installing the packages, you'll use keyring to set the main directory on our shared drive.  This avoids the need to hard-code file names in the scripts:
+After installing the packages, you'll use keyring to set the main directory on our shared drive. See contact information below to get data access. 
 
 	import keyring
 	keyring.set_password("msp", "vmt_reduction_dir", <directory>)
 
 
-
 ## Handling data
 
-**Non-private and non-proprietary example data are the only data we store in this GitHub repository.**  The analyses used for this project are based on the Travel Behavior Inventory (TBI) which includes personal information for the respondents, including trip locations.  It is important to keep those data safe, including both the raw data and outputs of individual records or traces. Aggregated data summaries are ok. Users should take the following precautions: 
-
-* Only run the scripts outside the repository to avoid accidentally checking in private data or outputs. 
-* If you are working with a particular data file, add its extension to the .gitignore file. (This is redundant with the practice above, and that's the point.)
-
-Eventually we hope to provide a runable example using synthetic and/or public data. If you think a new dataset should be incorporated, please discuss with the project contacts.
+**Non-private and non-proprietary example data are the only data we store in this GitHub repository.**  The analyses used for this project are based on the Travel Behavior Inventory (TBI) which includes personal information for the respondents, including trip locations. For more information or to request data access, please contact us. 
 
 ### nbstripout
 
@@ -64,33 +53,19 @@ We want to avoid inadvertently committing any identifiable data to the repositor
 
 Full instructions are [available on the nbstripout site](https://github.com/kynan/nbstripout). In a nutshell, install nbstripout by running `pip install --upgrade nbstripout`, and then, within the repository directory, run `nbstripout --install`. This will remove outputs from notebooks when committing, without modifying your local files.
 
-I recommend using this as a failsafe, and using the "Clear All Outputs" menu item in JupyterLab before committing so that you are always committing clean files anyhow.
-
 ### Data Management Plan
 
-Please see our [DATA MANAGEMENT PLAN](DATA_MANAGEMENT_PLAN.md)  for further details on our data practices for this project. 
+Please see our [DATA MANAGEMENT PLAN](DATA_MANAGEMENT_PLAN.md) for further details on our data practices for this project. 
 
-## Related repositories
+## Contacts
 
-[metc-tbi-helper](https://github.com/Metropolitan-Council/metc.tbi.helper) and metc-tbi-internal: These repositories create the data objects and .csv files containing the Travel Behavior Inventory (TBI) 2019 and 2021 data.
+[Metropolitan Council](https://metrocouncil.org/)
 
-## Project info
-
-### Management
-
-[Asana board](https://app.asana.com/0/1203071874148265/board) available to project members.
-
-Additional documents in VMT Reduction Mode Shift Microsoft Teams/Sharepoint.
-
-### Contacts
-
-Metropolitan Council 
-
-- Liz Roten [email](liz.roten@metc.state.mn.us) @eroten
+- Primary contact: Liz Roten [email](liz.roten@metc.state.mn.us) @eroten
 - Jonathan Ehrlich [email](jonathan.ehrlich@metc.state.mn.us) @JonathanEhrlichMC 
-- Brandon Whited [email](brandon.whited@metc.state.mn.us)
+- Brandon Whited [email](brandon.whited@metc.state.mn.us) @Brandon-Whited
 
-Researcher Contacts
+Researchers
 
 - Greg Erhardt [email](greg.erhardt@uky.edu) @gregerhardt
 - Matthew Wigginton Bhagat-Conway [email](mwbc@unc.edu) @mattwigway
@@ -105,6 +80,4 @@ Contributors
 
 Please note that the mode-shift project is released with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md). By contributing to this project, you agree to abide by its terms.
 
-This repository is in active development. See [CONTRIBUTING](CONTRIBUTING.md) learn how to contribute 🤝.
-
-![](logos_combined.png)
+![Metropolitan Council, University of Kentucky, and University of North Carolina at Chapel Hill logos](logos_combined.png)
