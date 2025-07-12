@@ -1,0 +1,74 @@
+---
+title: Route flexibility analysis
+author: Matt Bhagat-Conway
+---
+
+We allow up to 5 minutes of flexibility for desired arrivals/departures, if the flexibility will improve overall travel time by at least 15 minutes. This notebook looks at how this affects routing.
+
+```{julia}
+using DataFrames, GeoDataFrames, CSV, DataFramesMeta, Plots, Dates, StatsBase
+
+const TBI_DIR = "/mnt/c/Users/mwbc/University of Kentucky/VMT Reduction Mode Shift - General/Data_Processed"
+const DATA_DIR = "/home/mwbc/vmt-output"
+
+const REPRESENTATIVE_WEEK = Date(2019, 10, 19)
+select_representative_date(date) = Dates.tonext(x -> dayofweek(x) == dayofweek(date), REPRESENTATIVE_WEEK)
+```
+
+```{julia}
+tbi = CSV.read(joinpath(TBI_DIR, "tbi_cleaned.csv"), DataFrame);
+transit_trips = GeoDataFrames.read(joinpath(DATA_DIR, "transit_flexibility_applied_10k.parquet"));
+```
+
+```{julia}
+single_trips = @chain transit_trips begin
+    groupby(:trip_id)
+    @combine(:start_time = first(:start_time), :end_time = last(:end_time))
+    leftjoin(tbi, on=:trip_id)
+end
+
+single_trips.depart_date_time = DateTime.(select_representative_date.(single_trips.travel_date), single_trips.depart_time)
+single_trips.arrive_date_time = DateTime.(select_representative_date.(single_trips.travel_date), single_trips.arrive_time)
+
+single_trips.arrive_date_time[single_trips.arrive_time .< single_trips.depart_time] .+= Day(1)
+
+single_trips.reverse_search = single_trips.d_purpose_category .== "Work" .&& single_trips.o_purpose_category .!= "Work"
+
+single_trips.wait_time_seconds = Dates.value.(Second.(ifelse.(
+    single_trips.reverse_search,
+    single_trips.arrive_date_time .- single_trips.end_time,
+    single_trips.start_time .- single_trips.depart_date_time
+)))
+```
+
+# Wait time analysis
+
+Most trips should wait a positive amount, but a few trips (less than 10%) violate constraints and wait a negative amount. For arrive-by trips, waiting is at the destination.
+
+```{julia}
+histogram(min.(single_trips.wait_time_seconds ./ 60, 240), legend=false, xlabel = "Wait time (minutes)", ylabel="Frequency")
+```
+
+The most they can violate constraints should be five minutes.
+
+```{julia}
+@assert minimum(single_trips.wait_time_seconds) ≥ -300
+```
+
+Less than 12% should violate constraints.
+
+```{julia}
+# what proportion of trips violated the constraints
+# Based on previous analysis, should be <12%
+mean(single_trips.wait_time_seconds .< 0)
+```
+
+There should be trips that violate constraints both for arrive-by and depart-at trips, and probably a similar number.
+
+```{julia}
+@chain single_trips begin
+    groupby(:reverse_search)
+    @combine :mean_violate_constraints = mean(:wait_time_seconds .< 0)
+end
+```
+

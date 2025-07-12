@@ -63,7 +63,7 @@ trip,day_num,day_num,day_num,1,Day number within travel period
 trip,travel_date,travel_date,travel_date,1,Travel date
 trip,trip_num,trip_num,trip_num,1,Trip number within travel period
 trip,trip_weight,trip_weight,trip_weight,1,Trip weight
-trip,depart_time,depart_time,depart_time,1,Time departed from origin (US/Central time)
+trip,depart_time_imputed,depart_time,depart_time,1,Time departed from origin (US/Central time)
 trip,arrive_time,arrive_time,arrive_time,1,Time arrived at destination (US/Central time)
 trip,duration_imputed,duration,duration,1,Trip duration imputed (minutes)
 trip,distance,distance,distance,1,Trip distance between collected location points (miles)

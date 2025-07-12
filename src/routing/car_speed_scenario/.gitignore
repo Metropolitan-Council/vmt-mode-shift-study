@@ -1,0 +1,4 @@
+# CSV files are globally ignored to avoid accidentally checking in sensitive data.
+# Unignore the highway_types.csv file as it is not sensitive and is an important
+# piece of the methodology.
+!highway_types.csv

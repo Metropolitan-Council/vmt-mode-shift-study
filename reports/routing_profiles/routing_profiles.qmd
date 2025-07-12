@@ -270,5 +270,4 @@ In addition to generalized costs used to select paths, travel times are needed f
 - Can turn costs for drivers be retrieved from StreetLight? No
 - What trip purposes should be treated as origin or destination "anchors"—i.e., trip departure or arrival times are fixed for these locations?
 - Should transit routing ever use multiple times over a time window? Yes, not clear what. Tour based analysis more important
-
 - Map ped infra, and lane infra. Weighting approach to safety. -->

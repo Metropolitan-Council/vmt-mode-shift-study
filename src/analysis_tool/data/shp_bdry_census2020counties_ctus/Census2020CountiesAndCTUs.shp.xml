@@ -1,0 +1,249 @@
+<metadata xml:lang="en">
+	<Esri>
+		<CreaDate>20210907</CreaDate>
+		<CreaTime>10564000</CreaTime>
+		<ArcGISFormat>1.0</ArcGISFormat>
+		<SyncOnce>FALSE</SyncOnce>
+		<DataProperties>
+			<lineage>
+				<Process ToolSource="c:\program files (x86)\arcgis\desktop10.5\ArcToolbox\Toolboxes\Data Management Tools.tbx\TruncateTable" Date="20190417" Time="185932">TruncateTable "Database Connections\SDE@GISLibrary.sde\GISLibrary.DBO.AdministrativeAndPolitical\GISLibrary.DBO.CountiesAndCTUs"</Process>
+				<Process ToolSource="c:\program files (x86)\arcgis\desktop10.5\ArcToolbox\Toolboxes\Data Management Tools.tbx\Append" Date="20190417" Time="185944">Append \\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp "Database Connections\SDE@GISLibrary.sde\GISLibrary.DBO.AdministrativeAndPolitical\GISLibrary.DBO.CountiesAndCTUs" NO_TEST "COCTU_ID "COCTU_ID" true true false 11 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,COCTU_ID,-1,-1;COCTU_CODE "COCTU_CODE" true true false 8 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,COCTU_CODE,-1,-1;COCTU_DESC "COCTU_DESC" true true false 40 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,COCTU_DESC,-1,-1;CO_CODE "CO_CODE" true true false 3 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,CO_CODE,-1,-1;CO_NAME "CO_NAME" true true false 24 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,CO_NAME,-1,-1;CTU_ID "CTU_ID" true true false 4 Long 0 10 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,CTU_ID,-1,-1;CTU_ID_CEN "CTU_ID_CEN" true true false 8 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,CTU_ID_CEN,-1,-1;CTU_CODE "CTU_CODE" true true false 5 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,CTU_CODE,-1,-1;CTU_NAME "CTU_NAME" true true false 24 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,CTU_NAME,-1,-1;COMCD_CENS "COMCD_CENS" true true false 4 Long 0 10 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,COMCD_CENS,-1,-1;GlobalID "GlobalID" false false false 38 GlobalID 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,GlobalID,-1,-1;Shape.STArea() "Shape.STArea()" false false true 0 Double 0 0 ,First,#;Shape.STLength() "Shape.STLength()" false false true 0 Double 0 0 ,First,#" #</Process>
+				<Process ToolSource="c:\program files (x86)\arcgis\desktop10.7\ArcToolbox\Toolboxes\Data Management Tools.tbx\TruncateTable" Date="20190805" Time="190421">TruncateTable "Database Connections\SDE@GISLibrary.sde\GISLibrary.DBO.AdministrativeAndPolitical\GISLibrary.DBO.CountiesAndCTUs"</Process>
+				<Process ToolSource="c:\program files (x86)\arcgis\desktop10.7\ArcToolbox\Toolboxes\Data Management Tools.tbx\Append" Date="20190805" Time="190427">Append \\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp "Database Connections\SDE@GISLibrary.sde\GISLibrary.DBO.AdministrativeAndPolitical\GISLibrary.DBO.CountiesAndCTUs" NO_TEST "COCTU_ID "COCTU_ID" true true false 11 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,COCTU_ID,-1,-1;COCTU_CODE "COCTU_CODE" true true false 8 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,COCTU_CODE,-1,-1;COCTU_DESC "COCTU_DESC" true true false 40 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,COCTU_DESC,-1,-1;CO_CODE "CO_CODE" true true false 3 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,CO_CODE,-1,-1;CO_NAME "CO_NAME" true true false 24 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,CO_NAME,-1,-1;CTU_ID "CTU_ID" true true false 4 Long 0 10 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,CTU_ID,-1,-1;CTU_ID_CEN "CTU_ID_CEN" true true false 8 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,CTU_ID_CEN,-1,-1;CTU_CODE "CTU_CODE" true true false 5 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,CTU_CODE,-1,-1;CTU_NAME "CTU_NAME" true true false 24 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,CTU_NAME,-1,-1;COMCD_CENS "COMCD_CENS" true true false 4 Long 0 10 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,COMCD_CENS,-1,-1;GlobalID "GlobalID" false false false 38 GlobalID 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,GlobalID,-1,-1;Shape.STArea() "Shape.STArea()" false false true 0 Double 0 0 ,First,#;Shape.STLength() "Shape.STLength()" false false true 0 Double 0 0 ,First,#" #</Process>
+				<Process ToolSource="c:\program files (x86)\arcgis\desktop10.7\ArcToolbox\Toolboxes\Data Management Tools.tbx\TruncateTable" Date="20190806" Time="143230">TruncateTable "Database Connections\SDE@GISLibrary.sde\GISLibrary.DBO.AdministrativeAndPolitical\GISLibrary.DBO.CountiesAndCTUs"</Process>
+				<Process ToolSource="c:\program files (x86)\arcgis\desktop10.7\ArcToolbox\Toolboxes\Data Management Tools.tbx\Append" Date="20190806" Time="143237">Append \\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp "Database Connections\SDE@GISLibrary.sde\GISLibrary.DBO.AdministrativeAndPolitical\GISLibrary.DBO.CountiesAndCTUs" NO_TEST "COCTU_ID "COCTU_ID" true true false 11 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,COCTU_ID,-1,-1;COCTU_CODE "COCTU_CODE" true true false 8 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,COCTU_CODE,-1,-1;COCTU_DESC "COCTU_DESC" true true false 40 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,COCTU_DESC,-1,-1;CO_CODE "CO_CODE" true true false 3 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,CO_CODE,-1,-1;CO_NAME "CO_NAME" true true false 24 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,CO_NAME,-1,-1;CTU_ID "CTU_ID" true true false 4 Long 0 10 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,CTU_ID,-1,-1;CTU_ID_CEN "CTU_ID_CEN" true true false 8 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,CTU_ID_CEN,-1,-1;CTU_CODE "CTU_CODE" true true false 5 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,CTU_CODE,-1,-1;CTU_NAME "CTU_NAME" true true false 24 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,CTU_NAME,-1,-1;COMCD_CENS "COMCD_CENS" true true false 4 Long 0 10 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,COMCD_CENS,-1,-1;GlobalID "GlobalID" false false false 38 GlobalID 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,GlobalID,-1,-1;Shape.STArea() "Shape.STArea()" false false true 0 Double 0 0 ,First,#;Shape.STLength() "Shape.STLength()" false false true 0 Double 0 0 ,First,#" #</Process>
+				<Process ToolSource="c:\program files (x86)\arcgis\desktop10.7\ArcToolbox\Toolboxes\Data Management Tools.tbx\TruncateTable" Date="20191023" Time="191208">TruncateTable "Database Connections\SDE@GISLibrary.sde\GISLibrary.DBO.AdministrativeAndPolitical\GISLibrary.DBO.CountiesAndCTUs"</Process>
+				<Process ToolSource="c:\program files (x86)\arcgis\desktop10.7\ArcToolbox\Toolboxes\Data Management Tools.tbx\Append" Date="20191023" Time="191213">Append \\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp "Database Connections\SDE@GISLibrary.sde\GISLibrary.DBO.AdministrativeAndPolitical\GISLibrary.DBO.CountiesAndCTUs" NO_TEST "COCTU_ID "COCTU_ID" true true false 11 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,COCTU_ID,-1,-1;COCTU_CODE "COCTU_CODE" true true false 8 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,COCTU_CODE,-1,-1;COCTU_DESC "COCTU_DESC" true true false 40 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,COCTU_DESC,-1,-1;CO_CODE "CO_CODE" true true false 3 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,CO_CODE,-1,-1;CO_NAME "CO_NAME" true true false 24 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,CO_NAME,-1,-1;CTU_ID "CTU_ID" true true false 4 Long 0 10 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,CTU_ID,-1,-1;CTU_ID_CEN "CTU_ID_CEN" true true false 8 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,CTU_ID_CEN,-1,-1;CTU_CODE "CTU_CODE" true true false 5 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,CTU_CODE,-1,-1;CTU_NAME "CTU_NAME" true true false 24 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,CTU_NAME,-1,-1;COMCD_CENS "COMCD_CENS" true true false 4 Long 0 10 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,COMCD_CENS,-1,-1;GlobalID "GlobalID" false false false 38 GlobalID 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,GlobalID,-1,-1;Shape.STArea() "Shape.STArea()" false false true 0 Double 0 0 ,First,#;Shape.STLength() "Shape.STLength()" false false true 0 Double 0 0 ,First,#" #</Process>
+				<Process ToolSource="c:\program files (x86)\arcgis\desktop10.7\ArcToolbox\Toolboxes\Data Management Tools.tbx\TruncateTable" Date="20200127" Time="191057">TruncateTable "Database Connections\SDE@GISLibrary.sde\GISLibrary.DBO.AdministrativeAndPolitical\GISLibrary.DBO.CountiesAndCTUs"</Process>
+				<Process ToolSource="c:\program files (x86)\arcgis\desktop10.7\ArcToolbox\Toolboxes\Data Management Tools.tbx\Append" Date="20200127" Time="191103">Append \\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp "Database Connections\SDE@GISLibrary.sde\GISLibrary.DBO.AdministrativeAndPolitical\GISLibrary.DBO.CountiesAndCTUs" NO_TEST "COCTU_ID "COCTU_ID" true true false 11 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,COCTU_ID,-1,-1;COCTU_CODE "COCTU_CODE" true true false 8 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,COCTU_CODE,-1,-1;COCTU_DESC "COCTU_DESC" true true false 40 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,COCTU_DESC,-1,-1;CO_CODE "CO_CODE" true true false 3 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,CO_CODE,-1,-1;CO_NAME "CO_NAME" true true false 24 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,CO_NAME,-1,-1;CTU_ID "CTU_ID" true true false 4 Long 0 10 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,CTU_ID,-1,-1;CTU_ID_CEN "CTU_ID_CEN" true true false 8 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,CTU_ID_CEN,-1,-1;CTU_CODE "CTU_CODE" true true false 5 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,CTU_CODE,-1,-1;CTU_NAME "CTU_NAME" true true false 24 Text 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,CTU_NAME,-1,-1;COMCD_CENS "COMCD_CENS" true true false 4 Long 0 10 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,COMCD_CENS,-1,-1;GlobalID "GlobalID" false false false 38 GlobalID 0 0 ,First,#,\\rafsshare.mc.local\gis\devel\data_devel\ctu\3_Publish\CountiesAndCTUs.shp,GlobalID,-1,-1;Shape.STArea() "Shape.STArea()" false false true 0 Double 0 0 ,First,#;Shape.STLength() "Shape.STLength()" false false true 0 Double 0 0 ,First,#" #</Process>
+				<Process ToolSource="c:\program files (x86)\arcgis\desktop10.7\ArcToolbox\Toolboxes\Conversion Tools.tbx\FeatureClassToFeatureClass" Date="20200731" Time="102715">FeatureClassToFeatureClass L:\Resources\DatabaseConnections\SDE@GISLibrary.sde\GISLibrary.DBO.AdministrativeAndPolitical\GISLibrary.DBO.CountiesAndCTUs \\rafsshare.mc.local\gis\gis_library\av_themes\Historic_Datasets\AdministrativeAndPolitical\CountiesAndCTUs.gdb CountiesAndCTUs_2020Q2 # "COCTU_ID "COCTU_ID" true true false 11 Text 0 0 ,First,#,L:\Resources\DatabaseConnections\SDE@GISLibrary.sde\GISLibrary.DBO.AdministrativeAndPolitical\GISLibrary.DBO.CountiesAndCTUs,COCTU_ID,-1,-1;COCTU_CODE "COCTU_CODE" true true false 8 Text 0 0 ,First,#,L:\Resources\DatabaseConnections\SDE@GISLibrary.sde\GISLibrary.DBO.AdministrativeAndPolitical\GISLibrary.DBO.CountiesAndCTUs,COCTU_CODE,-1,-1;COCTU_DESC "COCTU_DESC" true true false 40 Text 0 0 ,First,#,L:\Resources\DatabaseConnections\SDE@GISLibrary.sde\GISLibrary.DBO.AdministrativeAndPolitical\GISLibrary.DBO.CountiesAndCTUs,COCTU_DESC,-1,-1;CO_CODE "CO_CODE" true true false 3 Text 0 0 ,First,#,L:\Resources\DatabaseConnections\SDE@GISLibrary.sde\GISLibrary.DBO.AdministrativeAndPolitical\GISLibrary.DBO.CountiesAndCTUs,CO_CODE,-1,-1;CO_NAME "CO_NAME" true true false 24 Text 0 0 ,First,#,L:\Resources\DatabaseConnections\SDE@GISLibrary.sde\GISLibrary.DBO.AdministrativeAndPolitical\GISLibrary.DBO.CountiesAndCTUs,CO_NAME,-1,-1;CTU_ID "CTU_ID" true true false 4 Long 0 10 ,First,#,L:\Resources\DatabaseConnections\SDE@GISLibrary.sde\GISLibrary.DBO.AdministrativeAndPolitical\GISLibrary.DBO.CountiesAndCTUs,CTU_ID,-1,-1;CTU_ID_CEN "CTU_ID_CEN" true true false 8 Text 0 0 ,First,#,L:\Resources\DatabaseConnections\SDE@GISLibrary.sde\GISLibrary.DBO.AdministrativeAndPolitical\GISLibrary.DBO.CountiesAndCTUs,CTU_ID_CEN,-1,-1;CTU_CODE "CTU_CODE" true true false 5 Text 0 0 ,First,#,L:\Resources\DatabaseConnections\SDE@GISLibrary.sde\GISLibrary.DBO.AdministrativeAndPolitical\GISLibrary.DBO.CountiesAndCTUs,CTU_CODE,-1,-1;CTU_NAME "CTU_NAME" true true false 24 Text 0 0 ,First,#,L:\Resources\DatabaseConnections\SDE@GISLibrary.sde\GISLibrary.DBO.AdministrativeAndPolitical\GISLibrary.DBO.CountiesAndCTUs,CTU_NAME,-1,-1;COMCD_CENS "COMCD_CENS" true true false 4 Long 0 10 ,First,#,L:\Resources\DatabaseConnections\SDE@GISLibrary.sde\GISLibrary.DBO.AdministrativeAndPolitical\GISLibrary.DBO.CountiesAndCTUs,COMCD_CENS,-1,-1;GlobalID "GlobalID" false false false 38 GlobalID 0 0 ,First,#,L:\Resources\DatabaseConnections\SDE@GISLibrary.sde\GISLibrary.DBO.AdministrativeAndPolitical\GISLibrary.DBO.CountiesAndCTUs,GlobalID,-1,-1;Shape_STArea__ "Shape_STArea__" false false true 0 Double 0 0 ,First,#,L:\Resources\DatabaseConnections\SDE@GISLibrary.sde\GISLibrary.DBO.AdministrativeAndPolitical\GISLibrary.DBO.CountiesAndCTUs,Shape.STArea(),-1,-1;Shape_STLength__ "Shape_STLength__" false false true 0 Double 0 0 ,First,#,L:\Resources\DatabaseConnections\SDE@GISLibrary.sde\GISLibrary.DBO.AdministrativeAndPolitical\GISLibrary.DBO.CountiesAndCTUs,Shape.STLength(),-1,-1" #</Process>
+				<Process ToolSource="c:\program files (x86)\arcgis\desktop10.7\ArcToolbox\Toolboxes\Conversion Tools.tbx\FeatureClassToFeatureClass" Date="20210907" Time="095645">FeatureClassToFeatureClass CountiesAndCTUs_2020Q2 "Database Connections\SDE@GISLibrary.sde\GISLibrary.DBO.Demographics" Census2020CountiesAndCTUs # "COCTU_ID "COCTU_ID" true true false 11 Text 0 0 ,First,#,CountiesAndCTUs_2020Q2,COCTU_ID,-1,-1;COCTU_CODE "COCTU_CODE" true true false 8 Text 0 0 ,First,#,CountiesAndCTUs_2020Q2,COCTU_CODE,-1,-1;COCTU_DESC "COCTU_DESC" true true false 40 Text 0 0 ,First,#,CountiesAndCTUs_2020Q2,COCTU_DESC,-1,-1;CO_CODE "CO_CODE" true true false 3 Text 0 0 ,First,#,CountiesAndCTUs_2020Q2,CO_CODE,-1,-1;CO_NAME "CO_NAME" true true false 24 Text 0 0 ,First,#,CountiesAndCTUs_2020Q2,CO_NAME,-1,-1;CTU_ID "CTU_ID" true true false 4 Long 0 0 ,First,#,CountiesAndCTUs_2020Q2,CTU_ID,-1,-1;CTU_ID_CEN "CTU_ID_CEN" true true false 8 Text 0 0 ,First,#,CountiesAndCTUs_2020Q2,CTU_ID_CEN,-1,-1;CTU_CODE "CTU_CODE" true true false 5 Text 0 0 ,First,#,CountiesAndCTUs_2020Q2,CTU_CODE,-1,-1;CTU_NAME "CTU_NAME" true true false 24 Text 0 0 ,First,#,CountiesAndCTUs_2020Q2,CTU_NAME,-1,-1;COMCD_CENS "COMCD_CENS" true true false 4 Long 0 0 ,First,#,CountiesAndCTUs_2020Q2,COMCD_CENS,-1,-1;GlobalID "GlobalID" false false false 38 GlobalID 0 0 ,First,#,CountiesAndCTUs_2020Q2,GlobalID,-1,-1;Shape_Length "Shape_Length" false true true 8 Double 0 0 ,First,#,CountiesAndCTUs_2020Q2,Shape_Length,-1,-1;Shape_Area "Shape_Area" false true true 8 Double 0 0 ,First,#,CountiesAndCTUs_2020Q2,Shape_Area,-1,-1" #</Process>
+				<Process ToolSource="c:\program files (x86)\arcgis\desktop10.7\ArcToolbox\Toolboxes\Data Management Tools.tbx\Copy" Date="20210907" Time="105643">Copy C:\Users\Mayertj\AppData\Roaming\ESRI\Desktop10.7\ArcCatalog\SDE@GISLibrary.sde\Census2020CountiesAndCTUs L:\GDRS\STAGE\bdry_census2020counties_ctus\fgdb\bdry_census2020counties_ctus.gdb\Census2020CountiesAndCTUs FeatureClass</Process>
+				<Process ToolSource="C:\program files\arcgis\server\ArcToolbox\Toolboxes\Conversion Tools.tbx\FeatureClassToFeatureClass" Date="20210907" Time="234909">FeatureClassToFeatureClass /var/ftp/gdrs_temp/update\us_mn_state_metc\bdry_census2020counties_ctus\fgdb\bdry_census2020counties_ctus.gdb\Census2020CountiesAndCTUs /var/ftp/gdrs_temp/update\us_mn_state_metc\bdry_census2020counties_ctus\shp Census2020CountiesAndCTUs.shp # "COCTU_ID "COCTU_ID" true true false 11 Text 0 0 ,First,#,/var/ftp/gdrs_temp/update\us_mn_state_metc\bdry_census2020counties_ctus\fgdb\bdry_census2020counties_ctus.gdb\Census2020CountiesAndCTUs,COCTU_ID,-1,-1;COCTU_CODE "COCTU_CODE" true true false 8 Text 0 0 ,First,#,/var/ftp/gdrs_temp/update\us_mn_state_metc\bdry_census2020counties_ctus\fgdb\bdry_census2020counties_ctus.gdb\Census2020CountiesAndCTUs,COCTU_CODE,-1,-1;COCTU_DESC "COCTU_DESC" true true false 40 Text 0 0 ,First,#,/var/ftp/gdrs_temp/update\us_mn_state_metc\bdry_census2020counties_ctus\fgdb\bdry_census2020counties_ctus.gdb\Census2020CountiesAndCTUs,COCTU_DESC,-1,-1;CO_CODE "CO_CODE" true true false 3 Text 0 0 ,First,#,/var/ftp/gdrs_temp/update\us_mn_state_metc\bdry_census2020counties_ctus\fgdb\bdry_census2020counties_ctus.gdb\Census2020CountiesAndCTUs,CO_CODE,-1,-1;CO_NAME "CO_NAME" true true false 24 Text 0 0 ,First,#,/var/ftp/gdrs_temp/update\us_mn_state_metc\bdry_census2020counties_ctus\fgdb\bdry_census2020counties_ctus.gdb\Census2020CountiesAndCTUs,CO_NAME,-1,-1;CTU_ID "CTU_ID" true true false 4 Long 0 0 ,First,#,/var/ftp/gdrs_temp/update\us_mn_state_metc\bdry_census2020counties_ctus\fgdb\bdry_census2020counties_ctus.gdb\Census2020CountiesAndCTUs,CTU_ID,-1,-1;CTU_ID_CEN "CTU_ID_CEN" true true false 8 Text 0 0 ,First,#,/var/ftp/gdrs_temp/update\us_mn_state_metc\bdry_census2020counties_ctus\fgdb\bdry_census2020counties_ctus.gdb\Census2020CountiesAndCTUs,CTU_ID_CEN,-1,-1;CTU_CODE "CTU_CODE" true true false 5 Text 0 0 ,First,#,/var/ftp/gdrs_temp/update\us_mn_state_metc\bdry_census2020counties_ctus\fgdb\bdry_census2020counties_ctus.gdb\Census2020CountiesAndCTUs,CTU_CODE,-1,-1;CTU_NAME "CTU_NAME" true true false 24 Text 0 0 ,First,#,/var/ftp/gdrs_temp/update\us_mn_state_metc\bdry_census2020counties_ctus\fgdb\bdry_census2020counties_ctus.gdb\Census2020CountiesAndCTUs,CTU_NAME,-1,-1;COMCD_CENS "COMCD_CENS" true true false 4 Long 0 0 ,First,#,/var/ftp/gdrs_temp/update\us_mn_state_metc\bdry_census2020counties_ctus\fgdb\bdry_census2020counties_ctus.gdb\Census2020CountiesAndCTUs,COMCD_CENS,-1,-1;Shape_Leng "Shape_Leng" false true true 8 Double 0 0 ,First,#,/var/ftp/gdrs_temp/update\us_mn_state_metc\bdry_census2020counties_ctus\fgdb\bdry_census2020counties_ctus.gdb\Census2020CountiesAndCTUs,Shape_Length,-1,-1;Shape_Area "Shape_Area" false true true 8 Double 0 0 ,First,#,/var/ftp/gdrs_temp/update\us_mn_state_metc\bdry_census2020counties_ctus\fgdb\bdry_census2020counties_ctus.gdb\Census2020CountiesAndCTUs,Shape_Area,-1,-1" #</Process>
+			</lineage>
+			<itemProps>
+				<itemName Sync="TRUE">Census2020CountiesAndCTUs</itemName>
+				<imsContentType Sync="TRUE">002</imsContentType>
+				<itemLocation>
+					<linkage Sync="TRUE">file://\\g46palgdrftp001\Z\var\ftp\gdrs_temp\update\us_mn_state_metc\bdry_census2020counties_ctus\shp\Census2020CountiesAndCTUs.shp</linkage>
+					<protocol Sync="TRUE">Local Area Network</protocol>
+				</itemLocation>
+				<itemSize Sync="TRUE">0.000</itemSize>
+			</itemProps>
+			<coordRef>
+				<type Sync="TRUE">Projected</type>
+				<geogcsn Sync="TRUE">GCS_North_American_1983</geogcsn>
+				<csUnits Sync="TRUE">Linear Unit: Meter (1.000000)</csUnits>
+				<projcsn Sync="TRUE">NAD_1983_UTM_Zone_15N</projcsn>
+				<peXml Sync="TRUE">&lt;ProjectedCoordinateSystem xsi:type='typens:ProjectedCoordinateSystem' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns:xs='http://www.w3.org/2001/XMLSchema' xmlns:typens='http://www.esri.com/schemas/ArcGIS/10.4'&gt;&lt;WKT&gt;PROJCS[&amp;quot;NAD_1983_UTM_Zone_15N&amp;quot;,GEOGCS[&amp;quot;GCS_North_American_1983&amp;quot;,DATUM[&amp;quot;D_North_American_1983&amp;quot;,SPHEROID[&amp;quot;GRS_1980&amp;quot;,6378137.0,298.257222101]],PRIMEM[&amp;quot;Greenwich&amp;quot;,0.0],UNIT[&amp;quot;Degree&amp;quot;,0.0174532925199433]],PROJECTION[&amp;quot;Transverse_Mercator&amp;quot;],PARAMETER[&amp;quot;False_Easting&amp;quot;,500000.0],PARAMETER[&amp;quot;False_Northing&amp;quot;,0.0],PARAMETER[&amp;quot;Central_Meridian&amp;quot;,-93.0],PARAMETER[&amp;quot;Scale_Factor&amp;quot;,0.9996],PARAMETER[&amp;quot;Latitude_Of_Origin&amp;quot;,0.0],UNIT[&amp;quot;Meter&amp;quot;,1.0],AUTHORITY[&amp;quot;EPSG&amp;quot;,26915]]&lt;/WKT&gt;&lt;XOrigin&gt;-5120900&lt;/XOrigin&gt;&lt;YOrigin&gt;-9998100&lt;/YOrigin&gt;&lt;XYScale&gt;450445547.3910538&lt;/XYScale&gt;&lt;ZOrigin&gt;-100000&lt;/ZOrigin&gt;&lt;ZScale&gt;10000&lt;/ZScale&gt;&lt;MOrigin&gt;-100000&lt;/MOrigin&gt;&lt;MScale&gt;10000&lt;/MScale&gt;&lt;XYTolerance&gt;0.001&lt;/XYTolerance&gt;&lt;ZTolerance&gt;0.001&lt;/ZTolerance&gt;&lt;MTolerance&gt;0.001&lt;/MTolerance&gt;&lt;HighPrecision&gt;true&lt;/HighPrecision&gt;&lt;WKID&gt;26915&lt;/WKID&gt;&lt;LatestWKID&gt;26915&lt;/LatestWKID&gt;&lt;/ProjectedCoordinateSystem&gt;</peXml>
+			</coordRef>
+		</DataProperties>
+		<SyncDate>20210907</SyncDate>
+		<SyncTime>23490900</SyncTime>
+		<ModDate>20210907</ModDate>
+		<ModTime>23490900</ModTime>
+	</Esri>
+	<dataIdInfo>
+		<envirDesc Sync="TRUE">Microsoft Windows XP Professional x64 Edition Version 5.2 (Build 3790) Service Pack 2; Esri ArcGIS 10.4.1.5686</envirDesc>
+		<dataLang>
+			<languageCode value="en" Sync="TRUE"/>
+			<countryCode value="US" Sync="TRUE"/>
+		</dataLang>
+		<idCitation>
+			<resTitle Sync="TRUE">Census2020CountiesAndCTUs</resTitle>
+			<presForm>
+				<PresFormCd value="005" Sync="TRUE"/>
+			</presForm>
+		</idCitation>
+		<spatRpType>
+			<SpatRepTypCd value="001" Sync="TRUE"/>
+		</spatRpType>
+	</dataIdInfo>
+	<mdLang>
+		<languageCode value="en" Sync="TRUE"/>
+		<countryCode value="US" Sync="TRUE"/>
+	</mdLang>
+	<distInfo>
+		<distFormat>
+			<formatName Sync="TRUE">Shapefile</formatName>
+		</distFormat>
+		<distTranOps>
+			<transSize Sync="TRUE">0.000</transSize>
+		</distTranOps>
+	</distInfo>
+	<mdHrLv>
+		<ScopeCd value="005" Sync="TRUE"/>
+	</mdHrLv>
+	<mdHrLvName Sync="TRUE">dataset</mdHrLvName>
+	<refSysInfo>
+		<RefSystem>
+			<refSysID>
+				<identCode code="26915" Sync="TRUE"/>
+				<idCodeSpace Sync="TRUE">EPSG</idCodeSpace>
+				<idVersion Sync="TRUE">6.13(3.0.1)</idVersion>
+			</refSysID>
+		</RefSystem>
+	</refSysInfo>
+	<spatRepInfo>
+		<VectSpatRep>
+			<geometObjs Name="Census2020CountiesAndCTUs">
+				<geoObjTyp>
+					<GeoObjTypCd value="002" Sync="TRUE"/>
+				</geoObjTyp>
+				<geoObjCnt Sync="TRUE">0</geoObjCnt>
+			</geometObjs>
+			<topLvl>
+				<TopoLevCd value="001" Sync="TRUE"/>
+			</topLvl>
+		</VectSpatRep>
+	</spatRepInfo>
+	<spdoinfo>
+		<ptvctinf>
+			<esriterm Name="Census2020CountiesAndCTUs">
+				<efeatyp Sync="TRUE">Simple</efeatyp>
+				<efeageom code="4" Sync="TRUE"/>
+				<esritopo Sync="TRUE">FALSE</esritopo>
+				<efeacnt Sync="TRUE">0</efeacnt>
+				<spindex Sync="TRUE">FALSE</spindex>
+				<linrefer Sync="TRUE">FALSE</linrefer>
+			</esriterm>
+		</ptvctinf>
+	</spdoinfo>
+	<eainfo>
+		<detailed Name="Census2020CountiesAndCTUs">
+			<enttyp>
+				<enttypl Sync="TRUE">Census2020CountiesAndCTUs</enttypl>
+				<enttypt Sync="TRUE">Feature Class</enttypt>
+				<enttypc Sync="TRUE">0</enttypc>
+			</enttyp>
+			<attr>
+				<attrlabl Sync="TRUE">FID</attrlabl>
+				<attalias Sync="TRUE">FID</attalias>
+				<attrtype Sync="TRUE">OID</attrtype>
+				<attwidth Sync="TRUE">4</attwidth>
+				<atprecis Sync="TRUE">0</atprecis>
+				<attscale Sync="TRUE">0</attscale>
+				<attrdef Sync="TRUE">Internal feature number.</attrdef>
+				<attrdefs Sync="TRUE">Esri</attrdefs>
+				<attrdomv>
+					<udom Sync="TRUE">Sequential unique whole numbers that are automatically generated.</udom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl Sync="TRUE">Shape</attrlabl>
+				<attalias Sync="TRUE">Shape</attalias>
+				<attrtype Sync="TRUE">Geometry</attrtype>
+				<attwidth Sync="TRUE">0</attwidth>
+				<atprecis Sync="TRUE">0</atprecis>
+				<attscale Sync="TRUE">0</attscale>
+				<attrdef Sync="TRUE">Feature geometry.</attrdef>
+				<attrdefs Sync="TRUE">Esri</attrdefs>
+				<attrdomv>
+					<udom Sync="TRUE">Coordinates defining the features.</udom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl Sync="TRUE">COCTU_ID</attrlabl>
+				<attalias Sync="TRUE">COCTU_ID</attalias>
+				<attrtype Sync="TRUE">String</attrtype>
+				<attwidth Sync="TRUE">11</attwidth>
+				<atprecis Sync="TRUE">0</atprecis>
+				<attscale Sync="TRUE">0</attscale>
+			</attr>
+			<attr>
+				<attrlabl Sync="TRUE">COCTU_CODE</attrlabl>
+				<attalias Sync="TRUE">COCTU_CODE</attalias>
+				<attrtype Sync="TRUE">String</attrtype>
+				<attwidth Sync="TRUE">8</attwidth>
+				<atprecis Sync="TRUE">0</atprecis>
+				<attscale Sync="TRUE">0</attscale>
+			</attr>
+			<attr>
+				<attrlabl Sync="TRUE">COCTU_DESC</attrlabl>
+				<attalias Sync="TRUE">COCTU_DESC</attalias>
+				<attrtype Sync="TRUE">String</attrtype>
+				<attwidth Sync="TRUE">40</attwidth>
+				<atprecis Sync="TRUE">0</atprecis>
+				<attscale Sync="TRUE">0</attscale>
+			</attr>
+			<attr>
+				<attrlabl Sync="TRUE">CO_CODE</attrlabl>
+				<attalias Sync="TRUE">CO_CODE</attalias>
+				<attrtype Sync="TRUE">String</attrtype>
+				<attwidth Sync="TRUE">3</attwidth>
+				<atprecis Sync="TRUE">0</atprecis>
+				<attscale Sync="TRUE">0</attscale>
+			</attr>
+			<attr>
+				<attrlabl Sync="TRUE">CO_NAME</attrlabl>
+				<attalias Sync="TRUE">CO_NAME</attalias>
+				<attrtype Sync="TRUE">String</attrtype>
+				<attwidth Sync="TRUE">24</attwidth>
+				<atprecis Sync="TRUE">0</atprecis>
+				<attscale Sync="TRUE">0</attscale>
+			</attr>
+			<attr>
+				<attrlabl Sync="TRUE">CTU_ID</attrlabl>
+				<attalias Sync="TRUE">CTU_ID</attalias>
+				<attrtype Sync="TRUE">Integer</attrtype>
+				<attwidth Sync="TRUE">10</attwidth>
+				<atprecis Sync="TRUE">10</atprecis>
+				<attscale Sync="TRUE">0</attscale>
+			</attr>
+			<attr>
+				<attrlabl Sync="TRUE">CTU_ID_CEN</attrlabl>
+				<attalias Sync="TRUE">CTU_ID_CEN</attalias>
+				<attrtype Sync="TRUE">String</attrtype>
+				<attwidth Sync="TRUE">8</attwidth>
+				<atprecis Sync="TRUE">0</atprecis>
+				<attscale Sync="TRUE">0</attscale>
+			</attr>
+			<attr>
+				<attrlabl Sync="TRUE">CTU_CODE</attrlabl>
+				<attalias Sync="TRUE">CTU_CODE</attalias>
+				<attrtype Sync="TRUE">String</attrtype>
+				<attwidth Sync="TRUE">5</attwidth>
+				<atprecis Sync="TRUE">0</atprecis>
+				<attscale Sync="TRUE">0</attscale>
+			</attr>
+			<attr>
+				<attrlabl Sync="TRUE">CTU_NAME</attrlabl>
+				<attalias Sync="TRUE">CTU_NAME</attalias>
+				<attrtype Sync="TRUE">String</attrtype>
+				<attwidth Sync="TRUE">24</attwidth>
+				<atprecis Sync="TRUE">0</atprecis>
+				<attscale Sync="TRUE">0</attscale>
+			</attr>
+			<attr>
+				<attrlabl Sync="TRUE">COMCD_CENS</attrlabl>
+				<attalias Sync="TRUE">COMCD_CENS</attalias>
+				<attrtype Sync="TRUE">Integer</attrtype>
+				<attwidth Sync="TRUE">10</attwidth>
+				<atprecis Sync="TRUE">10</atprecis>
+				<attscale Sync="TRUE">0</attscale>
+			</attr>
+			<attr>
+				<attrlabl Sync="TRUE">Shape_Leng</attrlabl>
+				<attalias Sync="TRUE">Shape_Leng</attalias>
+				<attrtype Sync="TRUE">Double</attrtype>
+				<attwidth Sync="TRUE">19</attwidth>
+				<atprecis Sync="TRUE">0</atprecis>
+				<attscale Sync="TRUE">0</attscale>
+			</attr>
+			<attr>
+				<attrlabl Sync="TRUE">Shape_Area</attrlabl>
+				<attalias Sync="TRUE">Shape_Area</attalias>
+				<attrtype Sync="TRUE">Double</attrtype>
+				<attwidth Sync="TRUE">19</attwidth>
+				<atprecis Sync="TRUE">0</atprecis>
+				<attscale Sync="TRUE">0</attscale>
+				<attrdef Sync="TRUE">Area of feature in internal units squared.</attrdef>
+				<attrdefs Sync="TRUE">Esri</attrdefs>
+				<attrdomv>
+					<udom Sync="TRUE">Positive real numbers that are automatically generated.</udom>
+				</attrdomv>
+			</attr>
+		</detailed>
+	</eainfo>
+	<mdDateSt Sync="TRUE">20210907</mdDateSt>
+</metadata>

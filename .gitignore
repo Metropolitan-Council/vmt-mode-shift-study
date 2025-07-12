@@ -1,3 +1,6 @@
+# Custom for VMT reduction project
+src/analysis_tool/output/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -133,9 +136,26 @@ README.html
 
 # data files
 *.csv
+!config.csv
+!USW00014922.csv
 
 # Quarto output files
 reports/**/*.html
+!feasibility_analysis_cleaned.html
 reports/**/*_cache
 reports/**/*_files
 
+.vscode
+/.luarc.json
+src/analysis_tool/temp.ipynb
+src/analysis_tool/data/tbi_anonymous.parquet
+
+src/routing/Manifest.toml
+
+cmake_troubleshooting.sh
+
+src/routing/OSM/
+
+src/routing/analysis-area.osm.pbf
+
+src/routing/streetlight_data.db

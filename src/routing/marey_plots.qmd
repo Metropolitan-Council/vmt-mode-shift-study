@@ -1,0 +1,153 @@
+---
+title: Marey plots
+author: Matt Bhagat-Conway
+---
+
+As we discussed last week, I've generated transit routes with three hours of flexibility around the requested departure/arrival time. This gives us a _lot_ more data for each trip. Here I take a look at some of these.
+
+```{julia}
+using DataFrames, GeoDataFrames, CSV, DataFramesMeta, StatsBase, Plots, Dates, ColorSchemes, StatsPlots, Tyler, CairoMakie, ArchGDAL
+
+const TBI_DIR = "/mnt/c/Users/mwbc/University of Kentucky/VMT Reduction Mode Shift - General/Data_Processed"
+const DATA_DIR = "/home/mwbc/vmt-output"
+```
+
+```{julia}
+tbi = CSV.read(joinpath(TBI_DIR, "tbi_cleaned.csv"), DataFrame);
+```
+
+```{julia}
+transit_trips = GeoDataFrames.read(joinpath(DATA_DIR, "transit_flexibility_10k.parquet"));
+```
+
+## How many trips does the average transit trip request have?
+
+This is only among trips that routed successfully.
+
+```{julia}
+@chain transit_trips begin
+    groupby(:trip_id)
+    combine(nrow=>:n)
+    median(_.n)
+    "$(_) total trips ($(360/_) minute average frequency)"
+end
+```
+
+## Check some example trips
+
+```{julia}
+function single_trips(legs)
+    # format this into a form we can use - just the start and end time for each option,
+    # and the sequence of routes
+    @chain legs begin
+        groupby(:option_index)
+        @combine(:start_time=Time(first(:start_time)), :end_time=Time(last(:end_time)), :route_seq=join(skipmissing(coalesce.(:route_short_name, :route_long_name)), ", "))
+    end
+end
+
+function mareyplot(legs)
+    # find the trip in the TBI
+    tbi_trip = tbi[tbi.trip_id .== first(legs.trip_id), :]
+    @assert nrow(tbi_trip) == 1
+
+    arrive_by = tbi_trip[1, :d_purpose_category] == "Work"
+    time = tbi_trip[1, arrive_by ? :arrive_time : :depart_time]
+
+    plot(legend=:outerbottomright, xlabel="Hours from requested $(arrive_by ? "arrival" : "departure")")
+
+    plot_data = single_trips(legs)
+
+    colors = Dict{String, RGB{Float64}}()
+
+    for trip in eachrow(plot_data)
+        include_in_legend = !haskey(colors, trip.route_seq)
+        if include_in_legend
+            colors[trip.route_seq] = ColorSchemes.tab20[length(colors) % 20 + 1]
+        end
+        
+        plot!([Dates.value(Second(trip.start_time - time)) / 3600, Dates.value(Second(trip.end_time - time)) / 3600], [0, 1], color=colors[trip.route_seq], label=include_in_legend ? trip.route_seq : nothing)
+    end
+
+    plot!(yticks=[0, 1], yformatter=x->["Departure", "Arrival"][round(Int64, x) + 1])
+end
+```
+
+
+```{julia}
+mareyplot(transit_trips[transit_trips.trip_id .== first(transit_trips.trip_id), :])
+```
+
+```{julia}
+mareyplot(transit_trips[transit_trips.trip_id .== "[1811424402035, 1811424402036, 1811424402037, 1811424402038]", :])
+```
+
+```{julia}
+function print_trips(legs)
+    @chain legs begin
+        @subset :leg_type .== "TransitRouter.transit"
+        @eachrow!(begin
+            @newcol :text::Vector{String}
+            :text = "$(:origin_stop_name)@$(Time(:start_time)) -> $(:destination_stop_name)@$(Time(:end_time)) via $(coalesce(:route_short_name, :route_long_name))"
+        end)
+        groupby(:option_index)
+        @combine(:text = join(:text, ", "))
+        println(join(_.text, "\n"))
+    end
+end
+```
+
+```{julia}
+print_trips(transit_trips[transit_trips.trip_id .== "[1811424402035, 1811424402036, 1811424402037, 1811424402038]", :])
+```
+
+```{julia}
+function option_frequencies(legs)
+    trips = single_trips(legs)
+
+    headway = []
+    routeseq = []
+
+    for group in groupby(trips, :route_seq)
+        group = sort(group, :start_time)
+        headways = Dates.value.(Second.(group.start_time[begin + 1:end] .- group.start_time[begin:end - 1]))
+        push!.(Ref(headway), headways)
+        push!.(Ref(routeseq), [first(group.route_seq) for _ in headways])
+
+        # Handle trips that only come once
+        if nrow(group) == 1
+            push!(headway, 0)
+            push!(routeseq, first(group.route_seq))
+        end
+    end
+
+    StatsPlots.boxplot(routeseq, headway ./ 60, legend=false, xlabel="Option", ylabel="Headway (minutes)")
+end
+
+option_frequencies(transit_trips[transit_trips.trip_id .== "[1811424402035, 1811424402036, 1811424402037, 1811424402038]", :])
+```
+
+
+```{julia}
+function both_plots(trip_id=nothing)
+    while trip_id == nothing
+        new_trip_id = rand(tbi.trip_id) # use tbi so longer trips are not overselected
+        if new_trip_id ∈ transit_trips.trip_id
+            trip_id = new_trip_id
+        end
+    end
+
+    println(trip_id)
+
+    legs = transit_trips[transit_trips.trip_id .== trip_id, :]
+
+    freq = option_frequencies(legs)
+    marey = mareyplot(legs)
+
+    plot(freq, marey, layout=(2, 1), size=(800, 800))
+end
+```
+
+```{julia}
+both_plots("[1811424402035, 1811424402036, 1811424402037, 1811424402038]")
+```
+
