@@ -7,7 +7,7 @@ Further details and study conclusions available on [metrocouncil.org](https://me
 
 Presentations and reports
 
-|     |  |
+| Item     | Link |
 | -------- | ------- |
 | Final PDF report | [link](./VMT%20Reduction%20Mode%20Shift%20Final%20Report.pdf)     |
 | Presentation to Transportation Policy Plan Advisory Workgroup, 12/16/2022 | [link](https://metrocouncil.org/Council-Meetings/Work-Groups/TPP-Advisory-Work-Group/2022/2022-12-16-TPP-Advisory-Work-Group-Meeting/2022-12-16-TPP-AWG-Presentation-VMT-Reduction-Mode.aspx) |
@@ -27,9 +27,9 @@ Further details are available in READMEs within each subfolder.
 * `data_viz` A tool to visualize individual routes and check them for reasonableness.
 * `reports` Several reports documenting the process. 
 
-
+<br>
 <details>
-<summary>Installation instructions</summary>
+<summary>Notebook and environment instructions</summary>
 
 The files here are mostly jupyter notebooks running python.  The installed packages used for development are stored in environment.yml.  You can use `conda` to set up the environment with the right installs:
 
