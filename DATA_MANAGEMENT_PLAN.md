@@ -26,7 +26,7 @@ Unless there is a specific concern with respect to revealing personally identifi
 
 The code, as well as associated documentation and reports, used in this study will be checked-into the project's Github repository.  When working on an intermediate step, users should create a new branch.  When that intermediate step is complete, the user will create a pull request into the main branch, and request review from Council staff.  Upon successful review, and after any necessary changes, that branch will be merged into the main branch.  
 
-The repository should not be used to store data.  Instead, data should be shared on the shared network drive--the Microsoft Teams folder hosted by the University of Kentucky.  This prevents large files from overwhelming the changes in git.  
+The repository should not be used to store data.  Instead, data should be shared on the shared network drive--the Microsoft OneDrive folder hosted by the University of Kentucky.  This prevents large files from overwhelming the changes in git.  
 
 Care should be taken to avoid committing any PII to the repository.  This includes any exploratory results that may be reported in a Jupyter notebook.  To accomplish this, the .gitignore file should ensure that .csv or other data file formats are specifically ignored by git.  In addition, users should clear any notebook cells before checking them in.  
 
