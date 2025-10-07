@@ -1,4 +1,4 @@
-FROM condaforge/mambaforge AS build
+FROM condaforge/mambaforge:24.9.2-0 AS build
 
     COPY linux_environment.yml environment.yml
     RUN mamba env create -f environment.yml
