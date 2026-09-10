@@ -32,27 +32,28 @@ Further details are available in READMEs within each subfolder.
 <summary>Notebook and environment instructions</summary>
 
 The files here are mostly jupyter notebooks running python.  The installed packages used for development are stored in environment.yml.  You can use `conda` to set up the environment with the right installs:
-
-	conda env create --file environment.yml
+```sh
+conda env create --file environment.yml
+```
 
 Then to activate the environment:
 
-	conda activate vmtmodeenv
+```sh
+conda activate vmtmodeenv
+```
+If you have difficulties solving packages on macOS, try using the Mac-specific environment. You may also need to finesse the environment.yml file to resolve any conflicts.
 
-If you have difficulties solving packages on macOS, try using the Mac-specific environment. You may also need to finesse the 
-
-	conda env create --file mac-environment.yml
-	conda activate vmtmodeenv
-
-After installing, if you are on a mac, we need to manually install jupyter notebook:
-
-	pip install notebook
+```sh
+conda env create --file mac-environment.yml
+conda activate vmtmodeenv
+```
 
 After installing the packages, you'll use keyring to set the main directory on our shared drive. See contact information below to get data access. 
 
-	import keyring
-	keyring.set_password("msp", "vmt_reduction_dir", <directory>)
-
+```python
+import keyring
+keyring.set_password("msp", "vmt_reduction_dir", <directory>)
+```
 </details>
 
 ## Data Management  
