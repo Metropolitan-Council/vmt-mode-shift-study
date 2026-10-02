@@ -24,6 +24,9 @@ dependencies:
   - jupyter_core
   - pyarrow=11.0.0
   - timezonefinder=6.5.3
+  - ipywidgets=8.1.0
+  - geoplot=0.5.1
+  - plotly=7.0.0
   - tqdm=4.66.5
   - pip
   - pip:
