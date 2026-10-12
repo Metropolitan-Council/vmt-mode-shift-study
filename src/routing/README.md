@@ -1,19 +1,76 @@
 # Routing readme
 
-The scripts `route_street.jl` and `route_transit.jl` perform routing on the TBI data. Getting ready to run them can be a bit tricky, however. First, you need to have OSRM built and installed (see instructions [on the OSRM github](https://github.com/Project-OSRM/osrm-backend#building-from-source)). I  have had no luck installing OSRM on Windows; if you're using Windows, consider using Windows Subsystem for Linux (WSL) for routing. For now, you should install from the `process-segment-flags` branch of `mattwigway/osrm-backend`, but the changes in that branch currently have a pull request to be incorporated back into the main OSRM repository.
+The scripts `route_street.jl` and `route_transit.jl` perform routing on the TBI data. First, build OSRM using the vcpkg instructions in [install-orsm-backend.md](../../install-orsm-backend.md). The commands below assume the OSRM build directory is `osrm-backend/build-vcpkg`; adjust `OSRM_BUILD_DIR` if you used a different name.
 
-Then, you need to install the C++ shim library to allow Julia to communicate with OSRM. To do that, clone the [OSRM.jl](https://github.com/mattwigway/OSRM.jl) Github repository, and within the `cxx/build` directory, run:
+<!-- I  have had no luck installing OSRM on Windows; if you're using Windows, consider using Windows Subsystem for Linux (WSL) for routing. For now, you should install from the `process-segment-flags` branch of `mattwigway/osrm-backend`, but the changes in that branch currently have a pull request to be incorporated back into the main OSRM repository. -->
 
-    cmake ..
-    cmake --build .
-    sudo cmake --build . --target install
+Then install OSRM and build the C++ shim that allows Julia to communicate with it. Run these commands from the project root, with `VCPKG_ROOT` pointing to your vcpkg installation:
 
-The difficult part is now over; you just need to install the Julia packages needed for routing. This can be done by running `julia --project` in this directory, and then typing `]instantiate` to install the dependencies.
+The shim requires Boost.Filesystem. It is listed in this checkout's OSRM vcpkg manifest so it uses the same pinned Boost version as the other OSRM dependencies; reconfigure and rebuild OSRM after adding it rather than installing the port separately.
 
-If you have difficulty with your registry, install Matt's Public Julia Registry
+The current OSRM.jl shim CMake file also needs to link LibArchive, which is used by OSRM's headers. In `OSRM.jl/cxx/CMakeLists.txt`, add `find_package(LibArchive REQUIRED)` after `find_package(LibOSRM REQUIRED)`, then add `LibArchive::LibArchive` to the `target_link_libraries(osrmjl ...)` call.
 
-    ]registry add https://github.com/mattwigway/PublicJuliaRegistry.git
-    ]add OSM
+```zsh
+
+brew install cmake ninja pkg-config autoconf automake libtool curl zip unzip
+git clone https://github.com/microsoft/vcpkg.git ~/vcpkg
+~/vcpkg/bootstrap-vcpkg.sh -disableMetrics
+export VCPKG_ROOT="$HOME/vcpkg"
+
+```
+
+Additional changes made to `OSRM.jl/cxx/CMakeLists.txt` to link LibArchive.
+
+```
+find_package(LibOSRM REQUIRED)
+find_package(LibArchive REQUIRED)
+# https://stackoverflow.com/questions/1065672
+find_package(Boost COMPONENTS system filesystem REQUIRED)
+```
+
+Changes made to osrm-backend/vcpkg.json
+```
+{
+  "dependencies": {
+    "boost-filesystem",
+  }
+}
+```
+
+```zsh
+export VCPKG_ROOT="$HOME/vcpkg"
+export OSRM_BUILD_DIR="$PWD/osrm-backend/build-vcpkg"
+export VCPKG_INSTALLED_DIR="$OSRM_BUILD_DIR/vcpkg_installed"
+cmake -S "$PWD/osrm-backend" -B "$OSRM_BUILD_DIR" -G Ninja \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" \
+    -DVCPKG_TARGET_TRIPLET=arm64-osx
+cmake --build "$OSRM_BUILD_DIR" --parallel
+sudo cmake --install "$OSRM_BUILD_DIR"
+export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+
+git clone https://github.com/mattwigway/OSRM.jl.git
+cd OSRM.jl
+cmake -S cxx -B cxx/build-vcpkg \
+    -DCMAKE_TOOLCHAIN_FILE:FILEPATH="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" \
+    -DVCPKG_MANIFEST_MODE=OFF \
+    -DVCPKG_INSTALLED_DIR:PATH="$VCPKG_INSTALLED_DIR" \
+    -DVCPKG_TARGET_TRIPLET=arm64-osx \
+    -DCMAKE_PREFIX_PATH="$VCPKG_INSTALLED_DIR/arm64-osx" \
+    -DBoost_DIR="$VCPKG_INSTALLED_DIR/arm64-osx/share/boost"
+cmake --build cxx/build-vcpkg --parallel
+sudo cmake --install cxx/build-vcpkg
+cd ..
+cd src/routing
+```
+
+Install the Julia packages from `src/routing` by running `julia --project` and entering these commands at the Julia package prompt. General provides packages such as CSV; the public registry provides OSRM.jl:
+
+```julia-repl
+]registry add General
+]registry add https://github.com/mattwigway/PublicJuliaRegistry.git
+]instantiate
+```
 
 ## Building the network
 
