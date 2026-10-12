@@ -159,3 +159,7 @@ src/routing/OSM/
 src/routing/analysis-area.osm.pbf
 
 src/routing/streetlight_data.db
+
+OSRM.jl
+
+osrm-backend
