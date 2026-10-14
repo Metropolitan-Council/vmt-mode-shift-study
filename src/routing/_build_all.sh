@@ -10,7 +10,7 @@ OSM_FILE="${OSM_FILE:-$NETWORK_DIR/analysis-area.osm.pbf}"
 SPEED_DATABASE="${SPEED_DATABASE:-$SCRIPT_DIR/streetlight_data.db}"
 ELEVATION_FILE="${ELEVATION_FILE:-$HOME/Documents/uky_vmt_study/VMT Reduction Mode Shift - General/2-Re-Routing Analysis/Elevation/final.asc}"
 SPEED_CAP_DATABASE="${SPEED_CAP_DATABASE:-$NETWORK_DIR/speed_cap_database.db}"
-# MINNEAPOLIS_2040_GPKG="${MINNEAPOLIS_2040_GPKG:-$HOME/Documents/uky_vmt_study/VMT Reduction Mode Shift - General/Data/GIS/fgdb_society_thrive_msp2040_com_des/society_thrive_msp2040_com_des.gpkg}"
+MINNEAPOLIS_2040_GPKG="${MINNEAPOLIS_2040_GPKG:-$HOME/Documents/uky_vmt_study/VMT Reduction Mode Shift - General/Data/GIS/fgdb_society_thrive_msp2040_com_des/society_thrive_msp2040_com_des.gpkg}"
 GTFS_FILE_1="${GTFS_FILE_1:-$HOME/Documents/uky_vmt_study/VMT Reduction Mode Shift - General/2-Re-Routing Analysis/GTFS/metro_transit_20230120.zip}"
 GTFS_FILE_2="${GTFS_FILE_2:-$HOME/Documents/uky_vmt_study/VMT Reduction Mode Shift - General/2-Re-Routing Analysis/GTFS/mvta-transitfeeds_com-20190903.zip}"
 
@@ -42,11 +42,11 @@ fi
 
 eval "$(luarocks path)"
 
-# if [[ ! -f "$SPEED_CAP_DATABASE" ]]; then
-#   printf '\nBuilding speed-cap database from %s\n' "$MINNEAPOLIS_2040_GPKG"
-#   julia --project="$SCRIPT_DIR" "$SCRIPT_DIR/car_speed_scenario/area_for_way.jl" \
-#     "$OSM_FILE" "$MINNEAPOLIS_2040_GPKG" "$SPEED_CAP_DATABASE"
-# fi
+if [[ ! -f "$SPEED_CAP_DATABASE" ]]; then
+  printf '\nBuilding speed-cap database from %s\n' "$MINNEAPOLIS_2040_GPKG"
+  julia --project="$SCRIPT_DIR" "$SCRIPT_DIR/car_speed_scenario/area_for_way.jl" \
+    "$OSM_FILE" "$MINNEAPOLIS_2040_GPKG" "$SPEED_CAP_DATABASE"
+fi
 
 run_builder() {
   local builder="$1"
@@ -66,7 +66,6 @@ run_builder build_bicycle_baseline_network.sh "$OSM_FILE" "$NETWORK_DIR"
 run_builder build_bicycle_ebike_network.sh "$OSM_FILE" "$NETWORK_DIR"
 run_builder build_bicycle_all_lts1_network.sh "$OSM_FILE" "$NETWORK_DIR"
 run_builder build_car_baseline_networks.sh "$OSM_FILE" "$NETWORK_DIR"
-run_builder build_car_speed_scenario_networks.sh "$OSM_FILE" "$NETWORK_DIR" "$SPEED_CAP_DATABASE"
 
 run_builder build_transit_network.sh \
   --osrm-network "$NETWORK_DIR/walk-baseline/walk-baseline.osrm" \
