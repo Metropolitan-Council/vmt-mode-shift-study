@@ -163,3 +163,5 @@ src/routing/streetlight_data.db
 OSRM.jl
 
 osrm-backend
+
+*.quarto_ipynb_1
