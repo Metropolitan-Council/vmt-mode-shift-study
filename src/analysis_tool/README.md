@@ -1,5 +1,14 @@
 # VMT Mode Shift Analysis Tool
 
+This tool provides an interactive interface for analyzing vehicle miles traveled (VMT) mode shift scenarios based on user-input thresholds, or default values. 
+
+To run the streamlit app, 
+
+```bash
+cd src/analysis_tool
+streamlit run main.py
+```
+
 ## Setup
 
 To get this tool up and running on your machine, there are three main options:
