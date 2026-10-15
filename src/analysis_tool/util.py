@@ -105,6 +105,9 @@ def stacked_shift_histogram(df: pd.DataFrame, mode: Mode, mode_duration: str, mo
     Returns:
         go.Figure: The plotly stacked shift histogram (pre-formatted)
     """
+    # callers may pass a filtered slice, so build temp columns on a narrow copy
+    df = df[["mode", mode_duration, "car_duration_seconds_adj", mode_feasible_field, "person_trips"]].copy()
+    
     # create temp columns for duration difference & categories (mode trips, drive shifts that can shift, and drive shifts that can't)
     df.loc[:, "curr"] = (df[mode_duration] - df["car_duration_seconds_adj"] / 60)
     df.loc[:, "Category"] = "na"
@@ -157,6 +160,7 @@ def stacked_shift_histogram(df: pd.DataFrame, mode: Mode, mode_duration: str, mo
     )
     
     fig.update_xaxes(tick0=-15, dtick=15, tickfont=dict(size=16), showgrid=True)
+    fig.add_vline(x=15, line_dash="dash", line_color="black", annotation_text="+15 min", annotation_position="top right")
     fig.update_yaxes(tickfont=dict(size=16))
     
     # return figure
@@ -223,6 +227,7 @@ def total_shift_histogram(df: pd.DataFrame, phase: Phase) -> go.Figure:
     )
     
     fig.update_xaxes(tick0=-15, dtick=15, tickfont=dict(size=16), showgrid=True, zeroline=True)
+    fig.add_vline(x=15, line_dash="dash", line_color="black", annotation_text="+15 min", annotation_position="top right")
     fig.update_yaxes(tickfont=dict(size=16), showgrid=True, zeroline=True)
     
     # return figure
@@ -272,6 +277,8 @@ def get_duration_diff_df(df: pd.DataFrame, mode: Mode, mode_shift_col: str, mode
     """
     # create initial table
     res = pd.DataFrame(index=[r"% of Car Trips", r"% of VMT"])
+    # callers may pass a filtered slice, so build temp columns on a narrow copy
+    df = df[["mode", mode_shift_col, mode_duration, "car_duration_seconds_adj", "vehicle_trips", "vmt"]].copy()
     # calculate duration difference in temp column
     df.loc[:, "curr"] = (df[mode_duration] - df["car_duration_seconds_adj"] / 60).abs()
     
