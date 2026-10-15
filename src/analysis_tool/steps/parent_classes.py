@@ -109,13 +109,14 @@ class BaseStep:
         communities[f"Proportion of people that can shift {'feasibly' if self.overall_step == Phase.FEASIBLE else 'with likelihood'}"] = values
         
         # EPSG 4326; create choropleth
-        fig = px.choropleth_mapbox(communities, 
+        fig = px.choropleth_map(communities, 
                             geojson=communities.geometry, 
                             locations=communities.index, 
                             color=f"Proportion of people that can shift {'feasibly' if st.session_state.phase == Phase.FEASIBLE else 'with likelihood'}", color_continuous_scale="viridis_r", 
                             range_color=(0, 1),
-                            mapbox_style="carto-positron",
+                            map_style="carto-positron",
                             center={"lat": 44.9778, "lon": -93.2650},
+                            zoom=7.5,
                             opacity=0.8
         )
         
@@ -123,9 +124,10 @@ class BaseStep:
         fig.update_layout(margin=dict(l=0, r=0, b=0, t=40),
                   title=dict(
                       text="Choropleth of proportion of people that can shift from car for this criteria",
-                      x=0.5,
+                      x=0,
                       y=0.98,
-                      xanchor='center',
+                      yanchor='top',
+                      xanchor='left',
                       font=dict(size=18)
                   ),
                   width=900, 
@@ -134,6 +136,9 @@ class BaseStep:
         
         # zoom in accordingly
         fig.update_geos(fitbounds="locations", visible=False)
+        fig.update_coloraxes(colorbar_title_text=f"Percent of<br>people that<br>can shift<br>{'feasibly' if self.overall_step == Phase.FEASIBLE else 'with likelihood'}")
+        fig.update_traces(hovertemplate="<b>%{location}</b><br>Can shift: %{z:.1%}<extra></extra>")
+        fig.update_layout(hoverlabel=dict(font=dict(size=18)))
         
         return fig
     
@@ -247,7 +252,7 @@ class BaseStep:
         if type(fig) == tuple:  # normal matplotlib fig, ax
             slots[0].pyplot(fig[0])
         else:  # plotly chart
-            slots[0].plotly_chart(fig)
+            slots[0].plotly_chart(fig.update_layout(hoverlabel=dict(font=dict(size=18))))
             
         slots[1].markdown(self.get_summary_statistics().to_html(escape=False) + "<br>", unsafe_allow_html=True)
         slots[2].plotly_chart(self.get_map())

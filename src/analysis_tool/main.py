@@ -55,7 +55,7 @@ def run_all(phase: Phase) -> None:
             
     # toggle summary screen and refresh streamlit
     st.session_state["summary_screen"] = True
-    st.experimental_rerun()
+    st.rerun()
         
 def start_screen_feasible() -> None:
     """
@@ -91,7 +91,7 @@ def start_screen_feasible() -> None:
         if "phase" not in st.session_state or st.session_state.phase != Phase.FEASIBLE:
             setup_vars(Phase.FEASIBLE)
         st.session_state.start_screen_feasible = False
-        st.experimental_rerun()
+        st.rerun()
     
     # begin visualization with all steps selected by default
     if st.sidebar.button("Begin with all steps selected"):
@@ -104,7 +104,7 @@ def start_screen_feasible() -> None:
         if "phase" not in st.session_state or st.session_state.phase != Phase.FEASIBLE:
             setup_vars(Phase.FEASIBLE)
         st.session_state.start_screen_feasible = False
-        st.experimental_rerun()
+        st.rerun()
         
     # run all selected steps automatically
     if st.sidebar.button("Run all selected steps"):
@@ -168,7 +168,7 @@ def start_screen_probable() -> None:
         if "phase" not in st.session_state or st.session_state.phase != Phase.PROBABLE:
             setup_vars(Phase.PROBABLE)
         st.session_state.start_screen_probable = False
-        st.experimental_rerun()
+        st.rerun()
         
     # begin with all steps selected; set probable steps to all probable steps & toggle off this start screen & refresh
     if st.sidebar.button("Begin with all steps selected"):
@@ -178,7 +178,7 @@ def start_screen_probable() -> None:
         if "phase" not in st.session_state or st.session_state.phase != Phase.PROBABLE:
             setup_vars(Phase.PROBABLE)
         st.session_state.start_screen_probable = False
-        st.experimental_rerun()
+        st.rerun()
         
     # run through all selected steps automatically
     if st.sidebar.button("Run all selected steps"):
@@ -309,7 +309,7 @@ def final_summary() -> None:
             logging.info("Moving to probable step")
             st.session_state.summary_screen = False
             st.session_state.start_screen_probable = True
-            st.experimental_rerun()
+            st.rerun()
     
     # save reference to underlying df for ease of typing
     df: pd.DataFrame = st.session_state.df
@@ -324,7 +324,7 @@ def final_summary() -> None:
             st.session_state.start_screen_feasible = True
         elif st.session_state.phase == Phase.PROBABLE:
             st.session_state.start_screen_probable = True
-        st.experimental_rerun()
+        st.rerun()
         
     # currently not supported to go back all the way--can just refresh to do so
     if st.sidebar.button("Start visualization tool from beginning", disabled=True):
@@ -555,14 +555,15 @@ def final_summary() -> None:
     
     # create a choropleth mapbox using this (use mapbox since this allows for the desired projection)
     bigger_markdown(f"This map shows the percent of vehicle trips in each community region that can {adjective} shift to any alternative non-car mode.")
-    fig2 = px.choropleth_mapbox(communities, 
+    fig2 = px.choropleth_map(communities, 
                          geojson=communities.geometry, 
                          locations=communities.index, 
                          color=f"Percent of vehicle trips that can shift {adjective}", 
                          range_color=(0, 1), 
                          color_continuous_scale="viridis_r",
-                         mapbox_style="carto-positron",
+                         map_style="carto-positron",
                          center={"lat": 44.9778, "lon": -93.2650},
+                         zoom=7.5,
                          opacity=0.8,
     )
     fig2.update_layout(margin=dict(l=0, r=0, b=0, t=40),
@@ -570,15 +571,18 @@ def final_summary() -> None:
                 height=500,
                 title=dict(
                     text=f"Percent of vehicle trips in that can shift {adjective} to any non-car mode",
-                    x=0.4,
+                    x=0,
                     y=0.98,
-                    xanchor="center",
+                    yanchor="top",
+                    xanchor="left",
                     font=dict(size=18)
                 ), 
                 legend=dict(font=dict(size=16))
     )
-    fig2.update_coloraxes(colorbar_title=dict(font=dict(size=16)), colorbar_tickfont=dict(size=16), colorbar_tickformat='0%')
+    fig2.update_coloraxes(colorbar_title=dict(text=f"Percent of<br>vehicle trips<br>that can shift<br>{adjective}", font=dict(size=16)), colorbar_tickfont=dict(size=16), colorbar_tickformat='0%')
     fig2.update_geos(fitbounds="locations", visible=False)
+    fig2.update_traces(hovertemplate=f"<b>%{{location}}</b><br>Can shift {adjective}: %{{z:.1%}}<extra></extra>")
+    fig2.update_layout(hoverlabel=dict(font=dict(size=18)))
     st.plotly_chart(fig2)
     
     # map of % of trips in each community regino that can shift competitively when considering the fastest alternative mode
@@ -594,30 +598,35 @@ def final_summary() -> None:
     
     # create the choropleth mapbox
     bigger_markdown(f"This map shows the percent of vehicle trips in each community region that can competitively shift (maximum bidirectional difference of 15 minutes) to the fastest alternative non-car mode.")
-    fig3 = px.choropleth_mapbox(communities, 
+    
+    fig3 = px.choropleth_map(communities, 
                          geojson=communities.geometry, 
                          locations=communities.index, 
                          color=f"Percent of vehicle trips that can shift {adjective}",
                          color_continuous_scale="viridis_r", 
                          range_color=(0, 1),
-                         mapbox_style="carto-positron",
+                         map_style="carto-positron",
                          center={"lat": 44.9778, "lon": -93.2650},
+                         zoom=7.5,
                          opacity=0.8
     )
-    fig3.update_layout(margin=dict(l=0, r=0, b=0, t=40),
+    fig3.update_layout(margin=dict(l=0, r=0, b=0, t=70),
                 title=dict(
-                    text="Proportion of vehicle trips in CTUs that can competitively shift to a non-car mode",
+                    text="Percent of vehicle trips in CTUs that can competitively shift to a non-car mode",
                     font=dict(size=18),
-                    x=0.4,
+                    x=0,
                     y=0.98,
-                    xanchor="center"
+                    yanchor="top",
+                    xanchor="left"
                 ),
                 width=900, 
                 height=500, 
                 legend=dict(font=dict(size=16))
     )
-    fig3.update_coloraxes(colorbar_title=dict(font=dict(size=16)), colorbar_tickfont=dict(size=16), colorbar_tickformat='0%')
+    fig3.update_coloraxes(colorbar_title=dict(text="Percent of<br>vehicle trips<br>that can<br>competitively<br>shift", font=dict(size=16)), colorbar_tickfont=dict(size=16), colorbar_tickformat='0%')
     fig3.update_geos(fitbounds="locations", visible=False)
+    fig3.update_traces(hovertemplate="<b>%{location}</b><br>Can competitively shift: %{z:.1%}<extra></extra>")
+    fig3.update_layout(hoverlabel=dict(font=dict(size=18)))
     st.plotly_chart(fig3)
     
     # display various raw metrics regarding shifts/other indicators
@@ -652,8 +661,8 @@ def final_summary() -> None:
     
     # run cold start logic (this takes a bit, hence the spinner) to see cold starts before/after shifts
     with st.spinner("Running cold start logic"):
-        before_cold_starts = df[df["mode"] == Mode.CAR].groupby(["wave", "person_id", "travel_date"]).apply(lambda x: get_num_cold_starts(list(x["depart_time"]), x["duration"].values, list(x["mode"]))).sum()
-        after_cold_starts = df[(df['mode'] == Mode.CAR) & (~df[f'{st.session_state.phase}_shift'])].groupby(['wave', 'person_id', 'travel_date']).apply(lambda x: get_num_cold_starts(list(x["depart_time"]), x["duration"].values, list(x["mode"]))).sum()
+        before_cold_starts = df[df["mode"] == Mode.CAR].groupby(["wave", "person_id", "travel_date"], group_keys=True).apply(lambda x: get_num_cold_starts(list(x["depart_time"]), x["duration"].values, list(x["mode"]))).sum()
+        after_cold_starts = df[(df['mode'] == Mode.CAR) & (~df[f'{st.session_state.phase}_shift'])].groupby(['wave', 'person_id', 'travel_date'], group_keys=True).apply(lambda x: get_num_cold_starts(list(x["depart_time"]), x["duration"].values, list(x["mode"]))).sum()
         if (~df[f"{st.session_state.phase}_shift"]).sum() == 0:
             after_cold_starts = 0
         
@@ -666,6 +675,7 @@ def final_summary() -> None:
     
     # various bar charts showing the ability to shift across various categories
     st.header("Shifts by categories")
+    bar_hovertemplate = "<b>%{x}</b><br>Percent of vehicle trips: %{y:.1%}<br>Total vehicle trips: %{marker.color:,.0f}<extra></extra>"
     
     # ability to shift when segmented by income bracket
     bigger_markdown(r"Below, the % of vehicle trips that can shift when segmented by income bracket is shown.")
@@ -691,15 +701,18 @@ def final_summary() -> None:
             'font': dict(
                 size=18
             ),
-            'x': 0.5, 
-            'xanchor': 'center',
-            'y': 0.9
+            'x': 0,
+            'xanchor': 'left',
+            'y': 0.98,
+            'yanchor': 'top'
         },
         xaxis_title=dict(text="Income group", font=dict(size=16)),
         yaxis_title=dict(text=f"Percent of vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
         showlegend=False
     )
     fig4.update_xaxes(tickfont=dict(size=16))
+    fig4.update_traces(hovertemplate=bar_hovertemplate)
+    fig4.update_layout(hoverlabel=dict(font=dict(size=18)))
     fig4.update_yaxes(tickfont=dict(size=16), showgrid=True, zeroline=True, tickformat='0%')
     fig4.update_coloraxes(colorbar_title=dict(font=dict(size=16)), colorbar_tickfont=dict(size=16))
     st.plotly_chart(fig4)
@@ -725,15 +738,18 @@ def final_summary() -> None:
             'font': dict(
                 size=18
             ),
-            'x': 0.5, 
-            'xanchor': 'center',
-            'y': 0.9
+            'x': 0,
+            'xanchor': 'left',
+            'y': 0.98,
+            'yanchor': 'top'
         },
         xaxis_title=dict(text="Trip Purpose", font=dict(size=16)),
         yaxis_title=dict(text=f"Percent of vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
         showlegend=False
     )    
     fig5.update_xaxes(tickfont=dict(size=16))
+    fig5.update_traces(hovertemplate=bar_hovertemplate)
+    fig5.update_layout(hoverlabel=dict(font=dict(size=18)))
     fig5.update_yaxes(tickfont=dict(size=16), showgrid=True, zeroline=True, tickformat='0%')
     fig5.update_coloraxes(colorbar_title=dict(font=dict(size=16)), colorbar_tickfont=dict(size=16))
     st.plotly_chart(fig5)
@@ -759,15 +775,18 @@ def final_summary() -> None:
             'font': dict(
                 size=18
             ),
-            'x': 0.5, 
-            'xanchor': 'center',
-            'y': 0.9
+            'x': 0,
+            'xanchor': 'left',
+            'y': 0.98,
+            'yanchor': 'top'
         },
         xaxis_title=dict(text="Person type", font=dict(size=16)),
         yaxis_title=dict(text=f"Percent of vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
         showlegend=False
     )    
     fig6.update_xaxes(tickfont=dict(size=16))
+    fig6.update_traces(hovertemplate=bar_hovertemplate)
+    fig6.update_layout(hoverlabel=dict(font=dict(size=18)))
     fig6.update_yaxes(tickfont=dict(size=16), showgrid=True, zeroline=True, tickformat='0%')
     fig6.update_coloraxes(colorbar_title=dict(font=dict(size=16)), colorbar_tickfont=dict(size=16))
     st.plotly_chart(fig6)
@@ -793,15 +812,18 @@ def final_summary() -> None:
             'font': dict(
                 size=18
             ),
-            'x': 0.5, 
-            'xanchor': 'center',
-            'y': 0.9
+            'x': 0,
+            'xanchor': 'left',
+            'y': 0.98,
+            'yanchor': 'top'
         },
         xaxis_title=dict(text="Gender", font=dict(size=16)),
         yaxis_title=dict(text=f"Percent of vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
         showlegend=False
     )    
     fig7.update_xaxes(tickfont=dict(size=16))
+    fig7.update_traces(hovertemplate=bar_hovertemplate)
+    fig7.update_layout(hoverlabel=dict(font=dict(size=18)))
     fig7.update_yaxes(tickfont=dict(size=16), showgrid=True, zeroline=True, tickformat='0%')
     fig7.update_coloraxes(colorbar_title=dict(font=dict(size=16)), colorbar_tickfont=dict(size=16))
     st.plotly_chart(fig7)
@@ -826,15 +848,18 @@ def final_summary() -> None:
             'font': dict(
                 size=18
             ),
-            'x': 0.5, 
-            'xanchor': 'center',
-            'y': 0.9
+            'x': 0,
+            'xanchor': 'left',
+            'y': 0.98,
+            'yanchor': 'top'
         },
         xaxis_title=dict(text="Wave", font=dict(size=16)),
         yaxis_title=dict(text=f"Percent of vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
         showlegend=False
     )
     fig8.update_xaxes(tickfont=dict(size=16))
+    fig8.update_traces(hovertemplate=bar_hovertemplate)
+    fig8.update_layout(hoverlabel=dict(font=dict(size=18)))
     fig8.update_yaxes(tickfont=dict(size=16), showgrid=True, zeroline=True, tickformat='0%')
     fig8.update_coloraxes(colorbar_title=dict(font=dict(size=16)), colorbar_tickfont=dict(size=16))
     st.plotly_chart(fig8)
@@ -938,7 +963,7 @@ def run() -> None:
     if st.sidebar.button("Finish and move to summary"):
         logging.info("Moving to the summary step")
         st.session_state.summary_screen = True
-        st.experimental_rerun()
+        st.rerun()
     
     # have the ability to choose what step to run (with segmentation based on phase)
     # can only go to new steps; TODO: add functionality to save snapshots after each step is left to allow full backtracking
@@ -953,7 +978,7 @@ def run() -> None:
     # manual refresh of the tool -- may break the tool
     if st.sidebar.button("Refresh"):
         logging.info("Refreshing the tool")
-        st.experimental_rerun()
+        st.rerun()
 
     # logic if we swithced steps (selected step is not equal to the stored step)
     if st.session_state.step != option:
@@ -972,7 +997,7 @@ def run() -> None:
             st.session_state.step_class_dict[option] = getattr(st.session_state.overall_step, option)(st.session_state.df)
             st.session_state.step_class = st.session_state.step_class_dict[option]
             st.session_state.id += 10
-            # st.experimental_rerun()
+            # st.rerun()
             
     # show the meat of the current step
     show_step()
@@ -1014,6 +1039,9 @@ if __name__ == "__main__":
                 .bigger-font {
                     font-size: 1.2rem !important;
                 }
+                [data-testid="stMainBlockContainer"] {
+                    max-width: 1000px;
+                }
             </style>
         """, 
         unsafe_allow_html=True
@@ -1033,7 +1061,7 @@ if __name__ == "__main__":
     if "df" not in st.session_state:
         with st.spinner("Setting up application"):
             setup_df()
-        st.experimental_rerun()
+        st.rerun()
     # run the start screen for the feasible phase
     elif st.session_state.start_screen_feasible:
         start_screen_feasible()

@@ -23,9 +23,10 @@ class TransitAccessDistanceStep(ContinuousStep):
             title=dict(
                 text="Rerouted transit access distance for observed transit and car trips",
                 font=dict(size=18),
-                x=0.5,
-                y=0.9,
-                xanchor='center',
+                x=0,
+                y=0.98,
+                yanchor='top',
+                xanchor='left',
             ),
             xaxis_title=dict(
                 text="Access Distance (miles)",
@@ -100,9 +101,10 @@ class TransitEgressDistanceStep(ContinuousStep):
             title=dict(
                 text="Rerouted transit egress distance for observed transit and car trips",
                 font=dict(size=18),
-                x=0.5,
-                y=0.9,
-                xanchor='center',
+                x=0,
+                y=0.98,
+                yanchor='top',
+                xanchor='left',
             ),
             xaxis_title=dict(
                 text="Egress Distance (miles)",
@@ -177,9 +179,10 @@ class TransitWaitTimeStep(ContinuousStep):
             title=dict(
                 text="Rerouted transit wait time for observed transit and car trips",
                 font=dict(size=18),
-                x=0.5,
-                y=0.9,
-                xanchor='center',
+                x=0,
+                y=0.98,
+                yanchor='top',
+                xanchor='left',
             ),
             xaxis_title=dict(
                 text="Wait Time (min)",

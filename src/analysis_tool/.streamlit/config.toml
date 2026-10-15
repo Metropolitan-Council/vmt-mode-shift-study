@@ -1,2 +1,6 @@
 [server]
 address = "127.0.0.1"
+runOnSave = true
+
+[browser]
+gatherUsageStats = false

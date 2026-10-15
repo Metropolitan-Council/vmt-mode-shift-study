@@ -24,9 +24,10 @@ class WalkDurationDifferenceStep(ContinuousStep):
             title=dict(
                 text=r"Difference between car and walk rerouted durations",
                 font=dict(size=18),
-                x=0.5,
-                y=0.9,
-                xanchor='center',
+                x=0,
+                y=0.98,
+                yanchor='top',
+                xanchor='left',
             ),
             xaxis_title=dict(
                 text="Probability Density",
@@ -87,9 +88,10 @@ class BikeDurationDifferenceStep(ContinuousStep):
             title=dict(
                 text=r"Difference between car and bike rerouted durations",
                 font=dict(size=18),
-                x=0.5,
-                y=0.9,
-                xanchor='center',
+                x=0,
+                y=0.98,
+                yanchor='top',
+                xanchor='left',
             ),
             xaxis_title=dict(
                 text="Probability Density",
@@ -152,9 +154,10 @@ class TransitDurationDifferenceStep(ContinuousStep):
             title=dict(
                 text=r"Difference between car and transit rerouted durations",
                 font=dict(size=18),
-                x=0.5,
-                y=0.9,
-                xanchor='center',
+                x=0,
+                y=0.98,
+                yanchor='top',
+                xanchor='left',
             ),
             xaxis_title=dict(
                 text="Probability Density",

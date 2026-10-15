@@ -11,6 +11,9 @@ from steps.enums import Mode
 
 from settings import handler, scenario
 
+# TAZ shapefile has null geometries (dropped below); GDAL logs an error for each
+logging.getLogger("fiona._env").setLevel(logging.CRITICAL)
+
 def clean_mode_names(df: pd.DataFrame) -> None:
     """
     This function standardizes the mode names based on the defined mode enum in-place.

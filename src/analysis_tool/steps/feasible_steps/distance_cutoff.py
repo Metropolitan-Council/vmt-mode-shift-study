@@ -29,9 +29,10 @@ class WalkDistanceStep(ContinuousStep):
             title=dict(
                 text="Rerouted walk distance distributions<br>for observed walk and car trips",
                 font=dict(size=18),
-                x=0.5,
-                y=0.9,
-                xanchor='center',
+                x=0,
+                y=0.98,
+                yanchor='top',
+                xanchor='left',
             ),
             xaxis_title=dict(
                 text="Walk Distance (miles)",
@@ -100,9 +101,10 @@ class BikeDistanceStep(ContinuousStep):
             title=dict(
                 text="Rerouted bike distance distributions<br>for observed bike and car trips",
                 font=dict(size=18),
-                x=0.5,
-                y=0.9,
-                xanchor='center',
+                x=0,
+                y=0.98,
+                yanchor='top',
+                xanchor='left',
             ),
             xaxis_title=dict(
                 text="Bike Distance (miles)",

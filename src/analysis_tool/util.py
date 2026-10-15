@@ -132,19 +132,26 @@ def stacked_shift_histogram(df: pd.DataFrame, mode: Mode, mode_duration: str, mo
                                                         f"Drive Trips - {phase} to Switch", 
                                                         f"{mode.capitalize()} Trips"]))
     
-    fig.update_traces(xbins=dict(size=1))
+    # integer bin edges so hover ranges read e.g. "5 - 6 min"
+    fig.update_traces(
+        xbins=dict(start=-15, size=1),
+        xhoverformat=".0f",
+        hovertemplate="<b>%{fullData.name}</b><br>Time difference: %{x} min<br>Person trips: %{y:,.0f}<extra></extra>"
+    )
     
     fig.update_layout(
         title=dict(
-            text=f"Stacked histogram of duration difference<br>between equivalent {mode} and driving trips",
+            text=f"Stacked histogram of duration difference between equivalent {mode} and driving trips",
             font=dict(
                 size=18
             ),
-            x=0.5,
-            y=0.95,
-            xanchor='center',
+            x=0,
+            y=0.98,
+            yanchor='top',
+            xanchor='left',
         ),
         legend=dict(font=dict(size=16)),
+        hoverlabel=dict(font=dict(size=18)),
         xaxis_title=dict(text=f"Travel Time Difference ({mode} - drive time, minutes)", font=dict(size=16)),
         yaxis_title=dict(text="Person Trips", font=dict(size=16))
     )
@@ -191,19 +198,26 @@ def total_shift_histogram(df: pd.DataFrame, phase: Phase) -> go.Figure:
     fig = px.histogram(view, x="curr", y="vehicle_trips", histfunc="sum", color="Category", barmode="stack", range_x=[-15,150],
                        color_discrete_sequence=plotly_colors)
     
-    fig.update_traces(xbins=dict(size=1))
+    # integer bin edges so hover ranges read e.g. "5 - 6 min"
+    fig.update_traces(
+        xbins=dict(start=-15, size=1),
+        xhoverformat=".0f",
+        hovertemplate="<b>%{fullData.name}</b><br>Time difference: %{x} min<br>Vehicle trips: %{y:,.0f}<extra></extra>"
+    )
     
     fig.update_layout(
         title=dict(
-            text=f"Stacked histogram of duration difference<br>between fastest feasible alternative and driving",
+            text=f"Stacked histogram of duration difference between fastest feasible alternative and driving",
             font=dict(
                 size=16
             ),
-            x=0.4,
-            y=0.95,
-            xanchor='center',
+            x=0,
+            y=0.98,
+            yanchor='top',
+            xanchor='left',
         ),
         legend=dict(font=dict(size=16)),
+        hoverlabel=dict(font=dict(size=18)),
         xaxis_title=dict(text="Travel Time Difference (alternative - drive time, minutes)", font=dict(size=16)),
         yaxis_title=dict(text="Vehicle Trips", font=dict(size=16))
     )
@@ -231,7 +245,8 @@ def get_summary_df(df: pd.DataFrame, steps: list, mode: Mode, mode_shift_col: st
     
     # for each step, if the step applies to the current mode, extract the step statistics
     for step in steps:
-        if step.get_mode() == mode:
+        # skip steps that were never applied (or were disabled); their column may not exist
+        if step.get_mode() == mode and step.get_previous_run() is not None:
             stats = step.get_step_statistics()
             res[step.get_name()] = [f"{stats[2][0] * 100: .1f}%", f"{stats[2][1] * 100: .1f}%"]
             
@@ -299,7 +314,7 @@ def stateful_button(*args, key=None, **kwargs):
 
     if st.sidebar.button(*args, **kwargs):
         st.session_state[key] = not st.session_state[key]
-        st.experimental_rerun()
+        st.rerun()
 
     return st.session_state[key]
 

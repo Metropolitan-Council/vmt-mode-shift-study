@@ -24,9 +24,10 @@ class BikeHighLTSDistStep(ContinuousStep):
             title=dict(
                 text=r"High LTS (3/4) distance for observed bike and car trips",
                 font=dict(size=18),
-                x=0.5,
-                y=0.9,
-                xanchor='center',
+                x=0,
+                y=0.98,
+                yanchor='top',
+                xanchor='left',
             ),
             xaxis_title=dict(
                 text="Probability Density",
