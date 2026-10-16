@@ -5,7 +5,7 @@ import streamlit as st
 from steps.parent_classes import CategoricalStep
 from steps.enums import *
 from steps.figure_lib import *
-from util import bigger_markdown
+from util import bigger_markdown, format_figure
 
 import inspect
 
@@ -72,7 +72,7 @@ class WalkPurposeStep(CategoricalStep):
         for tick in ax.get_xticklabels():
             tick.set_rotation(45)
         ax.set_title("Count plot of the cleaned destination purposes in the TBI data")
-        st.pyplot(fig)
+        st.pyplot(format_figure(fig))
         
         slots = []
         
@@ -81,9 +81,9 @@ class WalkPurposeStep(CategoricalStep):
             temp = st.empty()
             slots.append(temp)
             
-        slots[0].pyplot(self.get_summary_figure()[0])
+        slots[0].pyplot(format_figure(self.get_summary_figure())[0])
         slots[1].dataframe(self.get_summary_statistics())
-        slots[2].plotly_chart(self.get_map())
+        slots[2].plotly_chart(format_figure(self.get_map()))
         
 class BikePurposeStep(CategoricalStep):
     
@@ -144,7 +144,7 @@ class BikePurposeStep(CategoricalStep):
         for tick in ax.get_xticklabels():
             tick.set_rotation(45)
         ax.set_title("Count plot of the cleaned destination purposes in the TBI data")
-        st.pyplot(fig)
+        st.pyplot(format_figure(fig))
         
         slots = []
         
@@ -153,9 +153,9 @@ class BikePurposeStep(CategoricalStep):
             temp = st.empty()
             slots.append(temp)
             
-        slots[0].pyplot(self.get_summary_figure()[0])
+        slots[0].pyplot(format_figure(self.get_summary_figure())[0])
         slots[1].dataframe(self.get_summary_statistics())
-        slots[2].plotly_chart(self.get_map())
+        slots[2].plotly_chart(format_figure(self.get_map()))
         
 class TransitPurposeStep(CategoricalStep):
     
@@ -216,7 +216,7 @@ class TransitPurposeStep(CategoricalStep):
         for tick in ax.get_xticklabels():
             tick.set_rotation(45)
         ax.set_title("Count plot of the cleaned destination purposes in the TBI data")
-        st.pyplot(fig)
+        st.pyplot(format_figure(fig))
         
         slots = []
         
@@ -225,6 +225,6 @@ class TransitPurposeStep(CategoricalStep):
             temp = st.empty()
             slots.append(temp)
             
-        slots[0].pyplot(self.get_summary_figure()[0])
+        slots[0].pyplot(format_figure(self.get_summary_figure())[0])
         slots[1].dataframe(self.get_summary_statistics())
-        slots[2].plotly_chart(self.get_map())
+        slots[2].plotly_chart(format_figure(self.get_map()))

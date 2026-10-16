@@ -575,22 +575,19 @@ def final_summary() -> None:
                     y=0.98,
                     yanchor="top",
                     xanchor="left",
-                    font=dict(size=18)
                 ), 
-                legend=dict(font=dict(size=16))
     )
-    fig2.update_coloraxes(colorbar_title=dict(text=f"Percent of<br>vehicle trips<br>that can shift<br>{adjective}", font=dict(size=16)), colorbar_tickfont=dict(size=16), colorbar_tickformat='0%')
+    fig2.update_coloraxes(colorbar_title_text=f"Percent of<br>vehicle trips<br>that can shift<br>{adjective}", colorbar_tickformat='0%')
     fig2.update_geos(fitbounds="locations", visible=False)
     fig2.update_traces(hovertemplate=f"<b>%{{location}}</b><br>Can shift {adjective}: %{{z:.1%}}<extra></extra>")
-    fig2.update_layout(hoverlabel=dict(font=dict(size=18)))
-    st.plotly_chart(fig2)
+    st.plotly_chart(format_figure(fig2))
     
     # map of % of trips in each community regino that can shift competitively when considering the fastest alternative mode
     
     # use previously used dummy communities df to store this metric for each geography
     df["competitive_timing"] = df["min_alt_mode_minus_car_duration"] <= 15
     
-    community_pct = df.groupby(["community","competitive_timing"])[["vehicle_trips"]].sum().reset_index()
+    community_pct = df.assign(community=map_areas).groupby(["community","competitive_timing"])[["vehicle_trips"]].sum().reset_index()
     community_pct['percent_vehicle_trips'] = community_pct['vehicle_trips'] / community_pct.groupby('community')['vehicle_trips'].transform('sum')
     community_pct.set_index('community', inplace=True)
     values_competitive = community_pct[community_pct["competitive_timing"]==1]['percent_vehicle_trips'].fillna(0)
@@ -613,7 +610,6 @@ def final_summary() -> None:
     fig3.update_layout(margin=dict(l=0, r=0, b=0, t=70),
                 title=dict(
                     text="Percent of vehicle trips in CTUs that can competitively shift to a non-car mode",
-                    font=dict(size=18),
                     x=0,
                     y=0.98,
                     yanchor="top",
@@ -621,16 +617,14 @@ def final_summary() -> None:
                 ),
                 width=900, 
                 height=500, 
-                legend=dict(font=dict(size=16))
     )
-    fig3.update_coloraxes(colorbar_title=dict(text="Percent of<br>vehicle trips<br>that can<br>competitively<br>shift", font=dict(size=16)), colorbar_tickfont=dict(size=16), colorbar_tickformat='0%')
+    fig3.update_coloraxes(colorbar_title_text="Percent of<br>vehicle trips<br>that can<br>competitively<br>shift", colorbar_tickformat='0%')
     fig3.update_geos(fitbounds="locations", visible=False)
     fig3.update_traces(hovertemplate="<b>%{location}</b><br>Can competitively shift: %{z:.1%}<extra></extra>")
-    fig3.update_layout(hoverlabel=dict(font=dict(size=18)))
-    st.plotly_chart(fig3)
+    st.plotly_chart(format_figure(fig3))
     
     # display various raw metrics regarding shifts/other indicators
-    st.header("Raw metrics")
+    section_header("Raw metrics")
     
     # person trip count before/after mode shifts
     bigger_markdown(inspect.cleandoc(
@@ -698,24 +692,18 @@ def final_summary() -> None:
     fig4.update_layout(
         title={
             'text': 'Percent of vehicle trips that can shift modes by income group',
-            'font': dict(
-                size=18
-            ),
             'x': 0,
             'xanchor': 'left',
             'y': 0.98,
             'yanchor': 'top'
         },
-        xaxis_title=dict(text="Income group", font=dict(size=16)),
-        yaxis_title=dict(text=f"Percent of vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
+        xaxis_title_text="Income group",
+        yaxis_title_text=f"Percent of vehicle trips in the<br>category that can {adjective} shift",
         showlegend=False
     )
-    fig4.update_xaxes(tickfont=dict(size=16))
     fig4.update_traces(hovertemplate=bar_hovertemplate)
-    fig4.update_layout(hoverlabel=dict(font=dict(size=18)))
-    fig4.update_yaxes(tickfont=dict(size=16), showgrid=True, zeroline=True, tickformat='0%')
-    fig4.update_coloraxes(colorbar_title=dict(font=dict(size=16)), colorbar_tickfont=dict(size=16))
-    st.plotly_chart(fig4)
+    fig4.update_yaxes(showgrid=True, zeroline=True, tickformat='0%')
+    st.plotly_chart(format_figure(fig4))
     
     # ability to shift by trip purpose (usually destination purpose unless destination is home, then origin purpose -- this is done in the intiialization step)
     bigger_markdown(r"Below, the % of vehicle trips that can shift when segmented by trip purpose are shown.")
@@ -735,24 +723,18 @@ def final_summary() -> None:
     fig5.update_layout(
         title={
             'text': 'Percent of vehicle trips that can shift mode by trip purpose',
-            'font': dict(
-                size=18
-            ),
             'x': 0,
             'xanchor': 'left',
             'y': 0.98,
             'yanchor': 'top'
         },
-        xaxis_title=dict(text="Trip Purpose", font=dict(size=16)),
-        yaxis_title=dict(text=f"Percent of vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
+        xaxis_title_text="Trip Purpose",
+        yaxis_title_text=f"Percent of vehicle trips in the<br>category that can {adjective} shift",
         showlegend=False
     )    
-    fig5.update_xaxes(tickfont=dict(size=16))
     fig5.update_traces(hovertemplate=bar_hovertemplate)
-    fig5.update_layout(hoverlabel=dict(font=dict(size=18)))
-    fig5.update_yaxes(tickfont=dict(size=16), showgrid=True, zeroline=True, tickformat='0%')
-    fig5.update_coloraxes(colorbar_title=dict(font=dict(size=16)), colorbar_tickfont=dict(size=16))
-    st.plotly_chart(fig5)
+    fig5.update_yaxes(showgrid=True, zeroline=True, tickformat='0%')
+    st.plotly_chart(format_figure(fig5))
     
     # ability to shift by person type (adult, student, etc.)
     bigger_markdown(r"Below, the % of vehicle trips that can shift when segmented by person type are shown.")
@@ -772,24 +754,18 @@ def final_summary() -> None:
     fig6.update_layout(
         title={
             'text': 'Percent of vehicle trips that can shift mode by person type',
-            'font': dict(
-                size=18
-            ),
             'x': 0,
             'xanchor': 'left',
             'y': 0.98,
             'yanchor': 'top'
         },
-        xaxis_title=dict(text="Person type", font=dict(size=16)),
-        yaxis_title=dict(text=f"Percent of vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
+        xaxis_title_text="Person type",
+        yaxis_title_text=f"Percent of vehicle trips in the<br>category that can {adjective} shift",
         showlegend=False
     )    
-    fig6.update_xaxes(tickfont=dict(size=16))
     fig6.update_traces(hovertemplate=bar_hovertemplate)
-    fig6.update_layout(hoverlabel=dict(font=dict(size=18)))
-    fig6.update_yaxes(tickfont=dict(size=16), showgrid=True, zeroline=True, tickformat='0%')
-    fig6.update_coloraxes(colorbar_title=dict(font=dict(size=16)), colorbar_tickfont=dict(size=16))
-    st.plotly_chart(fig6)
+    fig6.update_yaxes(showgrid=True, zeroline=True, tickformat='0%')
+    st.plotly_chart(format_figure(fig6))
     
     # ability to shift by gender
     bigger_markdown(r"Below, the % of trips that can shift when segmented by gender are shown.")
@@ -809,24 +785,18 @@ def final_summary() -> None:
     fig7.update_layout(
         title={
             'text': 'Percent of vehicle trips that can shift mode by gender',
-            'font': dict(
-                size=18
-            ),
             'x': 0,
             'xanchor': 'left',
             'y': 0.98,
             'yanchor': 'top'
         },
-        xaxis_title=dict(text="Gender", font=dict(size=16)),
-        yaxis_title=dict(text=f"Percent of vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
+        xaxis_title_text="Gender",
+        yaxis_title_text=f"Percent of vehicle trips in the<br>category that can {adjective} shift",
         showlegend=False
     )    
-    fig7.update_xaxes(tickfont=dict(size=16))
     fig7.update_traces(hovertemplate=bar_hovertemplate)
-    fig7.update_layout(hoverlabel=dict(font=dict(size=18)))
-    fig7.update_yaxes(tickfont=dict(size=16), showgrid=True, zeroline=True, tickformat='0%')
-    fig7.update_coloraxes(colorbar_title=dict(font=dict(size=16)), colorbar_tickfont=dict(size=16))
-    st.plotly_chart(fig7)
+    fig7.update_yaxes(showgrid=True, zeroline=True, tickformat='0%')
+    st.plotly_chart(format_figure(fig7))
     
     # ability to shift by recorded TBI wave (either 1/2)
     bigger_markdown(r"Below, the % of trips that can shift when segmented by TBI wave is shown.")
@@ -845,27 +815,21 @@ def final_summary() -> None:
     fig8.update_layout(
         title={
             'text': 'Percent of vehicle trips that can shift mode by TBI wave',
-            'font': dict(
-                size=18
-            ),
             'x': 0,
             'xanchor': 'left',
             'y': 0.98,
             'yanchor': 'top'
         },
-        xaxis_title=dict(text="Wave", font=dict(size=16)),
-        yaxis_title=dict(text=f"Percent of vehicle trips in the<br>category that can {adjective} shift", font=dict(size=16)),
+        xaxis_title_text="Wave",
+        yaxis_title_text=f"Percent of vehicle trips in the<br>category that can {adjective} shift",
         showlegend=False
     )
-    fig8.update_xaxes(tickfont=dict(size=16))
     fig8.update_traces(hovertemplate=bar_hovertemplate)
-    fig8.update_layout(hoverlabel=dict(font=dict(size=18)))
-    fig8.update_yaxes(tickfont=dict(size=16), showgrid=True, zeroline=True, tickformat='0%')
-    fig8.update_coloraxes(colorbar_title=dict(font=dict(size=16)), colorbar_tickfont=dict(size=16))
-    st.plotly_chart(fig8)
+    fig8.update_yaxes(showgrid=True, zeroline=True, tickformat='0%')
+    st.plotly_chart(format_figure(fig8))
     
     # various metrics for tour-level shifts that are possible
-    st.header("Tour-level shifts")
+    section_header("Tour-level shifts")
     
     # a tour can shift to a mode if and only if all component trips can shift to that mode
     temp = pd.merge(

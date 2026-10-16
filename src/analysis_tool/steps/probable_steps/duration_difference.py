@@ -23,24 +23,14 @@ class WalkDurationDifferenceStep(ContinuousStep):
         fig.update_layout(
             title=dict(
                 text=r"Difference between car and walk rerouted durations",
-                font=dict(size=18),
                 x=0,
                 y=0.98,
                 yanchor='top',
                 xanchor='left',
             ),
-            xaxis_title=dict(
-                text="Probability Density",
-                font=dict(size=16)
-            ),
-            yaxis_title=dict(
-                text="Duration Difference (minutes)",
-                font=dict(size=16)
-            ),
-            legend=dict(
-                title="Legend",
-                font=dict(size=16)
-            )
+            xaxis_title_text="Probability Density",
+            yaxis_title_text="Duration Difference (minutes)",
+            legend_title_text="Legend"
         )
         return fig
     
@@ -87,24 +77,14 @@ class BikeDurationDifferenceStep(ContinuousStep):
         fig.update_layout(
             title=dict(
                 text=r"Difference between car and bike rerouted durations",
-                font=dict(size=18),
                 x=0,
                 y=0.98,
                 yanchor='top',
                 xanchor='left',
             ),
-            xaxis_title=dict(
-                text="Probability Density",
-                font=dict(size=16)
-            ),
-            yaxis_title=dict(
-                text="Duration Difference (minutes)",
-                font=dict(size=16)
-            ),
-            legend=dict(
-                title="Legend",
-                font=dict(size=16)
-            )
+            xaxis_title_text="Probability Density",
+            yaxis_title_text="Duration Difference (minutes)",
+            legend_title_text="Legend"
         )
         return fig
     
@@ -153,24 +133,14 @@ class TransitDurationDifferenceStep(ContinuousStep):
         fig.update_layout(
             title=dict(
                 text=r"Difference between car and transit rerouted durations",
-                font=dict(size=18),
                 x=0,
                 y=0.98,
                 yanchor='top',
                 xanchor='left',
             ),
-            xaxis_title=dict(
-                text="Probability Density",
-                font=dict(size=16)
-            ),
-            yaxis_title=dict(
-                text="Duration Difference (minutes)",
-                font=dict(size=16)
-            ),
-            legend=dict(
-                title="Legend",
-                font=dict(size=16)
-            )
+            xaxis_title_text="Probability Density",
+            yaxis_title_text="Duration Difference (minutes)",
+            legend_title_text="Legend"
         )
         return fig
     

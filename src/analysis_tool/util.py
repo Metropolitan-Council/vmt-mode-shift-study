@@ -8,6 +8,51 @@ import plotly.express as px
 
 from steps.enums import Mode, Phase
 from settings import handler
+PLOTLY_DEFAULT_HEIGHT_PX = 450
+TITLE_FONT_SIZE = 18
+LABEL_FONT_SIZE = 16
+HOVER_FONT_SIZE = 18
+
+def format_figure(fig):
+    """Standardizes plotly figure height and font sizes, and adds the selected city (title and hover tooltips) to a plotly figure, matplotlib figure, or matplotlib (fig, ax) tuple."""
+    mpl_fig = None if isinstance(fig, go.Figure) else (fig[0] if isinstance(fig, tuple) else fig)
+    if mpl_fig is None:
+        # grow the top margin as needed so multi-line titles/subtitles aren't clipped
+        fig.update_layout(
+            height=(fig.layout.height or PLOTLY_DEFAULT_HEIGHT_PX) + 50,
+            title_automargin=True,
+            title_font_size=TITLE_FONT_SIZE,
+            legend_font_size=LABEL_FONT_SIZE,
+            hoverlabel_font_size=HOVER_FONT_SIZE,
+        )
+        fig.update_xaxes(title_font_size=LABEL_FONT_SIZE, tickfont_size=LABEL_FONT_SIZE)
+        fig.update_yaxes(title_font_size=LABEL_FONT_SIZE, tickfont_size=LABEL_FONT_SIZE)
+        fig.update_coloraxes(colorbar_title_font_size=LABEL_FONT_SIZE, colorbar_tickfont_size=LABEL_FONT_SIZE)
+    
+    city = st.session_state.get("city")
+    if not city:
+        return fig
+    label = f"Trips beginning or ending in {city}"
+    
+    if mpl_fig is None:
+        if fig.layout.title.text:
+            fig.update_layout(title_subtitle_text=label)
+        else:
+            fig.update_layout(title_text=label)
+        if any(trace.type == "choroplethmap" for trace in fig.data):
+            centroid = get_communities().loc[city, "geometry"].centroid
+            fig.update_layout(map_center=dict(lat=centroid.y, lon=centroid.x), map_zoom=10)
+        for trace in fig.data:
+            template = getattr(trace, "hovertemplate", None)
+            if template is None:
+                continue
+            if "<extra>" in template:
+                trace.hovertemplate = template.replace("<extra>", f"<br>{label}<extra>", 1)
+            else:
+                trace.hovertemplate = f"{template}<br>{label}"
+    else:
+        mpl_fig.suptitle(label)
+    return fig
 
 def convert_to_minutes(temp: str) -> float:
     """This is a helper function that converts a timestamp string into the number of minutes it is after midnight.
@@ -145,23 +190,17 @@ def stacked_shift_histogram(df: pd.DataFrame, mode: Mode, mode_duration: str, mo
     fig.update_layout(
         title=dict(
             text=f"Stacked histogram of duration difference between equivalent {mode} and driving trips",
-            font=dict(
-                size=18
-            ),
             x=0,
             y=0.98,
             yanchor='top',
             xanchor='left',
         ),
-        legend=dict(font=dict(size=16)),
-        hoverlabel=dict(font=dict(size=18)),
-        xaxis_title=dict(text=f"Travel Time Difference ({mode} - drive time, minutes)", font=dict(size=16)),
-        yaxis_title=dict(text="Person Trips", font=dict(size=16))
+        xaxis_title_text=f"Travel Time Difference ({mode} - drive time, minutes)",
+        yaxis_title_text="Person Trips"
     )
     
-    fig.update_xaxes(tick0=-15, dtick=15, tickfont=dict(size=16), showgrid=True)
-    fig.add_vline(x=15, line_dash="dash", line_color="black", annotation_text="+15 min", annotation_position="top right")
-    fig.update_yaxes(tickfont=dict(size=16))
+    fig.update_xaxes(tick0=-15, dtick=15, showgrid=True)
+    fig.add_vline(x=15, line_dash="dash", line_color="black", annotation_text="15 min", annotation_position="top right")
     
     # return figure
     return fig
@@ -212,23 +251,18 @@ def total_shift_histogram(df: pd.DataFrame, phase: Phase) -> go.Figure:
     fig.update_layout(
         title=dict(
             text=f"Stacked histogram of duration difference between fastest feasible alternative and driving",
-            font=dict(
-                size=16
-            ),
             x=0,
             y=0.98,
             yanchor='top',
             xanchor='left',
         ),
-        legend=dict(font=dict(size=16)),
-        hoverlabel=dict(font=dict(size=18)),
-        xaxis_title=dict(text="Travel Time Difference (alternative - drive time, minutes)", font=dict(size=16)),
-        yaxis_title=dict(text="Vehicle Trips", font=dict(size=16))
+        xaxis_title_text="Travel Time Difference (alternative - drive time, minutes)",
+        yaxis_title_text="Vehicle Trips"
     )
     
-    fig.update_xaxes(tick0=-15, dtick=15, tickfont=dict(size=16), showgrid=True, zeroline=True)
-    fig.add_vline(x=15, line_dash="dash", line_color="black", annotation_text="+15 min", annotation_position="top right")
-    fig.update_yaxes(tickfont=dict(size=16), showgrid=True, zeroline=True)
+    fig.update_xaxes(tick0=-15, dtick=15, showgrid=True, zeroline=True)
+    fig.add_vline(x=15, line_dash="dash", line_color="black", annotation_text="15 min", annotation_position="top right")
+    fig.update_yaxes(showgrid=True, zeroline=True)
     
     # return figure
     return fig
