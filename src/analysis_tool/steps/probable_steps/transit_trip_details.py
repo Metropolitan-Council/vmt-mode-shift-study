@@ -1,11 +1,11 @@
+import inspect
+
 import pandas as pd
 import matplotlib.pyplot as plt
 
 from steps.parent_classes import ContinuousStep, CategoricalStep
 from steps.figure_lib import *
 from steps.enums import *
-
-import inspect
 
 class TransitTransferCountStep(ContinuousStep):
     

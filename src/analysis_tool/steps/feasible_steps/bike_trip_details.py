@@ -1,11 +1,10 @@
+import inspect
+
 import pandas as pd
-import matplotlib.pyplot as plt
 
 from steps.parent_classes import ContinuousStep
 from steps.enums import *
 from steps.figure_lib import *
-
-import inspect
 
 class BikeSnowDepthStep(ContinuousStep):
     
@@ -24,24 +23,14 @@ class BikeSnowDepthStep(ContinuousStep):
         fig.update_layout(
             title=dict(
                 text="Snow depth during travel day for all modes",
-                font=dict(size=18),
                 x=0,
                 y=0.98,
                 yanchor='top',
                 xanchor='left',
             ),
-            xaxis_title=dict(
-                text="Probability Density",
-                font=dict(size=16)
-            ),
-            yaxis_title=dict(
-                text="Snow Depth (mm)",
-                font=dict(size=16)
-            ),
-            legend=dict(
-                title="Legend",
-                font=dict(size=16)
-            )
+            xaxis_title_text="Probability Density",
+            yaxis_title_text="Snow Depth (mm)",
+            legend_title_text="Legend"
         )
         return fig
     
@@ -77,7 +66,7 @@ class BikeSnowDepthStep(ContinuousStep):
 class BikeHighLTSDistStep(ContinuousStep):
     
     def __init__(self, df: pd.DataFrame, cutoff=0.95, column="high_lts_biking_pct", scenario=False):
-        super().__init__(df, "feasible_bike_high_lts_dist", Mode.BIKE, cutoff, column, Phase.FEASIBLE, f"proportion high LTS")
+        super().__init__(df, "feasible_bike_high_lts_dist", Mode.BIKE, cutoff, column, Phase.FEASIBLE, "proportion high LTS")
         
         if column == "high_lts_biking_pct":
             df.loc[:, "high_lts_dist"] = df["bike_distance_meters_3"] + df["bike_distance_meters_4"]
@@ -95,27 +84,17 @@ class BikeHighLTSDistStep(ContinuousStep):
         fig.update_layout(
             title=dict(
                 text=r"% of bike trip on high LTS routes for observed bike and car trips",
-                font=dict(size=18),
                 x=0,
                 y=0.98,
                 yanchor='top',
                 xanchor='left',
             ),
-            yaxis_title=dict(
-                text="Probability Density",
-                font=dict(size=16)
-            ),
-            xaxis_title=dict(
-                text="% High LTS",
-                font=dict(size=16)
-            ),
-            legend=dict(
-                title="Legend",
-                font=dict(size=16)
-            )
+            yaxis_title_text="Probability Density",
+            xaxis_title_text="% High LTS",
+            legend_title_text="Legend"
         )
-        fig.update_xaxes(range=[0,1], tickfont=dict(size=16), tickformat='0%')
-        fig.update_yaxes(tickfont=dict(size=16), showgrid=True, zeroline=True)
+        fig.update_xaxes(range=[0,1], tickformat='0%')
+        fig.update_yaxes(showgrid=True, zeroline=True)
         return fig
     
     def apply_step(self):

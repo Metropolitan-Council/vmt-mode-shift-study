@@ -1,12 +1,13 @@
+import inspect
+import sys
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import streamlit as st
-import inspect
 
 from steps.parent_classes import *
 from steps.figure_lib import *
 
-import sys
 sys.path.append("...")
 from settings import handler
 

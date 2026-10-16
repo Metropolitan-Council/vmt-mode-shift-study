@@ -1,12 +1,11 @@
+import inspect
+
 import pandas as pd
-import matplotlib.pyplot as plt
 from scipy import stats
 
 from steps.parent_classes import ContinuousStep
 from steps.enums import *
 from steps.figure_lib import *
-
-import inspect
 
 class WalkDurationDifferenceStep(ContinuousStep):
     

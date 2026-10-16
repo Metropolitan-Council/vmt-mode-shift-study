@@ -10,9 +10,10 @@ pyproj.network.set_network_enabled(False)
 with open("config.yaml", "r", encoding="utf-8") as stream:
     try:
         handler = yaml.safe_load(stream)
-        scenario = handler['scenarios'][handler['scenario_to_run']]
+        scenario = handler["scenarios"][handler["scenario_to_run"]]
     except yaml.YAMLError as exc:
         raise RuntimeError("Error parsing the yaml file")
+
 
 # get the communities df (cached for future use since it does not change)
 @st.cache_data()
