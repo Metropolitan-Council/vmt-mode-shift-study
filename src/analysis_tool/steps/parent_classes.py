@@ -238,7 +238,7 @@ class BaseStep:
             ]
         else:
             logging.exception(
-                f"Something went wrong with the overall step enum: {self.overall_step}"
+                "Something went wrong with the overall step enum: %s", self.overall_step
             )
             raise RuntimeError("Something went wrong with the overall step enum")
 
@@ -378,7 +378,8 @@ class ContinuousStep(BaseStep):
 
     def apply_step(self, expression: pd.Series) -> None:
         logging.info(
-            f"Running through the logic and visualization of continuous step {self.name}"
+            "Running through the logic and visualization of continuous step %s",
+            self.name,
         )
 
         # save the previous run here (with cutoffs), then apply the expression like previously
@@ -494,17 +495,49 @@ class ContinuousStep(BaseStep):
 
 
 class CategoricalStep(BaseStep):
+    """A step that evaluates trips using a categorical, boolean rule."""
 
     def apply_step(self, expression: pd.Series) -> None:
         logging.info(
-            f"Running through the logic and visualization of categorical step {self.name}"
+            "Running through the logic and visualization of categorical step %s",
+            self.name,
         )
         # overwrite parent apply_step completely
         # set previous run to 1 (no cutoffs) and apply the expression directly since this is a true/false thing
         # do this since calling the super will create a redundant column that matches directly to this step's internal column
         self.previous_run = 1
+        self.expression = expression.copy()
         self.df.loc[:, f"{self.overall_step}_{self.mode}_shift"] = self.prev
         self.df.loc[expression, f"{self.overall_step}_{self.mode}_shift"] = False
+
+    def _get_summary_data(self) -> pd.DataFrame:
+        """Summarize how many trips satisfy and fail this step's rule."""
+        mode_df = self.df[self.df["mode"] == self.mode]
+        expression = getattr(self, "expression", pd.Series(False, index=self.df.index))
+        outcomes = expression.reindex(mode_df.index).fillna(False).astype(bool)
+        counts = outcomes.value_counts().reindex([True, False], fill_value=0)
+        total = counts.sum()
+        percentages = counts / total * 100 if total else counts.astype(float)
+        return pd.DataFrame(
+            {
+                "Rule outcome": ["Satisfies rule", "Does not satisfy rule"],
+                "Trips": counts.to_numpy(),
+                "Percent": percentages.to_numpy(),
+            }
+        )
+
+    def get_summary_figure(self) -> go.Figure:
+        """Return a bar chart showing trips by categorical rule outcome."""
+        return px.bar(
+            self._get_summary_data(),
+            x="Rule outcome",
+            y="Trips",
+            title=self.get_name(),
+        )
+
+    def get_summary_statistics(self) -> pd.DataFrame:
+        """Return trip counts and percentages by categorical rule outcome."""
+        return self._get_summary_data()
 
     def is_continuous(self):
         # categorical steps are never continuous

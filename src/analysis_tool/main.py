@@ -391,7 +391,7 @@ def setup_vars(phase: Phase) -> None:
     Args:
         phase (Phase): the phase whose variables should be set up
     """
-    logging.info("Setting up variables for phase {phase}")
+    logging.info("Setting up variables for phase %s", phase)
 
     # if we are in the probable phase, make df the subset of trips that can feasibly shift, according to the probable phase logic
     if phase == Phase.PROBABLE:

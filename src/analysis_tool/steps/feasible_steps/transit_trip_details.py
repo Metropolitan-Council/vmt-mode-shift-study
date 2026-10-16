@@ -52,7 +52,9 @@ class TransitAccessDistanceStep(ContinuousStep):
         fig.update_yaxes(showgrid=True, zeroline=True)
         return fig
 
-    def apply_step(self):
+    def apply_step(self, condition=None):
+        if condition is not None:
+            return super().apply_step(condition)
         if self.cutoff_mode == CutoffMode.PCT:
             super().apply_step(
                 (
