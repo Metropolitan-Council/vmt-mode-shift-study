@@ -6,7 +6,7 @@ import pandas as pd
 import geopandas as gpd
 import streamlit as st
 from settings import get_communities
-from settings import handler, scenario
+from settings import handler, scenario as default_scenario
 from steps.enums import Mode
 
 # TAZ shapefile has null geometries (dropped below); GDAL logs an error for each
@@ -496,17 +496,21 @@ def round_off_columns(df: pd.DataFrame) -> None:
 
 # make it so that it only runs once
 @st.cache_data()
-def prepare_data(df: pd.DataFrame, data_dir: str) -> pd.DataFrame:
+def prepare_data(
+    df: pd.DataFrame, data_dir: str, scenario_config: dict | None = None
+) -> pd.DataFrame:
     """
     This function is the "main" function for cleaning the raw TBI dataframe.
 
     Args:
         df (pd.DataFrame): raw TBI df to clean
         data_dir (str): directory of the root TBI OneDrive
+        scenario_config (dict | None): selected scenario, or the configured default
 
     Returns:
         DataFrame: cleaned/fully specified DataFrame
     """
+    scenario = default_scenario if scenario_config is None else scenario_config
     logging.info("beginning data intake and cleaning")
 
     # merge in weather

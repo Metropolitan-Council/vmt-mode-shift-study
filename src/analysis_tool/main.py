@@ -512,6 +512,7 @@ def final_summary() -> None:
 
     # summary just has some overall statistics
     st.title(f"Summary{city_title_suffix()}")
+    st.subheader(f"{scenario['description']}")
 
     snapshot = st.session_state.get("feasible_snapshot")
     if st.session_state.phase == Phase.PROBABLE and snapshot is not None:
