@@ -178,9 +178,9 @@ def start_screen_feasible() -> None:
 
     if run_choice.startswith("Run all"):
         bigger_markdown(
-            "Clicking run at the left will apply every feasible step and then every probable step with their default values and go straight to the probable summary."
+            "Clicking <strong>Run all steps with default values</strong> at the left will apply every feasible step and then every probable step with their default values and go straight to the probable summary."
         )
-        if st.sidebar.button("Run"):
+        if st.sidebar.button("Run all steps with default values"):
             run_all_defaults()
         return
 
@@ -191,7 +191,7 @@ def start_screen_feasible() -> None:
         inspect.cleandoc(
             """The checked steps will be able to be run in the visualization tool. There should be at least one step checked before beginning, but ideally, one step that applies to each mode should be checked for meaningful overall results. 
                 
-    At the left, clicking begin will start the in-depth tool with the selected steps, clicking begin with all steps checked will begin the in-depth tool with all the steps included regardless of the checked steps, and clicking run all will automatically run all the selected steps."""
+    At the left, <strong>Begin customization with selected steps</strong> walks through the checked steps one at a time so you can set each cutoff, <strong>Begin customization with all steps</strong> does the same for every step regardless of what is checked, and <strong>Run selected steps with default values</strong> applies the checked steps with their default cutoffs and goes straight to the summary."""
         )
     )
 
@@ -201,7 +201,7 @@ def start_screen_feasible() -> None:
         st.session_state["scenarios"] = {mode: "none" for mode in Mode.get_all()}
 
     # begin visualization tools with selected steps
-    if st.sidebar.button("Begin"):
+    if st.sidebar.button("Begin customization with selected steps"):
         logging.info("Beginning tool with selected steps")
 
         # filter to the selected city, setup variables, toggle start screen feasible off, and refresh
@@ -211,7 +211,7 @@ def start_screen_feasible() -> None:
         st.rerun()
 
     # begin visualization with all steps selected by default
-    if st.sidebar.button("Begin with all steps selected"):
+    if st.sidebar.button("Begin customization with all steps"):
         logging.info("Beginning tool with all steps")
 
         # set feasible steps to all defined feasible steps
@@ -224,7 +224,7 @@ def start_screen_feasible() -> None:
         st.rerun()
 
     # run all selected steps automatically
-    if st.sidebar.button("Run all selected steps"):
+    if st.sidebar.button("Run selected steps with default values"):
         logging.info("Running through all steps automatically")
 
         # toggle start screen, filter to the selected city & call the run all function for feasible
@@ -276,7 +276,7 @@ def start_screen_probable() -> None:
         inspect.cleandoc(
             """The checked steps will be able to be run in the visualization tool. There should be at least one step checked before beginning, but ideally, one step that applies to each mode should be checked for meaningful overall results. 
                 
-    At the left, clicking begin will start the in-depth tool with the selected steps, clicking begin with all steps checked will begin the in-depth tool with all the steps included regardless of the checked steps, and clicking run all will automatically run all the selected steps."""
+    At the left, <strong>Begin customization with selected steps</strong> walks through the checked steps one at a time so you can set each cutoff, <strong>Begin customization with all steps</strong> does the same for every step regardless of what is checked, and <strong>Run selected steps with default values</strong> applies the checked steps with their default cutoffs and goes straight to the summary."""
         )
     )
 
@@ -288,7 +288,7 @@ def start_screen_probable() -> None:
     st.sidebar.header("Actions")
 
     # begin with selected steps; setup probable variables & toggle off this start screen & refresh
-    if st.sidebar.button("Begin"):
+    if st.sidebar.button("Begin customization with selected steps"):
         logging.info("Beginning tool with selected steps")
         if "phase" not in st.session_state or st.session_state.phase != Phase.PROBABLE:
             setup_vars(Phase.PROBABLE)
@@ -296,7 +296,7 @@ def start_screen_probable() -> None:
         st.rerun()
 
     # begin with all steps selected; set probable steps to all probable steps & toggle off this start screen & refresh
-    if st.sidebar.button("Begin with all steps selected"):
+    if st.sidebar.button("Begin customization with all steps"):
         logging.info("Beginning tool with all steps")
 
         st.session_state["probable_steps"] = handler["probable_steps"]
@@ -306,7 +306,7 @@ def start_screen_probable() -> None:
         st.rerun()
 
     # run through all selected steps automatically
-    if st.sidebar.button("Run all selected steps"):
+    if st.sidebar.button("Run selected steps with default values"):
         logging.info("Running through all steps automatically")
 
         # toggle off this start screen & call the run all function with the probable phase
@@ -466,7 +466,7 @@ def final_summary() -> None:
 
     # button to allow shift to feasible step; only possible if currently in feasible and probable not disabled
     if st.session_state.phase == Phase.FEASIBLE:
-        if st.sidebar.button("Move to probable step"):
+        if st.sidebar.button("Continue to probable phase"):
             logging.info("Moving to probable step")
             st.session_state.summary_screen = False
             st.session_state.start_screen_probable = True
@@ -476,7 +476,7 @@ def final_summary() -> None:
     df: pd.DataFrame = st.session_state.df
 
     # rerun current phase from step selection
-    if st.sidebar.button("Rerun visualization tool phase"):
+    if st.sidebar.button("Restart this phase"):
         logging.info("Rerunning current (%s) phase of the tool", st.session_state.phase)
 
         # turn off the summary screen and turn on the desired start screen and refresh
@@ -488,12 +488,12 @@ def final_summary() -> None:
         st.rerun()
 
     # currently not supported to go back all the way--can just refresh to do so
-    if st.sidebar.button("Start visualization tool from beginning", disabled=True):
+    if st.sidebar.button("Start over from the beginning", disabled=True):
         pass
 
     # button to save final df/percentiles we used to disk; not available if in build mode
     if not handler["build"]:
-        if st.sidebar.button("Save current result to csv"):
+        if st.sidebar.button("Save results to CSV"):
             with st.spinner("Exporting dataframe and percentiles"):
                 df.to_csv(scenario["saved_results"], index=False)
                 f = open(scenario["saved_options"], "w")
@@ -1472,7 +1472,7 @@ def show_step() -> None:
                 )
             )
             st.sidebar.markdown(
-                f"Cutoff equivalent: {curr.get_cutoff_equivalent():.1f} percentile"
+                f"Cutoff equivalent: {curr.get_cutoff_equivalent() * 100:.0f}th percentile"
             )
         else:
             logging.exception(
@@ -1482,18 +1482,32 @@ def show_step() -> None:
             raise RuntimeError("something went wrong")
 
     # button to dsiable the current step
-    if st.sidebar.button("Disable step", use_container_width=True):
+    if st.sidebar.button("Skip (disable) this step", use_container_width=True):
         curr.disable()
 
     # button to apply (& show the entire narrative of the current step); otherwise, just have a blurb on the current step/how to run it
-    if st.sidebar.button("Apply step", use_container_width=True):
+    if st.sidebar.button("Apply cutoff and show results", use_container_width=True):
         curr.apply_step()
         curr.show_step_streamlit()
     else:
         st.header(
-            "Click the apply step button once the desired settings have been set or click disable to disable the step."
+            "Click Apply cutoff and show results once the desired settings have been set, or Skip (disable) this step to leave it out."
         )
         bigger_markdown(curr.get_desc())
+
+
+def switch_to_step(step: str) -> None:
+    """
+    This function makes the given step the current one, creating a fresh instance of it (the step being left keeps its settings).
+    """
+    logging.info("Moving to new step %s from step %s", step, st.session_state.step)
+    st.session_state.step = step
+    st.session_state.step_class_dict[step] = getattr(
+        st.session_state.overall_step, step
+    )(st.session_state.df)
+    st.session_state.step_class = st.session_state.step_class_dict[step]
+    # new widget keys so the cutoff controls reset for the new step
+    st.session_state.id += 10
 
 
 def run() -> None:
@@ -1503,46 +1517,11 @@ def run() -> None:
 
     # define possible actions
     st.sidebar.header("Actions")
-    option_slot = st.sidebar.empty()
 
-    # finish and move to summary button -- toggle summary screen to true & refresh
-    if st.sidebar.button("Finish and move to summary"):
-        logging.info("Moving to the summary step")
-        st.session_state.summary_screen = True
-        st.rerun()
-
-    # have the ability to choose what step to run (with segmentation based on phase)
-    # can only go to new steps; TODO: add functionality to save snapshots after each step is left to allow full backtracking
     if st.session_state.phase == Phase.FEASIBLE:
-        option = option_slot.selectbox(
-            "Choose the step you want to run. If you move away from the current step, the settings of the current step will be 'locked in' and will be unable to be changed.",
-            [
-                step
-                for step in st.session_state["feasible_steps"]
-                if step not in st.session_state.step_class_dict
-                or step == st.session_state.step
-                or (
-                    step in st.session_state.step_class_dict
-                    and st.session_state.step_class_dict[step].get_previous_run()
-                    == None
-                )
-            ],
-        )
+        step_names = st.session_state["feasible_steps"]
     elif st.session_state.phase == Phase.PROBABLE:
-        option = option_slot.selectbox(
-            "Choose the step you want to run. If you move away from the current step, the settings of the current step will be 'locked in' and will be unable to be changed.",
-            [
-                step
-                for step in st.session_state["probable_steps"]
-                if step not in st.session_state.step_class_dict
-                or step == st.session_state.step
-                or (
-                    step in st.session_state.step_class_dict
-                    and st.session_state.step_class_dict[step].get_previous_run()
-                    == None
-                )
-            ],
-        )
+        step_names = st.session_state["probable_steps"]
     else:
         logging.exception(
             "something went wrong with the overall step session state variable: %s",
@@ -1552,35 +1531,46 @@ def run() -> None:
             "Something went wrong with the overall step session state variable"
         )
 
+    # can only go to new steps; TODO: add functionality to save snapshots after each step is left to allow full backtracking
+    options = [
+        step
+        for step in step_names
+        if step not in st.session_state.step_class_dict
+        or step == st.session_state.step
+        or st.session_state.step_class_dict[step].get_previous_run() is None
+    ]
+    current_index = step_names.index(st.session_state.step)
+    next_step = next(
+        (step for step in step_names[current_index + 1 :] if step in options), None
+    )
+
+    if next_step is not None and st.sidebar.button(
+        f"Next step: {next_step}", type="primary"
+    ):
+        switch_to_step(next_step)
+        st.rerun()
+
+    # finish and move to summary button -- toggle summary screen to true & refresh
+    if st.sidebar.button("Finish phase and view summary"):
+        logging.info("Moving to the summary step")
+        st.session_state.summary_screen = True
+        st.rerun()
+
+    option = st.sidebar.selectbox(
+        "Choose the step you want to run. If you move away from the current step, the settings of the current step will be 'locked in' and will be unable to be changed.",
+        options,
+        index=options.index(st.session_state.step),
+        # id changes on every step switch, so the box resets to the new current step
+        key=f"step_select_{st.session_state.id}",
+    )
+
     # manual refresh of the tool -- may break the tool
-    if st.sidebar.button("Refresh"):
+    if st.sidebar.button("Refresh page"):
         logging.info("Refreshing the tool")
         st.rerun()
 
-    # logic if we swithced steps (selected step is not equal to the stored step)
     if st.session_state.step != option:
-        logging.info(
-            "Moving to new step %s from step %s", option, st.session_state.step
-        )
-
-        # update current step
-        st.session_state.step = option
-
-        # if the step has already been created, retrieve it from the dictionary
-        if (
-            False and option in st.session_state.step_class_dict
-        ):  # currently disabled -- backtracking breaks things without some kind of "commit" structure
-            logging.info("Retrieving existing instantiation of the new step")
-            st.session_state.step_class = st.session_state.step_class_dict[option]
-        # otherwise, create it from scratch
-        else:
-            logging.info("Creating the new step for the first time")
-            st.session_state.step_class_dict[option] = getattr(
-                st.session_state.overall_step, option
-            )(st.session_state.df)
-            st.session_state.step_class = st.session_state.step_class_dict[option]
-            st.session_state.id += 10
-            # st.rerun()
+        switch_to_step(option)
 
     # show the meat of the current step
     show_step()
