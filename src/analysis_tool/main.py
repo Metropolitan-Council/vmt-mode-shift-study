@@ -1,4 +1,5 @@
 import inspect
+import json
 import logging
 from contextlib import contextmanager
 
@@ -43,15 +44,56 @@ except Exception as e:
     raise e
 
 
+def reset_scenario() -> None:
+    selected_scenario = st.session_state["selected_scenario"]
+    for state_key in list(st.session_state):
+        if state_key != "selected_scenario":
+            del st.session_state[state_key]
+    logging.info("Switching to scenario %s", selected_scenario)
+
+
+def select_scenario() -> dict:
+    scenario_names = list(handler["scenarios"])
+    selected_scenario = st.sidebar.selectbox(
+        "Scenario",
+        scenario_names,
+        index=scenario_names.index(handler["scenario_to_run"]),
+        format_func=lambda name: f"{name}: {handler['scenarios'][name]['description']}",
+        key="selected_scenario",
+        on_change=reset_scenario,
+    )
+    return handler["scenarios"][selected_scenario]
+
+
+def initialize_step(step_name: str) -> steps.parent_classes.BaseStep:
+    step: steps.parent_classes.BaseStep = getattr(
+        st.session_state.overall_step, step_name
+    )(st.session_state.df)
+    if step.is_continuous():
+        extrema = step.get_extrema()
+        configured_cutoff = handler.get("default_raw_cutoffs", {}).get(step_name)
+        raw_cutoff = (
+            float(configured_cutoff)
+            if configured_cutoff is not None
+            else min(
+                max(float(step.get_cutoff_equivalent()), float(extrema[0])),
+                float(extrema[1]),
+            )
+        )
+        if configured_cutoff is not None:
+            step.set_cutoff(raw_cutoff)
+            step.set_cutoff_mode(CutoffMode.RAW)
+        st.session_state.setdefault("default_raw_cutoffs", {})[step_name] = raw_cutoff
+    return step
+
+
 def apply_all_steps(phase: Phase, step_names: list[str]) -> None:
     """
     This function sets up the given phase and applies each named step with its current (default unless customized) cutoff.
     """
     setup_vars(phase)
     for step in step_names:
-        curr: steps.parent_classes.BaseStep = getattr(
-            st.session_state.overall_step, step
-        )(st.session_state.df)
+        curr = initialize_step(step)
         curr.apply_step()
         st.session_state.step_class_dict[step] = curr
 
@@ -346,7 +388,7 @@ def setup_df() -> 0:
         raw = pd.read_csv(
             drive_data_dir + scenario["input_tbi_file"], usecols=handler["keep_columns"]
         )
-        df = prepare_data(raw, drive_data_dir)
+        df = prepare_data(raw, drive_data_dir, scenario)
     # otherwise, we are not reinitialization -- read in precleaned files
     else:
         logging.info("Attempting to read in pre-cleaned data files")
@@ -375,7 +417,7 @@ def setup_df() -> 0:
                 usecols=handler["keep_columns"],
             )
 
-            df = prepare_data(raw, drive_data_dir)
+            df = prepare_data(raw, drive_data_dir, scenario)
 
     # store the generated df into a session state variable
     logging.info("Setting up the data inputs has succeeded")
@@ -444,9 +486,9 @@ def setup_vars(phase: Phase) -> None:
 
     # create a dictionary for storing initialized step class objects and store the first step within it already
     st.session_state["step_class_dict"] = dict()
-    st.session_state["step_class_dict"][st.session_state.step] = getattr(
-        st.session_state.overall_step, st.session_state.step
-    )(st.session_state.df)
+    st.session_state["step_class_dict"][st.session_state.step] = initialize_step(
+        st.session_state.step
+    )
 
     # store the current step class (as an alias to the stored one in the dictionary)
     st.session_state["step_class"] = st.session_state["step_class_dict"][
@@ -496,16 +538,20 @@ def final_summary() -> None:
         if st.sidebar.button("Save results to CSV"):
             with st.spinner("Exporting dataframe and percentiles"):
                 df.to_csv(scenario["saved_results"], index=False)
-                f = open(scenario["saved_options"], "w")
-                f.write(
-                    str(
-                        {
-                            step_name: step_class.get_cutoff()
-                            for step_name, step_class in st.session_state.step_class_dict.items()
-                        }
-                    )
-                )
-                f.close()
+                options = {
+                    step_name: {
+                        "cutoff": step_class.get_cutoff()
+                        if step_class.is_continuous()
+                        else None,
+                        "cutoff_mode": str(step_class.get_cutoff_mode())
+                        if step_class.is_continuous()
+                        else "categorical",
+                    }
+                    for step_name, step_class in st.session_state.step_class_dict.items()
+                }
+                with open(scenario["saved_options"], "w", encoding="utf-8") as options_file:
+                    json.dump(options, options_file, indent=2)
+            st.success("Saved results CSV and options JSON.")
 
     # calculate overall shift ability -- can shift to at least one mode; saves feasible pct for the probable phase
     update_overall_shift()
@@ -615,10 +661,10 @@ def phase_summary() -> None:
         if step_class.is_continuous():
             if prev[1] == CutoffMode.PCT:
                 settings[name] = (
-                    f"{prev[0] * 100:.0f}th pct ({step_class.get_pct_value(prev[0]):.1f} {step_class.get_units()})"
+                    f"{prev[0] * 100:.2f}th pct ({step_class.get_pct_value(prev[0]):.1f} {step_class.get_units()})"
                 )
             elif prev[1] == CutoffMode.RAW:
-                settings[name] = f"{prev[0]:.1f} {step_class.get_units()}"
+                settings[name] = f"{prev[0]:.2f} {step_class.get_units()}"
             else:
                 raise RuntimeError("Something went wrong with the cutoff mode enum")
         else:
@@ -770,6 +816,16 @@ def phase_summary() -> None:
         f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"]) & (df["min_alt_mode_minus_car_duration"] <= 30)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.1f}%',
     ]
     st.table(duration_diff_df)
+    fastest_15_minute_column = "Fastest mode is within 15 minutes of driving"
+    car_trip_share = duration_diff_df.loc[
+        r"% of Car Trips", fastest_15_minute_column
+    ].strip()
+    vmt_share = duration_diff_df.loc[r"% of VMT", fastest_15_minute_column].strip()
+    selected_city = st.session_state.get("city")
+    region = selected_city or "the Twin Cities region"
+    bigger_markdown(
+        f"Overall, in {region} today, {car_trip_share} of car trips could shift to walk, bike or transit with travel times within 15 minutes of driving, and these trips represent {vmt_share} of VMT."
+    )
 
     # details about walking shifts
     section_header("Walking")
@@ -1447,13 +1503,20 @@ def show_step() -> None:
             st.sidebar.radio(
                 "Choose how to set the cutoff",
                 (CutoffMode.PCT, CutoffMode.RAW),
+                index=1 if curr.get_cutoff_mode() == CutoffMode.RAW else 0,
                 key=st.session_state.id,
             )
         )
         if curr.get_cutoff_mode() == CutoffMode.PCT:
             curr.set_cutoff(
                 st.sidebar.slider(
-                    "Select a value:", 0.0, 1.0, 0.95, 0.01, key=st.session_state.id + 1
+                    "Select a value:",
+                    0.0,
+                    1.0,
+                    0.95,
+                    0.01,
+                    format="%.2f",
+                    key=st.session_state.id + 1,
                 )
             )
             st.sidebar.markdown(
@@ -1461,19 +1524,24 @@ def show_step() -> None:
             )
         elif curr.get_cutoff_mode() == CutoffMode.RAW:
             extrema = curr.get_extrema()
+            raw_cutoff = st.session_state.get("default_raw_cutoffs", {}).get(
+                st.session_state.step, float(extrema[1])
+            )
+            min_value = min(float(extrema[0]), float(raw_cutoff))
+            max_value = max(float(extrema[1]), float(raw_cutoff))
             curr.set_cutoff(
-                st.sidebar.slider(
-                    "Select a value:",
-                    float(extrema[0]),
-                    float(extrema[1]),
-                    float(extrema[1]),
-                    float((extrema[1] - extrema[0]) / 100),
-                    format=f"%0.1f {curr.get_units()}",
+                st.sidebar.number_input(
+                    f"Select a value ({curr.get_units()}):",
+                    min_value=min_value,
+                    max_value=max_value,
+                    value=float(raw_cutoff),
+                    step=float((extrema[1] - extrema[0]) / 100),
+                    format="%0.2f",
                     key=st.session_state.id + 2,
                 )
             )
             st.sidebar.markdown(
-                f"Cutoff equivalent: {curr.get_cutoff_equivalent() * 100:.0f}th percentile"
+                f"Cutoff equivalent: {curr.get_cutoff_equivalent() * 100:.2f}th percentile"
             )
         else:
             logging.exception(
@@ -1503,9 +1571,7 @@ def switch_to_step(step: str) -> None:
     """
     logging.info("Moving to new step %s from step %s", step, st.session_state.step)
     st.session_state.step = step
-    st.session_state.step_class_dict[step] = getattr(
-        st.session_state.overall_step, step
-    )(st.session_state.df)
+    st.session_state.step_class_dict[step] = initialize_step(step)
     st.session_state.step_class = st.session_state.step_class_dict[step]
     # new widget keys so the cutoff controls reset for the new step
     st.session_state.id += 10
@@ -1654,6 +1720,8 @@ if __name__ == "__main__":
         """,
         unsafe_allow_html=True,
     )
+
+    scenario = select_scenario()
 
     # do initiali variable setup; this only runs on first startup
     # this forces the tool to start at start screen feasible
