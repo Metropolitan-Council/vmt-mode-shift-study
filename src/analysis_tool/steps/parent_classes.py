@@ -444,12 +444,7 @@ class ContinuousStep(BaseStep):
             return self.get_pct_value(self.cutoff)
         # to convert raw score to percentile, can use scipy
         elif self.cutoff_mode == CutoffMode.RAW:
-            return (
-                stats.percentileofscore(
-                    self.df[self.df["mode"] == self.mode][self.column_name], self.cutoff
-                )
-                / 100
-            )
+            return self.get_value_pct(self.cutoff)
         else:
             raise RuntimeError("something went wrong with the cutoff mode enum")
 
@@ -467,14 +462,17 @@ class ContinuousStep(BaseStep):
             return self.cutoff
         # otherwise, use scipy to convert raw to percentile
         elif self.cutoff_mode == CutoffMode.RAW:
-            return (
-                stats.percentileofscore(
-                    self.df[self.df["mode"] == self.mode][self.column_name], self.cutoff
-                )
-                / 100
-            )
+            return self.get_value_pct(self.cutoff)
         else:
             raise RuntimeError("something went wrong with the cutfof mode enum")
+
+    def get_value_pct(self, value: float) -> float:
+        """
+        This function returns the percentile (0-1) of the given raw value among this step's mode, the inverse of get_pct_value.
+        """
+        # quantile skips missing values, so skip them here too (scipy would return nan)
+        values = self.df[self.df["mode"] == self.mode][self.column_name].dropna()
+        return stats.percentileofscore(values, value) / 100
 
     def get_pct_value(self, pct: float) -> float:
         """
