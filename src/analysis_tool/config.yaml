@@ -28,6 +28,17 @@ probable_steps:
 fixed_purposes: ["Work", "Work-related", "Escort", "School", "School-related"]
 unlikely_purposes: ["Escort", "Shop"]
 
+# Optional raw numeric-input defaults, in each step's units, keyed by step class name.
+# Omitted steps use the step's current effective cutoff converted to raw units.
+default_raw_cutoffs: 
+    WalkDistanceStep: 1.6
+    BikeDistanceStep: 10
+    BikeHighLTSDistStep: 0.15
+    BikeSnowDepthStep: 0.0
+    TransitAccessDistanceStep: 0.97
+    TransitEgressDistanceStep: 0.93
+    TransitWaitTimeStep: 64
+
 build: False  # whether we are currently building to docker/streamlit; disables initialization/keyring
 force_reinitialize: True
 # save_result: False
@@ -108,6 +119,7 @@ scenarios:
         saved_tbi_file: "data/tbi_base.csv"  
         saved_results: "output/trips_base.csv"  
         saved_options: "output/options_base.json"  
+        saved_tables: "output/tables_base.json"
         
     best_walk: 
         description: "Improve all streets to best walk quality"
@@ -119,6 +131,7 @@ scenarios:
         saved_tbi_file: "data/tbi_best_walk.csv"  
         saved_results: "output/trips_best_walk.csv"  
         saved_options: "output/options_best_walk.json"  
+        saved_tables: "output/tables_best_walk.json"
         
     best_bike: 
         description: "Improve all streets to best bike LTS"
@@ -130,6 +143,7 @@ scenarios:
         saved_tbi_file: "data/tbi_best_bike.csv"  
         saved_results: "output/trips_best_bike.csv"  
         saved_options: "output/options_best_bike.json"  
+        saved_tables: "output/tables_best_bike.json"
         
     e_bike: 
         description: "Improve all streets to best bike LTS and everyone rides an e-bike"
@@ -141,6 +155,7 @@ scenarios:
         saved_tbi_file: "data/tbi_e_bike.csv"  
         saved_results: "output/trips_e_bike.csv"  
         saved_options: "output/options_e_bike.json"  
+        saved_tables: "output/tables_e_bike.json"
         
     double_transit: 
         description: "Double frequenency of all transit routes" 
@@ -152,6 +167,7 @@ scenarios:
         saved_tbi_file: "data/tbi_double_transit.csv"  
         saved_results: "output/trips_double_transit.csv"  
         saved_options: "output/options_double_transit.json"  
+        saved_tables: "output/tables_double_transit.json"
         
     slow_car: 
         description: "Reduce car speed limits"
@@ -163,6 +179,7 @@ scenarios:
         saved_tbi_file: "data/tbi_slow_car.csv"  
         saved_results: "output/trips_slow_car.csv"  
         saved_options: "output/options_slow_car.json"  
+        saved_tables: "output/tables_slow_car.json"
         
     old_slow_car: 
         description: "Reduce car speed limits"
@@ -174,6 +191,7 @@ scenarios:
         saved_tbi_file: "data/tbi_old_slow_car.csv"  
         saved_results: "output/trips_old_slow_car.csv"  
         saved_options: "output/options_old_slow_car.json"  
+        saved_tables: "output/tables_old_slow_car.json"
         
     all_four: 
         description: "All of the above"
@@ -185,4 +203,5 @@ scenarios:
         saved_tbi_file: "data/tbi_all_four.csv"  
         saved_results: "output/trips_all_four.csv"  
         saved_options: "output/options_all_four.json"  
+        saved_tables: "output/tables_all_four.json"
         

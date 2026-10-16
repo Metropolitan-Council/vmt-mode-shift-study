@@ -502,6 +502,7 @@ def final_summary() -> None:
     """
     This function generates the final summary for the visualization tool.
     """
+    st.session_state["summary_tables"] = {}
 
     # define the actions we can do at this point
     st.sidebar.header("Actions")
@@ -540,16 +541,22 @@ def final_summary() -> None:
                 df.to_csv(scenario["saved_results"], index=False)
                 options = {
                     step_name: {
-                        "cutoff": step_class.get_cutoff()
-                        if step_class.is_continuous()
-                        else None,
-                        "cutoff_mode": str(step_class.get_cutoff_mode())
-                        if step_class.is_continuous()
-                        else "categorical",
+                        "cutoff": (
+                            step_class.get_cutoff()
+                            if step_class.is_continuous()
+                            else None
+                        ),
+                        "cutoff_mode": (
+                            str(step_class.get_cutoff_mode())
+                            if step_class.is_continuous()
+                            else "categorical"
+                        ),
                     }
                     for step_name, step_class in st.session_state.step_class_dict.items()
                 }
-                with open(scenario["saved_options"], "w", encoding="utf-8") as options_file:
+                with open(
+                    scenario["saved_options"], "w", encoding="utf-8"
+                ) as options_file:
                     json.dump(options, options_file, indent=2)
             st.success("Saved results CSV and options JSON.")
 
@@ -571,6 +578,21 @@ def final_summary() -> None:
     else:
         render_toc([st.session_state.phase])
         phase_summary()
+
+    if not handler["build"] and st.sidebar.button("Save summary tables to JSON"):
+        with st.spinner("Exporting summary tables"):
+            with open(scenario["saved_tables"], "w", encoding="utf-8") as tables_file:
+                json.dump(
+                    {
+                        "scenario": st.session_state.get(
+                            "selected_scenario", handler["scenario_to_run"]
+                        ),
+                        "phases": st.session_state["summary_tables"],
+                    },
+                    tables_file,
+                    indent=2,
+                )
+        st.success("Saved summary tables JSON.")
 
 
 SUMMARY_SECTIONS = [
@@ -624,6 +646,16 @@ def phase_state(df: pd.DataFrame, phase: Phase, step_class_dict: dict):
         yield
     finally:
         st.session_state.update(saved)
+
+
+def register_summary_table(name: str, table: pd.DataFrame) -> pd.DataFrame:
+    """Store a JSON-safe split representation of a displayed summary table."""
+    phase = st.session_state.phase.value
+    tables = st.session_state.setdefault("summary_tables", {})
+    tables.setdefault(phase, {})[name] = json.loads(
+        table.to_json(orient="split", date_format="iso")
+    )
+    return table
 
 
 def phase_summary() -> None:
@@ -695,7 +727,7 @@ def phase_summary() -> None:
         f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"])]["vehicle_trips"].sum() / df[(df["mode"] == Mode.CAR)]["vehicle_trips"].sum() * 100:.1f}%',
         f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.1f}%',
     ]
-    st.table(overall_shifts)
+    st.table(register_summary_table("overall_shifts", overall_shifts))
 
     # fastest alternative by mode comparisons
     bigger_markdown(
@@ -786,7 +818,9 @@ def phase_summary() -> None:
         f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"])]["vehicle_trips"].sum() / df[(df["mode"] == Mode.CAR)]["vehicle_trips"].sum() * 100:.1f}%',
         f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"])]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.1f}%',
     ]
-    st.table(overall_shift_comparison)
+    st.table(
+        register_summary_table("overall_shift_comparison", overall_shift_comparison)
+    )
 
     # histogram for min travel time difference for all modes
     bigger_markdown(
@@ -815,7 +849,7 @@ def phase_summary() -> None:
         f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"]) & (df["min_alt_mode_minus_car_duration"] <= 30)]["vehicle_trips"].sum() / df[(df["mode"] == Mode.CAR)]["vehicle_trips"].sum() * 100: .1f}%',
         f'{df[(df["mode"] == Mode.CAR) & (df[f"{st.session_state.phase}_shift"]) & (df["min_alt_mode_minus_car_duration"] <= 30)]["vmt"].sum() / df[(df["mode"] == Mode.CAR)]["vmt"].sum() * 100:.1f}%',
     ]
-    st.table(duration_diff_df)
+    st.table(register_summary_table("duration_diff_df", duration_diff_df))
     fastest_15_minute_column = "Fastest mode is within 15 minutes of driving"
     car_trip_share = duration_diff_df.loc[
         r"% of Car Trips", fastest_15_minute_column
@@ -838,12 +872,15 @@ def phase_summary() -> None:
         r"Below, a table detailing processed steps and the % of car trips and VMT that meet those constraints can be seen."
     )
     st.table(
-        get_summary_df(
-            df,
-            st.session_state.step_class_dict.values(),
-            Mode.WALK,
-            f"{st.session_state.phase}_walk_shift",
-            st.session_state.phase,
+        register_summary_table(
+            "walk_step_summary",
+            get_summary_df(
+                df,
+                st.session_state.step_class_dict.values(),
+                Mode.WALK,
+                f"{st.session_state.phase}_walk_shift",
+                st.session_state.phase,
+            ),
         )
     )
 
@@ -869,11 +906,14 @@ def phase_summary() -> None:
         f"The % of car trips and VMT that are {st.session_state.phase} and within x minutes from walking can be seen in the below table."
     )
     st.table(
-        get_duration_diff_df(
-            df,
-            Mode.WALK,
-            f"{st.session_state.phase}_walk_shift",
-            "walk_duration_minutes",
+        register_summary_table(
+            "walk_duration_summary",
+            get_duration_diff_df(
+                df,
+                Mode.WALK,
+                f"{st.session_state.phase}_walk_shift",
+                "walk_duration_minutes",
+            ),
         )
     )
 
@@ -888,12 +928,15 @@ def phase_summary() -> None:
         r"Below, a table detailing processed steps and the % of car trips and VMT that meet those constraints can be seen."
     )
     st.table(
-        get_summary_df(
-            df,
-            st.session_state.step_class_dict.values(),
-            Mode.BIKE,
-            f"{st.session_state.phase}_bike_shift",
-            st.session_state.phase,
+        register_summary_table(
+            "bike_step_summary",
+            get_summary_df(
+                df,
+                st.session_state.step_class_dict.values(),
+                Mode.BIKE,
+                f"{st.session_state.phase}_bike_shift",
+                st.session_state.phase,
+            ),
         )
     )
 
@@ -919,11 +962,14 @@ def phase_summary() -> None:
         f"The % of car trips and VMT that are {st.session_state.phase} and within x minutes from walking can be seen in the below table."
     )
     st.table(
-        get_duration_diff_df(
-            df,
-            Mode.BIKE,
-            f"{st.session_state.phase}_bike_shift",
-            "bike_duration_minutes_adj",
+        register_summary_table(
+            "bike_duration_summary",
+            get_duration_diff_df(
+                df,
+                Mode.BIKE,
+                f"{st.session_state.phase}_bike_shift",
+                "bike_duration_minutes_adj",
+            ),
         )
     )
 
@@ -935,12 +981,15 @@ def phase_summary() -> None:
         r"Below, a table detailing processed steps and the % of car trips and VMT that meet those constraints can be seen."
     )
     st.table(
-        get_summary_df(
-            df,
-            st.session_state.step_class_dict.values(),
-            Mode.TRANSIT,
-            f"{st.session_state.phase}_transit_shift",
-            st.session_state.phase,
+        register_summary_table(
+            "transit_step_summary",
+            get_summary_df(
+                df,
+                st.session_state.step_class_dict.values(),
+                Mode.TRANSIT,
+                f"{st.session_state.phase}_transit_shift",
+                st.session_state.phase,
+            ),
         )
     )
 
@@ -970,11 +1019,14 @@ def phase_summary() -> None:
         f"The % of car trips and VMT that are {st.session_state.phase} and within x minutes from transit can be seen in the below table."
     )
     st.table(
-        get_duration_diff_df(
-            df[~df["transit_duration"].isna()],
-            Mode.TRANSIT,
-            f"{st.session_state.phase}_transit_shift",
-            "transit_duration",
+        register_summary_table(
+            "transit_duration_summary",
+            get_duration_diff_df(
+                df[~df["transit_duration"].isna()],
+                Mode.TRANSIT,
+                f"{st.session_state.phase}_transit_shift",
+                "transit_duration",
+            ),
         )
     )
 
@@ -1484,7 +1536,7 @@ def phase_summary() -> None:
     bigger_markdown(
         f"We consider a tour-level shift possible if every component trip can also shift {adjective}."
     )
-    st.table(tour_df)
+    st.table(register_summary_table("tour_df", tour_df))
 
 
 def show_step() -> None:
