@@ -1,4 +1,4 @@
-﻿feasible_steps: 
+feasible_steps: 
     - WalkDistanceStep
     - WalkTimingStep
     - BikeDistanceStep
@@ -181,17 +181,17 @@ scenarios:
         saved_options: "output/options_slow_car.json"  
         saved_tables: "output/tables_slow_car.json"
         
-    old_slow_car: 
-        description: "Reduce car speed limits"
-        input_tbi_file: "/data_processed/tbi_cleaned.csv" 
-        car_route_file: "/Data_Processed/geodata/car_scenario.parquet"
-        walk_route_file: "/Data_Processed/geodata/walk-trips-1d39c.parquet"
-        bike_route_file: "/Data_Processed/geodata/bike-lts-37721.parquet"
-        transit_route_file: "/Data_Processed/geodata/transit-trips-7d58f.parquet"
-        saved_tbi_file: "data/tbi_old_slow_car.csv"  
-        saved_results: "output/trips_old_slow_car.csv"  
-        saved_options: "output/options_old_slow_car.json"  
-        saved_tables: "output/tables_old_slow_car.json"
+    # old_slow_car: 
+    #     description: "Reduce car speed limits"
+    #     input_tbi_file: "/data_processed/tbi_cleaned.csv" 
+    #     car_route_file: "/Data_Processed/geodata/car_scenario.parquet"
+    #     walk_route_file: "/Data_Processed/geodata/walk-trips-1d39c.parquet"
+    #     bike_route_file: "/Data_Processed/geodata/bike-lts-37721.parquet"
+    #     transit_route_file: "/Data_Processed/geodata/transit-trips-7d58f.parquet"
+    #     saved_tbi_file: "data/tbi_old_slow_car.csv"  
+    #     saved_results: "output/trips_old_slow_car.csv"  
+    #     saved_options: "output/options_old_slow_car.json"  
+    #     saved_tables: "output/tables_old_slow_car.json"
         
     all_four: 
         description: "All of the above"
