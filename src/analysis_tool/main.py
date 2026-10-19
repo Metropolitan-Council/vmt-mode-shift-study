@@ -2,6 +2,7 @@ import inspect
 import json
 import logging
 from contextlib import contextmanager
+from pathlib import Path
 
 import streamlit as st
 import pandas as pd
@@ -47,7 +48,7 @@ except Exception as e:
 def reset_scenario() -> None:
     selected_scenario = st.session_state["selected_scenario"]
     for state_key in list(st.session_state):
-        if state_key != "selected_scenario":
+        if state_key not in ("selected_scenario", "city"):
             del st.session_state[state_key]
     logging.info("Switching to scenario %s", selected_scenario)
 
@@ -555,7 +556,19 @@ def final_summary() -> None:
 
     if not handler["build"] and st.sidebar.button("Save results"):
         with st.spinner("Exporting results, summary tables, and options"):
-            df.to_csv(scenario["saved_results"], index=False)
+            city = st.session_state.get("city") or ALL_CITIES
+            output_paths = {
+                key: Path(scenario[key])
+                for key in ("saved_results", "saved_options", "saved_tables")
+            }
+            if city != ALL_CITIES:
+                output_paths = {
+                    key: path.parent / city / path.name
+                    for key, path in output_paths.items()
+                }
+            for path in output_paths.values():
+                path.parent.mkdir(parents=True, exist_ok=True)
+            df.to_csv(output_paths["saved_results"], index=False)
             phase_steps = {}
             if st.session_state.phase == Phase.PROBABLE and snapshot is not None:
                 phase_steps[Phase.FEASIBLE.value] = snapshot[1]
@@ -578,10 +591,14 @@ def final_summary() -> None:
                 }
                 for phase, step_classes in phase_steps.items()
             }
-            options["city"] = st.session_state.get("city") or ALL_CITIES
-            with open(scenario["saved_options"], "w", encoding="utf-8") as options_file:
+            options["city"] = city
+            with open(
+                output_paths["saved_options"], "w", encoding="utf-8"
+            ) as options_file:
                 json.dump(options, options_file, indent=2)
-            with open(scenario["saved_tables"], "w", encoding="utf-8") as tables_file:
+            with open(
+                output_paths["saved_tables"], "w", encoding="utf-8"
+            ) as tables_file:
                 json.dump(
                     {
                         "scenario": st.session_state.get(

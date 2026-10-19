@@ -1,4 +1,4 @@
-feasible_steps: 
+﻿feasible_steps: 
     - WalkDistanceStep
     - WalkTimingStep
     - BikeDistanceStep
