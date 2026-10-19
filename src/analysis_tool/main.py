@@ -534,32 +534,6 @@ def final_summary() -> None:
     if st.sidebar.button("Start over from the beginning", disabled=True):
         pass
 
-    # button to save final df/percentiles we used to disk; not available if in build mode
-    if not handler["build"]:
-        if st.sidebar.button("Save results to CSV"):
-            with st.spinner("Exporting dataframe and percentiles"):
-                df.to_csv(scenario["saved_results"], index=False)
-                options = {
-                    step_name: {
-                        "cutoff": (
-                            step_class.get_cutoff()
-                            if step_class.is_continuous()
-                            else None
-                        ),
-                        "cutoff_mode": (
-                            str(step_class.get_cutoff_mode())
-                            if step_class.is_continuous()
-                            else "categorical"
-                        ),
-                    }
-                    for step_name, step_class in st.session_state.step_class_dict.items()
-                }
-                with open(
-                    scenario["saved_options"], "w", encoding="utf-8"
-                ) as options_file:
-                    json.dump(options, options_file, indent=2)
-            st.success("Saved results CSV and options JSON.")
-
     # calculate overall shift ability -- can shift to at least one mode; saves feasible pct for the probable phase
     update_overall_shift()
 
@@ -579,8 +553,34 @@ def final_summary() -> None:
         render_toc([st.session_state.phase])
         phase_summary()
 
-    if not handler["build"] and st.sidebar.button("Save summary tables to JSON"):
-        with st.spinner("Exporting summary tables"):
+    if not handler["build"] and st.sidebar.button("Save results"):
+        with st.spinner("Exporting results, summary tables, and options"):
+            df.to_csv(scenario["saved_results"], index=False)
+            phase_steps = {}
+            if st.session_state.phase == Phase.PROBABLE and snapshot is not None:
+                phase_steps[Phase.FEASIBLE.value] = snapshot[1]
+            phase_steps[st.session_state.phase.value] = st.session_state.step_class_dict
+            options = {
+                phase: {
+                    step_name: {
+                        "cutoff": (
+                            step_class.get_cutoff()
+                            if step_class.is_continuous()
+                            else None
+                        ),
+                        "cutoff_mode": (
+                            str(step_class.get_cutoff_mode())
+                            if step_class.is_continuous()
+                            else "categorical"
+                        ),
+                    }
+                    for step_name, step_class in step_classes.items()
+                }
+                for phase, step_classes in phase_steps.items()
+            }
+            options["city"] = st.session_state.get("city") or ALL_CITIES
+            with open(scenario["saved_options"], "w", encoding="utf-8") as options_file:
+                json.dump(options, options_file, indent=2)
             with open(scenario["saved_tables"], "w", encoding="utf-8") as tables_file:
                 json.dump(
                     {
@@ -592,7 +592,7 @@ def final_summary() -> None:
                     tables_file,
                     indent=2,
                 )
-        st.success("Saved summary tables JSON.")
+        st.success("Saved results CSV, summary tables JSON, and options JSON.")
 
 
 SUMMARY_SECTIONS = [
@@ -701,6 +701,10 @@ def phase_summary() -> None:
                 raise RuntimeError("Something went wrong with the cutoff mode enum")
         else:
             settings[name] = "1 (categorical)"
+    register_summary_table(
+        "step_settings",
+        pd.DataFrame.from_dict(settings, orient="index", columns=["Setting"]),
+    )
     st.write(settings)
 
     section_header("Any mode")

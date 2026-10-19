@@ -1,5 +1,4 @@
 # Custom for VMT reduction project
-src/analysis_tool/output/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
