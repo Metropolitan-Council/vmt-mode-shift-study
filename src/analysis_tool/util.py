@@ -10,6 +10,11 @@ from settings import handler, get_communities
 ALL_CITIES = "All cities"
 
 
+def city_filter_joiner() -> str:
+    """Returns the endpoint joiner selected for the city trip filter."""
+    return "and" if st.session_state.get("city_filter_logic", "OR") == "AND" else "or"
+
+
 def get_map_areas(df: pd.DataFrame) -> tuple:
     """Returns each trip's map area and the CTU geometries to map; with a city selected, all trips belong to that city and only it is mapped."""
     communities = get_communities()
@@ -22,7 +27,7 @@ def get_map_areas(df: pd.DataFrame) -> tuple:
 def city_title_suffix() -> str:
     """Returns a title suffix naming the selected city, or an empty string if no city filter is applied."""
     city = st.session_state.get("city")
-    return f" — trips beginning or ending in {city}" if city else ""
+    return f" — trips beginning {city_filter_joiner()} ending in {city}" if city else ""
 
 
 PLOTLY_DEFAULT_HEIGHT_PX = 450
@@ -57,7 +62,7 @@ def format_figure(fig):
     city = st.session_state.get("city")
     if not city:
         return fig
-    label = f"Trips beginning or ending in {city}"
+    label = f"Trips beginning {city_filter_joiner()} ending in {city}"
 
     if mpl_fig is None:
         if fig.layout.title.text:

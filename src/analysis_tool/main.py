@@ -48,7 +48,7 @@ except Exception as e:
 def reset_scenario() -> None:
     selected_scenario = st.session_state["selected_scenario"]
     for state_key in list(st.session_state):
-        if state_key not in ("selected_scenario", "city"):
+        if state_key not in ("selected_scenario", "city", "city_filter_logic"):
             del st.session_state[state_key]
     logging.info("Switching to scenario %s", selected_scenario)
 
@@ -159,7 +159,8 @@ def run_all_defaults() -> None:
 
 def filter_to_city() -> None:
     """
-    This function resets the working df to the full dataset, restricted to trips that begin or end in the selected city (if any).
+    This function resets the working df to the full dataset, restricted to trips
+    matching the selected city filter (if any).
     """
     df_full: pd.DataFrame = st.session_state.df_full
     city = st.session_state.get("city")
@@ -167,10 +168,25 @@ def filter_to_city() -> None:
         st.session_state["df"] = df_full.copy()
         return
 
-    in_city = df_full["community"] == city
-    if "d_community" in df_full.columns:
-        in_city = in_city | (df_full["d_community"] == city)
-    logging.info("Filtering to %s trips beginning or ending in %s", in_city.sum(), city)
+    origin_in_city = df_full["community"] == city
+    destination_in_city = (
+        df_full["d_community"] == city
+        if "d_community" in df_full.columns
+        else pd.Series(False, index=df_full.index)
+    )
+    filter_logic = st.session_state.get("city_filter_logic", "OR")
+    if filter_logic == "AND":
+        in_city = origin_in_city & destination_in_city
+        filter_description = "starting and ending"
+    else:
+        in_city = origin_in_city | destination_in_city
+        filter_description = "starting or ending"
+    logging.info(
+        "Filtering to %s trips %s in %s",
+        in_city.sum(),
+        filter_description,
+        city,
+    )
     st.session_state["df"] = df_full[in_city].copy()
 
 
@@ -206,15 +222,33 @@ def start_screen_feasible() -> None:
     city_options = [ALL_CITIES] + sorted(cities - {"na"})
     current_city = st.session_state.get("city") or ALL_CITIES
     selected_city = st.selectbox(
-        "Only include trips that begin or end in this city",
+        "City for trip filter",
         city_options,
         index=city_options.index(current_city) if current_city in city_options else 0,
     )
     st.session_state["city"] = None if selected_city == ALL_CITIES else selected_city
+    selected_filter_logic = st.radio(
+        "Include trips that:",
+        options=("OR", "AND"),
+        format_func=lambda logic: (
+            "Start OR end in the selected city"
+            if logic == "OR"
+            else "Start AND end in the selected city"
+        ),
+        horizontal=True,
+        index=1 if st.session_state.get("city_filter_logic", "OR") == "AND" else 0,
+        key="city_filter_logic_widget",
+    )
+    st.session_state["city_filter_logic"] = selected_filter_logic
     if not has_destination:
-        st.warning(
-            "The saved data has no destination cities; only trips beginning in the selected city will be included. Reinitialize the data to add destinations."
-        )
+        if st.session_state["city_filter_logic"] == "AND":
+            st.warning(
+                "The saved data has no destination cities; AND filtering cannot confirm both endpoints, so no trips will be included. Reinitialize the data to add destinations."
+            )
+        else:
+            st.warning(
+                "The saved data has no destination cities; OR filtering will include trips beginning in the selected city. Reinitialize the data to add destinations."
+            )
 
     # define all actions that can be done
     st.sidebar.header("Actions")
@@ -598,6 +632,9 @@ def save_results() -> None:
                 for phase, step_classes in phase_steps.items()
             }
             options["city"] = city
+            options["city_filter_logic"] = st.session_state.get(
+                "city_filter_logic", "OR"
+            )
             options["routes"] = {
                 mode: scenario[f"{mode}_route_file"]
                 for mode in ("car", "walk", "bike", "transit")
@@ -1239,6 +1276,26 @@ def phase_summary() -> None:
         )
         if (~df[f"{st.session_state.phase}_shift"]).sum() == 0:
             after_cold_starts = 0
+
+    car_trips = df[df["mode"] == Mode.CAR]
+    car_trips_after_shift = car_trips[~car_trips[f"{st.session_state.phase}_shift"]]
+    raw_metrics = pd.DataFrame(
+        {
+            "Before shift": {
+                "Person trips": car_trips["person_trips"].sum(),
+                "Vehicle trips": car_trips["vehicle_trips"].sum(),
+                "VMT": car_trips["vmt"].sum(),
+                "Cold starts": before_cold_starts,
+            },
+            "After shift": {
+                "Person trips": car_trips_after_shift["person_trips"].sum(),
+                "Vehicle trips": car_trips_after_shift["vehicle_trips"].sum(),
+                "VMT": car_trips_after_shift["vmt"].sum(),
+                "Cold starts": after_cold_starts,
+            },
+        }
+    )
+    register_summary_table("raw_metrics", raw_metrics.round().astype(int))
 
     # cold shifts before/after mode shifts
     bigger_markdown(
