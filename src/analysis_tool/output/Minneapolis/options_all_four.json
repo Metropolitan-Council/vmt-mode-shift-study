@@ -47,15 +47,15 @@
   },
   "probable": {
     "WalkDurationDifferenceStep": {
-      "cutoff": 0.0555,
+      "cutoff": 0.0691,
       "cutoff_mode": "Percentile"
     },
     "BikeDurationDifferenceStep": {
-      "cutoff": 0.005,
+      "cutoff": 0.043,
       "cutoff_mode": "Percentile"
     },
     "TransitDurationDifferenceStep": {
-      "cutoff": 0.2098,
+      "cutoff": 0.3527,
       "cutoff_mode": "Percentile"
     },
     "BikeHighLTSDistStep": {
@@ -96,7 +96,7 @@
     }
   },
   "city": "Minneapolis",
-  "city_filter_logic": "AND",
+  "city_filter_logic": "OR",
   "routes": {
     "car": "/Data_Processed/geodata/car_scenario_f2802.parquet",
     "walk": "/Data_Processed/geodata/walk-scenario-a37e1.parquet",
