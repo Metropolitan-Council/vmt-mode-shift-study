@@ -95,5 +95,11 @@
       "cutoff_mode": "Percentile"
     }
   },
-  "city": "All cities"
+  "city": "All cities",
+  "routes": {
+    "car": "/Data_Processed/geodata/car_congestion_1d39c/car_congestion.parquet",
+    "walk": "/Data_Processed/geodata/walk-trips-1d39c.parquet",
+    "bike": "/Data_Processed/geodata/bike-lts-37721.parquet",
+    "transit": "/Data_Processed/geodata/transit-trips-45d51.parquet"
+  }
 }
