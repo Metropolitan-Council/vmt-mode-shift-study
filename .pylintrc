@@ -2,4 +2,5 @@
 disable=
     line-too-long,
     trailing-whitespace,
-    too-many-lines
+    too-many-lines,
+    pointless-statement

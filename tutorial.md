@@ -23,18 +23,25 @@ Assumptions:
 
 ## What are you trying to do?
 
-- Re-run feasibility and probability analyses on project data (no new network, TBI, or other data)? -> go to ## Final reporting notebooks
-- Build new networks, update routing data? -> go to ## Start running things
+- Re-run feasibility and probability analyses on project data (no new network, TBI, or other data)? -> go to ## Final reporting notebooks and streamlit app
+- Add new TBI data, build new networks, update routing? -> go to ## Start running things
 
 
-## Final reporting notebooks
+## Final reporting notebooks and streamlit app
+
 
 These take in the cleaned TBI, networks, various routed trips, and produce the potential trips shifted between modes.
+
+The notebooks walk through the logic of analyzing the feasibility and probability of trips being shifted between modes.
 
 - reports/exploratory_data_analysis/feasibility_analysis_cleaned.ipynb
 - reports/exploratory_data_analysis/probable_analysis_cleaned.ipynb
 
-The project left us with networks and routed trips. These live in Data_Processed/geodata.
+The streamlit app allows you to set different cutoff values for determining the feasibility and probability of trips being shifted between modes.
+
+See [src/analysis_tool/](src/analysis_tool/README.md)
+
+The project left us with networks and routed trips. These live in Data_Processed/geodata. Data_Processed/CHANGELOG.md contains a record of the exact route files 
 
 ## Start running things
 
@@ -57,7 +64,7 @@ The project left us with networks and routed trips. These live in Data_Processed
 
 # Updating options
 
-- Add 2023 TBI data and re-run all subsequent data processing, routing, and analysis steps? Maybe, but networks and routes available will have changed. 
+- Add 2023 TBI data and re-run all subsequent data processing, routing, and analysis steps? Maybe, but networks, routes, weather, TAZ terminal times,  available will have changed. 
 - Update community designations to 2050 (area_for_way.jl)
 
 
