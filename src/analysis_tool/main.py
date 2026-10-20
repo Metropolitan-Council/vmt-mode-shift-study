@@ -583,7 +583,7 @@ def save_results() -> None:
                 phase: {
                     step_name: {
                         "cutoff": (
-                            step_class.get_cutoff()
+                            round(step_class.get_cutoff(), 4)
                             if step_class.is_continuous()
                             else None
                         ),

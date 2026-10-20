@@ -47,15 +47,15 @@
   },
   "probable": {
     "WalkDurationDifferenceStep": {
-      "cutoff": 0.09131672160684672,
+      "cutoff": 0.0913,
       "cutoff_mode": "Percentile"
     },
     "BikeDurationDifferenceStep": {
-      "cutoff": 0.2459818308874913,
+      "cutoff": 0.246,
       "cutoff_mode": "Percentile"
     },
     "TransitDurationDifferenceStep": {
-      "cutoff": 0.4309004534657741,
+      "cutoff": 0.4309,
       "cutoff_mode": "Percentile"
     },
     "BikeHighLTSDistStep": {

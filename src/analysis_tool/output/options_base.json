@@ -47,15 +47,15 @@
   },
   "probable": {
     "WalkDurationDifferenceStep": {
-      "cutoff": 0.09048799983603534,
+      "cutoff": 0.0906,
       "cutoff_mode": "Percentile"
     },
     "BikeDurationDifferenceStep": {
-      "cutoff": 0.2443133951137321,
+      "cutoff": 0.246,
       "cutoff_mode": "Percentile"
     },
     "TransitDurationDifferenceStep": {
-      "cutoff": 0.5105065251050653,
+      "cutoff": 0.4986,
       "cutoff_mode": "Percentile"
     },
     "BikeHighLTSDistStep": {
@@ -100,6 +100,6 @@
     "car": "/Data_Processed/geodata/car_congestion_1d39c/car_congestion.parquet",
     "walk": "/Data_Processed/geodata/walk-trips-1d39c.parquet",
     "bike": "/Data_Processed/geodata/bike-lts-37721.parquet",
-    "transit": "/Data_Processed/geodata/transit-trips-45d51.parquet"
+    "transit": "/Data_Processed/geodata/transit-trips-7d58f.parquet"
   }
 }
