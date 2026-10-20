@@ -516,9 +516,6 @@ def final_summary() -> None:
             st.session_state.start_screen_probable = True
             st.rerun()
 
-    # save reference to underlying df for ease of typing
-    df: pd.DataFrame = st.session_state.df
-
     # rerun current phase from step selection
     if st.sidebar.button("Restart this phase"):
         logging.info("Rerunning current (%s) phase of the tool", st.session_state.phase)
@@ -554,7 +551,16 @@ def final_summary() -> None:
         render_toc([st.session_state.phase])
         phase_summary()
 
-    if not handler["build"] and st.sidebar.button("Save results"):
+    if not handler["build"]:
+        with st.sidebar:
+            save_results()
+
+
+@st.fragment
+def save_results() -> None:
+    df: pd.DataFrame = st.session_state.df
+    snapshot = st.session_state.get("feasible_snapshot")
+    if st.button("Save results"):
         with st.spinner("Exporting results, summary tables, and options"):
             city = st.session_state.get("city") or ALL_CITIES
             output_paths = {
@@ -592,6 +598,10 @@ def final_summary() -> None:
                 for phase, step_classes in phase_steps.items()
             }
             options["city"] = city
+            options["routes"] = {
+                mode: scenario[f"{mode}_route_file"]
+                for mode in ("car", "walk", "bike", "transit")
+            }
             with open(
                 output_paths["saved_options"], "w", encoding="utf-8"
             ) as options_file:
