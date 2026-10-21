@@ -4,8 +4,13 @@ library(purrr)
 library(tidyr)
 
 suppressMessages(here::i_am("src/analysis_tool/compare_summary_tables.R"))
+summary_output_dir <- get0(
+    "summary_output_dir",
+    ifnotfound = here::here("src", "analysis_tool", "output"),
+    inherits = TRUE
+)
 summary_files <- list.files(
-    here::here("src", "analysis_tool", "output"),
+    summary_output_dir,
     pattern = "^tables_.*\\.json$",
     full.names = TRUE
 )
@@ -49,7 +54,26 @@ summary_cells <- summary_exports %>%
     list_rbind() %>%
     mutate(
         scenario = factor(scenario, levels = scenario_order),
-        phase = factor(phase, levels = c("feasible", "probable"))
+        phase = factor(phase, levels = c("feasible", "probable")),
+        column_label = recode_values(
+            column_label,
+            "Feasible Walking Distance" ~ "Walking distance < 1.6 miles",
+            "Feasible Walk Timing" ~ "Sufficient time is available to complete the trip",
+            "Feasible Bike Timing" ~ "Sufficient time is available to complete the trip",
+            "Feasible Transit Timing" ~ "Sufficient time is available to complete the trip",
+            "Feasible Bike Snow Depth" ~ "There is not snow on the ground",
+            "Feasible Bike High Lts Distance" ~ "No more than 15% of the distance is on LTS 3 or 4 facilities",
+            "Feasible Biking Distance" ~ "Biking distance < 10 miles",
+            "feasible Across All Criteria" ~ "Feasible across all constraints",
+            "Feasible Transit Access Distance" ~ "Walk access distance < 0.97 miles",
+            "Feasible Transit Egress Distance" ~ "Walk egress distance < 0.93 miles",
+            "Feasible Transit Route Found" ~ "Valid transit path found with 2 or fewer transfers",
+            "Feasible Transit Timing" ~ "Sufficient time is available to complete the trip",
+            "Feasible Transit Wait Time" ~ "Waiting time for first vehicle is < 64 minutes",
+            default = column_label
+        ),
+        mode = stringr::str_extract(stringr::str_to_title(column_label), "Walk|Bike|Transit|Any Non-Car Mode") %>% stringr::str_to_sentence(),
+        minutes = stringr::str_extract(column_label, "5 minutes|15 minutes|30 minutes")
     )
 
 percentage_cells <- summary_cells %>%
@@ -57,7 +81,7 @@ percentage_cells <- summary_cells %>%
     mutate(value_pct = readr::parse_number(
         value_text,
         na = c("", "NA", "NaN", "nan", "NaN%", "nan%")
-    ))
+    ) / 100)
 
 base_percentages <- percentage_cells %>%
     filter(scenario == "base") %>%
@@ -74,7 +98,7 @@ comparison_long <- percentage_cells %>%
 
 comparison_wide <- comparison_long %>%
     select(
-        phase, table, row_label, column_label, scenario, value_pct
+        phase, table, mode, minutes, row_label, column_label, scenario, value_pct
     ) %>%
     pivot_wider(
         names_from = scenario,
@@ -84,7 +108,7 @@ comparison_wide <- comparison_long %>%
         names_expand = TRUE
     )
 
-# make feasbility tables
+# make feasibility tables
 feas_walk_tables <- comparison_long %>%
     filter(
         phase == "feasible", scenario == "base",
@@ -164,6 +188,12 @@ scen_all_four <- comparison_long %>%
     ) %>%
     arrange(table, column_label)
 
+compare_all_four <- comparison_long %>% 
+  filter(phase == "feasible",
+         table == "duration_diff_df",
+         minutes == "15 minutes"
+         )
+
 
 plotting_tables <- list(
     existing = list(
@@ -179,5 +209,6 @@ plotting_tables <- list(
         double_transit = scen_transit,
         slow_car = scen_speed,
         all_four = scen_all_four
-    )
+    ),
+    compare_all_four = compare_all_four
 )

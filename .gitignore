@@ -164,3 +164,7 @@ OSRM.jl
 osrm-backend
 
 *.quarto_ipynb_1
+
+.Rhistory
+
+summary-report-debug.html
