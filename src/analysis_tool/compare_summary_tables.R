@@ -9,6 +9,52 @@ summary_output_dir <- get0(
     ifnotfound = here::here("src", "analysis_tool", "output"),
     inherits = TRUE
 )
+summary_options <- jsonlite::fromJSON(file.path(summary_output_dir, "options_base.json"))
+feasible_options <- summary_options$feasible
+walk_distance_cutoff <- feasible_options$WalkDistanceStep$cutoff
+bike_distance_cutoff <- feasible_options$BikeDistanceStep$cutoff
+bike_high_lts_distance_cutoff <- feasible_options$BikeHighLTSDistStep$cutoff
+bike_snow_depth_cutoff <- feasible_options$BikeSnowDepthStep$cutoff
+transit_access_distance_cutoff <- feasible_options$TransitAccessDistanceStep$cutoff
+transit_egress_distance_cutoff <- feasible_options$TransitEgressDistanceStep$cutoff
+transit_wait_time_cutoff <- feasible_options$TransitWaitTimeStep$cutoff
+
+# create labels -----
+walk_distance_label <- paste0(
+    "Walking distance < ",
+    format(walk_distance_cutoff, trim = TRUE, scientific = FALSE),
+    " miles"
+)
+bike_distance_label <- paste0(
+    "Biking distance < ",
+    format(bike_distance_cutoff, trim = TRUE, scientific = FALSE),
+    " miles"
+)
+bike_high_lts_cutoff_label <- sub(
+    "\\.0%$",
+    "%",
+    scales::percent(bike_high_lts_distance_cutoff, accuracy = 0.1)
+)
+bike_high_lts_distance_label <- paste0(
+    "No more than ",
+    bike_high_lts_cutoff_label,
+    " of the distance is on LTS 3 or 4 facilities"
+)
+transit_access_label <- paste0(
+    "Walk access distance < ",
+    format(transit_access_distance_cutoff, trim = TRUE, scientific = FALSE),
+    " miles"
+)
+transit_egress_label <- paste0(
+    "Walk egress distance < ",
+    format(transit_egress_distance_cutoff, trim = TRUE, scientific = FALSE),
+    " miles"
+)
+transit_wait_label <- paste0(
+    "Waiting time for first vehicle is < ",
+    format(transit_wait_time_cutoff, trim = TRUE, scientific = FALSE),
+    " minutes"
+)
 summary_files <- list.files(
     summary_output_dir,
     pattern = "^tables_.*\\.json$",
@@ -57,19 +103,19 @@ summary_cells <- summary_exports %>%
         phase = factor(phase, levels = c("feasible", "probable")),
         column_label = recode_values(
             column_label,
-            "Feasible Walking Distance" ~ "Walking distance < 1.6 miles",
+            "Feasible Walking Distance" ~ walk_distance_label,
             "Feasible Walk Timing" ~ "Sufficient time is available to complete the trip",
             "Feasible Bike Timing" ~ "Sufficient time is available to complete the trip",
             "Feasible Transit Timing" ~ "Sufficient time is available to complete the trip",
             "Feasible Bike Snow Depth" ~ "There is not snow on the ground",
-            "Feasible Bike High Lts Distance" ~ "No more than 15% of the distance is on LTS 3 or 4 facilities",
-            "Feasible Biking Distance" ~ "Biking distance < 10 miles",
+            "Feasible Bike High Lts Distance" ~ bike_high_lts_distance_label,
+            "Feasible Biking Distance" ~ bike_distance_label,
             "feasible Across All Criteria" ~ "Feasible across all constraints",
-            "Feasible Transit Access Distance" ~ "Walk access distance < 0.97 miles",
-            "Feasible Transit Egress Distance" ~ "Walk egress distance < 0.93 miles",
+            "Feasible Transit Access Distance" ~ transit_access_label,
+            "Feasible Transit Egress Distance" ~ transit_egress_label,
             "Feasible Transit Route Found" ~ "Valid transit path found with 2 or fewer transfers",
             "Feasible Transit Timing" ~ "Sufficient time is available to complete the trip",
-            "Feasible Transit Wait Time" ~ "Waiting time for first vehicle is < 64 minutes",
+            "Feasible Transit Wait Time" ~ transit_wait_label,
             default = column_label
         ),
         mode = stringr::str_extract(stringr::str_to_title(column_label), "Walk|Bike|Transit|Any Non-Car Mode") %>% stringr::str_to_sentence(),
@@ -188,11 +234,12 @@ scen_all_four <- comparison_long %>%
     ) %>%
     arrange(table, column_label)
 
-compare_all_four <- comparison_long %>% 
-  filter(phase == "feasible",
-         table == "duration_diff_df",
-         minutes == "15 minutes"
-         )
+compare_all_four <- comparison_long %>%
+    filter(
+        phase == "feasible",
+        table == "duration_diff_df",
+        minutes == "15 minutes"
+    )
 
 
 plotting_tables <- list(
