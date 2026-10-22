@@ -1,11 +1,13 @@
 ---
-title: VMT Mode Shift Study summary reporting
+title: VMT mode shift study summary report
 date: today
 author:
   - name: Liz Roten
     orcid: 0000-0002-5346-3549
     email: liz.roten@metc.state.mn.us
     affiliation: Metropolitan Council
+    attributes:
+      - corresponding: true
 bibliography: ../bibliography.bib
 format:
   html:
@@ -237,7 +239,14 @@ font-family: "Condensed", sans-serif !important;
 </style>
 ```
 
-The summary tables below use results for **`r summary_city`**. `r if (!is.null(summary_city) && !is.na(summary_city) && summary_city != "All cities") paste0("Trips are included when they start ", city_filter_connector, " end in ", summary_city, ".")`
+::: {.callout-important}
+
+Observed trips, street network, weather, transit schedules, routes, and other contextual factors are current as of 2021. 
+
+The tables and figures below use results for **`r summary_city`**. `r if (!is.null(summary_city) && !is.na(summary_city) && summary_city != "All cities") paste0("Trips are included when they start ", city_filter_connector, " end in ", summary_city, ".")`
+
+:::
+
 
 In this study, we consider the potential to reduce vehicle miles traveled (VMT) in the Twin Cities region that might be achieved by incentivizing people to switch from traveling in cars to walking, biking or riding transit. We do so by estimating the maximum feasible shift of car trips to alternative modes given existing land-use and travel patterns observed in the 2019 and 2021 Travel Behavior Inventory (TBI) surveys. For each observed car trip, we calculate the best available walk path, bike path, and transit path, considering the quality of the available infrastructure and transit service. We consider an option to be feasible if we observe a substantial number (`r scales::percent(minimum_mode_prevalence, accuracy = 1)` or more) of people using that mode under similar circumstances, and if the traveler has sufficient time to complete the trip within their travel schedule. Further, we consider a feasible option to be competitive if its travel time is within `r competitive_minutes` minutes of the car trip it would replace. Our analysis also examines which modes can absorb the largest mode shift, as summarized in @fig-feasibility-competitive-mode-shift. 
 
@@ -381,7 +390,11 @@ Second, we consider which car trips could feasibly switch to another mode, given
 > If we have a reason to think that something is a barrier to shifting modes AND fewer than `r scales::percent(minimum_mode_prevalence, accuracy = 1)` of observed trips currently using that mode violate that barrier, then we consider doing so to be infeasible.
 
 
-For walk trips, we consider walking infeasible for long trips. Only `r scales::percent(minimum_mode_prevalence, accuracy = 1)` of current walk trips are longer than `r walk_distance_cutoff` miles, so we consider walking a feasible alternative only when the walking distance is less than `r walk_distance_cutoff` miles. This does not mean it is impossible to walk farther—some people do—but our interest is in shifting trips from car, and people who currently drive may be less willing to walk long distances. Applying equivalent logic, bike trips are feasible if they are shorter than `r bike_distance_cutoff` miles, no more than `r bike_high_lts_cutoff_label` of their distance is on high traffic-stress facilities, and snow depth is no greater than `r bike_snow_depth_cutoff` mm. Transit trips are feasible if the origin is within `r transit_access_distance_cutoff` miles and the destination is within `r transit_egress_distance_cutoff` miles of a transit stop, the wait for the first vehicle is less than `r transit_wait_time_cutoff` minutes, and there are no more than `r transit_transfer_limit` transfers. We considered other possible feasibility constraints, but found that they did not meet the standard for exclusion under this rule. These included precipitation and temperature as limits on walking and biking, as well as trip purpose, which could indicate whether people may be less willing to walk, bike or ride transit if they need to carry goods with them.
+For walk trips, we consider walking infeasible for long trips. Only `r scales::percent(minimum_mode_prevalence, accuracy = 1)` of current walk trips are longer than `r walk_distance_cutoff` miles, so we consider walking a feasible alternative only when the walking distance is less than `r walk_distance_cutoff` miles. This does not mean it is impossible to walk farther—some people do—but our interest is in shifting trips from car, and people who currently drive may be less willing to walk long distances. 
+
+Applying equivalent logic, bike trips are feasible if they are shorter than `r bike_distance_cutoff` miles, no more than `r bike_high_lts_cutoff_label` of their distance is on high traffic-stress facilities, and snow depth is no greater than `r bike_snow_depth_cutoff` mm. 
+
+Transit trips are feasible if the origin is within `r transit_access_distance_cutoff` miles and the destination is within `r transit_egress_distance_cutoff` miles of a transit stop, the wait for the first vehicle is less than `r transit_wait_time_cutoff` minutes, and there are no more than `r transit_transfer_limit` transfers. We considered other possible feasibility constraints, but found that they did not meet the standard for exclusion under this rule. These included precipitation and temperature as limits on walking and biking, as well as trip purpose, which could indicate whether people may be less willing to walk, bike or ride transit if they need to carry goods with them.
 
 We also consider whether a trip can be completed within the available time without interfering with a work, school or escort passenger activity. For example, an afternoon trip between finishing work and picking up a child from daycare likely has limited flexibility on both ends, and there may not be sufficient time available to accommodate a longer travel time.
 
@@ -402,7 +415,7 @@ aims to address the question:
 ## Potential shift to walk
 
 To measure the possible walk routes, we create an “all streets” network from OpenStreetMap that includes the
-street system and off-street walking paths but excludes freeways and other facilities where walking is prohibited. We introduce a penalty to reflect that walkers tend to avoid roads with a higher walking level of traffic stress (LTS)— those roads with high speeds, high functional classes, or without sidewalks—using an approach developed by the Virginia DOT for project evaluation (@hardy_accessibility_2019). The resulting paths reflect diversions from these LTS penalties, with people sometimes walking farther to avoid a major arterial. We calculate the travel time along this longer route assuming a `r walking_speed_mph` mphwalking speed.
+street system and off-street walking paths but excludes freeways and other facilities where walking is prohibited. We introduce a penalty to reflect that walkers tend to avoid roads with a higher walking level of traffic stress (LTS)— those roads with high speeds, high functional classes, or without sidewalks—using an approach developed by the Virginia DOT for project evaluation @hardy_accessibility_2019. The resulting paths reflect diversions from these LTS penalties, with people sometimes walking farther to avoid a major arterial. We calculate the travel time along this longer route assuming a `r walking_speed_mph` mph walking speed.
 
 
 @tbl-walk-feasibility-table shows walk feasibility constraints and the share of car trips and VMT that can feasibly switch under each. A walk alternative is shorter than `r walk_distance_cutoff` miles for `r summary_table_percent(plotting_tables$existing$walk, "walk_step_summary", walk_distance_label, "% of Car Trips")` of car trips, representing `r summary_table_percent(plotting_tables$existing$walk, "walk_step_summary", walk_distance_label, "% of VMT")` of VMT. Separately, travelers have sufficient time to walk for `r summary_table_percent(plotting_tables$existing$walk, "walk_step_summary", "Sufficient time is available to complete the trip", "% of Car Trips")` of car trips, representing `r summary_table_percent(plotting_tables$existing$walk, "walk_step_summary", "Sufficient time is available to complete the trip", "% of VMT")` of VMT. In many cases, schedules can accommodate these switches because trips are first or last of the day, allowing travelers to leave earlier or arrive later at home. A trip must be feasible across all constraints; overall, `r summary_table_percent(plotting_tables$existing$walk, "walk_step_summary", "Feasible across all constraints", "% of Car Trips")` of car trips and `r summary_table_percent(plotting_tables$existing$walk, "walk_step_summary", "Feasible across all constraints", "% of VMT")` of VMT could feasibly switch to walking.
@@ -1469,3 +1482,35 @@ compare_scenario_plot
 
 ```
 
+# Conclusions
+
+In this study, we consider the potential to reduce vehicle miles traveled (VMT) by incentivizing people to switch from traveling in cars to walking, biking or riding transit. We estimate the maximum feasible shift of car trips to alternative modes given existing land-use and travel patterns, and assess whether those shifts are competitive (within `r competitive_minutes` minutes of the driving time). Under existing conditions, `r summary_percent("overall", "% of Car Trips")` of car trips could shift to walk, bike or transit with travel times within `r competitive_minutes` minutes of driving, representing `r summary_percent("overall", "% of VMT", accuracy = 0.1)` of VMT. The difference between the mode shift potential of car trips versus VMT occurs because short trips are more likely to have a competitive, non-car option.
+This analysis shows that, given existing travel patterns, the competitive shifts would meet about `r scales::percent(vmt_target_attainment, accuracy = 0.1)` of the targeted `r scales::percent(vmt_reduction_target, accuracy = 1)` per-capita VMT reduction [@heggedal_vmt_reduction_2023]. Therefore, policymakers may wish to consider transportation infrastructure and service changes to further encourage mode shifts. To provide a starting point for those discussions, we evaluated `r length(scenario_headings) - 1` broad scenarios to increase the competitiveness of alternative modes, plus a combined scenario. The results show that if we made it safe and comfortable to walk and bike everywhere it is legal, made e-bikes available, doubled transit service, and reduced car speeds, `r scenario_percent("all_four", "all_four", "% of Car Trips", accuracy = 1)` of car trips and `r scenario_percent("all_four", "all_four", "% of VMT", accuracy = 0.1)` of VMT could competitively shift to another mode.
+
+
+While the potential mode shifts in these scenarios are promising, it is important to remember that just because people can switch to another mode does not necessarily mean they will switch. Under existing conditions, `r summary_percent("overall", "% of Car Trips")` of car trips could shift to another mode but do not. More work is needed to assess how to most effectively prompt a shift to another mode once that mode is competitive. Pricing incentives or behavioral “nudges” are two strategies that might help.
+
+Pricing incentives can include either strategies that make alternative modes less expensive—such as fare-free transit or vouchers to purchase an e-bike—or those that make driving more expensive—such as higher parking costs, gas prices, or tolls. If designed properly, pricing strategies have the potential to incentivize mode shift, reduce traffic congestion and generate revenue that can be used to make alternative modes better.
+
+The concept of nudges comes from behavioral economics and was popularized in the 2008 book by Thaler and Sunstein [@thaler_sunstein_nudge_2008]. The idea is to make small changes to the environment to make it more likely that people will make choices that benefit themselves or society. For example, a school cafeteria hoping to improve the dietary choices of students might put healthy food choices at eye level, while putting unhealthy foods in a less conspicuous location. In the transportation realm, nudges have been tested in research on public-transit subscriptions, travel-mode choice, and social norms, with modest effects [@hauslbauer_extending_2022; @steffen_nudging_2024; @riggs_painting_2017].
+
+
+Our analysis does not account for the changes to travel patterns that might be prompted by the proposed scenarios. If someone can safely bike to more places, they may choose more destinations within biking distance, rather than driving further to a location only accessible by car. Similarly, someone who shifts from driving to transit for their work commute, may plan their shopping trips around that commute. The Metropolitan Council’s activity-based travel demand model can simulate these travel pattern changes and estimate how many car trips and how much VMT are likely to switch to walk, bike or transit for each of the scenarios described here. Those model-based estimates would have trade-offs—they would have less network detail than this study and would be based in simulated rather than observed data. Thus, the data-driven and model-based estimates can be viewed as complements, each providing different evidence on the possible effectiveness of the proposed strategies.
+
+
+Overall, we can draw several conclusions from this analysis:
+
+- Biking has the highest potential for mode shift from car, and this potential can be greatly enhanced by building safe and comfortable bike infrastructure on all streets. However, only a small share of current trips that could be made by bike are made by bike, so that potential remains largely untapped. More work is needed to assess the extent to which this potential can be realized.
+- Short trips have much higher mode shift potential. Compact land-use can provide a double-benefit of higher mode shift potential and shorter trips for those that remain in cars and is necessary to achieve greater VMT reduction. While this study is based on current land-use, policymakers have some ability to guide how and where the Twin Cities region continues to grow in the coming decades.
+- Even with broad changes to transportation infrastructure and service, many trips remain that cannot competitively shift from car. Vehicle electrification will be essential to reducing the greenhouse gas emissions from these trips, and policies aimed at incentivizing electric vehicles can be targeted towards travelers least able to switch modes and least able to afford an electric vehicle themselves. There are two ways in which electrification is a natural complement to mode shift. First, electric vehicle ownership rates are higher in suburban areas where the mode shift potential is less [@erhardt_vehicle_type_model_2024], partly because people living in single-family homes can more easily install in-home chargers than those living in apartments. Second, the mode shift potential is greatest in more urban areas, where people are more likely to live in apartment buildings and opportunities for off-street charging may be more limited. In these areas, planners can make informed decisions about how to allocate right-of-way and curb space across modes, such as choosing among car lanes, bike lanes and on-street chargers.
+
+
+Mode shift, electrification, and compact land-use offer different levers for reducing the greenhouse gas emissions from car travel.  We hope this information is valuable to planners and policy makers in the Twin Cities region as they consider how to respond to the climate crisis.
+
+# Acknowledgments and Code Availability
+
+This study was performed by a team from the University of Kentucky (UK), the University of North Carolina at Chapel Hill (UNC), Metropolitan Council and its regional partners. Greg Erhardt (UK) was the study’s principal investigator and the lead author of this report. Matt Bhagat-Conway (UNC) contributed to the study design, analysis and interpretation, and led the development of the routing methods. Ian Zhang (UK) led the software development for the analysis tool, and Rich Donohue (UK) contributed to visualization. Metropolitan Council staff involved included Jonathan Ehrlich who was the project manager, Ashley Asmus who conceived of and initiated the study, and Liz Roten and Brandon Whited who contributed technically. Eric Lind from Metro Transit and Jim Henricksen from the Minnesota Department of Transportation provided review and input.
+
+This study was funded by Metropolitan Council through contract number 22P159 with the University of Kentucky Research Foundation.
+
+The software tools used to conduct the analysis, and an interactive data summary tool are available at: [https://github.com/Metropolitan-Council/vmt-mode-shift-study](https://github.com/Metropolitan-Council/vmt-mode-shift-study). 

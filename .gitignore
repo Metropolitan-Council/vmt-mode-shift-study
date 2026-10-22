@@ -168,3 +168,7 @@ osrm-backend
 .Rhistory
 
 summary-report-debug.html
+
+reports/summary_report/.vdoc.9e0d20f2-4125-4f38-a7ca-4d9d8b237058.r
+
+src/analysis_tool/output/trips_base.parquet
