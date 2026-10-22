@@ -6,6 +6,7 @@ from pathlib import Path
 
 import streamlit as st
 import pandas as pd
+import geopandas as gpd
 import plotly.express as px
 import numpy as np
 import steps
@@ -608,7 +609,14 @@ def save_results() -> None:
                 }
             for path in output_paths.values():
                 path.parent.mkdir(parents=True, exist_ok=True)
-            df.to_csv(output_paths["saved_results"], index=False)
+            trips_df = (
+                snapshot[0]
+                if st.session_state.phase == Phase.PROBABLE and snapshot is not None
+                else df
+            )
+            if "geometry" in trips_df.columns:
+                trips_df = gpd.GeoDataFrame(trips_df, geometry="geometry")
+            trips_df.to_parquet(output_paths["saved_results"], index=False)
             phase_steps = {}
             if st.session_state.phase == Phase.PROBABLE and snapshot is not None:
                 phase_steps[Phase.FEASIBLE.value] = snapshot[1]
