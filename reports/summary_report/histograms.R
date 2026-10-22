@@ -1,12 +1,8 @@
 library(plotly)
 library(dplyr)
 
-load_histogram_trips <- function(summary_output_dir, city) {
-    trips_path <- if (is.null(city) || is.na(city) || city == "All cities") {
-        file.path(summary_output_dir, "trips_base.parquet")
-    } else {
-        file.path(summary_output_dir, city, "trips_base.parquet")
-    }
+load_histogram_trips <- function(summary_output_dir) {
+    trips_path <- file.path(summary_output_dir, "trips_base.parquet")
 
     if (!file.exists(trips_path)) {
         stop("Trip export not found: ", trips_path, call. = FALSE)

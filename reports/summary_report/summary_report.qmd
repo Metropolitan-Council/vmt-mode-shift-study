@@ -42,7 +42,7 @@ knitr:
 ```{r}
 #| label: setup
 
-summary_output_dir <- here::here("src", "analysis_tool", "output")
+summary_output_dir <- here::here("src", "analysis_tool", "output", "Minneapolis")
 source(
   file.path(here::here(), "src/analysis_tool/compare_summary_tables.R"),
   local = knitr::knit_global()
@@ -56,7 +56,7 @@ city_filter_logic <- summary_options$city_filter_logic
 city_filter_connector <- if (identical(city_filter_logic, "AND")) "and" else "or"
 
 summary_city <- summary_options$city
-histogram_trips <- load_histogram_trips(summary_output_dir, summary_city)
+histogram_trips <- load_histogram_trips(summary_output_dir)
 
 minimum_mode_prevalence <- 0.05
 walking_speed_mph <- 3
