@@ -283,6 +283,36 @@
           ]
         ]
       },
+      "raw_metrics": {
+        "columns": [
+          "Before shift",
+          "After shift"
+        ],
+        "index": [
+          "Person trips",
+          "Vehicle trips",
+          "VMT",
+          "Cold starts"
+        ],
+        "data": [
+          [
+            22595474,
+            11660460
+          ],
+          [
+            16691746,
+            8795196
+          ],
+          [
+            123132945,
+            97076119
+          ],
+          [
+            91483,
+            67819
+          ]
+        ]
+      },
       "tour_df": {
         "columns": [
           "Feasible to switch to walk",
@@ -596,6 +626,36 @@
             "0.8%",
             "4.0%",
             "4.0%"
+          ]
+        ]
+      },
+      "raw_metrics": {
+        "columns": [
+          "Before shift",
+          "After shift"
+        ],
+        "index": [
+          "Person trips",
+          "Vehicle trips",
+          "VMT",
+          "Cold starts"
+        ],
+        "data": [
+          [
+            10935014,
+            8642626
+          ],
+          [
+            7896549,
+            6188629
+          ],
+          [
+            26056825,
+            24181477
+          ],
+          [
+            71883,
+            65036
           ]
         ]
       },

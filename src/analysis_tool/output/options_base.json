@@ -96,6 +96,7 @@
     }
   },
   "city": "All cities",
+  "city_filter_logic": "OR",
   "routes": {
     "car": "/Data_Processed/geodata/car_congestion_1d39c/car_congestion.parquet",
     "walk": "/Data_Processed/geodata/walk-trips-1d39c.parquet",
