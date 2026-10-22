@@ -45,18 +45,16 @@ source(
   file.path(here::here(), "src/analysis_tool/compare_summary_tables.R"),
   local = knitr::knit_global()
 )
-summary_options <- jsonlite::fromJSON(file.path(summary_output_dir, "options_base.json"))
+source(
+  here::here("reports", "summary_report", "histograms.R"),
+  local = knitr::knit_global()
+)
 
 city_filter_logic <- summary_options$city_filter_logic
+city_filter_connector <- if (identical(city_filter_logic, "AND")) "and" else "or"
 
 summary_city <- summary_options$city
-walk_distance_cutoff <- summary_options$feasible$WalkDistanceStep$cutoff
-bike_distance_cutoff <- summary_options$feasible$BikeDistanceStep$cutoff
-bike_high_lts_distance_cutoff <- summary_options$feasible$BikeHighLTSDistStep$cutoff
-bike_snow_depth_cutoff <- summary_options$feasible$BikeSnowDepthStep$cutoff
-transit_access_distance_cutoff <- summary_options$feasible$TransitAccessDistanceStep$cutoff
-transit_egress_distance_cutoff <- summary_options$feasible$TransitEgressDistanceStep$cutoff
-transit_wait_time_cutoff <- summary_options$feasible$TransitWaitTimeStep$cutoff
+histogram_trips <- load_histogram_trips(summary_output_dir, summary_city)
 
 minimum_mode_prevalence <- 0.05
 walking_speed_mph <- 3
@@ -74,15 +72,6 @@ transit_headway_saving_minutes <- transit_headway_minutes - scenario_transit_hea
 schedule_flexibility_minutes <- 5
 transit_route_label <- paste0(
   "Valid transit path found with ", transit_transfer_limit, " or fewer transfers"
-)
-transit_access_label <- paste0(
-  "Walk access distance < ", formatC(transit_access_distance_cutoff, format = "f", digits = 2), " miles"
-)
-transit_egress_label <- paste0(
-  "Walk egress distance < ", formatC(transit_egress_distance_cutoff, format = "f", digits = 2), " miles"
-)
-transit_wait_label <- paste0(
-  "Waiting time for first vehicle is < ", transit_wait_time_cutoff, " minutes"
 )
 walk_scenario_speed_limit_mph <- 30
 street_speed_limits_mph <- c(
@@ -130,21 +119,21 @@ table_titles <- c(
 )
 category_order <- list(
   walk_step_summary = c(
-    "Walking distance < 1.6 miles",
+    walk_distance_label,
     "Sufficient time is available to complete the trip",
     "Feasible across all constraints"
   ),
   bike_step_summary = c(
-    "Biking distance < 10 miles", "There is not snow on the ground",
-    "No more than 15% of the distance is on LTS 3 or 4 facilities",
+    bike_distance_label, "There is not snow on the ground",
+    bike_high_lts_distance_label,
     "Sufficient time is available to complete the trip",
     "Feasible across all constraints"
   ),
   transit_step_summary = c(
     "Valid transit path found with 2 or fewer transfers",
-    "Walk access distance < 0.97 miles",
-    "Walk egress distance < 0.93 miles",
-    "Waiting time for first vehicle is < 64 minutes",
+    transit_access_label,
+    transit_egress_label,
+    transit_wait_label,
     "Sufficient time is available to complete the trip",
     "Feasible across all constraints"
   ),
@@ -169,6 +158,8 @@ plot_duration_labels <- paste0("Within ", c(5, 15, 30), " min")
 plot_hover_template <- "%{customdata}<br>%{fullData.name}: %{x:.1%}<extra></extra>"
 competitive_minutes <- 15
 competitive_minute_label <- paste(competitive_minutes, "minutes")
+car_parking_walk_min_minutes <- 1
+car_parking_walk_max_minutes <- 4
 vmt_reduction_target <- 0.20        
 
 summary_table_percent <- function(cells, table_name, column_label, row_label, accuracy = 0.1) {
@@ -246,19 +237,9 @@ font-family: "Condensed", sans-serif !important;
 </style>
 ```
 
-The summary tables below use results for **`r summary_city`**.
+The summary tables below use results for **`r summary_city`**. `r if (!is.null(summary_city) && !is.na(summary_city) && summary_city != "All cities") paste0("Trips are included when they start ", city_filter_connector, " end in ", summary_city, ".")`
 
-In this study, we consider the potential to reduce vehicle miles traveled (VMT) in the Twin Cities
-region that might be achieved by incentivizing people to switch from traveling in cars to walking,
-biking or riding transit. We do so by estimating the maximum feasible shift of car trips to
-alternative modes given existing land-use and travel patterns observed in the 2019 and 2021 Travel
-Behavior Inventory (TBI) surveys. For each observed car trip, we calculate the best available walk
-path, bike path, and transit path, considering the quality of the available infrastructure and transit
-service. We consider an option to be feasible if we observe a substantial number
-(`r scales::percent(minimum_mode_prevalence, accuracy = 1)` or more) of people using that mode under similar circumstances, and if the
-traveler has sufficient time to complete the trip within their travel schedule. Further, we consider a
-feasible option to be competitive if its travel time is within `r competitive_minutes` minutes of the car trip it would replace.
-Our analysis also examines which modes can absorb the largest mode shift, as summarized in @fig-feasibility-competitive-mode-shift. 
+In this study, we consider the potential to reduce vehicle miles traveled (VMT) in the Twin Cities region that might be achieved by incentivizing people to switch from traveling in cars to walking, biking or riding transit. We do so by estimating the maximum feasible shift of car trips to alternative modes given existing land-use and travel patterns observed in the 2019 and 2021 Travel Behavior Inventory (TBI) surveys. For each observed car trip, we calculate the best available walk path, bike path, and transit path, considering the quality of the available infrastructure and transit service. We consider an option to be feasible if we observe a substantial number (`r scales::percent(minimum_mode_prevalence, accuracy = 1)` or more) of people using that mode under similar circumstances, and if the traveler has sufficient time to complete the trip within their travel schedule. Further, we consider a feasible option to be competitive if its travel time is within `r competitive_minutes` minutes of the car trip it would replace. Our analysis also examines which modes can absorb the largest mode shift, as summarized in @fig-feasibility-competitive-mode-shift. 
 
 ```{r}
 #| label: fig-feasibility-competitive-mode-shift
@@ -304,7 +285,7 @@ mode_trip_bars <- plotly::plot_ly(
   colors = c("#b4d17c", "#7cae1b"),
   type = "bar", orientation = "h",
   text = ~paste0(scales::percent(value_pct), " ", status),
-  textfont = list(family = "Arial Narrow"),
+  textfont = list(family = "Arial Narrow", color = "black"),
   textposition = "outside", cliponaxis = FALSE,
   hovertemplate = "%{y}<br>%{fullData.name}: %{x:.0%}<extra></extra>"
 ) %>%
@@ -319,7 +300,7 @@ mode_vmt_bars <- plotly::plot_ly(
   colors = c("#b7d4ec", colors$councilBlue),
   type = "bar", orientation = "h",
   text = ~paste0(scales::percent(value_pct), " ", status),
-  textfont = list(family = "Arial Narrow"),
+  textfont = list(family = "Arial Narrow", color = "black"),
   textposition = "outside", cliponaxis = FALSE,
   hovertemplate = "%{y}<br>%{fullData.name}: %{x:.0%}<extra></extra>"
 ) %>%
@@ -377,6 +358,40 @@ which the fastest feasible alternative in each scenario is within `r competitive
 results show that among the individual scenarios, the e-bike scenario provides a competitive alternative
 for the greatest share of VMT, followed by the bike scenario.
 
+
+The all of the above scenario in  @fig-scenario-compare-plot shows that if we made it safe and comfortable to walk and bike everywhere it is legal, made e-bikes available, doubled transit service, and reduced car speeds, half of car trips and 16.5% of VMT could competitively shift to another mode. While the potential mode shifts in these scenarios are promising, it is important to remember that just because people can switch to another mode does not necessarily mean they will switch. The results also show that under existing conditions, people making 25% of car trips can switch to another mode but have not. More work is needed to assess how to most effectively prompt a shift to another mode once that mode is competitive. Overall, we can draw several conclusions from this analysis:
+
+- Biking has the highest potential for mode shift. This potential can be further enhanced by building safe and comfortable bike infrastructure on all streets, but more work is needed to assess the extent to which this potential can be realized.
+- Short trips have much higher mode shift potential. Compact land-use can provide a double-benefit of higher mode shift potential and shorter trips for those that remain in cars and is necessary to achieve greater VMT reduction.
+- Even with broad changes to transportation infrastructure and service, many trips remain that cannot competitively shift. Vehicle electrification policies can be targeted towards travelers least able to switch modes.
+
+
+Even with broad changes to transportation infrastructure and service, many trips remain that cannot competitively shift. Vehicle electrification policies can be targeted towards travelers least able to switch modes.
+
+# Introduction
+
+The TBI surveys record the real-world travel behavior for a representative sample of households in the Twin Cities region in 2019 and 2021. Respondents are asked to install an app on their phone that records the locations they visit and prompts them to indicate the mode of each trip and the purpose of each stop. The resulting data indicate in detail where, when and how people in the Twin Cities region travel. Using these data, we observe both the trips made in cars, and those made by walking, biking or transit. For each observed car trip, we do the following:
+
+
+First, we calculate the best possible walk path, bike path and transit path, considering the quality of the available infrastructure and transit service. The walk paths consider the presence of sidewalks and the functional class and speed limit of the adjacent road. The routes reflect that people prefer to walk on local roads with sidewalks than on high-speed arterials with heavy traffic, and will go out of their way to avoid less-preferred streets [@hardy_accessibility_2019]. The bike routes consider a measure called Level of Traffic Stress (LTS) that reflects the availability of bike lanes and the discomfort of riding on busy, high-speed roads [@hood_gpsbased_2011; @broach_travel_2016; @furth_network_2016; @murphy_implementing_2019]. The transit routes are based on published transit schedules and the actual departure/arrival time of the trip, with routes calculated using a method similar to smartphone mapping apps [@delling_roundbased_2015]. Given this routing, we measure the travel time of the preferred route for each mode and compare it with the car trip. We visually inspected a sample of routes and travel times for all modes to ensure they were logical and consistent with our knowledge of the region.
+
+
+Second, we consider which car trips could feasibly switch to another mode, given the possible routes. A route may be technically possible without being a feasible alternative for a traveler. We determine feasibility by applying a `r scales::percent(minimum_mode_prevalence, accuracy = 1)` rule:
+
+> If we have a reason to think that something is a barrier to shifting modes AND fewer than `r scales::percent(minimum_mode_prevalence, accuracy = 1)` of observed trips currently using that mode violate that barrier, then we consider doing so to be infeasible.
+
+
+For walk trips, we consider walking infeasible for long trips. Only `r scales::percent(minimum_mode_prevalence, accuracy = 1)` of current walk trips are longer than `r walk_distance_cutoff` miles, so we consider walking a feasible alternative only when the walking distance is less than `r walk_distance_cutoff` miles. This does not mean it is impossible to walk farther—some people do—but our interest is in shifting trips from car, and people who currently drive may be less willing to walk long distances. Applying equivalent logic, bike trips are feasible if they are shorter than `r bike_distance_cutoff` miles, no more than `r bike_high_lts_cutoff_label` of their distance is on high traffic-stress facilities, and snow depth is no greater than `r bike_snow_depth_cutoff` mm. Transit trips are feasible if the origin is within `r transit_access_distance_cutoff` miles and the destination is within `r transit_egress_distance_cutoff` miles of a transit stop, the wait for the first vehicle is less than `r transit_wait_time_cutoff` minutes, and there are no more than `r transit_transfer_limit` transfers. We considered other possible feasibility constraints, but found that they did not meet the standard for exclusion under this rule. These included precipitation and temperature as limits on walking and biking, as well as trip purpose, which could indicate whether people may be less willing to walk, bike or ride transit if they need to carry goods with them.
+
+We also consider whether a trip can be completed within the available time without interfering with a work, school or escort passenger activity. For example, an afternoon trip between finishing work and picking up a child from daycare likely has limited flexibility on both ends, and there may not be sufficient time available to accommodate a longer travel time.
+
+
+
+Third, we assess whether each feasible option is competitive by comparing its travel time with the travel time for driving. The driving time considers traffic congestion using measures from a commercial speed data provider. It also includes the time to walk between the car’s parking location and the trip’s origin or destination, which we assume varies from `r car_parking_walk_min_minutes` minute in suburban locations to `r car_parking_walk_max_minutes` minutes downtown. We plot the distribution of trips by travel-time difference to understand their competitiveness; in some cases the alternative mode is faster than driving because of congestion and parking time. For the purpose of summarizing the results, we consider a feasible option competitive if its travel time is no more than `r competitive_minutes` minutes longer than the car trip it would replace. We also explore how the results differ for varying travel-time thresholds.
+
+
+Given these calculations, we summarize the data to provide insight in different dimensions to understand which modes are most competitive, where, and for whom. We apply this process again to test several scenarios to understand the extent to which changing the transportation system would result in more competitive travel by alternative modes. Additional details on the approach are included in the appendices
+
 # Existing Mode Shift Potential
 
 This section reports the potential for car trips to shift to walk, bike, transit, or any of these modes. It
@@ -390,7 +405,7 @@ To measure the possible walk routes, we create an “all streets” network from
 street system and off-street walking paths but excludes freeways and other facilities where walking is prohibited. We introduce a penalty to reflect that walkers tend to avoid roads with a higher walking level of traffic stress (LTS)— those roads with high speeds, high functional classes, or without sidewalks—using an approach developed by the Virginia DOT for project evaluation (@hardy_accessibility_2019). The resulting paths reflect diversions from these LTS penalties, with people sometimes walking farther to avoid a major arterial. We calculate the travel time along this longer route assuming a `r walking_speed_mph` mphwalking speed.
 
 
-@tbl-walk-feasibility-table shows walk feasibility constraints and the share of car trips and VMT that can feasibly switch under each. A walk alternative is shorter than `r walk_distance_cutoff` miles for `r summary_table_percent(plotting_tables$existing$walk, "walk_step_summary", "Walking distance < 1.6 miles", "% of Car Trips")` of car trips, representing `r summary_table_percent(plotting_tables$existing$walk, "walk_step_summary", "Walking distance < 1.6 miles", "% of VMT")` of VMT. Separately, travelers have sufficient time to walk for `r summary_table_percent(plotting_tables$existing$walk, "walk_step_summary", "Sufficient time is available to complete the trip", "% of Car Trips")` of car trips, representing `r summary_table_percent(plotting_tables$existing$walk, "walk_step_summary", "Sufficient time is available to complete the trip", "% of VMT")` of VMT. In many cases, schedules can accommodate these switches because trips are first or last of the day, allowing travelers to leave earlier or arrive later at home. A trip must be feasible across all constraints; overall, `r summary_table_percent(plotting_tables$existing$walk, "walk_step_summary", "Feasible across all constraints", "% of Car Trips")` of car trips and `r summary_table_percent(plotting_tables$existing$walk, "walk_step_summary", "Feasible across all constraints", "% of VMT")` of VMT could feasibly switch to walking.
+@tbl-walk-feasibility-table shows walk feasibility constraints and the share of car trips and VMT that can feasibly switch under each. A walk alternative is shorter than `r walk_distance_cutoff` miles for `r summary_table_percent(plotting_tables$existing$walk, "walk_step_summary", walk_distance_label, "% of Car Trips")` of car trips, representing `r summary_table_percent(plotting_tables$existing$walk, "walk_step_summary", walk_distance_label, "% of VMT")` of VMT. Separately, travelers have sufficient time to walk for `r summary_table_percent(plotting_tables$existing$walk, "walk_step_summary", "Sufficient time is available to complete the trip", "% of Car Trips")` of car trips, representing `r summary_table_percent(plotting_tables$existing$walk, "walk_step_summary", "Sufficient time is available to complete the trip", "% of VMT")` of VMT. In many cases, schedules can accommodate these switches because trips are first or last of the day, allowing travelers to leave earlier or arrive later at home. A trip must be feasible across all constraints; overall, `r summary_table_percent(plotting_tables$existing$walk, "walk_step_summary", "Feasible across all constraints", "% of Car Trips")` of car trips and `r summary_table_percent(plotting_tables$existing$walk, "walk_step_summary", "Feasible across all constraints", "% of VMT")` of VMT could feasibly switch to walking.
 
 
 ```{r}
@@ -422,6 +437,21 @@ walk_feasibility_cells %>%
 ```
 
 
+@tbl-walk-duration-table summarizes these same data for three specific thresholds of travel time difference. Among trips currently made by car, `r summary_table_percent(plotting_tables$existing$walk, "walk_duration_summary", category_order$walk_duration_summary[[1]], "% of Car Trips")` can feasibly switch to walking with a travel time within `r category_order$duration_minutes[[1]]` of driving, `r summary_table_percent(plotting_tables$existing$walk, "walk_duration_summary", category_order$walk_duration_summary[[2]], "% of Car Trips")` can feasibly switch within `r category_order$duration_minutes[[2]]`, and `r summary_table_percent(plotting_tables$existing$walk, "walk_duration_summary", category_order$walk_duration_summary[[3]], "% of Car Trips")` can feasibly switch within `r category_order$duration_minutes[[3]]`. If those trips did switch to walking, VMT would fall to `r summary_table_percent(plotting_tables$existing$walk, "walk_duration_summary", category_order$walk_duration_summary[[1]], "% of VMT")`, `r summary_table_percent(plotting_tables$existing$walk, "walk_duration_summary", category_order$walk_duration_summary[[2]], "% of VMT")`, and `r summary_table_percent(plotting_tables$existing$walk, "walk_duration_summary", category_order$walk_duration_summary[[3]], "% of VMT")` at thresholds of `r category_order$duration_minutes[[1]]`, `r category_order$duration_minutes[[2]]`, and `r category_order$duration_minutes[[3]]`, respectively.
+
+The distribution of travel-time differences for feasible walk shifts is shown in @fig-feasible-walk-shift-histogram.
+
+```{r}
+#| label: fig-feasible-walk-shift-histogram
+#| fig-cap: "Travel-time difference for feasible walk shifts and observed walk trips"
+stacked_shift_histogram(
+  histogram_trips,
+  "walk",
+  "walk_duration_minutes",
+  "feasible_walk_shift"
+)
+```
+
 ```{r}
 #| label: tbl-walk-duration-table
 #| tbl-cap: "Feasible shifts to walking within specific time differences"
@@ -448,6 +478,21 @@ walk_duration_cells %>%
 ```
 
 
+::: {.callout-note}
+
+### Understanding travel time difference plots
+
+@fig-feasible-walk-shift-histogram and several subsequent figures illustrate the competitiveness of each mode as an alternative
+to driving. In this call-out box, we explain how to understand these graphs, then focus on the
+findings in the text adjacent to each figure.
+
+In these plots, the horizontal axis is the travel time difference between using the alternative mod and driving. Values greater than zero indicate that driving has a faster travel time. Values less than zero indicate that the alternative mode is faster. The vertical axis shows the number of trips for a specific difference in travel times. In general, we observe a higher frequency of trips clustered towards the left end of the graph, indicating that the travel times are competitive for both modes. In some instances, the travel time for the alternative mode is faster than driving, which can occur when cars experience traffic congestion, or when people must spend time walking from there parking place to their destination. Conversely, for some trips it might take 60 minutes or more longer to switch modes than to drive. In the case of @fig-feasible-walk-shift-histogram, these tend to be longer trips, where it might take very long time to walk 5 or 10 miles. The vertical black line shows a threshold of 15- minutes of travel time difference, and we consider trips to the left of this line to be “competitive”.
+
+
+The color coding further segments the trips. The blue colors represent trips currently made by car, with the light blue indicating that those trips can feasibly switch to the alternative mode, and the dark blue indicating they cannot. For the dark blue areas, there may be some other barrier to The red areas represent trips currently made by the alternative mode. In the example of @fig-feasible-walk-shift-histogram, most people who currently walk have travel times that are competitive with driving, but some choose to walk even though it takes longer—maybe they enjoy the walk or maybe they do not have a car.
+
+:::
+
 ## Potential shift to bike 
 
 
@@ -469,9 +514,9 @@ minute at either end to lock or unlock a bike.
 
 @tbl-bike-feasibility-table shows bike feasibility constraints and the share of car trips and VMT
 that can feasibly switch under each. A preferred bicycle route is within `r bike_distance_cutoff` miles for
-`r summary_table_percent(plotting_tables$existing$bike, "bike_step_summary", "Biking distance < 10 miles", "% of Car Trips")` of car trips, representing `r summary_table_percent(plotting_tables$existing$bike, "bike_step_summary", "Biking distance < 10 miles", "% of VMT")` of VMT. The TBI data were collected year-round, allowing us to analyze weather. At a snow-depth cutoff of `r bike_snow_depth_cutoff` mm, `r summary_table_percent(plotting_tables$existing$bike, "bike_step_summary", "There is not snow on the ground", "% of Car Trips")` of car trips and `r summary_table_percent(plotting_tables$existing$bike, "bike_step_summary", "There is not snow on the ground", "% of VMT")` of VMT satisfy the snow constraint.
+`r summary_table_percent(plotting_tables$existing$bike, "bike_step_summary", bike_distance_label, "% of Car Trips")` of car trips, representing `r summary_table_percent(plotting_tables$existing$bike, "bike_step_summary", bike_distance_label, "% of VMT")` of VMT. The TBI data were collected year-round, allowing us to analyze weather. At a snow-depth cutoff of `r bike_snow_depth_cutoff` mm, `r summary_table_percent(plotting_tables$existing$bike, "bike_step_summary", "There is not snow on the ground", "% of Car Trips")` of car trips and `r summary_table_percent(plotting_tables$existing$bike, "bike_step_summary", "There is not snow on the ground", "% of VMT")` of VMT satisfy the snow constraint.
 
-`r summary_table_percent(plotting_tables$existing$bike, "bike_step_summary", "No more than 15% of the distance is on LTS 3 or 4 facilities", "% of Car Trips")` of car trips and `r summary_table_percent(plotting_tables$existing$bike, "bike_step_summary", "No more than 15% of the distance is on LTS 3 or 4 facilities", "% of VMT")` of VMT have preferred bicycle routes with no more than `r scales::percent(bike_high_lts_distance_cutoff, accuracy = 1)` of the distance on LTS 3 or 4 facilities. People’s schedules provide sufficient time to complete `r summary_table_percent(plotting_tables$existing$bike, "bike_step_summary", "Sufficient time is available to complete the trip", "% of Car Trips")` of car trips by bike, representing `r summary_table_percent(plotting_tables$existing$bike, "bike_step_summary", "Sufficient time is available to complete the trip", "% of VMT")` of VMT. Across all four constraints, biking is feasible for `r summary_table_percent(plotting_tables$existing$bike, "bike_step_summary", "Feasible across all constraints", "% of Car Trips")` of car trips and `r summary_table_percent(plotting_tables$existing$bike, "bike_step_summary", "Feasible across all constraints", "% of VMT")` of VMT.
+`r summary_table_percent(plotting_tables$existing$bike, "bike_step_summary", bike_high_lts_distance_label, "% of Car Trips")` of car trips and `r summary_table_percent(plotting_tables$existing$bike, "bike_step_summary", bike_high_lts_distance_label, "% of VMT")` of VMT have preferred bicycle routes with no more than `r bike_high_lts_cutoff_label` of the distance on LTS 3 or 4 facilities. People’s schedules provide sufficient time to complete `r summary_table_percent(plotting_tables$existing$bike, "bike_step_summary", "Sufficient time is available to complete the trip", "% of Car Trips")` of car trips by bike, representing `r summary_table_percent(plotting_tables$existing$bike, "bike_step_summary", "Sufficient time is available to complete the trip", "% of VMT")` of VMT. Across all four constraints, biking is feasible for `r summary_table_percent(plotting_tables$existing$bike, "bike_step_summary", "Feasible across all constraints", "% of Car Trips")` of car trips and `r summary_table_percent(plotting_tables$existing$bike, "bike_step_summary", "Feasible across all constraints", "% of VMT")` of VMT.
 
 ```{r}
 #| label: tbl-bike-feasibility-table
@@ -503,6 +548,19 @@ bike_feasibility_cells %>%
 ```
 
 @tbl-bike-duration-table summarizes these results for each time threshold. Among car trips, `r summary_table_percent(plotting_tables$existing$bike, "bike_duration_summary", category_order$bike_duration_summary[[1]], "% of Car Trips")`, `r summary_table_percent(plotting_tables$existing$bike, "bike_duration_summary", category_order$bike_duration_summary[[2]], "% of Car Trips")`, and `r summary_table_percent(plotting_tables$existing$bike, "bike_duration_summary", category_order$bike_duration_summary[[3]], "% of Car Trips")` could feasibly switch to biking within 5, 15, and 30 minutes of driving, respectively. These trips represent `r summary_table_percent(plotting_tables$existing$bike, "bike_duration_summary", category_order$bike_duration_summary[[1]], "% of VMT")`, `r summary_table_percent(plotting_tables$existing$bike, "bike_duration_summary", category_order$bike_duration_summary[[2]], "% of VMT")`, and `r summary_table_percent(plotting_tables$existing$bike, "bike_duration_summary", category_order$bike_duration_summary[[3]], "% of VMT")` of VMT.
+
+The distribution of travel-time differences for feasible bike shifts is shown in @fig-feasible-bike-shift-histogram.
+
+```{r}
+#| label: fig-feasible-bike-shift-histogram
+#| fig-cap: "Travel-time difference for feasible bike shifts and observed bike trips"
+stacked_shift_histogram(
+  histogram_trips,
+  "bike",
+  "bike_duration_minutes_adj",
+  "feasible_bike_shift"
+)
+```
 
 ```{r}
 #| label: tbl-bike-duration-table
@@ -574,6 +632,19 @@ transit_feasibility_cells %>%
 @tbl-transit-duration summarizes the share of car trips and VMT that can feasibly shift to transit within
 the specified time thresholds. Within 5 minutes of driving, `r summary_table_percent(plotting_tables$existing$transit, "transit_duration_summary", category_order$transit_duration_summary[[1]], "% of Car Trips")` of car trips and `r summary_table_percent(plotting_tables$existing$transit, "transit_duration_summary", category_order$transit_duration_summary[[1]], "% of VMT")` of VMT can shift to transit. Within 15 minutes, the shares are `r summary_table_percent(plotting_tables$existing$transit, "transit_duration_summary", category_order$transit_duration_summary[[2]], "% of Car Trips")` and `r summary_table_percent(plotting_tables$existing$transit, "transit_duration_summary", category_order$transit_duration_summary[[2]], "% of VMT")`; within 30 minutes, they are `r summary_table_percent(plotting_tables$existing$transit, "transit_duration_summary", category_order$transit_duration_summary[[3]], "% of Car Trips")` and `r summary_table_percent(plotting_tables$existing$transit, "transit_duration_summary", category_order$transit_duration_summary[[3]], "% of VMT")`.
 
+The distribution of travel-time differences for feasible transit shifts is shown in @fig-feasible-transit-shift-histogram.
+
+```{r}
+#| label: fig-feasible-transit-shift-histogram
+#| fig-cap: "Travel-time difference for feasible transit shifts and observed transit trips"
+stacked_shift_histogram(
+  histogram_trips,
+  "transit",
+  "transit_duration",
+  "feasible_transit_shift"
+)
+```
+
 ```{r}
 #| label: tbl-transit-duration
 #| tbl-cap: "Feasible shifts to transit within specific time differences"
@@ -611,9 +682,13 @@ These results show that even though walk and transit are the fastest alternative
 percentage of car trips, transit is the fastest alternative for a much higher percentage of VMT because
 transit can serve longer trips. Because the transit wait times vary by departure and arrival times, the fastest alternative may vary by time-of-day even for the same origin and destination. The fastest alternative also varies by season because we consider biking infeasible when snow is on the ground. For these reasons, many travelers may find value in choosing among multiple feasible alternatives.
 
-<!--
-Figure 11 shows a histogram of the travel time difference between the fastest alternative mode and driving, color coded by which mode is fastest. The large green area suggests that biking is the fastest alternative for the largest portion of car trips. The gray area indicates that were walking is the fastest alternative, it is usually within 15 minutes of driving. The light blue area indicates that where transit is the fastest alternative, the travel time difference with driving varies widely, suggesting that it may often be the only feasible alternative. The dark blue areas are trips that cannot feasibly shift from car to another mode—even though some alternatives would otherwise be competitive, there constraints prevent them from feasibly shifting.
--->
+The distribution of travel-time differences for the fastest feasible alternative is shown in @fig-feasible-fastest-alternative-histogram.
+
+```{r}
+#| label: fig-feasible-fastest-alternative-histogram
+#| fig-cap: "Travel-time difference for the fastest feasible alternative and driving"
+total_shift_histogram(histogram_trips)
+```
 
 
 
@@ -736,7 +811,7 @@ walk_scenario_trips <- plotly::plot_ly(
   ),
   type = "bar", orientation = "h",
   text = ~ scales::percent(value_pct),
-  textfont = list(family = "Arial Narrow"),
+  textfont = list(family = "Arial Narrow", color = "black"),
   textposition = "outside",
   customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
 ) %>%
@@ -762,7 +837,7 @@ walk_scenario_vmt <- plotly::plot_ly(
   ),
   type = "bar", orientation = "h",
   text = ~ scales::percent(value_pct),
-  textfont = list(family = "Arial Narrow"),
+  textfont = list(family = "Arial Narrow", color = "black"),
   textposition = "outside",
   customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
 ) %>%
@@ -854,7 +929,7 @@ bike_scenario_trips <- plotly::plot_ly(
   ),
   type = "bar", orientation = "h",
   text = ~ scales::percent(value_pct),
-  textfont = list(family = "Arial Narrow"),
+  textfont = list(family = "Arial Narrow", color = "black"),
   textposition = "outside", cliponaxis = FALSE,
   customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
 ) %>%
@@ -871,7 +946,7 @@ bike_scenario_vmt <- plotly::plot_ly(
   ),
   type = "bar", orientation = "h",
   text = ~ scales::percent(value_pct),
-  textfont = list(family = "Arial Narrow"),
+  textfont = list(family = "Arial Narrow", color = "black"),
   textposition = "outside", cliponaxis = FALSE,
   customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
 ) %>%
@@ -920,7 +995,7 @@ bike_scenario_cells %>%
 In the past few years, e-bikes have become more widely available and popular. The battery-electric motor on an e-bike reduces the effort required to pedal, improves acceleration, and increases the average speed. It therefore makes biking easier and faster. In this scenario, we build upon the bike scenario described above and imagine that in addition to the bike infrastructure improvements, everyone has access to an e-bike. We represent this change by increasing the biking speed by `r scales::percent(ebike_speed_increase, accuracy = 1)`,
 and removing avoidance of steep hills.
 
-@fig-scenario-ebike-plot shows results. Within `r competitive_minutes` minutes of driving, `r scenario_percent("e_bike", "e_bike", "% of Car Trips", accuracy = 1)` of car trips and `r scenario_percent("e_bike", "e_bike", "% of VMT", accuracy = 1)` of VMT could feasibly shift to e-biking.     s
+@fig-scenario-ebike-plot shows results. Within `r competitive_minutes` minutes of driving, `r scenario_percent("e_bike", "e_bike", "% of Car Trips", accuracy = 1)` of car trips and `r scenario_percent("e_bike", "e_bike", "% of VMT", accuracy = 1)` of VMT could feasibly shift to e-biking.  
 
 ```{r}
 #| label: fig-scenario-ebike-plot
@@ -948,7 +1023,7 @@ ebike_scenario_trips <- plotly::plot_ly(
   ),
   type = "bar", orientation = "h",
   text = ~ scales::percent(value_pct),
-  textfont = list(family = "Arial Narrow"),
+  textfont = list(family = "Arial Narrow", color = "black"),
   textposition = "outside", cliponaxis = FALSE,
   customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
 ) %>%
@@ -965,7 +1040,7 @@ ebike_scenario_vmt <- plotly::plot_ly(
   ),
   type = "bar", orientation = "h",
   text = ~ scales::percent(value_pct),
-  textfont = list(family = "Arial Narrow"),
+  textfont = list(family = "Arial Narrow", color = "black"),
   textposition = "outside", cliponaxis = FALSE,
   customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
 ) %>%
@@ -1041,7 +1116,7 @@ transit_scenario_trips <- plotly::plot_ly(
   ),
   type = "bar", orientation = "h",
   text = ~ scales::percent(value_pct),
-  textfont = list(family = "Arial Narrow"),
+  textfont = list(family = "Arial Narrow", color = "black"),
   textposition = "outside", cliponaxis = FALSE,
   customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
 ) %>%
@@ -1058,7 +1133,7 @@ transit_scenario_vmt <- plotly::plot_ly(
   ),
   type = "bar", orientation = "h",
   text = ~ scales::percent(value_pct),
-  textfont = list(family = "Arial Narrow"),
+  textfont = list(family = "Arial Narrow", color = "black"),
   textposition = "outside", cliponaxis = FALSE,
   customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
 ) %>%
@@ -1148,7 +1223,7 @@ speed_scenario_trips <- plotly::plot_ly(
   ),
   type = "bar", orientation = "h",
   text = ~ scales::percent(value_pct),
-  textfont = list(family = "Arial Narrow"),
+  textfont = list(family = "Arial Narrow", color = "black"),
   textposition = "outside", cliponaxis = FALSE,
   customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
 ) %>%
@@ -1165,7 +1240,7 @@ speed_scenario_vmt <- plotly::plot_ly(
   ),
   type = "bar", orientation = "h",
   text = ~ scales::percent(value_pct),
-  textfont = list(family = "Arial Narrow"),
+  textfont = list(family = "Arial Narrow", color = "black"),
   textposition = "outside", cliponaxis = FALSE,
   customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
 ) %>%
@@ -1242,7 +1317,7 @@ combined_scenario_trips <- plotly::plot_ly(
   ),
   type = "bar", orientation = "h",
   text = ~ scales::percent(value_pct),
-  textfont = list(family = "Arial Narrow"),
+  textfont = list(family = "Arial Narrow", color = "black"),
   textposition = "outside", cliponaxis = FALSE,
   customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
 ) %>%
@@ -1259,7 +1334,7 @@ combined_scenario_vmt <- plotly::plot_ly(
   ),
   type = "bar", orientation = "h",
   text = ~ scales::percent(value_pct),
-  textfont = list(family = "Arial Narrow"),
+  textfont = list(family = "Arial Narrow", color = "black"),
   textposition = "outside", cliponaxis = FALSE,
   customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
 ) %>%
@@ -1314,6 +1389,7 @@ combined_scenario_cells %>%
 ```{r}
 #| label: fig-scenario-compare-plot
 #| fig-cap: "Percentage of car trips and VMT with feasible shifts under transportation improvement scenarios"
+#| out-height: 600px
 
 
 compare_scen_cells <- plotting_tables$compare_all_four %>%
@@ -1345,10 +1421,13 @@ compare_scenario_trips <- plotly::plot_ly(
   x = ~value_pct, y = ~scenario,
   type = "bar", orientation = "h",
   name = "% of Car Trips",
-  text = ~ scales::percent(value_pct),
+  text = ~ scales::percent(value_pct, accuracy = 0.1),
   textfont = list(family = "Arial Narrow"),
-  marker = list(color = colors$councilBlue,
-                fill = colors$councilBlue),
+  marker = list(
+    color = colors$councilBlue,
+    line = list(color = colors$playDaBlue, 
+    width = 1)
+  ),
   textposition = "outside", cliponaxis = FALSE,
   customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
 ) %>%
@@ -1360,10 +1439,13 @@ compare_scenario_vmt <- plotly::plot_ly(
   data = filter(compare_scen_cells, row_label == "% of VMT"),
   x = ~value_pct, y = ~scenario,
   type = "bar", orientation = "h",
-  text = ~ scales::percent(value_pct),
+  text = ~ scales::percent(value_pct, accuracy = 0.1),
   textfont = list(family = "Arial Narrow"),
-  marker = list(color = colors$councilBlue,
-                fill = colors$councilBlue),
+    marker = list(
+    color = colors$councilBlue,
+    line = list(color = colors$playDaBlue, 
+    width = 1)
+  ),
   name = "% of VMT",
   textposition = "outside", cliponaxis = FALSE,
   customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
