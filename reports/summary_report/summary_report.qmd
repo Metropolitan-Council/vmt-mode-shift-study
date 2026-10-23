@@ -243,7 +243,7 @@ font-family: "Condensed", sans-serif !important;
 
 Observed trips, street network, weather, transit schedules, routes, and other contextual factors are current as of 2021. 
 
-The tables and figures below use results for **`r summary_city`**. `r if (!is.null(summary_city) && !is.na(summary_city) && summary_city != "All cities") paste0("Trips are included when they start ", city_filter_connector, " end in ", summary_city, ".")`
+The tables and figures below use results for **`r summary_city`**. `r if (!is.null(summary_city) && !is.na(summary_city) && summary_city != "All cities") paste0("Trips are included when they start **", city_filter_connector, "** end in ", summary_city, ".")`
 
 :::
 
@@ -301,7 +301,7 @@ mode_trip_bars <- plotly::plot_ly(
   councilR::plotly_layout(
     subtitle = "Percent of car trips"
   ) %>%
-  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.6)))
+  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.9)))
 
 mode_vmt_bars <- plotly::plot_ly(
   data = dplyr::filter(mode_shift_bars, row_label == "% of VMT"),
@@ -317,7 +317,7 @@ mode_vmt_bars <- plotly::plot_ly(
     subtitle = "Percent of VMT"
   ) %>%
   plotly::layout(
-    xaxis = list(tickformat = "1%", range = c(0, 0.6)),
+    xaxis = list(tickformat = "1%", range = c(0, 0.9)),
     showlegend = TRUE
   )
 
@@ -834,7 +834,7 @@ walk_scenario_trips <- plotly::plot_ly(
   layout(
     xaxis = list(
       tickformat = "1%",
-      range = c(0, 0.6)
+      range = c(0, 0.9)
     )
   )
 
@@ -860,7 +860,7 @@ walk_scenario_vmt <- plotly::plot_ly(
   layout(
     xaxis = list(
       tickformat = "1%",
-      range = c(0, 0.6)
+      range = c(0, 0.9)
     )
   )
 
@@ -947,7 +947,7 @@ bike_scenario_trips <- plotly::plot_ly(
   customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
 ) %>%
   councilR::plotly_layout(subtitle = "% of Car Trips") %>%
-  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.6)))
+  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.9)))
 
 
 bike_scenario_vmt <- plotly::plot_ly(
@@ -964,7 +964,7 @@ bike_scenario_vmt <- plotly::plot_ly(
   customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
 ) %>%
   councilR::plotly_layout(subtitle = "% of VMT") %>%
-  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.6)))
+  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.9)))
 
 bike_scenario_plot <- plotly::subplot(
   bike_scenario_trips, bike_scenario_vmt,
@@ -1041,7 +1041,7 @@ ebike_scenario_trips <- plotly::plot_ly(
   customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
 ) %>%
   councilR::plotly_layout(subtitle = "% of Car Trips") %>%
-  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.6)))
+  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.9)))
 
 
 ebike_scenario_vmt <- plotly::plot_ly(
@@ -1058,7 +1058,7 @@ ebike_scenario_vmt <- plotly::plot_ly(
   customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
 ) %>%
   councilR::plotly_layout(subtitle = "% of VMT") %>%
-  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.6)))
+  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.9)))
 
 ebike_scenario_plot <- plotly::subplot(
   ebike_scenario_trips, ebike_scenario_vmt,
@@ -1134,7 +1134,7 @@ transit_scenario_trips <- plotly::plot_ly(
   customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
 ) %>%
   councilR::plotly_layout(subtitle = "% of Car Trips") %>%
-  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.6)))
+  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.9)))
 
 
 transit_scenario_vmt <- plotly::plot_ly(
@@ -1151,7 +1151,7 @@ transit_scenario_vmt <- plotly::plot_ly(
   customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
 ) %>%
   councilR::plotly_layout(subtitle = "% of VMT") %>%
-  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.6)))
+  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.9)))
 
 transit_scenario_plot <- plotly::subplot(
   transit_scenario_trips, transit_scenario_vmt,
@@ -1241,7 +1241,7 @@ speed_scenario_trips <- plotly::plot_ly(
   customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
 ) %>%
   councilR::plotly_layout(subtitle = "% of Car Trips") %>%
-  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.6)))
+  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.9)))
 
 
 speed_scenario_vmt <- plotly::plot_ly(
@@ -1258,7 +1258,7 @@ speed_scenario_vmt <- plotly::plot_ly(
   customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
 ) %>%
   councilR::plotly_layout(subtitle = "% of VMT") %>%
-  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.6)))
+  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.9)))
 
 speed_scenario_plot <- plotly::subplot(
   speed_scenario_trips, speed_scenario_vmt,
@@ -1335,7 +1335,7 @@ combined_scenario_trips <- plotly::plot_ly(
   customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
 ) %>%
   councilR::plotly_layout(subtitle = "% of Car Trips") %>%
-  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.6)))
+  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.9)))
 
 
 combined_scenario_vmt <- plotly::plot_ly(
@@ -1352,7 +1352,7 @@ combined_scenario_vmt <- plotly::plot_ly(
   customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
 ) %>%
   councilR::plotly_layout(subtitle = "% of VMT") %>%
-  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.6)))
+  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.9)))
 
 combined_scenario_plot <- plotly::subplot(
   combined_scenario_trips, combined_scenario_vmt,
@@ -1445,7 +1445,7 @@ compare_scenario_trips <- plotly::plot_ly(
   customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
 ) %>%
   councilR::plotly_layout(subtitle = "% of Car Trips") %>%
-  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.6)))
+  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.9)))
 
 
 compare_scenario_vmt <- plotly::plot_ly(
@@ -1464,7 +1464,7 @@ compare_scenario_vmt <- plotly::plot_ly(
   customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
 ) %>%
   councilR::plotly_layout(subtitle = "% of VMT") %>%
-  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.6)))
+  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.9)))
 
 
 compare_scenario_plot <- plotly::subplot(
