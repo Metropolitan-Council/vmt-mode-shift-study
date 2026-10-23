@@ -44,7 +44,7 @@ knitr:
 
 summary_output_dir <- here::here("src", "analysis_tool", "output", "Minneapolis")
 source(
-  file.path(here::here(), "src/analysis_tool/compare_summary_tables.R"),
+  file.path(here::here(), "reports/summary_report/compile_streamlit_ouput.R"),
   local = knitr::knit_global()
 )
 source(

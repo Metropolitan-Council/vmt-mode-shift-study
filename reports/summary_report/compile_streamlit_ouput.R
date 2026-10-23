@@ -3,7 +3,7 @@ library(dplyr)
 library(purrr)
 library(tidyr)
 
-suppressMessages(here::i_am("src/analysis_tool/compare_summary_tables.R"))
+suppressMessages(here::i_am("reports/summary_report/compile_streamlit_ouput.R"))
 summary_output_dir <- get0(
     "summary_output_dir",
     ifnotfound = here::here("src", "analysis_tool", "output"),
