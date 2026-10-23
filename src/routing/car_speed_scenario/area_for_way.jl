@@ -72,10 +72,12 @@ function main(infile, shapefile, outfile)
     # For each highway node, whether it is in the urban area
     node_area = Dict{Int64, AreaType.T}()
     areas = GeoDataFrames.read(shapefile)
-    # use lon/lat order https://discourse.julialang.org/t/archgdal-transforming-crs-incorrectly-probably-wrong-long-lat-order/90098
-    areas.geom = GeoDataFrames.reproject(areas.geom, UTM, WGS84, order=:trad)
+    geometry_column = only(GeoDataFrames.getgeometrycolumns(areas))
+    geometry_ops = GeoDataFrames.GeometryOps
+    # Keep x/y order so the reprojected coordinates are longitude/latitude.
+    areas[!, geometry_column] = GeoDataFrames.reproject(areas[!, geometry_column], UTM, WGS84; always_xy=true)
 
-    for (i, geom, areacode) in zip(1:nrow(areas), areas.geom, areas.COMDESNAME)
+    for (i, geom, areacode) in zip(1:nrow(areas), areas[!, geometry_column], areas.COMDESNAME)
         atype = if areacode ∈ ["Urban", "Urban Center"]
             AreaType.Urban
         elseif areacode ∈ ["Suburban", "Suburban Edge", "Emerging Suburban Edge"]
@@ -87,13 +89,13 @@ function main(infile, shapefile, outfile)
             error("Unrecognized area type $areacode")
         end
 
-        bbox = ArchGDAL.envelope(geom)
+        bbox = geometry_ops.extent(geometry_ops.Planar(), geom)
         # use spatial index to find nodes potentially in the area
-        candidate_nodes = getindex.(Ref(highway_node_vector), LibSpatialIndex.intersects(node_idx, [bbox.MinX, bbox.MinY], [bbox.MaxX, bbox.MaxY]))
+        candidate_nodes = getindex.(Ref(highway_node_vector), LibSpatialIndex.intersects(node_idx, [bbox.X[1], bbox.Y[1]], [bbox.X[2], bbox.Y[2]]))
 
         for node in candidate_nodes
             # spatial index overselects
-            if ArchGDAL.contains(geom, nodes[node])
+            if geometry_ops.contains(geom, nodes[node])
                 if !haskey(node_area, node)
                     node_area[node] = atype
                 else

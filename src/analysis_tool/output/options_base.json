@@ -1,0 +1,106 @@
+{
+  "feasible": {
+    "WalkDistanceStep": {
+      "cutoff": 1.6,
+      "cutoff_mode": "Raw"
+    },
+    "WalkTimingStep": {
+      "cutoff": null,
+      "cutoff_mode": "categorical"
+    },
+    "BikeDistanceStep": {
+      "cutoff": 10.0,
+      "cutoff_mode": "Raw"
+    },
+    "BikeSnowDepthStep": {
+      "cutoff": 0.0,
+      "cutoff_mode": "Raw"
+    },
+    "BikeHighLTSDistStep": {
+      "cutoff": 0.15,
+      "cutoff_mode": "Raw"
+    },
+    "BikeTimingStep": {
+      "cutoff": null,
+      "cutoff_mode": "categorical"
+    },
+    "TransitReroutedStep": {
+      "cutoff": null,
+      "cutoff_mode": "categorical"
+    },
+    "TransitAccessDistanceStep": {
+      "cutoff": 0.97,
+      "cutoff_mode": "Raw"
+    },
+    "TransitEgressDistanceStep": {
+      "cutoff": 0.93,
+      "cutoff_mode": "Raw"
+    },
+    "TransitWaitTimeStep": {
+      "cutoff": 64.0,
+      "cutoff_mode": "Raw"
+    },
+    "TransitTimingStep": {
+      "cutoff": null,
+      "cutoff_mode": "categorical"
+    }
+  },
+  "probable": {
+    "WalkDurationDifferenceStep": {
+      "cutoff": 0.0905,
+      "cutoff_mode": "Percentile"
+    },
+    "BikeDurationDifferenceStep": {
+      "cutoff": 0.2443,
+      "cutoff_mode": "Percentile"
+    },
+    "TransitDurationDifferenceStep": {
+      "cutoff": 0.5105,
+      "cutoff_mode": "Percentile"
+    },
+    "BikeHighLTSDistStep": {
+      "cutoff": 0.15,
+      "cutoff_mode": "Raw"
+    },
+    "WalkPurposeStep": {
+      "cutoff": null,
+      "cutoff_mode": "categorical"
+    },
+    "BikePurposeStep": {
+      "cutoff": null,
+      "cutoff_mode": "categorical"
+    },
+    "TransitPurposeStep": {
+      "cutoff": null,
+      "cutoff_mode": "categorical"
+    },
+    "TransitTransferCountStep": {
+      "cutoff": 0.01,
+      "cutoff_mode": "Percentile"
+    },
+    "WalkPrecipitationStep": {
+      "cutoff": 0,
+      "cutoff_mode": "Percentile"
+    },
+    "BikePrecipitationStep": {
+      "cutoff": 0,
+      "cutoff_mode": "Percentile"
+    },
+    "WalkTemperatureStep": {
+      "cutoff": 0,
+      "cutoff_mode": "Percentile"
+    },
+    "BikeTemperatureStep": {
+      "cutoff": 0,
+      "cutoff_mode": "Percentile"
+    }
+  },
+  "city": "All cities",
+  "city_filter_logic": "OR",
+  "routes": {
+    "car": "/Data_Processed/geodata/car_congestion_1d39c/car_congestion.parquet",
+    "walk": "/Data_Processed/geodata/walk-trips-1d39c.parquet",
+    "bike": "/Data_Processed/geodata/bike-lts-37721.parquet",
+    "transit": "/Data_Processed/geodata/transit-trips-45d51.parquet"
+  }
+}

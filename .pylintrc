@@ -1,0 +1,6 @@
+[MESSAGES CONTROL]
+disable=
+    line-too-long,
+    trailing-whitespace,
+    too-many-lines,
+    pointless-statement

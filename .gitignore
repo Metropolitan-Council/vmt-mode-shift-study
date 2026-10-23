@@ -1,5 +1,4 @@
 # Custom for VMT reduction project
-src/analysis_tool/output/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -159,3 +158,22 @@ src/routing/OSM/
 src/routing/analysis-area.osm.pbf
 
 src/routing/streetlight_data.db
+
+OSRM.jl
+
+osrm-backend
+
+*.quarto_ipynb_1
+
+.Rhistory
+
+summary-report-debug.html
+
+reports/summary_report/.vdoc.9e0d20f2-4125-4f38-a7ca-4d9d8b237058.r
+
+src/analysis_tool/output/trips_base.parquet
+src/analysis_tool/**/*.parquet
+
+tutorial_files/
+
+tutorial.html

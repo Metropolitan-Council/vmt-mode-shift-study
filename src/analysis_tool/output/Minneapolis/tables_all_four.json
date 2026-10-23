@@ -1,0 +1,690 @@
+{
+  "scenario": "all_four",
+  "phases": {
+    "feasible": {
+      "step_settings": {
+        "columns": [
+          "Setting"
+        ],
+        "index": [
+          "WalkDistanceStep",
+          "WalkTimingStep",
+          "BikeDistanceStep",
+          "BikeSnowDepthStep",
+          "BikeHighLTSDistStep",
+          "BikeTimingStep",
+          "TransitReroutedStep",
+          "TransitAccessDistanceStep",
+          "TransitEgressDistanceStep",
+          "TransitWaitTimeStep",
+          "TransitTimingStep"
+        ],
+        "data": [
+          [
+            "1.60 miles"
+          ],
+          [
+            "1 (categorical)"
+          ],
+          [
+            "10.00 miles"
+          ],
+          [
+            "0.00 mm"
+          ],
+          [
+            "0.15 proportion high LTS"
+          ],
+          [
+            "1 (categorical)"
+          ],
+          [
+            "1 (categorical)"
+          ],
+          [
+            "0.97 miles"
+          ],
+          [
+            "0.93 miles"
+          ],
+          [
+            "64.00 minutes"
+          ],
+          [
+            "1 (categorical)"
+          ]
+        ]
+      },
+      "overall_shifts": {
+        "columns": [
+          "Feasible to switch to walk",
+          "Feasible to switch to bike",
+          "Feasible to switch to transit",
+          "Feasible to switch to any non-car mode"
+        ],
+        "index": [
+          "% of Car Trips",
+          "% of VMT"
+        ],
+        "data": [
+          [
+            " 38.5%",
+            " 72.6%",
+            "69.7%",
+            "91.8%"
+          ],
+          [
+            " 15.4%",
+            "69.4%",
+            "65.7%",
+            "86.7%"
+          ]
+        ]
+      },
+      "overall_shift_comparison": {
+        "columns": [
+          "Walk is the fastest alternative",
+          "Bike is the fastest alternative",
+          "Transit is the fastest alternative",
+          "Feasible to switch to any non-car mode"
+        ],
+        "index": [
+          "% of Car Trips",
+          "% of VMT"
+        ],
+        "data": [
+          [
+            "7.2%",
+            "70.7%",
+            "13.9%",
+            "91.8%"
+          ],
+          [
+            "2.4%",
+            "67.7%",
+            "16.6%",
+            "86.7%"
+          ]
+        ]
+      },
+      "duration_diff_df": {
+        "columns": [
+          "Fastest mode is within 5 minutes of driving",
+          "Fastest mode is within 15 minutes of driving",
+          "Fastest mode is within 30 minutes of driving"
+        ],
+        "index": [
+          "% of Car Trips",
+          "% of VMT"
+        ],
+        "data": [
+          [
+            " 67.0%",
+            " 85.2%",
+            " 90.8%"
+          ],
+          [
+            "47.0%",
+            "73.9%",
+            "84.5%"
+          ]
+        ]
+      },
+      "walk_step_summary": {
+        "columns": [
+          "Feasible Walking Distance",
+          "Feasible Walk Timing",
+          "feasible Across All Criteria"
+        ],
+        "index": [
+          "% of Car Trips",
+          "% of VMT"
+        ],
+        "data": [
+          [
+            " 45.1%",
+            " 73.2%",
+            "38.5%"
+          ],
+          [
+            " 18.7%",
+            " 66.4%",
+            "15.4%"
+          ]
+        ]
+      },
+      "walk_duration_summary": {
+        "columns": [
+          "Walk within 5 minutes of driving",
+          "Walk within 15 minutes of driving",
+          "Walk within 30 minutes of driving"
+        ],
+        "index": [
+          "% of Car Trips",
+          "% of VMT"
+        ],
+        "data": [
+          [
+            " 17.2%",
+            " 32.8%",
+            " 38.5%"
+          ],
+          [
+            "4.6%",
+            "11.9%",
+            "15.4%"
+          ]
+        ]
+      },
+      "bike_step_summary": {
+        "columns": [
+          "Feasible Biking Distance",
+          "Feasible Bike Snow Depth",
+          "Feasible Bike High Lts Distance",
+          "Feasible Bike Timing",
+          "feasible Across All Criteria"
+        ],
+        "index": [
+          "% of Car Trips",
+          "% of VMT"
+        ],
+        "data": [
+          [
+            " 99.9%",
+            " 74.7%",
+            " 100.0%",
+            " 96.9%",
+            "72.6%"
+          ],
+          [
+            " 99.8%",
+            " 74.0%",
+            " 100.0%",
+            " 93.3%",
+            "69.4%"
+          ]
+        ]
+      },
+      "bike_duration_summary": {
+        "columns": [
+          "Bike within 5 minutes of driving",
+          "Bike within 15 minutes of driving",
+          "Bike within 30 minutes of driving"
+        ],
+        "index": [
+          "% of Car Trips",
+          "% of VMT"
+        ],
+        "data": [
+          [
+            " 57.3%",
+            " 71.2%",
+            " 72.6%"
+          ],
+          [
+            "42.7%",
+            "65.1%",
+            "69.4%"
+          ]
+        ]
+      },
+      "transit_step_summary": {
+        "columns": [
+          "Feasible Transit Route Found",
+          "Feasible Transit Access Distance",
+          "Feasible Transit Egress Distance",
+          "Feasible Transit Wait Time",
+          "Feasible Transit Timing",
+          "feasible Across All Criteria"
+        ],
+        "index": [
+          "% of Car Trips",
+          "% of VMT"
+        ],
+        "data": [
+          [
+            " 100.0%",
+            " 97.6%",
+            " 97.1%",
+            " 93.0%",
+            " 73.4%",
+            "69.7%"
+          ],
+          [
+            " 100.0%",
+            " 97.9%",
+            " 97.0%",
+            " 91.8%",
+            " 69.5%",
+            "65.7%"
+          ]
+        ]
+      },
+      "transit_duration_summary": {
+        "columns": [
+          "Transit within 5 minutes of driving",
+          "Transit within 15 minutes of driving",
+          "Transit within 30 minutes of driving"
+        ],
+        "index": [
+          "% of Car Trips",
+          "% of VMT"
+        ],
+        "data": [
+          [
+            " 17.2%",
+            " 47.5%",
+            " 65.5%"
+          ],
+          [
+            "7.9%",
+            "32.3%",
+            "55.8%"
+          ]
+        ]
+      },
+      "raw_metrics": {
+        "columns": [
+          "Before shift",
+          "After shift"
+        ],
+        "index": [
+          "Person trips",
+          "Vehicle trips",
+          "VMT",
+          "Cold starts"
+        ],
+        "data": [
+          [
+            1080651,
+            83599
+          ],
+          [
+            785054,
+            64054
+          ],
+          [
+            2009640,
+            266917
+          ],
+          [
+            12659,
+            1764
+          ]
+        ]
+      },
+      "tour_df": {
+        "columns": [
+          "Feasible to switch to walk",
+          "Feasible to switch to bike",
+          "Feasible to switch to transit",
+          "Feasible to switch to any non-car mode"
+        ],
+        "index": [
+          "% of Car Trips",
+          "% of VMT"
+        ],
+        "data": [
+          [
+            "17.8%",
+            "67.9%",
+            "39.1%",
+            "79.4%"
+          ],
+          [
+            "6.5%",
+            "63.8%",
+            "37.2%",
+            "74.5%"
+          ]
+        ]
+      }
+    },
+    "probable": {
+      "step_settings": {
+        "columns": [
+          "Setting"
+        ],
+        "index": [
+          "WalkDurationDifferenceStep",
+          "BikeDurationDifferenceStep",
+          "TransitDurationDifferenceStep",
+          "BikeHighLTSDistStep",
+          "WalkPurposeStep",
+          "BikePurposeStep",
+          "TransitPurposeStep",
+          "TransitTransferCountStep",
+          "WalkPrecipitationStep",
+          "BikePrecipitationStep",
+          "WalkTemperatureStep",
+          "BikeTemperatureStep"
+        ],
+        "data": [
+          [
+            "5.55th pct (-15.0 minutes)"
+          ],
+          [
+            "0.50th pct (-14.8 minutes)"
+          ],
+          [
+            "20.98th pct (-15.0 minutes)"
+          ],
+          [
+            "0.15 meters"
+          ],
+          [
+            "1 (categorical)"
+          ],
+          [
+            "1 (categorical)"
+          ],
+          [
+            "1 (categorical)"
+          ],
+          [
+            "1.00th pct (0.0 transfers)"
+          ],
+          [
+            "0.00th pct (0.0 1/10 mm)"
+          ],
+          [
+            "0.00th pct (0.0 1/10 mm)"
+          ],
+          [
+            "0.00th pct (-30.1 1/10 C)"
+          ],
+          [
+            "0.00th pct (-23.0 1/10 C)"
+          ]
+        ]
+      },
+      "overall_shifts": {
+        "columns": [
+          "Feasible to switch to walk",
+          "Feasible to switch to bike",
+          "Feasible to switch to transit",
+          "Feasible to switch to any non-car mode"
+        ],
+        "index": [
+          "% of Car Trips",
+          "% of VMT"
+        ],
+        "data": [
+          [
+            " 20.3%",
+            " 52.9%",
+            "36.8%",
+            "65.2%"
+          ],
+          [
+            " 6.9%",
+            "52.0%",
+            "23.7%",
+            "60.3%"
+          ]
+        ]
+      },
+      "overall_shift_comparison": {
+        "columns": [
+          "Walk is the fastest alternative",
+          "Bike is the fastest alternative",
+          "Transit is the fastest alternative",
+          "Feasible to switch to any non-car mode"
+        ],
+        "index": [
+          "% of Car Trips",
+          "% of VMT"
+        ],
+        "data": [
+          [
+            "0.8%",
+            "51.9%",
+            "12.6%",
+            "65.2%"
+          ],
+          [
+            "0.2%",
+            "51.1%",
+            "9.0%",
+            "60.3%"
+          ]
+        ]
+      },
+      "duration_diff_df": {
+        "columns": [
+          "Fastest mode is within 5 minutes of driving",
+          "Fastest mode is within 15 minutes of driving",
+          "Fastest mode is within 30 minutes of driving"
+        ],
+        "index": [
+          "% of Car Trips",
+          "% of VMT"
+        ],
+        "data": [
+          [
+            " 48.9%",
+            " 65.2%",
+            " 65.2%"
+          ],
+          [
+            "37.0%",
+            "60.3%",
+            "60.3%"
+          ]
+        ]
+      },
+      "walk_step_summary": {
+        "columns": [
+          "Likely Walking Car Duration Difference",
+          "Likely Walk Purpose",
+          "Likely Walk Precipitation",
+          "Likely Walk Temperature",
+          "probable Across All Criteria"
+        ],
+        "index": [
+          "% of Car Trips",
+          "% of VMT"
+        ],
+        "data": [
+          [
+            " 39.5%",
+            " 80.7%",
+            " 67.9%",
+            " 100.0%",
+            "20.3%"
+          ],
+          [
+            " 15.4%",
+            " 84.0%",
+            " 66.3%",
+            " 100.0%",
+            "6.9%"
+          ]
+        ]
+      },
+      "walk_duration_summary": {
+        "columns": [
+          "Walk within 5 minutes of driving",
+          "Walk within 15 minutes of driving",
+          "Walk within 30 minutes of driving"
+        ],
+        "index": [
+          "% of Car Trips",
+          "% of VMT"
+        ],
+        "data": [
+          [
+            " 9.1%",
+            " 20.3%",
+            " 20.3%"
+          ],
+          [
+            "2.0%",
+            "6.9%",
+            "6.9%"
+          ]
+        ]
+      },
+      "bike_step_summary": {
+        "columns": [
+          "Likely Biking Car Duration Difference",
+          "Probable Bike High Lts Distance",
+          "Likely Bike Purpose",
+          "Likely Bike Precipitation",
+          "Likely Bike Temperature",
+          "probable Across All Criteria"
+        ],
+        "index": [
+          "% of Car Trips",
+          "% of VMT"
+        ],
+        "data": [
+          [
+            " 98.2%",
+            " 100.0%",
+            " 80.7%",
+            " 67.9%",
+            " 99.7%",
+            "52.9%"
+          ],
+          [
+            " 94.0%",
+            " 100.0%",
+            " 84.0%",
+            " 66.3%",
+            " 99.8%",
+            "52.0%"
+          ]
+        ]
+      },
+      "bike_duration_summary": {
+        "columns": [
+          "Bike within 5 minutes of driving",
+          "Bike within 15 minutes of driving",
+          "Bike within 30 minutes of driving"
+        ],
+        "index": [
+          "% of Car Trips",
+          "% of VMT"
+        ],
+        "data": [
+          [
+            " 42.2%",
+            " 52.9%",
+            " 52.9%"
+          ],
+          [
+            "33.3%",
+            "52.0%",
+            "52.0%"
+          ]
+        ]
+      },
+      "transit_step_summary": {
+        "columns": [
+          "Likely Transit Car Duration Difference",
+          "Likely Transit Purpose",
+          "Likely Transit Transfer Number",
+          "probable Across All Criteria"
+        ],
+        "index": [
+          "% of Car Trips",
+          "% of VMT"
+        ],
+        "data": [
+          [
+            " 59.4%",
+            " 80.7%",
+            " 69.1%",
+            "36.8%"
+          ],
+          [
+            " 42.2%",
+            " 84.0%",
+            " 53.1%",
+            "23.7%"
+          ]
+        ]
+      },
+      "transit_duration_summary": {
+        "columns": [
+          "Transit within 5 minutes of driving",
+          "Transit within 15 minutes of driving",
+          "Transit within 30 minutes of driving"
+        ],
+        "index": [
+          "% of Car Trips",
+          "% of VMT"
+        ],
+        "data": [
+          [
+            " 12.6%",
+            " 36.8%",
+            " 36.8%"
+          ],
+          [
+            "6.1%",
+            "23.7%",
+            "23.7%"
+          ]
+        ]
+      },
+      "raw_metrics": {
+        "columns": [
+          "Before shift",
+          "After shift"
+        ],
+        "index": [
+          "Person trips",
+          "Vehicle trips",
+          "VMT",
+          "Cold starts"
+        ],
+        "data": [
+          [
+            997052,
+            360827
+          ],
+          [
+            720999,
+            250599
+          ],
+          [
+            1742722,
+            691087
+          ],
+          [
+            12297,
+            6202
+          ]
+        ]
+      },
+      "tour_df": {
+        "columns": [
+          "Feasible to switch to walk",
+          "Feasible to switch to bike",
+          "Feasible to switch to transit",
+          "Feasible to switch to any non-car mode"
+        ],
+        "index": [
+          "% of Car Trips",
+          "% of VMT"
+        ],
+        "data": [
+          [
+            "9.3%",
+            "36.0%",
+            "13.1%",
+            "40.8%"
+          ],
+          [
+            "3.2%",
+            "36.4%",
+            "7.3%",
+            "39.6%"
+          ]
+        ]
+      }
+    }
+  }
+}

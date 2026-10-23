@@ -14,9 +14,10 @@ routing="$(dirname "$0")"
 # get the git commit hash
 COMMIT_HASH=$(cd "$routing"; git rev-parse HEAD | head -c 5)
 
-for netdir in "${NET_DIR}/car_congestion*/"; do
-    netname="$(basename "$net")"
-    echo $netname
+for netdir in "${NET_DIR}"/car_baseline_*/; do
+    [ -d "$netdir" ] || continue
+    netname="$(basename "$netdir")"
+    echo "$netname"
     OUT_FILE="${OUT_DIR}/${netname}-${COMMIT_HASH}.parquet"
     NET_BASE="${NET_DIR}/${netname}/${netname}.osrm"
 

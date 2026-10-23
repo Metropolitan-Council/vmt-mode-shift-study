@@ -1,0 +1,1529 @@
+---
+title: VMT mode shift study summary report
+date: today
+author:
+  - name: Liz Roten
+    orcid: 0000-0002-5346-3549
+    email: liz.roten@metc.state.mn.us
+    affiliation: Metropolitan Council
+    attributes:
+      - corresponding: true
+bibliography: ../bibliography.bib
+format:
+  html:
+    reference-location: document
+    theme: [cosmo, style/council.scss, style/font.scss]
+    toc: true
+    page-layout: full
+    embed-resources: true
+    self-contained-math: true
+    toc-depth: 3
+    number-sections: true 
+    number-depth: 2
+    copyright: "Metropolitan Council"
+    # fig-responsive: true
+    fig-cap-location: top
+    link-external-newwindow: true
+    link-external-icon: false
+execute:
+  echo: false
+  warning: false
+  message: false
+knitr:
+  opts_chunk:
+    echo: false
+    message: false
+    warning: false
+    out.width: "95%"
+    dev.args:
+      bg: transparent
+    # fig.pos: "H"
+---
+
+```{r}
+#| label: setup
+
+summary_output_dir <- here::here("src", "analysis_tool", "output")
+source(
+  file.path(here::here(), "reports/summary_report/compile_streamlit_ouput.R"),
+  local = knitr::knit_global()
+)
+source(
+  here::here("reports", "summary_report", "histograms.R"),
+  local = knitr::knit_global()
+)
+
+city_filter_logic <- summary_options$city_filter_logic
+city_filter_connector <- if (identical(city_filter_logic, "AND")) "and" else "or"
+
+summary_city <- summary_options$city
+original_car_person_trips <- summary_cells %>%
+  dplyr::filter(
+    .data$scenario == "base",
+    .data$phase == "feasible",
+    .data$table == "raw_metrics",
+    .data$row_label == "Person trips",
+    .data$column_label == "Before shift"
+  ) %>%
+  dplyr::pull(value_text) %>%
+  as.numeric()
+histogram_trips <- load_histogram_trips(summary_output_dir)
+
+minimum_mode_prevalence <- 0.05
+walking_speed_mph <- 3
+bike_lts_2_penalty <- 0.10
+biking_speed_mph <- 12
+bike_lock_minutes <- 1
+ebike_speed_increase <- 0.13
+transit_frequency_multiplier <- 2
+transit_transfer_limit <- 2
+transit_route_walking_limit_miles <- 1.5
+transit_schedule_period <- "October 2019"
+transit_headway_minutes <- 30
+scenario_transit_headway_minutes <- transit_headway_minutes / transit_frequency_multiplier
+transit_headway_saving_minutes <- transit_headway_minutes - scenario_transit_headway_minutes
+schedule_flexibility_minutes <- 5
+transit_route_label <- paste0(
+  "Valid transit path found with ", transit_transfer_limit, " or fewer transfers"
+)
+walk_scenario_speed_limit_mph <- 30
+street_speed_limits_mph <- c(
+  shared_street = 10,
+  minor_street = 20,
+  major_street = 25,
+  major_street_variation = 25,
+  local_collector = 20,
+  urban_arterial = 25,
+  suburban_arterial = 25,
+  urban_freeway = 55,
+  suburban_rural_freeway = 70
+)
+free_flow_speed_proportion <- 0.80
+
+library(plotly)
+
+metric_order <- c("% of Car Trips", "% of VMT")
+table_label_style <- gt::cell_text(weight = "bold")
+report_colors <- list(
+  "Existing conditions: % of Car Trips" = "#7ca7d0",
+  "Scenario: % of Car Trips" = colors$councilBlue,
+  "Existing conditions: % of VMT" = "#b4d17c",
+  "Scenario: % of VMT" = colors$cdGreen
+)
+scenario_headings <- c(
+  best_walk = "Improving walk infrastructure",
+  best_bike = "Improving bike infrastructure",
+  e_bike = "Universal e-bikes",
+  double_transit = "Double transit frequency",
+  slow_car = "Reduce roadway speeds",
+  all_four = "All of the above"
+)
+
+table_titles <- c(
+  walk_step_summary = "Feasibility of shifting car trips to walking",
+  walk_duration_summary = "Feasible shifts to walking within specific time differences",
+  bike_step_summary = "Feasibility of shifting car trips to biking",
+  bike_duration_summary = "Feasible shifts to biking within specific time differences",
+  transit_step_summary = "Feasibility of shifting car trips to transit",
+  transit_duration_summary = "Feasible shifts to transit within specific time differences",
+  overall_shifts = "Feasibility of shifting car trips to non-car modes",
+  overall_shift_comparison = "Fastest feasible alternative to driving",
+  duration_diff_df = "Feasible shifts to any non-car mode within specific time differences"
+)
+category_order <- list(
+  walk_step_summary = c(
+    walk_distance_label,
+    "Sufficient time is available to complete the trip",
+    "Feasible across all constraints"
+  ),
+  bike_step_summary = c(
+    bike_distance_label, "There is not snow on the ground",
+    bike_high_lts_distance_label,
+    "Sufficient time is available to complete the trip",
+    "Feasible across all constraints"
+  ),
+  transit_step_summary = c(
+    "Valid transit path found with 2 or fewer transfers",
+    transit_access_label,
+    transit_egress_label,
+    transit_wait_label,
+    "Sufficient time is available to complete the trip",
+    "Feasible across all constraints"
+  ),
+  overall_shifts = c(
+    "Feasible to switch to walk", "Feasible to switch to bike",
+    "Feasible to switch to transit", "Feasible to switch to any non-car mode"
+  ),
+  overall_shift_comparison = c(
+    "Walk is the fastest alternative", "Bike is the fastest alternative",
+    "Transit is the fastest alternative", "Feasible to switch to any non-car mode"
+  ),
+  walk_duration_summary = paste0("Walk within ", c(5, 15, 30), " minutes of driving"),
+  bike_duration_summary = paste0("Bike within ", c(5, 15, 30), " minutes of driving"),
+  transit_duration_summary = paste0("Transit within ", c(5, 15, 30), " minutes of driving"),
+  duration_diff_df = paste0("Fastest mode is within ", c(5, 15, 30), " minutes of driving"),
+  duration_minutes = paste0(c(5, 15, 30), " minutes"),
+  mode_order = c("Walk", "Bike", "Transit", "Any non-car mode")
+)
+
+
+plot_duration_labels <- paste0("Within ", c(5, 15, 30), " min")
+plot_hover_template <- "%{customdata}<br>%{fullData.name}: %{x:.1%}<extra></extra>"
+competitive_minutes <- 15
+competitive_minute_label <- paste(competitive_minutes, "minutes")
+car_parking_walk_min_minutes <- 1
+car_parking_walk_max_minutes <- 4
+vmt_reduction_target <- 0.20        
+
+summary_table_percent <- function(cells, table_name, column_label, row_label, accuracy = 0.1) {
+  cells %>%
+    dplyr::filter(
+      .data$table == .env$table_name,
+      .data$column_label == .env$column_label,
+      .data$row_label == .env$row_label
+    ) %>%
+    dplyr::pull(value_pct) %>%
+    scales::percent(accuracy = accuracy)
+}
+
+competitive_percentages <- dplyr::bind_rows(
+  plotting_tables$existing$walk %>%
+    dplyr::filter(table == "walk_duration_summary", minutes == competitive_minute_label) %>%
+    dplyr::mutate(mode = "walk"),
+  plotting_tables$existing$bike %>%
+    dplyr::filter(table == "bike_duration_summary", minutes == competitive_minute_label) %>%
+    dplyr::mutate(mode = "bike"),
+  plotting_tables$existing$transit %>%
+    dplyr::filter(table == "transit_duration_summary", minutes == competitive_minute_label) %>%
+    dplyr::mutate(mode = "transit"),
+  plotting_tables$compare_all_four %>%
+    dplyr::filter(scenario == "base", minutes == competitive_minute_label) %>%
+    dplyr::mutate(mode = "overall")
+) %>%
+  dplyr::select(mode, row_label, value_pct)
+
+summary_percent <- function(mode, row_label, accuracy = 2) {
+  competitive_percentages %>%
+    dplyr::filter(.data$mode == .env$mode, .data$row_label == .env$row_label) %>%
+    dplyr::pull(value_pct) %>%
+    scales::percent(accuracy = accuracy)
+}
+
+scenario_percentages <- purrr::imap_dfr(
+  plotting_tables$potential,
+  function(scenario_data, scenario_key) {
+    scenario_data %>%
+      dplyr::filter(minutes == competitive_minute_label) %>%
+      dplyr::mutate(
+        scenario_key = scenario_key,
+        scenario = as.character(scenario)
+      )
+  }
+)
+
+scenario_percent <- function(scenario_key, scenario, row_label, accuracy = 0.1) {
+  scenario_percentages %>%
+    dplyr::filter(
+      .data$scenario_key == .env$scenario_key,
+      .data$scenario == .env$scenario,
+      .data$row_label == .env$row_label
+    ) %>%
+    dplyr::pull(value_pct) %>%
+    scales::percent(accuracy = accuracy)
+}
+
+vmt_target_attainment <- competitive_percentages %>%
+  dplyr::filter(mode == "overall", row_label == "% of VMT") %>%
+  dplyr::pull(value_pct) / vmt_reduction_target
+```
+
+```{=html}
+<style>
+.cell-output-display:has(.js-plotly-plot) { overflow-x: auto; }
+.js-plotly-plot { min-width: 640px; }
+.js-plotly-plot [data-title]::before,
+.js-plotly-plot [data-title]::after,
+.plotly-notifier,
+.plotly-notifier * {
+font-family: "Condensed", sans-serif !important;
+}
+</style>
+```
+
+::: {.callout-important}
+
+Observed trips, street network, weather, transit schedules, routes, and other contextual factors are current as of 2019 and 2021. 
+
+The tables and figures below use results for **`r summary_city`**. `r if (!is.null(summary_city) && !is.na(summary_city) && summary_city != "All cities") paste0("Trips are included when they start **", city_filter_connector, "** end in ", summary_city, ".")`
+
+The analysis includes an estimated **`r scales::comma(original_car_person_trips)` person trips originally made by car**.
+
+:::
+
+
+In this study, we consider the potential to reduce vehicle miles traveled (VMT) in the Twin Cities region that might be achieved by incentivizing people to switch from traveling in cars to walking, biking or riding transit. We do so by estimating the maximum feasible shift of car trips to alternative modes given existing land-use and travel patterns observed in the 2019 and 2021 Travel Behavior Inventory (TBI) surveys. For each observed car trip, we calculate the best available walk path, bike path, and transit path, considering the quality of the available infrastructure and transit service. We consider an option to be feasible if we observe a substantial number (`r scales::percent(minimum_mode_prevalence, accuracy = 1)` or more) of people using that mode under similar circumstances, and if the traveler has sufficient time to complete the trip within their travel schedule. Further, we consider a feasible option to be competitive if its travel time is within `r competitive_minutes` minutes of the car trip it would replace. Our analysis also examines which modes can absorb the largest mode shift, as summarized in @fig-feasibility-competitive-mode-shift. 
+
+```{r}
+#| label: fig-feasibility-competitive-mode-shift
+#| fig-cap: "Potential to reduce vehicle trips and VMT by shifting car trips to walking, biking or transit"
+mode_shift_bars <- dplyr::bind_rows(
+  plotting_tables$existing$all_four %>%
+    dplyr::filter(
+      table == "overall_shifts",
+      column_label %in% c(
+        "Feasible to switch to walk",
+        "Feasible to switch to bike",
+        "Feasible to switch to transit"
+      )
+    ) %>%
+    dplyr::mutate(
+      mode = dplyr::recode(
+        as.character(column_label),
+        "Feasible to switch to walk" = "Walk",
+        "Feasible to switch to bike" = "Bike",
+        "Feasible to switch to transit" = "Transit"
+      ),
+      status = "Feasible"
+    ),
+  plotting_tables$existing$walk %>%
+    dplyr::filter(table == "walk_duration_summary", minutes == competitive_minute_label) %>%
+    dplyr::mutate(mode = "Walk", status = "Competitive"),
+  plotting_tables$existing$bike %>%
+    dplyr::filter(table == "bike_duration_summary", minutes == competitive_minute_label) %>%
+    dplyr::mutate(mode = "Bike", status = "Competitive"),
+  plotting_tables$existing$transit %>%
+    dplyr::filter(table == "transit_duration_summary", minutes == competitive_minute_label) %>%
+    dplyr::mutate(mode = "Transit", status = "Competitive")
+) %>%
+  dplyr::select(mode, status, row_label, value_pct) %>%
+  dplyr::mutate(
+    mode = factor(mode, levels = c("Walk", "Bike", "Transit")),
+    status = factor(status, levels = c("Feasible", "Competitive"))
+  )
+
+mode_trip_bars <- plotly::plot_ly(
+  data = dplyr::filter(mode_shift_bars, row_label == "% of Car Trips"),
+  x = ~value_pct, y = ~mode, color = ~status,
+  colors = c("#b4d17c", "#7cae1b"),
+  type = "bar", orientation = "h",
+  text = ~paste0(scales::percent(value_pct), " ", status),
+  textfont = list(family = "Arial Narrow", color = "black"),
+  textposition = "outside", cliponaxis = FALSE,
+  hovertemplate = "%{y}<br>%{fullData.name}: %{x:.0%}<extra></extra>"
+) %>%
+  councilR::plotly_layout(
+    subtitle = "Percent of car trips"
+  ) %>%
+  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.9)))
+
+mode_vmt_bars <- plotly::plot_ly(
+  data = dplyr::filter(mode_shift_bars, row_label == "% of VMT"),
+  x = ~value_pct, y = ~mode, color = ~status,
+  colors = c("#b7d4ec", colors$councilBlue),
+  type = "bar", orientation = "h",
+  text = ~paste0(scales::percent(value_pct), " ", status),
+  textfont = list(family = "Arial Narrow", color = "black"),
+  textposition = "outside", cliponaxis = FALSE,
+  hovertemplate = "%{y}<br>%{fullData.name}: %{x:.0%}<extra></extra>"
+) %>%
+  councilR::plotly_layout(
+    subtitle = "Percent of VMT"
+  ) %>%
+  plotly::layout(
+    xaxis = list(tickformat = "1%", range = c(0, 0.9)),
+    showlegend = TRUE
+  )
+
+mode_shift_plot <- plotly::subplot(
+  mode_trip_bars, mode_vmt_bars,
+  shareY = TRUE, margin = 0.06
+) %>%
+  councilR::plotly_layout("Feasible and competitive mode shifts under existing conditions") %>%
+  plotly::layout(
+    legend = list(orientation = "h"),
+    yaxis = list(autorange = "reversed"),
+    yaxis2 = list(autorange = "reversed")
+  ) %>%
+  plotly::config(responsive = TRUE)
+mode_shift_plot
+```
+
+Our results show that walking is a competitive alternative for `r summary_percent("walk", "% of Car Trips")` of car trips. However, because
+walking is most competitive for short trips, converting these trips to walk would only reduce VMT by
+`r summary_percent("walk", "% of VMT")`. Biking is a competitive alternative for `r summary_percent("bike", "% of Car Trips")` of car trips, comprising `r summary_percent("bike", "% of VMT")` of VMT, and transit is
+competitive for `r summary_percent("transit", "% of Car Trips")` of car trips, comprising `r summary_percent("transit", "% of VMT")` of VMT. Biking and transit are both feasible options
+for much larger share of VMT than walking, but there is a larger gap between feasible and competitive.
+This gap highlights the potential to improve the competitiveness of these modes by enabling more
+direct bike routes or faster and more frequent transit service.
+
+For some trips, more than one alternative mode is feasible, and in those cases we consider the
+competitiveness of the fastest available mode. **Overall, in the selected region today, `r summary_percent("overall", "% of Car Trips")` of
+car trips could shift to walk, bike or transit with travel times within `r competitive_minutes` minutes of driving, and
+these trips represent `r summary_percent("overall", "% of VMT", accuracy = 0.1)` of VMT.**
+
+
+<!-- This analysis shows that given existing travel patterns, even if everyone who could competitively -->
+<!-- switch to walking, biking and transit did switch, it would achieve only `r scales::percent(vmt_target_attainment, accuracy = 1)` of the targeted `r scales::percent(vmt_reduction_target, accuracy = 1)` per-capita VMT reduction. Therefore, policymakers may wish to consider transportation -->
+<!-- infrastructure and service changes to further encourage mode shifts. To provide a starting point for -->
+<!-- those discussions, we evaluated the potential of six very broad scenarios to increase the -->
+<!-- competitiveness of alternative modes: -->
+
+- Walk infrastructure: it is safe and comfortable to walk everywhere it is legal to do so;
+- Bike infrastructure: it is safe and comfortable to bike everywhere it is legal to do so;
+- E-bikes: additionally, everyone has an e-bike;
+- Transit frequency: transit frequency is doubled for all routes;
+- Highway speed: speed limits are reduced based on NACTO guidelines; and
+- All of the above.
+
+@fig-scenario-compare-plot shows the results of this scenario analysis, considering the percent of car trips and VMT for
+which the fastest feasible alternative in each scenario is within `r competitive_minutes` minutes of the car travel time. The
+results show that among the individual scenarios, the e-bike scenario provides a competitive alternative
+for the greatest share of VMT, followed by the bike scenario.
+
+
+The all of the above scenario in  @fig-scenario-compare-plot shows that if we made it safe and comfortable to walk and bike everywhere it is legal, made e-bikes available, doubled transit service, and reduced car speeds, half of car trips and 16.5% of VMT could competitively shift to another mode. While the potential mode shifts in these scenarios are promising, it is important to remember that just because people can switch to another mode does not necessarily mean they will switch. The results also show that under existing conditions, people making 25% of car trips can switch to another mode but have not. More work is needed to assess how to most effectively prompt a shift to another mode once that mode is competitive. Overall, we can draw several conclusions from this analysis:
+
+- Biking has the highest potential for mode shift. This potential can be further enhanced by building safe and comfortable bike infrastructure on all streets, but more work is needed to assess the extent to which this potential can be realized.
+- Short trips have much higher mode shift potential. Compact land-use can provide a double-benefit of higher mode shift potential and shorter trips for those that remain in cars and is necessary to achieve greater VMT reduction.
+- Even with broad changes to transportation infrastructure and service, many trips remain that cannot competitively shift. Vehicle electrification policies can be targeted towards travelers least able to switch modes.
+
+
+Even with broad changes to transportation infrastructure and service, many trips remain that cannot competitively shift. Vehicle electrification policies can be targeted towards travelers least able to switch modes.
+
+# Introduction
+
+The TBI surveys record the real-world travel behavior for a representative sample of households in the Twin Cities region in 2019 and 2021. Respondents are asked to install an app on their phone that records the locations they visit and prompts them to indicate the mode of each trip and the purpose of each stop. The resulting data indicate in detail where, when and how people in the Twin Cities region travel. Using these data, we observe both the trips made in cars, and those made by walking, biking or transit. For each observed car trip, we do the following:
+
+
+First, we calculate the best possible walk path, bike path and transit path, considering the quality of the available infrastructure and transit service. The walk paths consider the presence of sidewalks and the functional class and speed limit of the adjacent road. The routes reflect that people prefer to walk on local roads with sidewalks than on high-speed arterials with heavy traffic, and will go out of their way to avoid less-preferred streets [@hardy_accessibility_2019]. The bike routes consider a measure called Level of Traffic Stress (LTS) that reflects the availability of bike lanes and the discomfort of riding on busy, high-speed roads [@hood_gpsbased_2011; @broach_travel_2016; @furth_network_2016; @murphy_implementing_2019]. The transit routes are based on published transit schedules and the actual departure/arrival time of the trip, with routes calculated using a method similar to smartphone mapping apps [@delling_roundbased_2015]. Given this routing, we measure the travel time of the preferred route for each mode and compare it with the car trip. We visually inspected a sample of routes and travel times for all modes to ensure they were logical and consistent with our knowledge of the region.
+
+
+Second, we consider which car trips could feasibly switch to another mode, given the possible routes. A route may be technically possible without being a feasible alternative for a traveler. We determine feasibility by applying a `r scales::percent(minimum_mode_prevalence, accuracy = 1)` rule:
+
+> If we have a reason to think that something is a barrier to shifting modes AND fewer than `r scales::percent(minimum_mode_prevalence, accuracy = 1)` of observed trips currently using that mode violate that barrier, then we consider doing so to be infeasible.
+
+
+For walk trips, we consider walking infeasible for long trips. Only `r scales::percent(minimum_mode_prevalence, accuracy = 1)` of current walk trips are longer than `r walk_distance_cutoff` miles, so we consider walking a feasible alternative only when the walking distance is less than `r walk_distance_cutoff` miles. This does not mean it is impossible to walk farther—some people do—but our interest is in shifting trips from car, and people who currently drive may be less willing to walk long distances. 
+
+Applying equivalent logic, bike trips are feasible if they are shorter than `r bike_distance_cutoff` miles, no more than `r bike_high_lts_cutoff_label` of their distance is on high traffic-stress facilities, and snow depth is no greater than `r bike_snow_depth_cutoff` mm. 
+
+Transit trips are feasible if the origin is within `r transit_access_distance_cutoff` miles and the destination is within `r transit_egress_distance_cutoff` miles of a transit stop, the wait for the first vehicle is less than `r transit_wait_time_cutoff` minutes, and there are no more than `r transit_transfer_limit` transfers. We considered other possible feasibility constraints, but found that they did not meet the standard for exclusion under this rule. These included precipitation and temperature as limits on walking and biking, as well as trip purpose, which could indicate whether people may be less willing to walk, bike or ride transit if they need to carry goods with them.
+
+We also consider whether a trip can be completed within the available time without interfering with a work, school or escort passenger activity. For example, an afternoon trip between finishing work and picking up a child from daycare likely has limited flexibility on both ends, and there may not be sufficient time available to accommodate a longer travel time.
+
+
+
+Third, we assess whether each feasible option is competitive by comparing its travel time with the travel time for driving. The driving time considers traffic congestion using measures from a commercial speed data provider. It also includes the time to walk between the car’s parking location and the trip’s origin or destination, which we assume varies from `r car_parking_walk_min_minutes` minute in suburban locations to `r car_parking_walk_max_minutes` minutes downtown. We plot the distribution of trips by travel-time difference to understand their competitiveness; in some cases the alternative mode is faster than driving because of congestion and parking time. For the purpose of summarizing the results, we consider a feasible option competitive if its travel time is no more than `r competitive_minutes` minutes longer than the car trip it would replace. We also explore how the results differ for varying travel-time thresholds.
+
+
+Given these calculations, we summarize the data to provide insight in different dimensions to understand which modes are most competitive, where, and for whom. We apply this process again to test several scenarios to understand the extent to which changing the transportation system would result in more competitive travel by alternative modes. Additional details on the approach are included in the appendices
+
+# Existing Mode Shift Potential
+
+This section reports the potential for car trips to shift to walk, bike, transit, or any of these modes. It
+aims to address the question:
+
+> With land use, transportation system, and travel patterns held constant, how much potential exists for travel to shift from driving towards other, less carbon-intensive modes?
+
+## Potential shift to walk
+
+To measure the possible walk routes, we create an “all streets” network from OpenStreetMap that includes the
+street system and off-street walking paths but excludes freeways and other facilities where walking is prohibited. We introduce a penalty to reflect that walkers tend to avoid roads with a higher walking level of traffic stress (LTS)— those roads with high speeds, high functional classes, or without sidewalks—using an approach developed by the Virginia DOT for project evaluation @hardy_accessibility_2019. The resulting paths reflect diversions from these LTS penalties, with people sometimes walking farther to avoid a major arterial. We calculate the travel time along this longer route assuming a `r walking_speed_mph` mph walking speed.
+
+
+@tbl-walk-feasibility-table shows walk feasibility constraints and the share of car trips and VMT that can feasibly switch under each. A walk alternative is shorter than `r walk_distance_cutoff` miles for `r summary_table_percent(plotting_tables$existing$walk, "walk_step_summary", walk_distance_label, "% of Car Trips")` of car trips, representing `r summary_table_percent(plotting_tables$existing$walk, "walk_step_summary", walk_distance_label, "% of VMT")` of VMT. Separately, travelers have sufficient time to walk for `r summary_table_percent(plotting_tables$existing$walk, "walk_step_summary", "Sufficient time is available to complete the trip", "% of Car Trips")` of car trips, representing `r summary_table_percent(plotting_tables$existing$walk, "walk_step_summary", "Sufficient time is available to complete the trip", "% of VMT")` of VMT. In many cases, schedules can accommodate these switches because trips are first or last of the day, allowing travelers to leave earlier or arrive later at home. A trip must be feasible across all constraints; overall, `r summary_table_percent(plotting_tables$existing$walk, "walk_step_summary", "Feasible across all constraints", "% of Car Trips")` of car trips and `r summary_table_percent(plotting_tables$existing$walk, "walk_step_summary", "Feasible across all constraints", "% of VMT")` of VMT could feasibly switch to walking.
+
+
+```{r}
+#| label: tbl-walk-feasibility-table
+#| tbl-cap: "Feasibility of shifting car trips to walking"
+walk_feasibility_cells <- plotting_tables$existing$walk %>%
+  filter(table == "walk_step_summary") %>%
+  mutate(
+    column_label = factor(column_label, levels = category_order$walk_step_summary),
+    row_label = factor(row_label, levels = metric_order)
+  ) %>%
+  arrange(column_label, row_label)
+
+walk_feasibility_cells %>%
+  select(column_label, row_label, value_pct) %>%
+  pivot_wider(names_from = row_label, values_from = value_pct) %>%
+  gt::gt(id = "gt-walk-feasibility", caption = table_titles[["walk_step_summary"]]) %>%
+  gt::cols_label(column_label = "Feasibility constraint") %>%
+  gt::fmt_percent(columns = all_of(metric_order), decimals = 1) %>%
+  gt::tab_style(
+    style = table_label_style,
+    locations = gt::cells_body(rows = column_label == "Feasible across all constraints")
+  ) %>%
+  gt::tab_style(style = table_label_style, locations = gt::cells_column_labels()) %>%
+  gt::cols_align(
+    align = "left",
+    columns = tidyselect::where(~ is.character(.x) || is.factor(.x))
+  )
+```
+
+
+@tbl-walk-duration-table summarizes these same data for three specific thresholds of travel time difference. Among trips currently made by car, `r summary_table_percent(plotting_tables$existing$walk, "walk_duration_summary", category_order$walk_duration_summary[[1]], "% of Car Trips")` can feasibly switch to walking with a travel time within `r category_order$duration_minutes[[1]]` of driving, `r summary_table_percent(plotting_tables$existing$walk, "walk_duration_summary", category_order$walk_duration_summary[[2]], "% of Car Trips")` can feasibly switch within `r category_order$duration_minutes[[2]]`, and `r summary_table_percent(plotting_tables$existing$walk, "walk_duration_summary", category_order$walk_duration_summary[[3]], "% of Car Trips")` can feasibly switch within `r category_order$duration_minutes[[3]]`. If those trips did switch to walking, VMT would fall to `r summary_table_percent(plotting_tables$existing$walk, "walk_duration_summary", category_order$walk_duration_summary[[1]], "% of VMT")`, `r summary_table_percent(plotting_tables$existing$walk, "walk_duration_summary", category_order$walk_duration_summary[[2]], "% of VMT")`, and `r summary_table_percent(plotting_tables$existing$walk, "walk_duration_summary", category_order$walk_duration_summary[[3]], "% of VMT")` at thresholds of `r category_order$duration_minutes[[1]]`, `r category_order$duration_minutes[[2]]`, and `r category_order$duration_minutes[[3]]`, respectively.
+
+The distribution of travel-time differences for feasible walk shifts is shown in @fig-feasible-walk-shift-histogram.
+
+```{r}
+#| label: fig-feasible-walk-shift-histogram
+#| fig-cap: "Travel-time difference for feasible walk shifts and observed walk trips"
+stacked_shift_histogram(
+  histogram_trips,
+  "walk",
+  "walk_duration_minutes",
+  "feasible_walk_shift"
+)
+```
+
+```{r}
+#| label: tbl-walk-duration-table
+#| tbl-cap: "Feasible shifts to walking within specific time differences"
+walk_duration_cells <- plotting_tables$existing$walk %>%
+  filter(table == "walk_duration_summary") %>%
+  mutate(
+    column_label = factor(minutes, levels = category_order$duration_minutes),
+    row_label = factor(row_label, levels = metric_order)
+  ) %>%
+  arrange(column_label, row_label)
+
+walk_duration_cells %>%
+  select(column_label, row_label, value_pct) %>%
+  pivot_wider(names_from = row_label, values_from = value_pct) %>%
+  gt::gt(id = "gt-walk-duration", caption = table_titles[["walk_duration_summary"]]) %>%
+  gt::cols_label(column_label = "Travel time difference (alternative time - drive time)") %>%
+  gt::fmt_percent(columns = all_of(metric_order), decimals = 1) %>%
+  gt::sub_missing(columns = all_of(metric_order), missing_text = "\u2014") %>%
+  gt::tab_style(style = table_label_style, locations = gt::cells_column_labels()) %>%
+  gt::cols_align(
+    align = "left",
+    columns = tidyselect::where(~ is.character(.x) || is.factor(.x))
+  )
+```
+
+
+::: {.callout-note}
+
+### Understanding travel time difference plots
+
+@fig-feasible-walk-shift-histogram and several subsequent figures illustrate the competitiveness of each mode as an alternative
+to driving. In this call-out box, we explain how to understand these graphs, then focus on the
+findings in the text adjacent to each figure.
+
+In these plots, the horizontal axis is the travel time difference between using the alternative mod and driving. Values greater than zero indicate that driving has a faster travel time. Values less than zero indicate that the alternative mode is faster. The vertical axis shows the number of trips for a specific difference in travel times. In general, we observe a higher frequency of trips clustered towards the left end of the graph, indicating that the travel times are competitive for both modes. In some instances, the travel time for the alternative mode is faster than driving, which can occur when cars experience traffic congestion, or when people must spend time walking from there parking place to their destination. Conversely, for some trips it might take 60 minutes or more longer to switch modes than to drive. In the case of @fig-feasible-walk-shift-histogram, these tend to be longer trips, where it might take very long time to walk 5 or 10 miles. The vertical black line shows a threshold of 15- minutes of travel time difference, and we consider trips to the left of this line to be “competitive”.
+
+
+The color coding further segments the trips. The blue colors represent trips currently made by car, with the light blue indicating that those trips can feasibly switch to the alternative mode, and the dark blue indicating they cannot. For the dark blue areas, there may be some other barrier to The red areas represent trips currently made by the alternative mode. In the example of @fig-feasible-walk-shift-histogram, most people who currently walk have travel times that are competitive with driving, but some choose to walk even though it takes longer—maybe they enjoy the walk or maybe they do not have a car.
+
+:::
+
+## Potential shift to bike 
+
+
+As with walking, we calculated bike routes using an “all streets” network derived from
+OpenStreetMap, but filtered to include all bicycle facilities and exclude roads where bicycling is
+prohibited. Previous research indicates that bicyclists are highly averse to riding on busy and high-
+speed streets, especially without bike lanes [@hood_gpsbased_2011; @broach_travel_2016]. To reflect
+this aversion, our routing considers the bicycle level of traffic stress (LTS) [@furth_network_2016],
+as previously used by the University of Minnesota [@murphy_implementing_2019]. We calculate the bike routes by imposing a
+`r scales::percent(bike_lts_2_penalty, accuracy = 1)` penalty for biking on LTS 2 facilities and
+assuming that bicyclists who encounter LTS 3 and 4 facilities will dismount and walk their bikes until
+they reach a more comfortable street or path. While existing cyclists do sometimes ride on these
+facilities, a mode shift suggests the need to attract new cyclists who will be less confident. We also
+assume bicyclists will avoid hills if it does not make their trip too much longer. These penalties result
+in routes that avoid busier facilities. We assume that bicyclists
+travel at `r biking_speed_mph` mph along their preferred route and that it takes `r bike_lock_minutes`
+minute at either end to lock or unlock a bike.
+
+
+@tbl-bike-feasibility-table shows bike feasibility constraints and the share of car trips and VMT
+that can feasibly switch under each. A preferred bicycle route is within `r bike_distance_cutoff` miles for
+`r summary_table_percent(plotting_tables$existing$bike, "bike_step_summary", bike_distance_label, "% of Car Trips")` of car trips, representing `r summary_table_percent(plotting_tables$existing$bike, "bike_step_summary", bike_distance_label, "% of VMT")` of VMT. The TBI data were collected year-round, allowing us to analyze weather. At a snow-depth cutoff of `r bike_snow_depth_cutoff` mm, `r summary_table_percent(plotting_tables$existing$bike, "bike_step_summary", "There is not snow on the ground", "% of Car Trips")` of car trips and `r summary_table_percent(plotting_tables$existing$bike, "bike_step_summary", "There is not snow on the ground", "% of VMT")` of VMT satisfy the snow constraint.
+
+`r summary_table_percent(plotting_tables$existing$bike, "bike_step_summary", bike_high_lts_distance_label, "% of Car Trips")` of car trips and `r summary_table_percent(plotting_tables$existing$bike, "bike_step_summary", bike_high_lts_distance_label, "% of VMT")` of VMT have preferred bicycle routes with no more than `r bike_high_lts_cutoff_label` of the distance on LTS 3 or 4 facilities. People’s schedules provide sufficient time to complete `r summary_table_percent(plotting_tables$existing$bike, "bike_step_summary", "Sufficient time is available to complete the trip", "% of Car Trips")` of car trips by bike, representing `r summary_table_percent(plotting_tables$existing$bike, "bike_step_summary", "Sufficient time is available to complete the trip", "% of VMT")` of VMT. Across all four constraints, biking is feasible for `r summary_table_percent(plotting_tables$existing$bike, "bike_step_summary", "Feasible across all constraints", "% of Car Trips")` of car trips and `r summary_table_percent(plotting_tables$existing$bike, "bike_step_summary", "Feasible across all constraints", "% of VMT")` of VMT.
+
+```{r}
+#| label: tbl-bike-feasibility-table
+#| tbl-cap: "Feasibility of shifting car trips to biking"
+bike_feasibility_cells <- plotting_tables$existing$bike %>%
+  filter(table == "bike_step_summary") %>%
+  mutate(
+    column_label = factor(column_label, levels = category_order$bike_step_summary),
+    row_label = factor(row_label, levels = metric_order)
+  ) %>%
+  arrange(column_label, row_label)
+
+bike_feasibility_cells %>%
+  select(column_label, row_label, value_pct) %>%
+  pivot_wider(names_from = row_label, values_from = value_pct) %>%
+  gt::gt(id = "gt-bike-feasibility", caption = table_titles[["bike_step_summary"]]) %>%
+  gt::cols_label(column_label = "Feasibility constraint") %>%
+  gt::fmt_percent(columns = all_of(metric_order), decimals = 1) %>%
+  gt::sub_missing(columns = all_of(metric_order), missing_text = "\u2014") %>%
+  gt::tab_style(
+    style = table_label_style,
+    locations = gt::cells_body(rows = column_label == "Feasible across all constraints")
+  ) %>%
+  gt::tab_style(style = table_label_style, locations = gt::cells_column_labels()) %>%
+  gt::cols_align(
+    align = "left",
+    columns = tidyselect::where(~ is.character(.x) || is.factor(.x))
+  )
+```
+
+@tbl-bike-duration-table summarizes these results for each time threshold. Among car trips, `r summary_table_percent(plotting_tables$existing$bike, "bike_duration_summary", category_order$bike_duration_summary[[1]], "% of Car Trips")`, `r summary_table_percent(plotting_tables$existing$bike, "bike_duration_summary", category_order$bike_duration_summary[[2]], "% of Car Trips")`, and `r summary_table_percent(plotting_tables$existing$bike, "bike_duration_summary", category_order$bike_duration_summary[[3]], "% of Car Trips")` could feasibly switch to biking within 5, 15, and 30 minutes of driving, respectively. These trips represent `r summary_table_percent(plotting_tables$existing$bike, "bike_duration_summary", category_order$bike_duration_summary[[1]], "% of VMT")`, `r summary_table_percent(plotting_tables$existing$bike, "bike_duration_summary", category_order$bike_duration_summary[[2]], "% of VMT")`, and `r summary_table_percent(plotting_tables$existing$bike, "bike_duration_summary", category_order$bike_duration_summary[[3]], "% of VMT")` of VMT.
+
+The distribution of travel-time differences for feasible bike shifts is shown in @fig-feasible-bike-shift-histogram.
+
+```{r}
+#| label: fig-feasible-bike-shift-histogram
+#| fig-cap: "Travel-time difference for feasible bike shifts and observed bike trips"
+stacked_shift_histogram(
+  histogram_trips,
+  "bike",
+  "bike_duration_minutes_adj",
+  "feasible_bike_shift"
+)
+```
+
+```{r}
+#| label: tbl-bike-duration-table
+#| tbl-cap: "Feasible shifts to biking within specific time differences"
+
+bike_duration_cells <- plotting_tables$existing$bike %>%
+  filter(table == "bike_duration_summary") %>%
+  mutate(
+    column_label = factor(minutes, levels = category_order$duration_minutes),
+    row_label = factor(row_label, levels = metric_order)
+  ) %>%
+  arrange(column_label, row_label)
+
+bike_duration_cells %>%
+  select(column_label, row_label, value_pct) %>%
+  pivot_wider(names_from = row_label, values_from = value_pct) %>%
+  gt::gt(id = "gt-bike-duration", caption = table_titles[["bike_duration_summary"]]) %>%
+  gt::cols_label(column_label = "Travel time difference (alternative time - drive time)") %>%
+  gt::fmt_percent(columns = all_of(metric_order), decimals = 1) %>%
+  gt::sub_missing(columns = all_of(metric_order), missing_text = "\u2014") %>%
+  gt::tab_style(style = table_label_style, locations = gt::cells_column_labels()) %>%
+  gt::cols_align(
+    align = "left",
+    columns = tidyselect::where(~ is.character(.x) || is.factor(.x))
+  )
+```
+
+
+## Potential shift to transit
+
+We calculated using a method similar to a smartphone’s mapping app’s method. The method uses data from the General Transit Feed Specification (GTFS) files published by Metro Transit and Minnesota Valley Transit Authority for `r transit_schedule_period`. GTFS is a standard format operators use to publish their schedules for use in mapping apps. 
+
+Our routing method considers the exact departure or arrival time of the trip and reflects the scheduled transit vehicles and possible transfers available at that time, as well as the walking time to, from or between transit vehicles. For trips to work, school, or medical appointments, we assume the arrival time is fixed and calculate the latest departure from the trip’s origin that would reach the destination in time. For other trips, we calculate the earliest arrival given the departure time. Because the waiting time and route vary based on the trip’s timing, we allowed arrivals up to `r schedule_flexibility_minutes` minutes late at work, school, or medical appointments, and departures up to `r schedule_flexibility_minutes` minutes early for other trips if they made the trip at least `r competitive_minutes` minutes faster.
+
+
+@tbl-transit-feasibility-table summarizes transit feasibility constraints and the share of car trips and VMT
+that meet each. A valid transit path with `r transit_transfer_limit` or fewer transfers is possible for `r summary_table_percent(plotting_tables$existing$transit, "transit_step_summary", transit_route_label, "% of Car Trips")` of car trips, corresponding to `r summary_table_percent(plotting_tables$existing$transit, "transit_step_summary", transit_route_label, "% of VMT")` of VMT. We impose the transfer limit and a `r transit_route_walking_limit_miles`-mile limit on walking in the routing method itself to avoid creating a large number of complex and infeasible paths, so subsequent constraints rely on first meeting these conditions. Walking distance to and from transit is also a barrier to use and reflects overall bus-system coverage. The possible transit path involves walking less than `r transit_access_distance_cutoff` miles from the origin to the first stop for `r summary_table_percent(plotting_tables$existing$transit, "transit_step_summary", transit_access_label, "% of Car Trips")` of car trips and `r summary_table_percent(plotting_tables$existing$transit, "transit_step_summary", transit_access_label, "% of VMT")` of VMT. For the egress distance cutoff of `r transit_egress_distance_cutoff` miles, the corresponding shares are `r summary_table_percent(plotting_tables$existing$transit, "transit_step_summary", transit_egress_label, "% of Car Trips")` of car trips and `r summary_table_percent(plotting_tables$existing$transit, "transit_step_summary", transit_egress_label, "% of VMT")` of VMT. The first-vehicle wait-time cutoff is `r transit_wait_time_cutoff` minutes; `r summary_table_percent(plotting_tables$existing$transit, "transit_step_summary", transit_wait_label, "% of Car Trips")` of car trips and `r summary_table_percent(plotting_tables$existing$transit, "transit_step_summary", transit_wait_label, "% of VMT")` of VMT meet this constraint. This cutoff corresponds to a route headway of `r transit_headway_minutes` minutes or better. Each feasibility constraint follows the fixed `r scales::percent(minimum_mode_prevalence, accuracy = 1)` mode-prevalence rule.
+
+```{r}
+#| label: tbl-transit-feasibility-table
+#| tbl-cap: "Feasibility of shifting car trips to transit"
+transit_feasibility_cells <- plotting_tables$existing$transit %>%
+  filter(table == "transit_step_summary") %>%
+  mutate(
+    column_label = factor(column_label, levels = category_order$transit_step_summary),
+    row_label = factor(row_label, levels = metric_order)
+  ) %>%
+  arrange(column_label, row_label)
+
+transit_feasibility_cells %>%
+  select(column_label, row_label, value_pct) %>%
+  pivot_wider(names_from = row_label, values_from = value_pct) %>%
+  gt::gt(id = "gt-transit-feasibility", caption = table_titles[["transit_step_summary"]]) %>%
+  gt::cols_label(column_label = "Feasibility constraint") %>%
+  gt::fmt_percent(columns = all_of(metric_order), decimals = 1) %>%
+  gt::sub_missing(columns = all_of(metric_order), missing_text = "\u2014") %>%
+  gt::tab_style(
+    style = table_label_style,
+    locations = gt::cells_body(rows = column_label == "Feasible across all constraints")
+  ) %>%
+  gt::tab_style(style = table_label_style, locations = gt::cells_column_labels()) %>%
+  gt::cols_align(
+    align = "left",
+    columns = tidyselect::where(~ is.character(.x) || is.factor(.x))
+  )
+```
+
+
+@tbl-transit-duration summarizes the share of car trips and VMT that can feasibly shift to transit within
+the specified time thresholds. Within 5 minutes of driving, `r summary_table_percent(plotting_tables$existing$transit, "transit_duration_summary", category_order$transit_duration_summary[[1]], "% of Car Trips")` of car trips and `r summary_table_percent(plotting_tables$existing$transit, "transit_duration_summary", category_order$transit_duration_summary[[1]], "% of VMT")` of VMT can shift to transit. Within 15 minutes, the shares are `r summary_table_percent(plotting_tables$existing$transit, "transit_duration_summary", category_order$transit_duration_summary[[2]], "% of Car Trips")` and `r summary_table_percent(plotting_tables$existing$transit, "transit_duration_summary", category_order$transit_duration_summary[[2]], "% of VMT")`; within 30 minutes, they are `r summary_table_percent(plotting_tables$existing$transit, "transit_duration_summary", category_order$transit_duration_summary[[3]], "% of Car Trips")` and `r summary_table_percent(plotting_tables$existing$transit, "transit_duration_summary", category_order$transit_duration_summary[[3]], "% of VMT")`.
+
+The distribution of travel-time differences for feasible transit shifts is shown in @fig-feasible-transit-shift-histogram.
+
+```{r}
+#| label: fig-feasible-transit-shift-histogram
+#| fig-cap: "Travel-time difference for feasible transit shifts and observed transit trips"
+stacked_shift_histogram(
+  histogram_trips,
+  "transit",
+  "transit_duration",
+  "feasible_transit_shift"
+)
+```
+
+```{r}
+#| label: tbl-transit-duration
+#| tbl-cap: "Feasible shifts to transit within specific time differences"
+
+transit_duration_cells <- plotting_tables$existing$transit %>%
+  filter(table == "transit_duration_summary") %>%
+  mutate(
+    column_label = factor(minutes, levels = category_order$duration_minutes),
+    row_label = factor(row_label, levels = metric_order)
+  ) %>%
+  arrange(column_label, row_label)
+
+transit_duration_cells %>%
+  select(column_label, row_label, value_pct) %>%
+  pivot_wider(names_from = row_label, values_from = value_pct) %>%
+  gt::gt(id = "gt-transit-duration", caption = table_titles[["transit_duration_summary"]]) %>%
+  gt::cols_label(column_label = "Travel time difference (alternative time - drive time)") %>%
+  gt::fmt_percent(columns = all_of(metric_order), decimals = 1) %>%
+  gt::sub_missing(columns = all_of(metric_order), missing_text = "\u2014") %>%
+  gt::tab_style(style = table_label_style, locations = gt::cells_column_labels()) %>%
+  gt::cols_align(
+    align = "left",
+    columns = tidyselect::where(~ is.character(.x) || is.factor(.x))
+  )
+```
+
+
+## Potential shifts to any mode
+
+Some car trips can feasibly shift to only one alternative mode, while others can feasibly shift to multiple
+options. @tbl-overall-feasibility-table summarizes feasible shifts by mode and shows that `r summary_table_percent(plotting_tables$existing$all_four, "overall_shifts", "Feasible to switch to any non-car mode", "% of Car Trips")` of car trips and `r summary_table_percent(plotting_tables$existing$all_four, "overall_shifts", "Feasible to switch to any non-car mode", "% of VMT")` of VMT can feasibly switch to at least one non-car mode. @tbl-overall-feasibility-table shows which mode is fastest for those trips. Walk is fastest for `r summary_table_percent(plotting_tables$existing$all_four, "overall_shift_comparison", category_order$overall_shift_comparison[[1]], "% of Car Trips")` of car trips, bike for `r summary_table_percent(plotting_tables$existing$all_four, "overall_shift_comparison", category_order$overall_shift_comparison[[2]], "% of Car Trips")`, and transit for `r summary_table_percent(plotting_tables$existing$all_four, "overall_shift_comparison", category_order$overall_shift_comparison[[3]], "% of Car Trips")`. As a share of VMT, those values are `r summary_table_percent(plotting_tables$existing$all_four, "overall_shift_comparison", category_order$overall_shift_comparison[[1]], "% of VMT")`, `r summary_table_percent(plotting_tables$existing$all_four, "overall_shift_comparison", category_order$overall_shift_comparison[[2]], "% of VMT")`, and `r summary_table_percent(plotting_tables$existing$all_four, "overall_shift_comparison", category_order$overall_shift_comparison[[3]], "% of VMT")`, respectively.
+
+
+These results show that even though walk and transit are the fastest alternative to driving for a similar
+percentage of car trips, transit is the fastest alternative for a much higher percentage of VMT because
+transit can serve longer trips. Because the transit wait times vary by departure and arrival times, the fastest alternative may vary by time-of-day even for the same origin and destination. The fastest alternative also varies by season because we consider biking infeasible when snow is on the ground. For these reasons, many travelers may find value in choosing among multiple feasible alternatives.
+
+The distribution of travel-time differences for the fastest feasible alternative is shown in @fig-feasible-fastest-alternative-histogram.
+
+```{r}
+#| label: fig-feasible-fastest-alternative-histogram
+#| fig-cap: "Travel-time difference for the fastest feasible alternative and driving"
+total_shift_histogram(histogram_trips)
+```
+
+
+
+```{r}
+#| label: tbl-overall-feasibility-table
+#| tbl-cap: "Feasibility of shifting car trips to non-car modes"
+overall_feasibility_cells <- plotting_tables$existing$all_four %>%
+  filter(table %in% c("overall_shifts", "overall_shift_comparison")) %>%
+  mutate(
+    column_label = factor(mode, levels = category_order$mode_order),
+    row_label = factor(row_label, levels = metric_order)
+  ) %>%
+  arrange(column_label, row_label)
+
+overall_feasibility_cells %>%
+  select(column_label, table, row_label, value_pct) %>%
+  pivot_wider(names_from = row_label, values_from = value_pct) %>%
+  pivot_wider(names_from = table, values_from = all_of(metric_order)) %>% 
+  
+  gt::gt(id = "gt-overall-feasibility", caption = table_titles[["overall_shifts"]]) %>%
+  gt::cols_label(column_label = "Alternative mode") %>%
+  gt::tab_spanner(label = "Feasibile to shift to mode", columns = ends_with("overall_shifts")) %>%
+  gt::tab_spanner(label = "Mode is fastest alternative", columns = ends_with("overall_shift_comparison")) %>%
+  gt::cols_label_with(columns = -column_label, fn = ~ stringr::str_remove(.x, "_.*$")) %>%
+  gt::cols_label(
+    column_label = "Travel time difference (alternative time - drive time)",
+  ) %>%
+  gt::fmt_percent(columns = -column_label, decimals = 1) %>%
+  gt::sub_missing(columns = -column_label, missing_text = "\u2014") %>%
+  gt::tab_style(style = table_label_style, locations = gt::cells_column_labels()) %>%
+  gt::cols_align(
+    align = "left",
+    columns = tidyselect::where(~ is.character(.x) || is.factor(.x))
+  )
+```
+
+@tbl-overall-duration-table shows the share of car trips and VMT that can feasibly shift to any non-car mode within each travel-time threshold. Within 5 minutes of driving, `r summary_table_percent(plotting_tables$existing$all_four, "duration_diff_df", category_order$duration_diff_df[[1]], "% of Car Trips")` of trips and `r summary_table_percent(plotting_tables$existing$all_four, "duration_diff_df", category_order$duration_diff_df[[1]], "% of VMT")` of VMT can switch. Within 15 minutes, the shares are `r summary_table_percent(plotting_tables$existing$all_four, "duration_diff_df", category_order$duration_diff_df[[2]], "% of Car Trips")` and `r summary_table_percent(plotting_tables$existing$all_four, "duration_diff_df", category_order$duration_diff_df[[2]], "% of VMT")`; within 30 minutes, they are `r summary_table_percent(plotting_tables$existing$all_four, "duration_diff_df", category_order$duration_diff_df[[3]], "% of Car Trips")` and `r summary_table_percent(plotting_tables$existing$all_four, "duration_diff_df", category_order$duration_diff_df[[3]], "% of VMT")`.
+
+
+```{r}
+#| label: tbl-overall-duration-table
+#| tbl-cap: "Feasible shifts to any non-car mode within specific time differences"
+overall_duration_cells <- plotting_tables$existing$all_four %>%
+  filter(table == "duration_diff_df") %>%
+  mutate(
+    column_label = factor(minutes, levels = category_order$duration_minutes),
+    row_label = factor(row_label, levels = metric_order)
+  ) %>%
+  arrange(column_label, row_label)
+
+overall_duration_cells %>%
+  select(column_label, row_label, value_pct) %>%
+  pivot_wider(names_from = row_label, values_from = value_pct) %>%
+  gt::gt(id = "gt-overall-duration", caption = table_titles[["duration_diff_df"]]) %>%
+  gt::cols_label(column_label = "Travel time difference (alternative time - drive time)") %>%
+  gt::fmt_percent(columns = all_of(metric_order), decimals = 1) %>%
+  gt::sub_missing(columns = all_of(metric_order), missing_text = "\u2014") %>%
+  gt::tab_style(style = table_label_style, locations = gt::cells_column_labels()) %>%
+  gt::cols_align(
+    align = "left",
+    columns = tidyselect::where(~ is.character(.x) || is.factor(.x))
+  )
+```
+
+
+# Possible Actions to Increase Mode Shift Potential
+
+Above, we examine how many car trips and how much VMT could feasibly and completely shift to
+walk, bike or transit assuming land use, the transportation system and travel patterns remain as
+currently observed. Next, we build upon that analysis to consider:
+
+> By how much may changes to the transportation system increase the mode shift
+potential?
+
+
+To provide a starting point for discussions about how to effectively increase the mode shift potential,
+we evaluated the potential of six very broad scenarios to increase the competitiveness of alternative
+modes:
+
+- Walk infrastructure: it is safe and comfortable to walk everywhere it is legal to do so;
+- Bike infrastructure: it is safe and comfortable to bike everywhere it is legal to do so;
+- E-bikes: additionally, everyone has an e-bike;
+- Transit frequency: transit frequency is doubled for all routes;
+- Roadway speed: speed limits are reduced based on NACTO guidelines; and
+- All of the above.
+
+## Improving walk infrastructure
+
+The street environment affects people’s comfort and safety when walking. Most people would rather walk along a sidewalk on a quiet street than along a busy road with traffic speeding past. In this study, we reflect those preferences by selecting walking routes that are weighted to avoid higher class and higher speed streets. This scenario imagines a region where every street is safe and comfortable to walk along. This ideal environment includes sidewalks everywhere, speed limits no more than `r walk_scenario_speed_limit_mph` mph, and roads no wider than four lanes. People would walk the shortest distance to their destination, saving travel time.
+
+@fig-scenario-walk-plot shows the results of this scenario, compared to the existing conditions. It focuses on competitive shifts, where a competitive shift must be feasible and provide a travel time close to driving. It shows the percentage of car trips that can competitively shift to walking within `r paste(category_order$duration_minutes, collapse = ", ")` of the travel time of driving. It also shows the percentage of VMT that these car trips comprise. The results show that improving walk infrastructure would increase the competitiveness of walking slightly.
+
+```{r}
+#| label: fig-scenario-walk-plot
+#| fig-cap: "Percentage of car trips and VMT that can competitively shift to walking for a scenario where walking is safe and comfortable on all streets"
+walk_scenario_cells <- plotting_tables$potential$best_walk %>%
+  mutate(
+    scenario = factor(
+      recode(
+        as.character(scenario),
+        base = "Existing conditions",
+        best_walk = scenario_headings[["best_walk"]]
+      ),
+      levels = c("Existing conditions", scenario_headings[["best_walk"]])
+    ),
+    column_label = factor(minutes, levels = category_order$duration_minutes),
+    row_label = factor(row_label, levels = metric_order)
+  ) %>%
+  arrange(column_label, row_label, scenario)
+
+
+walk_scenario_trips <- plotly::plot_ly(
+  data = filter(walk_scenario_cells, row_label == "% of Car Trips"),
+  x = ~value_pct,
+  y = ~column_label,
+  color = ~scenario,
+  colors = c(
+    report_colors[["Existing conditions: % of Car Trips"]],
+    report_colors[["Scenario: % of Car Trips"]]
+  ),
+  type = "bar", orientation = "h",
+  text = ~ scales::percent(value_pct),
+  textfont = list(family = "Arial Narrow", color = "black"),
+  textposition = "outside",
+  customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
+) %>%
+  councilR::plotly_layout(
+    subtitle = "% of Car Trips"
+  ) %>%
+  layout(
+    xaxis = list(
+      tickformat = "1%",
+      range = c(0, 0.9)
+    )
+  )
+
+
+walk_scenario_vmt <- plotly::plot_ly(
+  data = filter(walk_scenario_cells, row_label == "% of VMT"),
+  x = ~value_pct,
+  y = ~column_label,
+  color = ~scenario,
+  colors = c(
+    report_colors[["Existing conditions: % of VMT"]],
+    report_colors[["Scenario: % of VMT"]]
+  ),
+  type = "bar", orientation = "h",
+  text = ~ scales::percent(value_pct),
+  textfont = list(family = "Arial Narrow", color = "black"),
+  textposition = "outside",
+  customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
+) %>%
+  councilR::plotly_layout(
+    subtitle = "% of VMT"
+  ) %>%
+  layout(
+    xaxis = list(
+      tickformat = "1%",
+      range = c(0, 0.9)
+    )
+  )
+
+
+walk_scenario_plot <- plotly::subplot(
+  walk_scenario_trips, walk_scenario_vmt,
+  shareY = TRUE, margin = 0.06
+) %>%
+  plotly_layout("Competitve shift to walk in walk improvement scenario") %>%
+  layout(
+    legend = list(
+      orientation = "h",
+      xaxis = list(tickformat = "1%")
+    ),
+    yaxis = list(autorange = "reversed"),
+    yaxis2 = list(autorange = "reversed")
+  )
+walk_scenario_plot
+```
+
+```{r}
+#| label: tbl-scenario-walk-table
+#| tbl-cap: "Feasible shifts to walking within specific time differences under improving walk infrastructure"
+walk_scenario_cells %>%
+  mutate(condition = as.character(scenario)) %>%
+  select(column_label, condition, row_label, value_pct) %>%
+  pivot_wider(names_from = row_label, values_from = value_pct) %>%
+  pivot_wider(names_from = condition, values_from = all_of(metric_order)) %>%
+  gt::gt(id = "gt-scenario-walk", caption = paste0(table_titles[["walk_duration_summary"]], ": ", scenario_headings[["best_walk"]])) %>%
+  gt::tab_spanner(label = "Existing conditions", columns = ends_with("_Existing conditions")) %>%
+  gt::tab_spanner(label = scenario_headings[["best_walk"]], columns = ends_with(scenario_headings[["best_walk"]])) %>%
+  gt::cols_label_with(columns = -column_label, fn = ~ stringr::str_remove(.x, "_.*$")) %>%
+  gt::cols_label(
+    column_label = "Travel time difference (alternative time - drive time)",
+  ) %>%
+  gt::fmt_percent(columns = -column_label, decimals = 1) %>%
+  gt::sub_missing(columns = -column_label, missing_text = "\u2014") %>%
+  gt::tab_style(style = table_label_style, locations = gt::cells_column_labels()) %>%
+  gt::cols_align(
+    align = "left",
+    columns = tidyselect::where(~ is.character(.x) || is.factor(.x))
+  )
+```
+
+
+## Improving bike infrastructure
+
+Many bicyclists are reluctant to ride on busy roads due to safety concerns and the stress of being near traffic. We reflect this reluctance by selecting bike routes that avoid roads with a high Level of Traffic Stress (LTS). This scenario imagines a region where everyone can safely and comfortably bike on any street. We represent this scenario by coding all streets except freeways with LTS 1, reflecting the best possible biking conditions. Bicyclists would therefore save travel time on each trip, because they could take the most direct route to their destination, without diverting or dismounting to avoid busy streets.
+
+
+@fig-scenario-bike-plot shows results of this scenario, compared to existing conditions. Under this scenario, many more car trips could feasibly shift to biking and maintain competitive travel times across all three time thresholds. At a `r competitive_minutes`-minute travel time difference, the share of car trips that could shift to biking increases from `r scenario_percent("best_bike", "base", "% of Car Trips")` to `r scenario_percent("best_bike", "best_bike", "% of Car Trips")`, while the share of VMT increases from `r scenario_percent("best_bike", "base", "% of VMT")` to `r scenario_percent("best_bike", "best_bike", "% of VMT")`. Biking holds a high potential as an alternative to driving, but the quality of the existing bike infrastructure in the Twin Cities region is a major barrier to achieving that potential.
+
+
+```{r}
+#| label: fig-scenario-bike-plot
+#| fig-cap: "Percentage of car trips and VMT that can competitively shift to biking for a scenario where biking is safe and comfortable on all streets"
+
+bike_scenario_cells <- plotting_tables$potential$best_bike %>%
+  mutate(
+    scenario = factor(
+      recode(
+        as.character(scenario),
+        base = "Existing conditions",
+        best_bike = scenario_headings[["best_bike"]]
+      ),
+      levels = c("Existing conditions", scenario_headings[["best_bike"]])
+    ),
+    column_label = factor(minutes, levels = category_order$duration_minutes),
+    row_label = factor(row_label, levels = metric_order)
+  ) %>%
+  arrange(column_label, row_label, scenario)
+
+bike_scenario_trips <- plotly::plot_ly(
+  data = filter(bike_scenario_cells, row_label == "% of Car Trips"),
+  x = ~value_pct, y = ~column_label, color = ~scenario,
+  colors = c(
+    report_colors[["Existing conditions: % of Car Trips"]],
+    report_colors[["Scenario: % of Car Trips"]]
+  ),
+  type = "bar", orientation = "h",
+  text = ~ scales::percent(value_pct),
+  textfont = list(family = "Arial Narrow", color = "black"),
+  textposition = "outside", cliponaxis = FALSE,
+  customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
+) %>%
+  councilR::plotly_layout(subtitle = "% of Car Trips") %>%
+  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.9)))
+
+
+bike_scenario_vmt <- plotly::plot_ly(
+  data = filter(bike_scenario_cells, row_label == "% of VMT"),
+  x = ~value_pct, y = ~column_label, color = ~scenario,
+  colors = c(
+    report_colors[["Existing conditions: % of VMT"]],
+    report_colors[["Scenario: % of VMT"]]
+  ),
+  type = "bar", orientation = "h",
+  text = ~ scales::percent(value_pct),
+  textfont = list(family = "Arial Narrow", color = "black"),
+  textposition = "outside", cliponaxis = FALSE,
+  customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
+) %>%
+  councilR::plotly_layout(subtitle = "% of VMT") %>%
+  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.9)))
+
+bike_scenario_plot <- plotly::subplot(
+  bike_scenario_trips, bike_scenario_vmt,
+  shareY = TRUE, margin = 0.06
+) %>%
+  plotly_layout("Competitve shift to bike in bike improvment scenario") %>%
+  plotly::layout(
+    legend = list(orientation = "h"),
+    yaxis = list(autorange = "reversed"),
+    yaxis2 = list(autorange = "reversed")
+  )
+bike_scenario_plot
+```
+
+```{r}
+#| label: tbl-scenario-bike-table
+#| tbl-cap: "Feasible shifts to biking within specific time differences under improving bike infrastructure"
+bike_scenario_cells %>%
+  mutate(condition = as.character(scenario)) %>%
+  select(column_label, condition, row_label, value_pct) %>%
+  pivot_wider(names_from = row_label, values_from = value_pct) %>%
+  pivot_wider(names_from = condition, values_from = all_of(metric_order)) %>%
+  gt::gt(id = "gt-scenario-bike", caption = paste0(table_titles[["bike_duration_summary"]], ": ", scenario_headings[["best_bike"]])) %>%
+  gt::tab_spanner(label = "Existing conditions", columns = ends_with("_Existing conditions")) %>%
+  gt::tab_spanner(label = scenario_headings[["best_bike"]], columns = ends_with(scenario_headings[["best_bike"]])) %>%
+  gt::cols_label_with(columns = -column_label, fn = ~ stringr::str_remove(.x, "_.*$")) %>%
+  gt::cols_label(
+    column_label = "Travel time difference (alternative time - drive time)",
+  ) %>%
+  gt::fmt_percent(columns = -column_label, decimals = 1) %>%
+  gt::sub_missing(columns = -column_label, missing_text = "\u2014") %>%
+  gt::tab_style(style = table_label_style, locations = gt::cells_column_labels()) %>%
+  gt::cols_align(
+    align = "left",
+    columns = tidyselect::where(~ is.character(.x) || is.factor(.x))
+  )
+```
+
+## Universal e-bikes
+
+In the past few years, e-bikes have become more widely available and popular. The battery-electric motor on an e-bike reduces the effort required to pedal, improves acceleration, and increases the average speed. It therefore makes biking easier and faster. In this scenario, we build upon the bike scenario described above and imagine that in addition to the bike infrastructure improvements, everyone has access to an e-bike. We represent this change by increasing the biking speed by `r scales::percent(ebike_speed_increase, accuracy = 1)`,
+and removing avoidance of steep hills.
+
+@fig-scenario-ebike-plot shows results. Within `r competitive_minutes` minutes of driving, `r scenario_percent("e_bike", "e_bike", "% of Car Trips", accuracy = 1)` of car trips and `r scenario_percent("e_bike", "e_bike", "% of VMT", accuracy = 1)` of VMT could feasibly shift to e-biking.  
+
+```{r}
+#| label: fig-scenario-ebike-plot
+#| fig-cap: "Percentage of car trips and VMT that can competitively shift to biking for a scenario where biking is safe and comfortable on all streets and everyone has access to an e-bike"
+ebike_scenario_cells <- plotting_tables$potential$e_bike %>%
+  mutate(
+    scenario = factor(
+      recode(
+        as.character(scenario),
+        base = "Existing conditions",
+        e_bike = scenario_headings[["e_bike"]]
+      ),
+      levels = c("Existing conditions", scenario_headings[["e_bike"]])
+    ),
+    column_label = factor(minutes, levels = category_order$duration_minutes),
+    row_label = factor(row_label, levels = metric_order)
+  ) %>%
+  arrange(column_label, row_label, scenario)
+ebike_scenario_trips <- plotly::plot_ly(
+  data = filter(ebike_scenario_cells, row_label == "% of Car Trips"),
+  x = ~value_pct, y = ~column_label, color = ~scenario,
+  colors = c(
+    report_colors[["Existing conditions: % of Car Trips"]],
+    report_colors[["Scenario: % of Car Trips"]]
+  ),
+  type = "bar", orientation = "h",
+  text = ~ scales::percent(value_pct),
+  textfont = list(family = "Arial Narrow", color = "black"),
+  textposition = "outside", cliponaxis = FALSE,
+  customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
+) %>%
+  councilR::plotly_layout(subtitle = "% of Car Trips") %>%
+  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.9)))
+
+
+ebike_scenario_vmt <- plotly::plot_ly(
+  data = filter(ebike_scenario_cells, row_label == "% of VMT"),
+  x = ~value_pct, y = ~column_label, color = ~scenario,
+  colors = c(
+    report_colors[["Existing conditions: % of VMT"]],
+    report_colors[["Scenario: % of VMT"]]
+  ),
+  type = "bar", orientation = "h",
+  text = ~ scales::percent(value_pct),
+  textfont = list(family = "Arial Narrow", color = "black"),
+  textposition = "outside", cliponaxis = FALSE,
+  customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
+) %>%
+  councilR::plotly_layout(subtitle = "% of VMT") %>%
+  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.9)))
+
+ebike_scenario_plot <- plotly::subplot(
+  ebike_scenario_trips, ebike_scenario_vmt,
+  shareY = TRUE, margin = 0.06
+) %>%
+  plotly_layout("Competitve shift to bike in e-bike scenario") %>%
+  plotly::layout(
+    legend = list(orientation = "h"),
+    yaxis = list(autorange = "reversed"),
+    yaxis2 = list(autorange = "reversed")
+  )
+ebike_scenario_plot
+```
+
+```{r}
+#| label: tbl-scenario-ebike-table
+#| tbl-cap: "Feasible shifts to biking within specific time differences with universal e-bikes"
+ebike_scenario_cells %>%
+  mutate(condition = as.character(scenario)) %>%
+  select(column_label, condition, row_label, value_pct) %>%
+  pivot_wider(names_from = row_label, values_from = value_pct) %>%
+  pivot_wider(names_from = condition, values_from = all_of(metric_order)) %>%
+  gt::gt(id = "gt-scenario-ebike", caption = paste0(table_titles[["bike_duration_summary"]], ": ", scenario_headings[["e_bike"]])) %>%
+  gt::tab_spanner(label = "Existing conditions", columns = ends_with("_Existing conditions")) %>%
+  gt::tab_spanner(label = scenario_headings[["e_bike"]], columns = ends_with(scenario_headings[["e_bike"]])) %>%
+  gt::cols_label_with(columns = -column_label, fn = ~ stringr::str_remove(.x, "_.*$")) %>%
+  gt::cols_label(
+    column_label = "Travel time difference (alternative time - drive time)",
+  ) %>%
+  gt::fmt_percent(columns = -column_label, decimals = 1) %>%
+  gt::sub_missing(columns = -column_label, missing_text = "\u2014") %>%
+  gt::tab_style(style = table_label_style, locations = gt::cells_column_labels()) %>%
+  gt::cols_align(
+    align = "left",
+    columns = tidyselect::where(~ is.character(.x) || is.factor(.x))
+  )
+```
+
+## Double transit frequency
+
+Traveling by public transit incurs travel time in several parts. The traveler must walk to the stop, wait for the bus or train, ride to another stop, and walk to their destination. Trips that require a transfer involve another walking and waiting step. Therefore, there are several ways to improve the competitiveness of transit: by adding stops closer to the desired origins and destinations (increasing coverage), by increasing the speed of the transit vehicles (such as through exclusive bus lanes or limited-stop service), or by reducing waiting times through increased service frequency. In this scenario, we focus on the latter, and imagine a region in which the same transit routes are operated at `r transit_frequency_multiplier` times their current frequency. Thus, the average headway would drop from `r transit_headway_minutes` minutes to `r scenario_transit_headway_minutes` minutes, saving travelers up to `r transit_headway_saving_minutes` minutes of waiting time, depending on when they depart. Travelers may also select different paths, particularly if the shorter waiting times open more opportunities for transfers.
+
+@fig-scenario-transit-plot shows the effect of doubling transit frequencies. Within `r competitive_minutes` minutes of driving, the share of car trips that could shift to transit increases from `r scenario_percent("double_transit", "base", "% of Car Trips")` to `r scenario_percent("double_transit", "double_transit", "% of Car Trips")`; the share of VMT increases from `r scenario_percent("double_transit", "base", "% of VMT")` to `r scenario_percent("double_transit", "double_transit", "% of VMT")`.
+
+```{r}
+#| label: fig-scenario-transit-plot
+#| fig-cap: "Percentage of car trips and VMT that can competitively shift to transit for a scenario where transit frequency is doubled on all routes"
+transit_scenario_cells <- plotting_tables$potential$double_transit %>%
+  mutate(
+    scenario = factor(
+      recode(
+        as.character(scenario),
+        base = "Existing conditions",
+        double_transit = scenario_headings[["double_transit"]]
+      ),
+      levels = c("Existing conditions", scenario_headings[["double_transit"]])
+    ),
+    column_label = factor(minutes, levels = category_order$duration_minutes),
+    row_label = factor(row_label, levels = metric_order)
+  ) %>%
+  arrange(column_label, row_label, scenario)
+transit_scenario_trips <- plotly::plot_ly(
+  data = filter(transit_scenario_cells, row_label == "% of Car Trips"),
+  x = ~value_pct, y = ~column_label, color = ~scenario,
+  colors = c(
+    report_colors[["Existing conditions: % of Car Trips"]],
+    report_colors[["Scenario: % of Car Trips"]]
+  ),
+  type = "bar", orientation = "h",
+  text = ~ scales::percent(value_pct),
+  textfont = list(family = "Arial Narrow", color = "black"),
+  textposition = "outside", cliponaxis = FALSE,
+  customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
+) %>%
+  councilR::plotly_layout(subtitle = "% of Car Trips") %>%
+  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.9)))
+
+
+transit_scenario_vmt <- plotly::plot_ly(
+  data = filter(transit_scenario_cells, row_label == "% of VMT"),
+  x = ~value_pct, y = ~column_label, color = ~scenario,
+  colors = c(
+    report_colors[["Existing conditions: % of VMT"]],
+    report_colors[["Scenario: % of VMT"]]
+  ),
+  type = "bar", orientation = "h",
+  text = ~ scales::percent(value_pct),
+  textfont = list(family = "Arial Narrow", color = "black"),
+  textposition = "outside", cliponaxis = FALSE,
+  customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
+) %>%
+  councilR::plotly_layout(subtitle = "% of VMT") %>%
+  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.9)))
+
+transit_scenario_plot <- plotly::subplot(
+  transit_scenario_trips, transit_scenario_vmt,
+  shareY = TRUE, margin = 0.06
+) %>%
+  plotly_layout("Competitve shift to transit in double transit frequency scenario") %>%
+  plotly::layout(
+    legend = list(orientation = "h"),
+    yaxis = list(autorange = "reversed"),
+    yaxis2 = list(autorange = "reversed")
+  )
+transit_scenario_plot
+```
+
+```{r}
+#| label: tbl-scenario-transit-table
+#| tbl-cap: "Feasible shifts to transit within specific time differences with double transit frequency"
+transit_scenario_cells %>%
+  mutate(condition = as.character(scenario)) %>%
+  select(column_label, condition, row_label, value_pct) %>%
+  pivot_wider(names_from = row_label, values_from = value_pct) %>%
+  pivot_wider(names_from = condition, values_from = all_of(metric_order)) %>%
+  gt::gt(id = "gt-scenario-transit", caption = paste0(table_titles[["transit_duration_summary"]], ": ", scenario_headings[["double_transit"]])) %>%
+  gt::tab_spanner(label = "Existing conditions", columns = ends_with("_Existing conditions")) %>%
+  gt::tab_spanner(label = scenario_headings[["double_transit"]], columns = ends_with(scenario_headings[["double_transit"]])) %>%
+  gt::cols_label_with(columns = -column_label, fn = ~ stringr::str_remove(.x, "_.*$")) %>%
+  gt::cols_label(
+    column_label = "Travel time difference (alternative time - drive time)",
+  ) %>%
+  gt::fmt_percent(columns = -column_label, decimals = 1) %>%
+  gt::sub_missing(columns = -column_label, missing_text = "\u2014") %>%
+  gt::tab_style(style = table_label_style, locations = gt::cells_column_labels()) %>%
+  gt::cols_align(
+    align = "left",
+    columns = tidyselect::where(~ is.character(.x) || is.factor(.x))
+  )
+```
+
+## Reduce roadway speeds
+
+The competitiveness of more sustainable modes depends both on the feasibility and travel times of those modes, and on the travel time to drive. Therefore, it is also possible to increase the competitiveness of other modes by reducing driving speeds with lower speed limits and/or street designs that naturally limit the driving speed. Here, we consider a scenario where the travel speeds on all streets in the Twin Cities region are adjusted to be consistent with guidance from the National Association of City Transportation Officials (NACTO). As a complement to the American Association of State Highway and Transportation Official’s (AASHTO’s) “green book”, NACTO publishes street design guidance focused on serving the mix of car, walk, bike and transit users found in urban and suburban areas (@nacto_urban_street_design_guide_2013). Current speed guidance for urban areas (@nacto_city_limits_2020) suggests:
+
+- `r street_speed_limits_mph[["shared_street"]]` mph on shared streets and alleys,
+- `r street_speed_limits_mph[["minor_street"]]` mph on minor streets,
+- `r street_speed_limits_mph[["major_street"]]` mph on major streets, with a variation of up to
+`r street_speed_limits_mph[["major_street_variation"]]` mph for streets in low density areas with
+well-protected places for people to walk and bike.
+
+
+We apply the `r street_speed_limits_mph[["shared_street"]]`-mph limit to shared streets and alleys and the `r street_speed_limits_mph[["local_collector"]]`-mph limit to locals and collectors. In urban areas, we apply a `r street_speed_limits_mph[["urban_arterial"]]`-mph speed limit to arterials, and `r street_speed_limits_mph[["suburban_arterial"]]` mph in suburban areas. In addition, we limit freeway speeds to `r street_speed_limits_mph[["urban_freeway"]]` mph in urban areas and `r street_speed_limits_mph[["suburban_rural_freeway"]]` mph in suburban and rural areas. We represent these changes in a scenario by limiting travel speeds on those types of facilities to no more than the values indicated, assuming the streets are designed such that drivers comply. In both the base case and the scenario, we set the free flow travel speed (excluding congestion) to `r scales::percent(free_flow_speed_proportion, accuracy = 1)` of the speed limit to account acceleration and deceleration time from intersections.
+
+@fig-scenario-speed-plot shows the results of this road speed scenario, compared to existing conditions. It shows that these changes would slightly increase the competitiveness of switching to any non-car mode. There are two ways to view the modest changes resulting from this scenario: that these specific road speed changes provide limited benefit in terms of increasing the mode shift potential, or that they can be implemented with limited cost to those who currently drive. Further, these road speed changes would provide other benefits. 
+
+First, they would improve the walking and biking conditions and would therefore likely be necessary to implement the walk and bike scenarios described above.
+
+Second, they would have safety benefits, with research showing that reducing roadway speeds can reduce both total crashes and fatal and serious injury crashes
+(@nacto_city_limits_2020).
+
+```{r}
+#| label: fig-scenario-speed-plot
+#| fig-cap: "Percentage of car trips and VMT that can competitively shift to walking, biking or transit for a scenario where roadway speeds are limited based on NACTO guidelines"
+speed_scenario_cells <- plotting_tables$potential$slow_car %>%
+  mutate(
+    scenario = factor(
+      recode(
+        as.character(scenario),
+        base = "Existing conditions",
+        slow_car = scenario_headings[["slow_car"]]
+      ),
+      levels = c("Existing conditions", scenario_headings[["slow_car"]])
+    ),
+    column_label = factor(minutes, levels = category_order$duration_minutes),
+    row_label = factor(row_label, levels = metric_order)
+  ) %>%
+  arrange(column_label, row_label, scenario)
+speed_scenario_trips <- plotly::plot_ly(
+  data = filter(speed_scenario_cells, row_label == "% of Car Trips"),
+  x = ~value_pct, y = ~column_label, color = ~scenario,
+  colors = c(
+    report_colors[["Existing conditions: % of Car Trips"]],
+    report_colors[["Scenario: % of Car Trips"]]
+  ),
+  type = "bar", orientation = "h",
+  text = ~ scales::percent(value_pct),
+  textfont = list(family = "Arial Narrow", color = "black"),
+  textposition = "outside", cliponaxis = FALSE,
+  customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
+) %>%
+  councilR::plotly_layout(subtitle = "% of Car Trips") %>%
+  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.9)))
+
+
+speed_scenario_vmt <- plotly::plot_ly(
+  data = filter(speed_scenario_cells, row_label == "% of VMT"),
+  x = ~value_pct, y = ~column_label, color = ~scenario,
+  colors = c(
+    report_colors[["Existing conditions: % of VMT"]],
+    report_colors[["Scenario: % of VMT"]]
+  ),
+  type = "bar", orientation = "h",
+  text = ~ scales::percent(value_pct),
+  textfont = list(family = "Arial Narrow", color = "black"),
+  textposition = "outside", cliponaxis = FALSE,
+  customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
+) %>%
+  councilR::plotly_layout(subtitle = "% of VMT") %>%
+  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.9)))
+
+speed_scenario_plot <- plotly::subplot(
+  speed_scenario_trips, speed_scenario_vmt,
+  shareY = TRUE, margin = 0.06
+) %>%
+  plotly_layout("Competitve shift to any non-car mode in reduced roadway speed scenario") %>%
+  plotly::layout(
+    legend = list(orientation = "h"),
+    yaxis = list(autorange = "reversed"),
+    yaxis2 = list(autorange = "reversed")
+  )
+speed_scenario_plot
+```
+
+```{r}
+#| label: tbl-scenario-speed-table
+#| tbl-cap: "Feasible shifts to any non-car mode within specific time differences with reduced roadway speeds"
+speed_scenario_cells %>%
+  mutate(condition = as.character(scenario)) %>%
+  select(column_label, condition, row_label, value_pct) %>%
+  pivot_wider(names_from = row_label, values_from = value_pct) %>%
+  pivot_wider(names_from = condition, values_from = all_of(metric_order)) %>%
+  gt::gt(id = "gt-scenario-speed", caption = paste0(table_titles[["duration_diff_df"]], ": ", scenario_headings[["slow_car"]])) %>%
+  gt::tab_spanner(label = "Existing conditions", columns = ends_with("_Existing conditions")) %>%
+  gt::tab_spanner(label = scenario_headings[["slow_car"]], columns = ends_with(scenario_headings[["slow_car"]])) %>%
+  gt::cols_label_with(columns = -column_label, fn = ~ stringr::str_remove(.x, "_.*$")) %>%
+  gt::cols_label(
+    column_label = "Travel time difference (alternative time - drive time)",
+  ) %>%
+  gt::fmt_percent(columns = -column_label, decimals = 1) %>%
+  gt::sub_missing(columns = -column_label, missing_text = "\u2014") %>%
+  gt::tab_style(style = table_label_style, locations = gt::cells_column_labels()) %>%
+  gt::cols_align(
+    align = "left",
+    columns = tidyselect::where(~ is.character(.x) || is.factor(.x))
+  )
+```
+
+## All of the above
+
+More than one of the above scenarios could be implemented together, and they may be complementary. Limiting roadway speeds would also improve the walk and bike environment of many streets, and improvements to the walk and bike environment may be mutually beneficial. Here, we envision an all of the above scenario, where every street is safe and comfortable for both walking and biking, everyone has access to an e-bike, transit frequency is doubled throughout the region, and roadway speeds are limited consistent with NACTO guidance.
+
+@fig-scenario-combined-plot shows the mode shift potential for this scenario, compared to existing conditions. Within `r competitive_minutes` minutes of driving, the share of car trips that could shift to a non-car mode increases from `r scenario_percent("all_four", "base", "% of Car Trips")` to `r scenario_percent("all_four", "all_four", "% of Car Trips")`; the share of VMT increases from `r scenario_percent("all_four", "base", "% of VMT")` to `r scenario_percent("all_four", "all_four", "% of VMT")`.
+
+```{r}
+#| label: fig-scenario-combined-plot
+#| fig-cap: "Percentage of car trips and VMT that can competitively shift to walking, biking or transit for a scenario where all of the above improvements are implemented"
+combined_scenario_cells <- plotting_tables$potential$all_four %>%
+  mutate(
+    scenario = factor(
+      recode(
+        as.character(scenario),
+        base = "Existing conditions",
+        all_four = scenario_headings[["all_four"]]
+      ),
+      levels = c("Existing conditions", scenario_headings[["all_four"]])
+    ),
+    column_label = factor(minutes, levels = category_order$duration_minutes),
+    row_label = factor(row_label, levels = metric_order)
+  ) %>%
+  arrange(column_label, row_label, scenario)
+
+combined_scenario_trips <- plotly::plot_ly(
+  data = filter(combined_scenario_cells, row_label == "% of Car Trips"),
+  x = ~value_pct, y = ~column_label, color = ~scenario,
+  colors = c(
+    report_colors[["Existing conditions: % of Car Trips"]],
+    report_colors[["Scenario: % of Car Trips"]]
+  ),
+  type = "bar", orientation = "h",
+  text = ~ scales::percent(value_pct),
+  textfont = list(family = "Arial Narrow", color = "black"),
+  textposition = "outside", cliponaxis = FALSE,
+  customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
+) %>%
+  councilR::plotly_layout(subtitle = "% of Car Trips") %>%
+  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.9)))
+
+
+combined_scenario_vmt <- plotly::plot_ly(
+  data = filter(combined_scenario_cells, row_label == "% of VMT"),
+  x = ~value_pct, y = ~column_label, color = ~scenario,
+  colors = c(
+    report_colors[["Existing conditions: % of VMT"]],
+    report_colors[["Scenario: % of VMT"]]
+  ),
+  type = "bar", orientation = "h",
+  text = ~ scales::percent(value_pct),
+  textfont = list(family = "Arial Narrow", color = "black"),
+  textposition = "outside", cliponaxis = FALSE,
+  customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
+) %>%
+  councilR::plotly_layout(subtitle = "% of VMT") %>%
+  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.9)))
+
+combined_scenario_plot <- plotly::subplot(
+  combined_scenario_trips, combined_scenario_vmt,
+  shareY = TRUE, margin = 0.06
+) %>%
+  plotly_layout("Competitve shift to any non-car mode in all the above scenario") %>% 
+  
+  plotly::layout(
+    legend = list(orientation = "h"),
+    yaxis = list(autorange = "reversed"),
+    yaxis2 = list(autorange = "reversed")
+  )
+combined_scenario_plot
+```
+
+```{r}
+#| label: tbl-scenario-combined-table
+#| tbl-cap: "Feasible shifts to any non-car mode within specific time differences with all improvements"
+combined_scenario_cells %>%
+  mutate(condition = as.character(scenario)) %>%
+  select(column_label, condition, row_label, value_pct) %>%
+  pivot_wider(names_from = row_label, values_from = value_pct) %>%
+  pivot_wider(names_from = "condition", values_from = c("% of Car Trips", "% of VMT")) %>% 
+  gt::gt(id = "gt-scenario-combined", caption = paste0(table_titles[["duration_diff_df"]], ": ", scenario_headings[["all_four"]])) %>%
+  gt::tab_spanner(label = "Existing conditions",
+                  columns = ends_with("_Existing conditions")) %>% 
+  gt::tab_spanner(label = scenario_headings[["all_four"]],
+                  columns = ends_with(scenario_headings[["all_four"]])) %>%
+  gt::cols_label_with(columns = -column_label, fn = ~ stringr::str_remove(.x, "_.*$")) %>%
+  gt::cols_label(
+    column_label = "Travel time difference (alternative time - drive time)"
+  ) %>% 
+  gt::fmt_percent(columns = all_of(starts_with(metric_order)), decimals = 1) %>%
+  gt::sub_missing(columns = all_of(starts_with(metric_order)), missing_text = "\u2014") %>%
+  gt::tab_style(style = table_label_style, locations = gt::cells_column_labels()) %>%
+  gt::cols_align(
+    align = "left",
+    columns = tidyselect::where(~ is.character(.x) || is.factor(.x))
+  )
+```
+
+
+## Scenario comparison
+
+@fig-scenario-compare-plot compares the results of each scenario, focusing on feasible shifts from car to any other mode that has a travel time within `r competitive_minutes` minutes of driving. All scenarios would increase the competitiveness of non-car modes, with the bike scenario providing the largest individual effect, and the all of the above scenario providing the largest overall effect.
+
+```{r}
+#| label: fig-scenario-compare-plot
+#| fig-cap: "Percentage of car trips and VMT with feasible shifts under transportation improvement scenarios"
+#| out-height: 600px
+
+
+compare_scen_cells <- plotting_tables$compare_all_four %>%
+  mutate(
+    scenario = recode_factor(
+      as.character(scenario),
+      base = "Existing conditions",
+      best_walk = "Walk Scenario",
+      best_bike = "Bike Scenario",
+      e_bike = "E-Bike Scenario",
+      double_transit = "Transit Scenario",
+      slow_car = "Road Speed Scenario",
+      all_four = "All of the Above Scenario",
+      .ordered = TRUE,
+      
+    ),
+    # levels = c("Existing conditions", "Walk Scenario", "Bike Scenario", "E-Bike Scenario", "Transit Scenario", "Road Speed Scenario", "All of the Above Scenario"),
+    # ordered = TRUE
+    column_label = factor(minutes, levels = category_order$duration_minutes),
+    row_label = factor(row_label, levels = metric_order)
+  ) %>%
+  arrange(column_label, row_label, scenario)
+
+
+
+
+compare_scenario_trips <- plotly::plot_ly(
+  data = filter(compare_scen_cells, row_label == "% of Car Trips"),
+  x = ~value_pct, y = ~scenario,
+  type = "bar", orientation = "h",
+  name = "% of Car Trips",
+  text = ~ scales::percent(value_pct, accuracy = 0.1),
+  textfont = list(family = "Arial Narrow"),
+  marker = list(
+    color = colors$councilBlue,
+    line = list(color = colors$playDaBlue, 
+    width = 1)
+  ),
+  textposition = "outside", cliponaxis = FALSE,
+  customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
+) %>%
+  councilR::plotly_layout(subtitle = "% of Car Trips") %>%
+  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.9)))
+
+
+compare_scenario_vmt <- plotly::plot_ly(
+  data = filter(compare_scen_cells, row_label == "% of VMT"),
+  x = ~value_pct, y = ~scenario,
+  type = "bar", orientation = "h",
+  text = ~ scales::percent(value_pct, accuracy = 0.1),
+  textfont = list(family = "Arial Narrow"),
+    marker = list(
+    color = colors$councilBlue,
+    line = list(color = colors$playDaBlue, 
+    width = 1)
+  ),
+  name = "% of VMT",
+  textposition = "outside", cliponaxis = FALSE,
+  customdata = ~ as.character(column_label), hovertemplate = plot_hover_template
+) %>%
+  councilR::plotly_layout(subtitle = "% of VMT") %>%
+  plotly::layout(xaxis = list(tickformat = "1%", range = c(0, 0.9)))
+
+
+compare_scenario_plot <- plotly::subplot(
+  compare_scenario_trips, compare_scenario_vmt,
+  shareY = TRUE, margin = 0.06
+) %>%
+  plotly_layout("Competitve shift to any non-car mode") %>% 
+  plotly::layout(
+    legend = list(orientation = "h"),
+    yaxis = list(autorange = "reversed"),
+    yaxis2 = list(autorange = "reversed"),
+    showlegend = FALSE
+  )
+compare_scenario_plot
+
+```
+
+# Conclusions
+
+In this study, we consider the potential to reduce vehicle miles traveled (VMT) by incentivizing people to switch from traveling in cars to walking, biking or riding transit. We estimate the maximum feasible shift of car trips to alternative modes given existing land-use and travel patterns, and assess whether those shifts are competitive (within `r competitive_minutes` minutes of the driving time). Under existing conditions, `r summary_percent("overall", "% of Car Trips")` of car trips could shift to walk, bike or transit with travel times within `r competitive_minutes` minutes of driving, representing `r summary_percent("overall", "% of VMT", accuracy = 0.1)` of VMT. The difference between the mode shift potential of car trips versus VMT occurs because short trips are more likely to have a competitive, non-car option.
+This analysis shows that, given existing travel patterns, the competitive shifts would meet about `r scales::percent(vmt_target_attainment, accuracy = 0.1)` of the targeted `r scales::percent(vmt_reduction_target, accuracy = 1)` per-capita VMT reduction [@heggedal_vmt_reduction_2023]. Therefore, policymakers may wish to consider transportation infrastructure and service changes to further encourage mode shifts. To provide a starting point for those discussions, we evaluated `r length(scenario_headings) - 1` broad scenarios to increase the competitiveness of alternative modes, plus a combined scenario. The results show that if we made it safe and comfortable to walk and bike everywhere it is legal, made e-bikes available, doubled transit service, and reduced car speeds, `r scenario_percent("all_four", "all_four", "% of Car Trips", accuracy = 1)` of car trips and `r scenario_percent("all_four", "all_four", "% of VMT", accuracy = 0.1)` of VMT could competitively shift to another mode.
+
+
+While the potential mode shifts in these scenarios are promising, it is important to remember that just because people can switch to another mode does not necessarily mean they will switch. Under existing conditions, `r summary_percent("overall", "% of Car Trips")` of car trips could shift to another mode but do not. More work is needed to assess how to most effectively prompt a shift to another mode once that mode is competitive. Pricing incentives or behavioral “nudges” are two strategies that might help.
+
+Pricing incentives can include either strategies that make alternative modes less expensive—such as fare-free transit or vouchers to purchase an e-bike—or those that make driving more expensive—such as higher parking costs, gas prices, or tolls. If designed properly, pricing strategies have the potential to incentivize mode shift, reduce traffic congestion and generate revenue that can be used to make alternative modes better.
+
+The concept of nudges comes from behavioral economics and was popularized in the 2008 book by Thaler and Sunstein [@thaler_sunstein_nudge_2008]. The idea is to make small changes to the environment to make it more likely that people will make choices that benefit themselves or society. For example, a school cafeteria hoping to improve the dietary choices of students might put healthy food choices at eye level, while putting unhealthy foods in a less conspicuous location. In the transportation realm, nudges have been tested in research on public-transit subscriptions, travel-mode choice, and social norms, with modest effects [@hauslbauer_extending_2022; @steffen_nudging_2024; @riggs_painting_2017].
+
+
+Our analysis does not account for the changes to travel patterns that might be prompted by the proposed scenarios. If someone can safely bike to more places, they may choose more destinations within biking distance, rather than driving further to a location only accessible by car. Similarly, someone who shifts from driving to transit for their work commute, may plan their shopping trips around that commute. The Metropolitan Council’s activity-based travel demand model can simulate these travel pattern changes and estimate how many car trips and how much VMT are likely to switch to walk, bike or transit for each of the scenarios described here. Those model-based estimates would have trade-offs—they would have less network detail than this study and would be based in simulated rather than observed data. Thus, the data-driven and model-based estimates can be viewed as complements, each providing different evidence on the possible effectiveness of the proposed strategies.
+
+
+Overall, we can draw several conclusions from this analysis:
+
+- Biking has the highest potential for mode shift from car, and this potential can be greatly enhanced by building safe and comfortable bike infrastructure on all streets. However, only a small share of current trips that could be made by bike are made by bike, so that potential remains largely untapped. More work is needed to assess the extent to which this potential can be realized.
+- Short trips have much higher mode shift potential. Compact land-use can provide a double-benefit of higher mode shift potential and shorter trips for those that remain in cars and is necessary to achieve greater VMT reduction. While this study is based on current land-use, policymakers have some ability to guide how and where the Twin Cities region continues to grow in the coming decades.
+- Even with broad changes to transportation infrastructure and service, many trips remain that cannot competitively shift from car. Vehicle electrification will be essential to reducing the greenhouse gas emissions from these trips, and policies aimed at incentivizing electric vehicles can be targeted towards travelers least able to switch modes and least able to afford an electric vehicle themselves. There are two ways in which electrification is a natural complement to mode shift. First, electric vehicle ownership rates are higher in suburban areas where the mode shift potential is less [@erhardt_vehicle_type_model_2024], partly because people living in single-family homes can more easily install in-home chargers than those living in apartments. Second, the mode shift potential is greatest in more urban areas, where people are more likely to live in apartment buildings and opportunities for off-street charging may be more limited. In these areas, planners can make informed decisions about how to allocate right-of-way and curb space across modes, such as choosing among car lanes, bike lanes and on-street chargers.
+
+
+Mode shift, electrification, and compact land-use offer different levers for reducing the greenhouse gas emissions from car travel.  We hope this information is valuable to planners and policy makers in the Twin Cities region as they consider how to respond to the climate crisis.
+
+# Acknowledgments and Code Availability
+
+This study was performed by a team from the University of Kentucky (UK), the University of North Carolina at Chapel Hill (UNC), Metropolitan Council and its regional partners. Greg Erhardt (UK) was the study’s principal investigator and the lead author of this report. Matt Bhagat-Conway (UNC) contributed to the study design, analysis and interpretation, and led the development of the routing methods. Ian Zhang (UK) led the software development for the analysis tool, and Rich Donohue (UK) contributed to visualization. Metropolitan Council staff involved included Jonathan Ehrlich who was the project manager, Ashley Asmus who conceived of and initiated the study, and Liz Roten and Brandon Whited who contributed technically. Eric Lind from Metro Transit and Jim Henricksen from the Minnesota Department of Transportation provided review and input.
+
+This study was funded by Metropolitan Council through contract number 22P159 with the University of Kentucky Research Foundation.
+
+The software tools used to conduct the analysis, and an interactive data summary tool are available at: [https://github.com/Metropolitan-Council/vmt-mode-shift-study](https://github.com/Metropolitan-Council/vmt-mode-shift-study). 

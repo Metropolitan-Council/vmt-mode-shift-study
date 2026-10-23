@@ -18,6 +18,8 @@ The final PDF report is available - [VMT Reduction Mode Shift Final Report.pdf](
 
 ## Repository details
 
+The [tutorial](./tutorial.md) provides a guide for setting up the environment, running the analysis tools, and understanding the order of operations. 
+
 Further details are available in READMEs within each subfolder.
 
 * `src` Source code for main tools.  There are two:
@@ -26,33 +28,33 @@ Further details are available in READMEs within each subfolder.
 * `data_processing` Scripts to process the TBI data.  Run these again if there is a new wave of the TBI. Must be run before the `analysis_tool`.
 * `data_viz` A tool to visualize individual routes and check them for reasonableness.
 * `reports` Several reports documenting the process. 
+* `docker` Docker build files and startup script for the analysis tool. These aren't required if you prefer to run the analysis tool in a local environment.
 
 <br>
 <details>
 <summary>Notebook and environment instructions</summary>
 
-The files here are mostly jupyter notebooks running python.  The installed packages used for development are stored in environment.yml.  You can use `conda` to set up the environment with the right installs:
+The files here are mostly jupyter notebooks running python.  The installed packages used for development are stored in environment.yml.  You can use `conda` to set up the environment with the right installs. Use the environment that matches your operating system.
 
-	conda env create --file environment.yml
+
+```sh
+conda env create --file {mac-environment.yml OR windows-environment.yml}
+```
 
 Then to activate the environment:
 
-	conda activate vmtmodeenv
+```sh
+conda activate vmtmodeenv
+```
 
-If you have difficulties solving packages on macOS, try using the Mac-specific environment. You may also need to finesse the 
-
-	conda env create --file mac-environment.yml
-	conda activate vmtmodeenv
-
-After installing, if you are on a mac, we need to manually install jupyter notebook:
-
-	pip install notebook
+ You may also need to finesse the environment.yml file to resolve any conflicts.
 
 After installing the packages, you'll use keyring to set the main directory on our shared drive. See contact information below to get data access. 
 
-	import keyring
-	keyring.set_password("msp", "vmt_reduction_dir", <directory>)
-
+```python
+import keyring
+keyring.set_password("msp", "vmt_reduction_dir", <directory>)
+```
 </details>
 
 ## Data Management  

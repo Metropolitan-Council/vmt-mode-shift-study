@@ -8,7 +8,7 @@
 set -ex
 
 # may be relative path but that's ok
-export JULIA_PROJECT="$(dirname \"${0}\")"
+export JULIA_PROJECT="$(cd "$(dirname "$0")" && pwd -P)"
 
 # unfortunately julia doesn't have a great way to get the path of a package, hack something together
 SCRIPT_PATH="$(julia << EOF
