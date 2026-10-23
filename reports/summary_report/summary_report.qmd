@@ -15,7 +15,8 @@ format:
     theme: [cosmo, style/council.scss, style/font.scss]
     toc: true
     page-layout: full
-    self-contained: true
+    embed-resources: true
+    self-contained-math: true
     toc-depth: 3
     number-sections: true 
     number-depth: 2
