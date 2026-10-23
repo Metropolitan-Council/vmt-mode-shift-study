@@ -1,6 +1,6 @@
 FROM condaforge/mambaforge:24.9.2-0 AS build
 
-    COPY linux_environment.yml environment.yml
+    COPY docker/linux_environment.yml environment.yml
     RUN mamba env create -f environment.yml
 
     RUN mamba install conda-pack
@@ -19,7 +19,7 @@ FROM python:3.9-slim AS runtime
     EXPOSE 8051
 
     COPY /src/analysis_tool /app
-    COPY docker_run.bash /app
+    COPY docker/docker_run.bash /app
 
     SHELL ["/bin/bash", "-c"]
 
