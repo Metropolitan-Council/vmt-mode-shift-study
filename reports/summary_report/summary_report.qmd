@@ -57,6 +57,16 @@ city_filter_logic <- summary_options$city_filter_logic
 city_filter_connector <- if (identical(city_filter_logic, "AND")) "and" else "or"
 
 summary_city <- summary_options$city
+original_car_person_trips <- summary_cells %>%
+  dplyr::filter(
+    .data$scenario == "base",
+    .data$phase == "feasible",
+    .data$table == "raw_metrics",
+    .data$row_label == "Person trips",
+    .data$column_label == "Before shift"
+  ) %>%
+  dplyr::pull(value_text) %>%
+  as.numeric()
 histogram_trips <- load_histogram_trips(summary_output_dir)
 
 minimum_mode_prevalence <- 0.05
@@ -242,9 +252,11 @@ font-family: "Condensed", sans-serif !important;
 
 ::: {.callout-important}
 
-Observed trips, street network, weather, transit schedules, routes, and other contextual factors are current as of 2021. 
+Observed trips, street network, weather, transit schedules, routes, and other contextual factors are current as of 2019 and 2021. 
 
 The tables and figures below use results for **`r summary_city`**. `r if (!is.null(summary_city) && !is.na(summary_city) && summary_city != "All cities") paste0("Trips are included when they start **", city_filter_connector, "** end in ", summary_city, ".")`
+
+The analysis includes an estimated **`r scales::comma(original_car_person_trips)` person trips originally made by car**.
 
 :::
 
