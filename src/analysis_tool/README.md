@@ -5,6 +5,7 @@ This tool provides an interactive interface for analyzing vehicle miles traveled
 To run the streamlit app, 
 
 ```bash
+conda activate vmtmodeenv
 cd src/analysis_tool
 streamlit run main.py
 ```
