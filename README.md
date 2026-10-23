@@ -18,6 +18,8 @@ The final PDF report is available - [VMT Reduction Mode Shift Final Report.pdf](
 
 ## Repository details
 
+The [tutorial](./tutorial.md) provides a guide for setting up the environment, running the analysis tools, and understanding the order of operations. 
+
 Further details are available in READMEs within each subfolder.
 
 * `src` Source code for main tools.  There are two:
