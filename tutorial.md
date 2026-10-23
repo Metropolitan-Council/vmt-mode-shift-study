@@ -37,8 +37,8 @@ The project left us with networks and routed trips. These live in the SharePoint
 
 The notebooks walk through the logic of analyzing the feasibility and probability of trips being shifted between modes. They ultimately aren't used for generating final reports, but rather for understanding and validating the analysis process.
 
-- reports/exploratory_data_analysis/feasibility_analysis_cleaned.ipynb
-- reports/exploratory_data_analysis/probable_analysis_cleaned.ipynb
+- [reports/exploratory_data_analysis/feasibility_analysis_cleaned.ipynb](reports/exploratory_data_analysis/feasibility_analysis_cleaned.ipynb)
+- [reports/exploratory_data_analysis/probable_analysis_cleaned.ipynb](reports/exploratory_data_analysis/probable_analysis_cleaned.ipynb)
 
 ### Streamlit App
 
