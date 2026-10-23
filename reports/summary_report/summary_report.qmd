@@ -43,7 +43,7 @@ knitr:
 ```{r}
 #| label: setup
 
-summary_output_dir <- here::here("src", "analysis_tool", "output", "Minneapolis")
+summary_output_dir <- here::here("src", "analysis_tool", "output")
 source(
   file.path(here::here(), "reports/summary_report/compile_streamlit_ouput.R"),
   local = knitr::knit_global()
@@ -448,7 +448,7 @@ walk_feasibility_cells <- plotting_tables$existing$walk %>%
 walk_feasibility_cells %>%
   select(column_label, row_label, value_pct) %>%
   pivot_wider(names_from = row_label, values_from = value_pct) %>%
-  gt::gt(caption = table_titles[["walk_step_summary"]]) %>%
+  gt::gt(id = "gt-walk-feasibility", caption = table_titles[["walk_step_summary"]]) %>%
   gt::cols_label(column_label = "Feasibility constraint") %>%
   gt::fmt_percent(columns = all_of(metric_order), decimals = 1) %>%
   gt::tab_style(
@@ -492,7 +492,7 @@ walk_duration_cells <- plotting_tables$existing$walk %>%
 walk_duration_cells %>%
   select(column_label, row_label, value_pct) %>%
   pivot_wider(names_from = row_label, values_from = value_pct) %>%
-  gt::gt(caption = table_titles[["walk_duration_summary"]]) %>%
+  gt::gt(id = "gt-walk-duration", caption = table_titles[["walk_duration_summary"]]) %>%
   gt::cols_label(column_label = "Travel time difference (alternative time - drive time)") %>%
   gt::fmt_percent(columns = all_of(metric_order), decimals = 1) %>%
   gt::sub_missing(columns = all_of(metric_order), missing_text = "\u2014") %>%
@@ -558,7 +558,7 @@ bike_feasibility_cells <- plotting_tables$existing$bike %>%
 bike_feasibility_cells %>%
   select(column_label, row_label, value_pct) %>%
   pivot_wider(names_from = row_label, values_from = value_pct) %>%
-  gt::gt(caption = table_titles[["bike_step_summary"]]) %>%
+  gt::gt(id = "gt-bike-feasibility", caption = table_titles[["bike_step_summary"]]) %>%
   gt::cols_label(column_label = "Feasibility constraint") %>%
   gt::fmt_percent(columns = all_of(metric_order), decimals = 1) %>%
   gt::sub_missing(columns = all_of(metric_order), missing_text = "\u2014") %>%
@@ -603,7 +603,7 @@ bike_duration_cells <- plotting_tables$existing$bike %>%
 bike_duration_cells %>%
   select(column_label, row_label, value_pct) %>%
   pivot_wider(names_from = row_label, values_from = value_pct) %>%
-  gt::gt(caption = table_titles[["bike_duration_summary"]]) %>%
+  gt::gt(id = "gt-bike-duration", caption = table_titles[["bike_duration_summary"]]) %>%
   gt::cols_label(column_label = "Travel time difference (alternative time - drive time)") %>%
   gt::fmt_percent(columns = all_of(metric_order), decimals = 1) %>%
   gt::sub_missing(columns = all_of(metric_order), missing_text = "\u2014") %>%
@@ -639,7 +639,7 @@ transit_feasibility_cells <- plotting_tables$existing$transit %>%
 transit_feasibility_cells %>%
   select(column_label, row_label, value_pct) %>%
   pivot_wider(names_from = row_label, values_from = value_pct) %>%
-  gt::gt(caption = table_titles[["transit_step_summary"]]) %>%
+  gt::gt(id = "gt-transit-feasibility", caption = table_titles[["transit_step_summary"]]) %>%
   gt::cols_label(column_label = "Feasibility constraint") %>%
   gt::fmt_percent(columns = all_of(metric_order), decimals = 1) %>%
   gt::sub_missing(columns = all_of(metric_order), missing_text = "\u2014") %>%
@@ -686,7 +686,7 @@ transit_duration_cells <- plotting_tables$existing$transit %>%
 transit_duration_cells %>%
   select(column_label, row_label, value_pct) %>%
   pivot_wider(names_from = row_label, values_from = value_pct) %>%
-  gt::gt(caption = table_titles[["transit_duration_summary"]]) %>%
+  gt::gt(id = "gt-transit-duration", caption = table_titles[["transit_duration_summary"]]) %>%
   gt::cols_label(column_label = "Travel time difference (alternative time - drive time)") %>%
   gt::fmt_percent(columns = all_of(metric_order), decimals = 1) %>%
   gt::sub_missing(columns = all_of(metric_order), missing_text = "\u2014") %>%
@@ -734,7 +734,7 @@ overall_feasibility_cells %>%
   pivot_wider(names_from = row_label, values_from = value_pct) %>%
   pivot_wider(names_from = table, values_from = all_of(metric_order)) %>% 
   
-  gt::gt(caption = table_titles[["overall_shifts"]]) %>%
+  gt::gt(id = "gt-overall-feasibility", caption = table_titles[["overall_shifts"]]) %>%
   gt::cols_label(column_label = "Alternative mode") %>%
   gt::tab_spanner(label = "Feasibile to shift to mode", columns = ends_with("overall_shifts")) %>%
   gt::tab_spanner(label = "Mode is fastest alternative", columns = ends_with("overall_shift_comparison")) %>%
@@ -768,7 +768,7 @@ overall_duration_cells <- plotting_tables$existing$all_four %>%
 overall_duration_cells %>%
   select(column_label, row_label, value_pct) %>%
   pivot_wider(names_from = row_label, values_from = value_pct) %>%
-  gt::gt(caption = table_titles[["duration_diff_df"]]) %>%
+  gt::gt(id = "gt-overall-duration", caption = table_titles[["duration_diff_df"]]) %>%
   gt::cols_label(column_label = "Travel time difference (alternative time - drive time)") %>%
   gt::fmt_percent(columns = all_of(metric_order), decimals = 1) %>%
   gt::sub_missing(columns = all_of(metric_order), missing_text = "\u2014") %>%
@@ -902,7 +902,7 @@ walk_scenario_cells %>%
   select(column_label, condition, row_label, value_pct) %>%
   pivot_wider(names_from = row_label, values_from = value_pct) %>%
   pivot_wider(names_from = condition, values_from = all_of(metric_order)) %>%
-  gt::gt(caption = paste0(table_titles[["walk_duration_summary"]], ": ", scenario_headings[["best_walk"]])) %>%
+  gt::gt(id = "gt-scenario-walk", caption = paste0(table_titles[["walk_duration_summary"]], ": ", scenario_headings[["best_walk"]])) %>%
   gt::tab_spanner(label = "Existing conditions", columns = ends_with("_Existing conditions")) %>%
   gt::tab_spanner(label = scenario_headings[["best_walk"]], columns = ends_with(scenario_headings[["best_walk"]])) %>%
   gt::cols_label_with(columns = -column_label, fn = ~ stringr::str_remove(.x, "_.*$")) %>%
@@ -1000,7 +1000,7 @@ bike_scenario_cells %>%
   select(column_label, condition, row_label, value_pct) %>%
   pivot_wider(names_from = row_label, values_from = value_pct) %>%
   pivot_wider(names_from = condition, values_from = all_of(metric_order)) %>%
-  gt::gt(caption = paste0(table_titles[["bike_duration_summary"]], ": ", scenario_headings[["best_bike"]])) %>%
+  gt::gt(id = "gt-scenario-bike", caption = paste0(table_titles[["bike_duration_summary"]], ": ", scenario_headings[["best_bike"]])) %>%
   gt::tab_spanner(label = "Existing conditions", columns = ends_with("_Existing conditions")) %>%
   gt::tab_spanner(label = scenario_headings[["best_bike"]], columns = ends_with(scenario_headings[["best_bike"]])) %>%
   gt::cols_label_with(columns = -column_label, fn = ~ stringr::str_remove(.x, "_.*$")) %>%
@@ -1094,7 +1094,7 @@ ebike_scenario_cells %>%
   select(column_label, condition, row_label, value_pct) %>%
   pivot_wider(names_from = row_label, values_from = value_pct) %>%
   pivot_wider(names_from = condition, values_from = all_of(metric_order)) %>%
-  gt::gt(caption = paste0(table_titles[["bike_duration_summary"]], ": ", scenario_headings[["e_bike"]])) %>%
+  gt::gt(id = "gt-scenario-ebike", caption = paste0(table_titles[["bike_duration_summary"]], ": ", scenario_headings[["e_bike"]])) %>%
   gt::tab_spanner(label = "Existing conditions", columns = ends_with("_Existing conditions")) %>%
   gt::tab_spanner(label = scenario_headings[["e_bike"]], columns = ends_with(scenario_headings[["e_bike"]])) %>%
   gt::cols_label_with(columns = -column_label, fn = ~ stringr::str_remove(.x, "_.*$")) %>%
@@ -1187,7 +1187,7 @@ transit_scenario_cells %>%
   select(column_label, condition, row_label, value_pct) %>%
   pivot_wider(names_from = row_label, values_from = value_pct) %>%
   pivot_wider(names_from = condition, values_from = all_of(metric_order)) %>%
-  gt::gt(caption = paste0(table_titles[["transit_duration_summary"]], ": ", scenario_headings[["double_transit"]])) %>%
+  gt::gt(id = "gt-scenario-transit", caption = paste0(table_titles[["transit_duration_summary"]], ": ", scenario_headings[["double_transit"]])) %>%
   gt::tab_spanner(label = "Existing conditions", columns = ends_with("_Existing conditions")) %>%
   gt::tab_spanner(label = scenario_headings[["double_transit"]], columns = ends_with(scenario_headings[["double_transit"]])) %>%
   gt::cols_label_with(columns = -column_label, fn = ~ stringr::str_remove(.x, "_.*$")) %>%
@@ -1294,7 +1294,7 @@ speed_scenario_cells %>%
   select(column_label, condition, row_label, value_pct) %>%
   pivot_wider(names_from = row_label, values_from = value_pct) %>%
   pivot_wider(names_from = condition, values_from = all_of(metric_order)) %>%
-  gt::gt(caption = paste0(table_titles[["duration_diff_df"]], ": ", scenario_headings[["slow_car"]])) %>%
+  gt::gt(id = "gt-scenario-speed", caption = paste0(table_titles[["duration_diff_df"]], ": ", scenario_headings[["slow_car"]])) %>%
   gt::tab_spanner(label = "Existing conditions", columns = ends_with("_Existing conditions")) %>%
   gt::tab_spanner(label = scenario_headings[["slow_car"]], columns = ends_with(scenario_headings[["slow_car"]])) %>%
   gt::cols_label_with(columns = -column_label, fn = ~ stringr::str_remove(.x, "_.*$")) %>%
@@ -1389,7 +1389,7 @@ combined_scenario_cells %>%
   select(column_label, condition, row_label, value_pct) %>%
   pivot_wider(names_from = row_label, values_from = value_pct) %>%
   pivot_wider(names_from = "condition", values_from = c("% of Car Trips", "% of VMT")) %>% 
-  gt::gt(caption = paste0(table_titles[["duration_diff_df"]], ": ", scenario_headings[["all_four"]])) %>% 
+  gt::gt(id = "gt-scenario-combined", caption = paste0(table_titles[["duration_diff_df"]], ": ", scenario_headings[["all_four"]])) %>%
   gt::tab_spanner(label = "Existing conditions",
                   columns = ends_with("_Existing conditions")) %>% 
   gt::tab_spanner(label = scenario_headings[["all_four"]],
