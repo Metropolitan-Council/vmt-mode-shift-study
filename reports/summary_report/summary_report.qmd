@@ -258,6 +258,8 @@ The tables and figures below use results for **`r summary_city`**. `r if (!is.nu
 
 The analysis includes an estimated **`r scales::comma(original_car_person_trips)` person trips originally made by car**.
 
+The full methodology report can be found [here](https://github.com/Metropolitan-Council/vmt-mode-shift-study/blob/main/VMT%20Reduction%20Mode%20Shift%20Final%20Report.pdf).
+
 :::
 
 
