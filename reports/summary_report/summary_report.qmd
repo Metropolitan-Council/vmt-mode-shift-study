@@ -67,6 +67,19 @@ original_car_person_trips <- summary_cells %>%
   ) %>%
   dplyr::pull(value_text) %>%
   as.numeric()
+
+
+  original_car_vmt <- summary_cells %>%
+  dplyr::filter(
+    .data$scenario == "base",
+    .data$phase == "feasible",
+    .data$table == "raw_metrics",
+    .data$row_label == "VMT",
+    .data$column_label == "Before shift"
+  ) %>%
+  dplyr::pull(value_text) %>%
+  as.numeric()
+
 histogram_trips <- load_histogram_trips(summary_output_dir)
 
 minimum_mode_prevalence <- 0.05
@@ -256,7 +269,7 @@ Observed trips, street network, weather, transit schedules, routes, and other co
 
 The tables and figures below use results for **`r summary_city`**. `r if (!is.null(summary_city) && !is.na(summary_city) && summary_city != "All cities") paste0("Trips are included when they start **", city_filter_connector, "** end in ", summary_city, ".")`
 
-The analysis includes an estimated **`r scales::comma(original_car_person_trips)` person trips originally made by car**.
+The analysis includes an estimated **`r scales::comma(original_car_person_trips)` person trips originally made by car** and **`r scales::comma(original_car_vmt)` vehicle miles traveled (VMT) originally made by car**.
 
 The full methodology report can be found [here](https://github.com/Metropolitan-Council/vmt-mode-shift-study/blob/main/VMT%20Reduction%20Mode%20Shift%20Final%20Report.pdf).
 
@@ -359,16 +372,48 @@ This gap highlights the potential to improve the competitiveness of these modes 
 direct bike routes or faster and more frequent transit service.
 
 For some trips, more than one alternative mode is feasible, and in those cases we consider the
-competitiveness of the fastest available mode. **Overall, in the selected region today, `r summary_percent("overall", "% of Car Trips")` of
+competitiveness of the fastest available mode. **Overall, in `r if (identical(summary_city, "All cities")) "the region" else summary_city` today, `r summary_percent("overall", "% of Car Trips")` of
 car trips could shift to walk, bike or transit with travel times within `r competitive_minutes` minutes of driving, and
 these trips represent `r summary_percent("overall", "% of VMT", accuracy = 0.1)` of VMT.**
 
+```{r}
+#| label: tbl-competitive-shift-summary
+#| tbl-cap: "Competitive mode shift summary in existing conditions. Trips and VMT represent travel on an average day."
+tibble::tibble(
+  `Geographic universe` = summary_city,
+  `Trip filtering` = ifelse(!is.null(summary_city) && !is.na(summary_city) && summary_city != "All cities", 
+  paste0("Trips are included when they start **", city_filter_connector, "** end in ", summary_city, "."),
+   "All trips are included."),
+  `Person trips` = scales::label_number(
+    scale = if (original_car_person_trips >= 1e9) 1e-9 else 1e-6,
+    suffix = if (original_car_person_trips >= 1e9) " billion" else " million",
+    accuracy = 0.01
+  )(original_car_person_trips),
+  `Vehicle miles traveled (VMT)` = scales::label_number(
+    scale = if (original_car_vmt >= 1e9) 1e-9 else 1e-6,
+    suffix = if (original_car_vmt >= 1e9) " billion" else " million",
+    accuracy = 0.01
+  )(original_car_vmt),
+  `% of Trips competitive to shift` = summary_percent("overall", "% of Car Trips"),
+  `% of VMT competitive to shift` = summary_percent("overall", "% of VMT", accuracy = 0.1),
+) %>%
+  gt::gt(id = "gt-competitive-shift-summary") %>%
+  gt::fmt_percent(columns = `% of Trips competitive to shift`, decimals = 0) %>%
+  gt::fmt_percent(columns = `% of VMT competitive to shift`, decimals = 1) %>%
+  gt::fmt_markdown(columns = c(`Geographic universe`, `Trip filtering`)) %>%
+  gt::tab_style(style = table_label_style, locations = gt::cells_column_labels()) 
+
+```
 
 <!-- This analysis shows that given existing travel patterns, even if everyone who could competitively -->
 <!-- switch to walking, biking and transit did switch, it would achieve only `r scales::percent(vmt_target_attainment, accuracy = 1)` of the targeted `r scales::percent(vmt_reduction_target, accuracy = 1)` per-capita VMT reduction. Therefore, policymakers may wish to consider transportation -->
 <!-- infrastructure and service changes to further encourage mode shifts. To provide a starting point for -->
 <!-- those discussions, we evaluated the potential of six very broad scenarios to increase the -->
 <!-- competitiveness of alternative modes: -->
+
+
+Policymakers may wish to consider transportation infrastructure and service changes to further encourage mode shifts. To provide a starting point for those discussions, we evaluated the potential of six very broad scenarios to increase the competitiveness of alternative modes:
+
 
 - Walk infrastructure: it is safe and comfortable to walk everywhere it is legal to do so;
 - Bike infrastructure: it is safe and comfortable to bike everywhere it is legal to do so;
