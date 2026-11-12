@@ -603,8 +603,9 @@ def save_results() -> None:
                 for key in ("saved_results", "saved_options", "saved_tables")
             }
             if city != ALL_CITIES:
+                city_folder = f"{city}_{st.session_state.get('city_filter_logic', 'OR')}"
                 output_paths = {
-                    key: path.parent / city / path.name
+                    key: path.parent / city_folder / path.name
                     for key, path in output_paths.items()
                 }
             for path in output_paths.values():
