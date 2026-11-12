@@ -44,12 +44,13 @@ knitr:
 #| label: setup
 
 summary_output_dir <- here::here("src", "analysis_tool", "output")
+
 source(
   file.path(here::here(), "reports/summary_report/compile_streamlit_ouput.R"),
   local = knitr::knit_global()
 )
 source(
-  here::here("reports", "summary_report", "histograms.R"),
+  here::here("reports/summary_report/histograms.R"),
   local = knitr::knit_global()
 )
 
@@ -387,12 +388,12 @@ tibble::tibble(
   `Person trips` = scales::label_number(
     scale = if (original_car_person_trips >= 1e9) 1e-9 else 1e-6,
     suffix = if (original_car_person_trips >= 1e9) " billion" else " million",
-    accuracy = 0.01
+    accuracy = 0.1
   )(original_car_person_trips),
   `Vehicle miles traveled (VMT)` = scales::label_number(
     scale = if (original_car_vmt >= 1e9) 1e-9 else 1e-6,
     suffix = if (original_car_vmt >= 1e9) " billion" else " million",
-    accuracy = 0.01
+    accuracy = 0.1
   )(original_car_vmt),
   `% of Trips competitive to shift` = summary_percent("overall", "% of Car Trips"),
   `% of VMT competitive to shift` = summary_percent("overall", "% of VMT", accuracy = 0.1),
