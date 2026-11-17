@@ -67,7 +67,7 @@ function get_elevation_gain_mm (rasterData, source, target, distance)
             local slope_pct = seg_elevation_mm / (seg_length * 1000) * 100
 
             if (slope_pct > 35 or slope_pct < -35) then
-                print("Warning: street segment is steeper than Baldwin St in Dunedin, NZ (35%). Assuming bad data/no slope, at " .. origin_lat .. ", " .. origin_lon)
+                print("Warning: segment is steeper than 35%. Assuming bad data/no slope, at " .. origin_lat .. ", " .. origin_lon)
             else
                 elevation_gain_mm = elevation_gain_mm + math.max(seg_elevation_mm, 0)
             end
@@ -123,7 +123,7 @@ function get_proportion_sloped_more_than (rasterData, source, target, distance, 
         local slope_pct = seg_elevation_mm / (seg_length * 1000) * 100
 
         if (slope_pct > 35 or slope_pct < -35) then
-            print("Warning: street segment is steeper than Baldwin St in Dunedin, NZ (35%). Assuming bad data/no slope, at " .. origin_lat .. ", " .. origin_lon)
+            print("Warning: segment is steeper than 35%. Assuming bad data/no slope, at " .. origin_lat .. ", " .. origin_lon)
         elseif (slope_pct > max_slope_pct) then
             --print("origin elevation " .. origin_val.datum .. " mm, destination elevation " .. destination_val.datum .. "mm, segment length " .. seg_length .. "m, calculated slope " .. slope_pct .. " at " .. origin_lat .. ", " .. origin_lon)
             steep_segments = steep_segments + 1

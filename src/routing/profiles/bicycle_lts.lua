@@ -56,6 +56,9 @@ function setup()
     error("Unknown scenario " .. SCENARIO)
   end   
 
+  local walking_profile = walk_profile.setup()
+  walking_profile.store_quality_classes = false
+
   return {
     -- scenario controls
     use_lts = use_lts, -- set to false to treat everything as LTS 1
@@ -272,7 +275,7 @@ function setup()
       'construction'
     },
 
-    walk_profile = walk_profile.setup(),
+    walk_profile = walking_profile,
     car_profile = car_profile.setup(),
 
     -- TODO loading elevation twice in bike and walk profiles

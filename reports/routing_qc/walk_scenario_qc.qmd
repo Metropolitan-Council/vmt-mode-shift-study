@@ -12,6 +12,8 @@ import keyring
 import numpy as np
 import yaml
 import contextily as cx
+import requests
+import warnings
 
 # This is used to avoid hard-coding directories. 
 # To set the directory, use the command prompt or a notebook you don't check in.  run:
@@ -82,7 +84,10 @@ def plot_trips(base, scen, trip_id):
 
     new_df = gpd.GeoDataFrame(pd.concat([base_sel, scen_sel], ignore_index=True))
     ax = new_df.to_crs(3857).plot(column="which", legend=True)
-    cx.add_basemap(ax)
+    try:
+        cx.add_basemap(ax)
+    except requests.exceptions.SSLError:
+        warnings.warn("Could not verify the map tile server certificate; rendering without a basemap.")
 
     # fix aspect ratio
     yl = plt.ylim()

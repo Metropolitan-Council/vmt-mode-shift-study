@@ -252,7 +252,7 @@ class RouteMapper(object):
         trip = self.tbi[self.tbi['trip_id']==trip_id]
                     
         # instantiate a global Leaflet map object using Folium
-        route_map = folium.Map(location=[44.9778,-93.2650], tiles="CartoDB positron", zoom_start=10)
+        route_map = folium.Map(location=[44.9778,-93.2650], tiles="OpenStreetMap", zoom_start=10)
         
         route_map = self.add_car_route(route_map, trip_id)
         route_map = self.add_walk_route(route_map, trip_id)

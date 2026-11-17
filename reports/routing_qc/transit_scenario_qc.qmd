@@ -1,6 +1,6 @@
 ---
-# may need to edit this line based on installed Julia kernels/versions
-jupyter: julia-1.9
+# Match the installed Julia Jupyter kernel.
+jupyter: julia-1.11
 ---
 
 # Transit Scenario QC
