@@ -53,6 +53,9 @@ fi
 BIKE_NETWORK="$NETWORK_DIR/bike-baseline/bike-baseline.osrm"
 WALK_NETWORK="$NETWORK_DIR/walk-baseline/walk-baseline.osrm"
 CAR_NETWORK="$NETWORK_DIR/car_baseline_$SPEED_COLUMN/car_baseline_$SPEED_COLUMN.osrm"
+if [[ -n "$SPEED_CAP_DATABASE" ]]; then
+	CAR_NETWORK="$NETWORK_DIR/car_scenario_$SPEED_COLUMN/car_scenario_$SPEED_COLUMN.osrm"
+fi
 
 require_network "$BIKE_NETWORK"
 require_network "$WALK_NETWORK"
