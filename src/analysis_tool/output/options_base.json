@@ -59,8 +59,8 @@
       "cutoff_mode": "Percentile"
     },
     "BikeHighLTSDistStep": {
-      "cutoff": 0.15,
-      "cutoff_mode": "Raw"
+      "cutoff": 0.01,
+      "cutoff_mode": "Percentile"
     },
     "WalkPurposeStep": {
       "cutoff": null,

@@ -20,6 +20,8 @@ class BikeHighLTSDistStep(ContinuousStep):
             "meters",
         )
 
+        # calculate high LTS distance and proportion of high LTS distance for each trip
+        # proportion of the trip that is LTS 3 or LTS 4
         df.loc[:, "high_lts_dist"] = (
             df["bike_distance_meters_3"] + df["bike_distance_meters_4"]
         )

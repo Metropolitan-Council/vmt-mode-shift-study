@@ -28,16 +28,20 @@ probable_steps:
 fixed_purposes: ["Work", "Work-related", "Escort", "School", "School-related"]
 unlikely_purposes: ["Escort", "Shop"]
 
-# Optional raw numeric-input defaults, in each step's units, keyed by step class name.
+# Optional raw numeric-input defaults, in each step's units, keyed by phase and step class name.
 # Omitted steps use the step's current effective cutoff converted to raw units.
-default_raw_cutoffs: 
-    WalkDistanceStep: 1.6
-    BikeDistanceStep: 10
-    BikeHighLTSDistStep: 0.15
-    BikeSnowDepthStep: 0.0
-    TransitAccessDistanceStep: 0.97
-    TransitEgressDistanceStep: 0.93
-    TransitWaitTimeStep: 64
+default_raw_cutoffs:
+    feasible:
+        WalkDistanceStep: 1.6
+        BikeDistanceStep: 10
+        BikeHighLTSDistStep: 0.15
+        BikeSnowDepthStep: 0.0
+        TransitAccessDistanceStep: 0.97
+        TransitEgressDistanceStep: 0.93
+        TransitWaitTimeStep: 64
+    probable: {
+        BikeHighLTSDistStep: 0.01 # percentile value
+    }
 
 build: False  # whether we are currently building to docker/streamlit; disables initialization/keyring
 force_reinitialize: True

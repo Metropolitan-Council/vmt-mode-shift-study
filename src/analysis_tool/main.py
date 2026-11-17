@@ -73,7 +73,10 @@ def initialize_step(step_name: str) -> steps.parent_classes.BaseStep:
     )(st.session_state.df)
     if step.is_continuous():
         extrema = step.get_extrema()
-        configured_cutoff = handler.get("default_raw_cutoffs", {}).get(step_name)
+        phase = str(st.session_state.phase)
+        configured_cutoff = (
+            handler.get("default_raw_cutoffs", {}).get(phase, {}).get(step_name)
+        )
         raw_cutoff = (
             float(configured_cutoff)
             if configured_cutoff is not None
@@ -85,7 +88,9 @@ def initialize_step(step_name: str) -> steps.parent_classes.BaseStep:
         if configured_cutoff is not None:
             step.set_cutoff(raw_cutoff)
             step.set_cutoff_mode(CutoffMode.RAW)
-        st.session_state.setdefault("default_raw_cutoffs", {})[step_name] = raw_cutoff
+        st.session_state.setdefault("default_raw_cutoffs", {}).setdefault(
+            phase, {}
+        )[step_name] = raw_cutoff
     return step
 
 
@@ -1673,8 +1678,10 @@ def show_step() -> None:
             )
         elif curr.get_cutoff_mode() == CutoffMode.RAW:
             extrema = curr.get_extrema()
-            raw_cutoff = st.session_state.get("default_raw_cutoffs", {}).get(
-                st.session_state.step, float(extrema[1])
+            raw_cutoff = (
+                st.session_state.get("default_raw_cutoffs", {})
+                .get(str(st.session_state.phase), {})
+                .get(st.session_state.step, float(extrema[1]))
             )
             min_value = min(float(extrema[0]), float(raw_cutoff))
             max_value = max(float(extrema[1]), float(raw_cutoff))
