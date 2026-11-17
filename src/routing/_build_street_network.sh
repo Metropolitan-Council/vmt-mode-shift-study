@@ -54,7 +54,7 @@ if [[ -d "$OUTPUT_DIR" ]]; then
 		[[ -e "$OUTPUT_ENTRY" || -L "$OUTPUT_ENTRY" ]] || continue
 		ENTRY_NAME="$(basename "$OUTPUT_ENTRY")"
 		case "$ENTRY_NAME" in
-			"${NET_NAME}.osm.pbf"|"${NET_NAME}.osrm"|"${NET_NAME}.osrm."*)
+			"${NET_NAME}.osm.pbf"|"${NET_NAME}.osrm"|"${NET_NAME}.osrm."*|"${NET_NAME}.gpkg")
 				if [[ -d "$OUTPUT_ENTRY" && ! -L "$OUTPUT_ENTRY" ]]; then
 					printf 'Refusing to replace nested directory in network output: %s\n' "$OUTPUT_ENTRY" >&2
 					exit 1

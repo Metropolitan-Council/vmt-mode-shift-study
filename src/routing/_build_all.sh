@@ -66,6 +66,7 @@ run_builder build_bicycle_baseline_network.sh "$OSM_FILE" "$NETWORK_DIR"
 run_builder build_bicycle_ebike_network.sh "$OSM_FILE" "$NETWORK_DIR"
 run_builder build_bicycle_all_lts1_network.sh "$OSM_FILE" "$NETWORK_DIR"
 run_builder build_car_baseline_networks.sh "$OSM_FILE" "$NETWORK_DIR"
+run_builder build_car_speed_scenario_networks.sh "$OSM_FILE" "$NETWORK_DIR" "$SPEED_CAP_DATABASE"
 
 run_builder build_transit_network.sh \
   --osrm-network "$NETWORK_DIR/walk-baseline/walk-baseline.osrm" \
